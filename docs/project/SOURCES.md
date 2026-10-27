@@ -5,10 +5,10 @@ during skilleval's design investigation. It is a dated source register, not a
 claim that every upstream has been installed, run, or adopted. Recheck a pinned
 revision before depending on its behavior.
 
-No upstream implementation is vendored in this foundation. The concrete external
-contracts currently used are the candidate smolvm CLI adapter and captured Codex
-event format. The remaining entries are design influences or reuse candidates.
-Declared Python dependencies are owned by `pyproject.toml` and `uv.lock`.
+The OpenBench gateway is incorporated at the exact revision recorded below.
+The other concrete external contracts are the candidate smolvm CLI adapter and
+native Codex interfaces. Remaining entries are design influences or reuse
+candidates. Declared Python dependencies are owned by `pyproject.toml` and `uv.lock`.
 
 ## Evaluation platforms, workflows, and research
 
@@ -31,10 +31,10 @@ task repositories, and leaderboard snapshots distinct.
 
 | Source | Current decision / possible reuse | Qualification still needed |
 | --- | --- | --- |
-| [smolvm](https://github.com/smol-machines/smolvm), [v1.32.3 CLI](https://github.com/smol-machines/smolvm/blob/v1.32.3/src/cli/machine.rs), [pack resolver](https://github.com/smol-machines/smolvm/blob/v1.32.3/src/data/pack_ref.rs) | Preferred runtime candidate; current offline adapter pins this version and restricts executable plans to explicit Docker Hub OCI references | Actual task fidelity, isolation, lifecycle, transport, and recovery. Packed-image policy inheritance motivated the route restriction; subprocess fixtures are not runtime proof. |
+| [smolvm](https://github.com/smol-machines/smolvm), [v1.32.3 CLI](https://github.com/smol-machines/smolvm/blob/v1.32.3/src/cli/machine.rs), [pack resolver](https://github.com/smol-machines/smolvm/blob/v1.32.3/src/data/pack_ref.rs) | Preferred runtime candidate; adapter pins this version, restricts registry execution to explicit Docker Hub OCI references, and also supports pinned local Docker-save archives | Actual task fidelity, isolation, lifecycle, transport, and recovery. Packed-image policy inheritance motivated the route restriction; subprocess fixtures are not runtime proof. |
 | [smolvm credential substitution](https://github.com/smol-machines/smolvm/blob/main/docs/credential-substitution.md), [SDK restore issue #1989](https://github.com/smol-machines/smolvm/issues/1989) | Sources evaluated for credential routing and network-policy pitfalls | Confirm the chosen Codex transport/authentication route. Do not assume a credential proxy or packed restore path preserves the requested policy. |
-| [Colima](https://github.com/abiosoft/colima), [configuration](https://colima.run/docs/configuration/) | Retained alternative for image building and execution if smolvm fails qualification | No fallback adapter implemented. Dedicated profiles, per-attempt state, credential/network scope, and cleanup need the same effective-boundary checks. |
-| [Codex noninteractive mode](https://learn.chatgpt.com/docs/non-interactive-mode), [SDKs](https://learn.chatgpt.com/docs/codex-sdk) | First native harness. Current code parses captured JSONL; native CLI execution is the selected direction | Bind binary/configuration identity, reconcile events with process exit, test real tool use, and measure skill exposure/consultation. SDK availability does not determine the core language. |
+| [Colima](https://github.com/abiosoft/colima), [configuration](https://colima.run/docs/configuration/) | Used for a dedicated no-host-mount image builder; retained as an execution alternative if smolvm fails qualification | No fallback adapter implemented. Dedicated profiles, per-attempt state, credential/network scope, and cleanup need the same effective-boundary checks. |
+| [Codex noninteractive mode](https://learn.chatgpt.com/docs/non-interactive-mode), [SDKs](https://learn.chatgpt.com/docs/codex-sdk) | Captured JSONL parser plus a native guest profile with 0.164.0 as the adapter baseline; stable same-major updates may enter qualification | Live model/tool execution, event/exit reconciliation, version/catalog identity, and observed skill consultation remain qualification work. SDK availability does not determine the core language. |
 | [Pi](https://github.com/earendil-works/pi), [CLI integration](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/cli-integration.md) | Later native harness through JSON/RPC interfaces | Keep Pi's native agent/resources and compare ON/OFF within Pi. Avoid silently substituting SDK defaults or confounding skill treatment with harness choice. |
 
 ## Existing project precedents
@@ -46,7 +46,7 @@ use skilleval.
 | Source | Candidate or influence | Adoption status |
 | --- | --- | --- |
 | [Dojo](https://github.com/davisbuilds/dojo) | Versioned skill packaging, discovery contracts, portable references, attribution, and distinction between routing checks and task quality | Conceptual input; skill bundles remain independently versioned experimental inputs. No runtime dependency. |
-| [OpenBench upstream](https://github.com/minghinmatthewlam/openbench) and [public fork](https://github.com/davisbuilds/openbench) | Task extraction/fidelity, attempt lifecycle, runtime controls, result handling, and lessons from repository-based comparisons | Selective reuse candidate. Pin the relevant source revision before adopting a component; local experimental changes are not necessarily in upstream or the public fork. No whole-runner adoption. |
+| [OpenBench upstream](https://github.com/minghinmatthewlam/openbench) and [public fork](https://github.com/davisbuilds/openbench) | Task extraction/fidelity, attempt lifecycle, runtime controls, result handling, and a bounded native inference gateway | Gateway implementation incorporated from the exact revision below; task/runner machinery remains a selective reuse candidate. No whole-runner adoption or runtime dependency on another checkout. |
 | [Engram](https://github.com/davisbuilds/engram), [curation](https://github.com/davisbuilds/engram/tree/main/internal/curate) | Agent semantic judgment plus deterministic admissibility checks; evidence-bound proposals; separate observation, consumption, and benefit | Architectural influence. Engram's structural validation is not a calibrated LLM-as-judge benchmark. Skilleval must establish its own grader reliability. |
 
 Earlier private capture/accounting experiments and frozen task exports informed
@@ -54,6 +54,30 @@ evidence preservation, failure accounting, and historical import contracts. Thei
 raw data and detailed provenance stay outside the public source tree. Public
 tests use authored examples; historical imports are development material, never
 new holdouts merely because they were copied into a new project.
+
+## Incorporated OpenBench gateway
+
+`src/skilleval/_vendor/openbench_gateway.py` is adapted from
+[`obench/sandbox_gateway.py` at commit
+39fec903f1e73bd3e8e3b15cacefbcce051bd1a6](https://github.com/davisbuilds/openbench/blob/39fec903f1e73bd3e8e3b15cacefbcce051bd1a6/obench/sandbox_gateway.py).
+The original upstream file's SHA-256 is
+`ed02f42cc52a22cfd16d49e3d639a27ce66de0b3bc3a9f41758c646bb26aed48`.
+A narrow local compatibility patch accepts empty `annotations` and `logprobs`
+on replayed assistant text, preserving native request bytes while refusing
+nonempty metadata and hosted capabilities. The pinned Codex wire format and a
+real rejected follow-up request established the need for this adaptation.
+The adjacent `OPENBENCH_LICENSE` retains the MIT permission and copyright notice,
+Copyright (c) 2026 Matthew Lam. Selected real-socket tests were adapted from the
+same revision's
+[`obench/tests/test_sandbox_gateway.py`](https://github.com/davisbuilds/openbench/blob/39fec903f1e73bd3e8e3b15cacefbcce051bd1a6/obench/tests/test_sandbox_gateway.py).
+
+`skilleval.gateway` owns the local typed adaptation: explicit host authentication,
+expiry checks, qualification ceilings, bounded receipts, cleanup, and the pinned
+native guest profile. The upstream broker CLI is not the supported host entry
+point. See [GATEWAY.md](../system/GATEWAY.md) for that boundary and renewal rules.
+This is source adoption, not an endorsement, live provider proof, or evidence of
+runtime isolation. The public calibration corpus was newly authored for this
+repository and does not copy private review content.
 
 ## How adoption is recorded
 

@@ -1,0 +1,11 @@
+{
+  "report_id": "r05",
+  "outcome": "valid-report",
+  "run_completed": true,
+  "findings": [
+    {
+      "title": "Repeated units cost too little",
+      "body": "The checkout adds each line price once. Ordering a 400-cent unit five times yields 400 before shipping instead of 2000."
+    }
+  ]
+}

@@ -1,6 +1,9 @@
 import json
 
-from skilleval.harnesses.codex import parse_codex_jsonl
+import pytest
+
+from skilleval.errors import SkillEvalError
+from skilleval.harnesses.codex import codex_version_identity, parse_codex_jsonl
 
 
 def events(*items: dict[str, object]) -> str:
@@ -65,3 +68,42 @@ def test_zero_usage_is_preserved_as_reported() -> None:
         )
     )
     assert result["usage"]["input_tokens"] == 0
+
+
+@pytest.mark.parametrize("observed", ["0.164.0", "0.164.1", "0.165.0", "0.200.0"])
+def test_stable_codex_upgrades_allow_qualification_with_exact_identity(observed: str) -> None:
+    identity = codex_version_identity(f"codex-cli {observed}\n")
+    assert identity == {
+        "observed_version": observed,
+        "baseline_version": "0.164.0",
+        "version_policy": "stable-same-major-at-or-after-baseline",
+        "baseline_match": observed == "0.164.0",
+    }
+
+
+@pytest.mark.parametrize(
+    "output",
+    [
+        "codex-cli 0.163.9",
+        "codex-cli 0.1.999",
+        "codex-cli 1.0.0",
+        "codex-cli 2.164.0",
+        "codex-cli 0.165.0-rc.1",
+        "codex-cli 0.164.1+build.1",
+        "codex-cli unknown",
+        "",
+        "0.165.0",
+        "codex 0.165.0",
+        "codex-cli v0.165.0",
+        "codex-cli 0.165",
+        "codex-cli 0.165.0.1",
+        "codex-cli 00.165.0",
+        "codex-cli 0.0165.0",
+        "codex-cli 0.165.00",
+        "warning: changed interface\ncodex-cli 0.165.0",
+        "codex-cli 0.165.0\nother output",
+    ],
+)
+def test_older_unknown_prerelease_and_new_major_require_review(output: str) -> None:
+    with pytest.raises(SkillEvalError):
+        codex_version_identity(output)

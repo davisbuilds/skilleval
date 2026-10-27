@@ -1,3 +1,5 @@
+import hashlib
+import io
 import json
 import tarfile
 from pathlib import Path
@@ -11,10 +13,23 @@ from skilleval.qualification import LOG_BYTES, plan_qualification, run_offline_q
 IMAGE = "docker.io/library/python@sha256:" + "a" * 64
 
 
-def bundle_at(root: Path) -> Path:
+def bundle_at(root: Path, reconstruct_git: bool = False) -> Path:
     case = root / "legacy" / "cases" / "synthetic"
     (case / "source").mkdir(parents=True)
-    (case / "source" / "task.txt").write_text("captured task")
+    (case / "source" / "task.txt").write_text("captured task" + ("\n" if reconstruct_git else ""))
+    if reconstruct_git:
+
+        def blob(data: bytes) -> str:
+            return hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
+
+        (case / "source" / ".openbench-review.json").write_text(
+            '{"schema":1,"patch":"review.patch"}\n'
+        )
+        (case / "source" / "review.patch").write_text(
+            "diff --git a/task.txt b/task.txt\n"
+            f"index {blob(b'base task\n')}..{blob(b'captured task\n')} 100644\n"
+            "--- a/task.txt\n+++ b/task.txt\n@@ -1 +1 @@\n-base task\n+captured task\n"
+        )
     (case / "oracle.md").write_text("hidden answer")
     (case / "instruction.md").write_text("public instruction")
     (root / "legacy" / "reports.json").write_text('[ {"case_id": "synthetic", "report_id": "r1"} ]')
@@ -64,9 +79,9 @@ def fake_runtime(tmp_path: Path, failure: str = "") -> Path:
 
     runtime = tmp_path / "runtime"
     script = f"""#!{sys.executable}
-import json, os, pathlib, sys, time
+import json, os, pathlib, subprocess, sys, time
 arguments = sys.argv[1:]
-state = pathlib.Path(os.environ['HOME']).parent
+state = pathlib.Path(os.environ['XDG_CONFIG_HOME']).parent
 with (state / 'calls.jsonl').open('a') as log:
     log.write(json.dumps({{'argv': arguments, 'env': dict(os.environ)}}) + '\\n')
 if arguments == ['--version']:
@@ -74,11 +89,35 @@ if arguments == ['--version']:
     raise SystemExit(0)
 if {failure!r} == 'start' and arguments[:2] == ['machine', 'start']:
     raise SystemExit(7)
+if {failure!r} == 'socket-path' and arguments[:2] == ['machine', 'start']:
+    socket_path = os.environ['HOME'] + '/Library/Caches/smolvm/vms/0123456789abcdef/agent.sock'
+    if len(socket_path.encode()) > 103:
+        print('socket path exceeds macOS limit', file=sys.stderr)
+        raise SystemExit(9)
 # v1.32.3 delete prompts without --force and DEVNULL cannot confirm.
 if arguments[:2] == ['machine', 'delete'] and '--force' not in arguments:
     raise SystemExit(2)
 if {failure!r} == 'delete' and arguments[:2] == ['machine', 'delete']:
     raise SystemExit(8)
+if arguments[:2] == ['machine', 'exec'] and 'git' in arguments:
+    command = arguments[arguments.index('--') + 1:]
+    allowed = [
+        ['git', 'rev-parse', 'HEAD', 'HEAD^', 'candidate^{{tree}}', 'base^{{tree}}'],
+        ['git', 'status', '--porcelain'], ['git', 'fsck', '--no-reflogs']
+    ]
+    if command in allowed:
+        if {failure!r} == 'git-history' and command[1] == 'rev-parse':
+            print('wrong commit')
+            raise SystemExit(0)
+        if {failure!r} == 'git-worktree' and command[1] == 'status':
+            print(' M task.txt')
+            raise SystemExit(0)
+        result = subprocess.run(['/usr/bin/git', '-C', str(state / 'workspace'), *command[1:]],
+            env={{'PATH':'/usr/bin:/bin', 'GIT_CONFIG_GLOBAL':'/dev/null',
+                 'GIT_CONFIG_NOSYSTEM':'1'}}, capture_output=True)
+        sys.stdout.buffer.write(result.stdout)
+        sys.stderr.buffer.write(result.stderr)
+        raise SystemExit(result.returncode)
 if arguments[:2] == ['machine', 'exec'] and 'big-output' in arguments:
     print('x' * 200000)
 if arguments[:2] == ['machine', 'exec'] and 'failing-control' in arguments:
@@ -157,6 +196,20 @@ def test_failing_control_is_partial(tmp_path: Path) -> None:
     )
     assert report["status"] == "partial"
     assert report["cleanup_complete"] is True
+
+
+def test_deep_output_does_not_extend_runtime_socket_paths(tmp_path: Path) -> None:
+    bundle = bundle_at(tmp_path)
+    output = tmp_path / ("nested-output-" * 8) / "result"
+    report = run_offline_qualification(
+        plan_qualification(bundle, IMAGE, [["true"]]),
+        output,
+        str(fake_runtime(tmp_path, "socket-path")),
+    )
+    assert report["status"] == "offline_passed"
+    assert report["runtime_home_removed"] is True
+    assert not Path(report["runtime_home"]).exists()
+    assert (output / "report.json").is_file()
 
 
 def test_captured_task_tampering_refused_before_launch(tmp_path: Path) -> None:
@@ -262,3 +315,182 @@ def test_output_alias_into_bundle_refused_before_launch(tmp_path: Path) -> None:
             str(fake_runtime(tmp_path)),
         )
     assert not (bundle / "result").exists()
+
+
+def docker_archive(root: Path, extra: tuple[str, bytes] | None = None) -> tuple[Path, str]:
+    root.mkdir(parents=True, exist_ok=True)
+    archive = root / "image.tar"
+    layer = b"synthetic layer bytes"
+    config = json.dumps(
+        {
+            "architecture": "arm64",
+            "os": "linux",
+            "rootfs": {
+                "type": "layers",
+                "diff_ids": ["sha256:" + hashlib.sha256(layer).hexdigest()],
+            },
+        }
+    ).encode()
+    config_name = hashlib.sha256(config).hexdigest() + ".json"
+    manifest = json.dumps(
+        [{"Config": config_name, "RepoTags": ["synthetic:local"], "Layers": ["layer/layer.tar"]}]
+    ).encode()
+    entries = [("manifest.json", manifest), (config_name, config), ("layer/layer.tar", layer)]
+    if extra:
+        entries.append(extra)
+    with tarfile.open(archive, "w") as output:
+        for name, data in entries:
+            info = tarfile.TarInfo(name)
+            info.size = len(data)
+            output.addfile(info, io.BytesIO(data))
+    return archive, hashlib.sha256(archive.read_bytes()).hexdigest()
+
+
+def test_local_archive_plan_binds_exact_image_bytes(tmp_path: Path) -> None:
+    archive, digest = docker_archive(tmp_path / "image")
+    plan = plan_qualification(
+        bundle_at(tmp_path), None, [["true"]], image_archive=archive, image_sha256=digest
+    )
+    assert plan["runtime"]["image_route"] == "local-docker-save"
+    assert plan["image_archive"]["sha256"] == digest
+    assert plan["image_archive"]["path"] == str(archive)
+
+
+def test_local_archive_run_copies_hash_bound_bytes_without_registry_route(tmp_path: Path) -> None:
+    archive, digest = docker_archive(tmp_path / "image")
+    plan = plan_qualification(
+        bundle_at(tmp_path), None, [["true"]], image_archive=archive, image_sha256=digest
+    )
+    report = run_offline_qualification(plan, tmp_path / "result", str(fake_runtime(tmp_path)))
+    assert report["status"] == "offline_passed"
+    assert report["cleanup_complete"] is True
+    state = tmp_path / "result" / "runtime-state"
+    copied = state / "image.tar"
+    assert copied.read_bytes() == archive.read_bytes()
+    create = next(item for item in report["steps"] if item["label"] == "create")
+    assert create["argv"][create["argv"].index("--image") + 1] == str(copied)
+    assert "--net" not in create["argv"]
+
+
+@pytest.mark.parametrize("change", ["bytes", "symlink", "fifo", "oversized"])
+def test_image_archive_changes_refused_before_runtime_launch(tmp_path: Path, change: str) -> None:
+    import os
+
+    from skilleval.qualification import MAX_IMAGE_BYTES
+
+    archive, digest = docker_archive(tmp_path / "image")
+    plan = plan_qualification(
+        bundle_at(tmp_path), None, [["true"]], image_archive=archive, image_sha256=digest
+    )
+    if change == "bytes":
+        archive.write_bytes(b"replacement")
+    else:
+        archive.unlink()
+        if change == "symlink":
+            target, _ = docker_archive(tmp_path / "other-image")
+            archive.symlink_to(target)
+        elif change == "fifo":
+            os.mkfifo(archive)
+        else:
+            with archive.open("wb") as output:
+                output.truncate(MAX_IMAGE_BYTES + 1)
+    with pytest.raises(SkillEvalError):
+        run_offline_qualification(plan, tmp_path / "result", "/missing/runtime")
+    assert not (tmp_path / "result").exists()
+
+
+@pytest.mark.parametrize(
+    "extra",
+    [
+        (".smolmachine/manifest.json", b'{"network":true}'),
+        ("../outside", b"escape"),
+        ("manifest.json", b"duplicate"),
+        ("unrecognized-policy.json", b'{"mounts":["/host"]}'),
+    ],
+)
+def test_non_docker_save_policy_and_unsafe_members_rejected(
+    tmp_path: Path, extra: tuple[str, bytes]
+) -> None:
+    archive, digest = docker_archive(tmp_path / "image", extra)
+    with pytest.raises(SkillEvalError):
+        plan_qualification(
+            bundle_at(tmp_path), None, [["true"]], image_archive=archive, image_sha256=digest
+        )
+
+
+def test_archive_digest_and_route_must_be_explicit(tmp_path: Path) -> None:
+    archive, digest = docker_archive(tmp_path / "image")
+    bundle = bundle_at(tmp_path)
+    for image, path, identity in [
+        (None, archive, None),
+        (IMAGE, archive, digest),
+        (IMAGE, None, digest),
+    ]:
+        with pytest.raises(SkillEvalError):
+            plan_qualification(bundle, image, [["true"]], image_archive=path, image_sha256=identity)
+
+
+def test_reconstructed_git_transfer_binds_and_checks_native_history(tmp_path: Path) -> None:
+    from skilleval.workspace import _git
+
+    bundle = bundle_at(tmp_path, reconstruct_git=True)
+    plan = plan_qualification(bundle, IMAGE, [["true"]], reconstruct_git=True)
+    report = run_offline_qualification(plan, tmp_path / "result", str(fake_runtime(tmp_path)))
+    assert report["status"] == "offline_passed"
+    assert report["workspace"] == plan["workspace"]
+    state = tmp_path / "result" / "runtime-state"
+    with tarfile.open(state / "task.tar") as archive:
+        names = archive.getnames()
+        assert ".git/HEAD" in names
+        assert ".git/refs/heads/base" in names
+        assert "task.txt" in names and "review.patch" in names
+        assert not {"oracle.md", "reports.json", "manifest.json"} & set(names)
+        assert archive.extractfile("task.txt").read() == b"captured task\n"  # type: ignore[union-attr]
+    assert _git(state / "workspace", "show", "base:task.txt") == b"base task\n"
+    checks = [step["label"] for step in report["steps"]]
+    assert checks.index("git_history") < checks.index("project_control_0")
+    assert "git_worktree" in checks and "git_objects" in checks
+    assert plan["workspace"]["original_history_available"] is False
+
+
+@pytest.mark.parametrize("failure", ["git-history", "git-worktree"])
+def test_guest_git_mismatch_is_partial_and_skips_project_controls(
+    tmp_path: Path, failure: str
+) -> None:
+    plan = plan_qualification(
+        bundle_at(tmp_path, reconstruct_git=True), IMAGE, [["true"]], reconstruct_git=True
+    )
+    report = run_offline_qualification(
+        plan, tmp_path / "result", str(fake_runtime(tmp_path, failure))
+    )
+    assert report["status"] == "partial"
+    assert report["cleanup_complete"] is True
+    assert not any(step["label"].startswith("project_control") for step in report["steps"])
+    assert "guest native Git" in report["error"]
+
+
+def test_modified_workspace_plan_refused_before_runtime_launch(tmp_path: Path) -> None:
+    plan = plan_qualification(
+        bundle_at(tmp_path, reconstruct_git=True), IMAGE, [["true"]], reconstruct_git=True
+    )
+    plan["workspace"]["base_commit"] = "a" * 40
+    with pytest.raises(SkillEvalError, match="changed"):
+        run_offline_qualification(plan, tmp_path / "result", "/missing/runtime")
+    assert not (tmp_path / "result").exists()
+
+
+@pytest.mark.parametrize(
+    "kind", [tarfile.SYMTYPE, tarfile.LNKTYPE, tarfile.CHRTYPE, tarfile.XHDTYPE]
+)
+def test_archive_links_devices_and_parser_extensions_refused(tmp_path: Path, kind: bytes) -> None:
+    archive, _ = docker_archive(tmp_path / "image")
+    with tarfile.open(archive, "a") as output:
+        info = tarfile.TarInfo("untrusted-extension")
+        info.type = kind
+        info.linkname = "../outside"
+        output.addfile(info)
+    digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+    with pytest.raises(SkillEvalError, match="unsupported"):
+        plan_qualification(
+            bundle_at(tmp_path), None, [["true"]], image_archive=archive, image_sha256=digest
+        )

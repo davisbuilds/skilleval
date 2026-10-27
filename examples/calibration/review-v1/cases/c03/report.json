@@ -1,0 +1,11 @@
+{
+  "report_id": "r03",
+  "outcome": "valid-report",
+  "run_completed": true,
+  "findings": [
+    {
+      "title": "Remote acknowledgement is never durable",
+      "body": "client.publish returns before durable storage, so send silently loses the payload on a crash."
+    }
+  ]
+}

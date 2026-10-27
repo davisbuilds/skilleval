@@ -1,0 +1,12 @@
+{
+  "upstream_commit": "39fec903f1e73bd3e8e3b15cacefbcce051bd1a6",
+  "upstream_url": "https://github.com/davisbuilds/openbench/blob/39fec903f1e73bd3e8e3b15cacefbcce051bd1a6/obench/sandbox_gateway.py",
+  "upstream_sha256": "ed02f42cc52a22cfd16d49e3d639a27ce66de0b3bc3a9f41758c646bb26aed48",
+  "adapted_sha256": "5159253383750db2583a51ea6789ff9e7cb897dfb7c73e2629293c84bd5ef5a0",
+  "patch": "openbench_gateway.patch",
+  "changes": [
+    "Accept only empty annotations/logprobs arrays on output_text; preserve request bytes."
+  ],
+  "protocol_source": "https://github.com/openai/codex/blob/6aaac694803004a63c6f393d153c96d22521a6b9/codex-rs/protocol/src/models.rs#L898",
+  "license": "OPENBENCH_LICENSE"
+}

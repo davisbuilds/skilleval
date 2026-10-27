@@ -8,7 +8,37 @@ not task-quality judgments or proof that a skill was consulted.
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
+
+from skilleval.errors import SkillEvalError
+
+CODEX_BASELINE_VERSION = "0.164.0"
+CODEX_VERSION_POLICY = "stable-same-major-at-or-after-baseline"
+
+
+def codex_version_identity(raw: str) -> dict[str, str | bool]:
+    """Admit stable upgrades for qualification; native controls must still pass.
+
+    The exact observed identity is retained. Acceptance does not establish event
+    protocol compatibility or equivalence to earlier qualification evidence.
+    """
+    component = r"(?:0|[1-9][0-9]*)"
+    match = re.fullmatch(rf"codex-cli ({component}\.{component}\.{component})", raw.strip())
+    if len(raw) > 128 or match is None:
+        raise SkillEvalError("unknown or unstable Codex version requires adapter review")
+    observed = tuple(int(part) for part in match[1].split("."))
+    baseline = tuple(int(part) for part in CODEX_BASELINE_VERSION.split("."))
+    if observed[0] != baseline[0]:
+        raise SkillEvalError("Codex major version requires adapter review")
+    if observed < baseline:
+        raise SkillEvalError("Codex version predates the adapter baseline")
+    return {
+        "observed_version": match[1],
+        "baseline_version": CODEX_BASELINE_VERSION,
+        "version_policy": CODEX_VERSION_POLICY,
+        "baseline_match": observed == baseline,
+    }
 
 
 def parse_codex_jsonl(text: str) -> dict[str, Any]:

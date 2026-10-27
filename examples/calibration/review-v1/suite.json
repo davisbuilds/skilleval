@@ -1,0 +1,193 @@
+{
+  "schema_version": 1,
+  "suite_id": "review-v1",
+  "description": "Public authored development controls; labels are reviewable hypotheses, not independent ground truth.",
+  "probes": [
+    {
+      "probe_id": "p01",
+      "case_id": "c01",
+      "kind": "finding",
+      "question": "Assess finding 0 in report.json.",
+      "expected": "supported",
+      "rationale": "Quantities are discarded when building subtotal.",
+      "citations": [
+        {
+          "path": "cases/c01/source/ledger.py",
+          "line_start": 4,
+          "line_end": 7
+        }
+      ],
+      "finding_index": 0
+    },
+    {
+      "probe_id": "p02",
+      "case_id": "c01",
+      "kind": "finding",
+      "question": "Assess finding 1 in report.json relative to earlier findings.",
+      "expected": "duplicate",
+      "rationale": "Same missing quantity factor as finding 0, despite different wording.",
+      "citations": [
+        {
+          "path": "cases/c01/source/ledger.py",
+          "line_start": 4,
+          "line_end": 7
+        }
+      ],
+      "finding_index": 1
+    },
+    {
+      "probe_id": "p03",
+      "case_id": "c01",
+      "kind": "finding",
+      "question": "Assess finding 2 in report.json on its own merits.",
+      "expected": "supported",
+      "rationale": "Equality enters the paid-shipping branch. This true defect was absent from the earlier reference.",
+      "citations": [
+        {
+          "path": "cases/c01/source/ledger.py",
+          "line_start": 4,
+          "line_end": 7
+        }
+      ],
+      "finding_index": 2
+    },
+    {
+      "probe_id": "p04",
+      "case_id": "c01",
+      "kind": "finding",
+      "question": "Assess finding 3 in report.json.",
+      "expected": "unsupported",
+      "rationale": "Integer sum and comparisons do not convert cents to floating point.",
+      "citations": [
+        {
+          "path": "cases/c01/source/ledger.py",
+          "line_start": 4,
+          "line_end": 7
+        }
+      ],
+      "finding_index": 3
+    },
+    {
+      "probe_id": "p05",
+      "case_id": "c01",
+      "kind": "coverage",
+      "question": "For paid=1000, previous refunds=[800], requested=300, does report.json cover the refund-overpayment defect, miss it, establish it absent, or leave it unresolved?",
+      "expected": "missed",
+      "rationale": "Refund guard ignores previous refunds and permits 1100 total refunded. No reported finding covers it.",
+      "citations": [
+        {
+          "path": "cases/c01/source/ledger.py",
+          "line_start": 10,
+          "line_end": 11
+        }
+      ]
+    },
+    {
+      "probe_id": "p06",
+      "case_id": "c01",
+      "kind": "coverage",
+      "question": "Does report.json cover the claim that three copies of an item are charged as one, miss it, establish it absent, or leave it unresolved?",
+      "expected": "covered",
+      "rationale": "Findings 0 and 1 cover the quantity defect.",
+      "citations": [
+        {
+          "path": "cases/c01/source/ledger.py",
+          "line_start": 4,
+          "line_end": 7
+        }
+      ]
+    },
+    {
+      "probe_id": "p07",
+      "case_id": "c02",
+      "kind": "report",
+      "question": "Classify report.json as valid-report, invalid-report, or unresolved. An empty findings list is allowed for a completed review.",
+      "expected": "valid-report",
+      "rationale": "Completed review has a valid empty list.",
+      "citations": [
+        {
+          "path": "cases/c02/report.json",
+          "line_start": 1,
+          "line_end": 6
+        }
+      ]
+    },
+    {
+      "probe_id": "p08",
+      "case_id": "c02",
+      "kind": "coverage",
+      "question": "For paid=1000, previous refunds=[800], requested=300, does report.json cover the refund-overpayment defect, miss it, establish it absent, or leave it unresolved?",
+      "expected": "absent",
+      "rationale": "Remaining balance is 200; 300 is rejected.",
+      "citations": [
+        {
+          "path": "cases/c02/source/ledger.py",
+          "line_start": 10,
+          "line_end": 12
+        }
+      ]
+    },
+    {
+      "probe_id": "p09",
+      "case_id": "c02",
+      "kind": "coverage",
+      "question": "Does checkout charge shipping at exactly the free-shipping threshold, and does report.json cover this defect, miss it, establish it absent, or leave it unresolved?",
+      "expected": "absent",
+      "rationale": "Equality is excluded from the paid-shipping branch.",
+      "citations": [
+        {
+          "path": "cases/c02/source/ledger.py",
+          "line_start": 4,
+          "line_end": 7
+        }
+      ]
+    },
+    {
+      "probe_id": "p10",
+      "case_id": "c03",
+      "kind": "finding",
+      "question": "Assess finding 0 in report.json.",
+      "expected": "unresolved",
+      "rationale": "The remote client contract is missing; neither durable nor nondurable acknowledgement is established.",
+      "citations": [
+        {
+          "path": "cases/c03/instruction.md",
+          "line_start": 1,
+          "line_end": 1
+        }
+      ],
+      "finding_index": 0
+    },
+    {
+      "probe_id": "p11",
+      "case_id": "c01",
+      "kind": "report",
+      "question": "Classify invalid-report.json as valid-report, invalid-report, or unresolved. A valid report requires a findings list.",
+      "expected": "invalid-report",
+      "rationale": "A string is not a findings list; invalid cannot be relabeled as clean.",
+      "citations": [
+        {
+          "path": "cases/c01/invalid-report.json",
+          "line_start": 1,
+          "line_end": 6
+        }
+      ]
+    },
+    {
+      "probe_id": "p12",
+      "case_id": "c01",
+      "kind": "finding",
+      "question": "Assess finding 0 in paraphrase-report.json independently of report.json.",
+      "finding_index": 0,
+      "expected": "supported",
+      "rationale": "The isolated paraphrase gives another trigger for the same real quantity defect; it is the first finding of its own report.",
+      "citations": [
+        {
+          "path": "cases/c01/source/ledger.py",
+          "line_start": 4,
+          "line_end": 7
+        }
+      ]
+    }
+  ]
+}

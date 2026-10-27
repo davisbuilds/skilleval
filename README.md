@@ -4,10 +4,13 @@ Local-first experiments measuring whether a skill improves an agent's work on
 real tasks. Compare matched skill and vanilla runs, preserve what happened, and
 grade outcomes using executable checks, semantic assessment, and human review.
 
-The foundation currently supports **offline evidence and assessment workflows**.
-It also contains a candidate smolvm adapter and a Codex event parser. It cannot
-yet launch a scored campaign or call an LLM judge. No runtime has been admitted
-for scored use.
+The foundation supports **evidence capture, native Git reconstruction, runtime
+controls, and grader calibration workflows**. A prepared smolvm task image passed
+repository tests and Git fidelity checks. Native Codex completed a bounded real
+model/tool loop through a host-only inference gateway, with filesystem/network
+controls and observed cleanup. An external development judge assessed the authored
+calibration set. Scored admission, broader lifecycle controls, and independent
+grader validation remain pending; no scored campaign has run.
 
 Python owns the core and CLI. A TypeScript review UI and a pi adapter are later
 work. See the [roadmap](docs/project/ROADMAP.md),
@@ -29,8 +32,8 @@ do not install a runtime, launch a VM, read credentials, or call a model.
 
 ## Try the offline workflow
 
-The checked-in example is an intentionally tiny calibration fixture. It is not
-representative task evidence. Run from this repository; output paths must be new.
+The checked-in review example is intentionally tiny. It is not representative
+task evidence. Run from this repository; output paths must be new.
 
 ```sh
 mkdir -p .local/evidence .local/reviews .local/assessments
@@ -101,12 +104,64 @@ All historical imports are exposed development data. The complete original
 document. Treat the whole bundle as private. Keep private data in ignored `.local/`
 or an explicit external directory; no sibling checkout is needed at runtime.
 
+## Calibrate a semantic judge
+
+The separate public [calibration set](docs/system/CALIBRATION.md) contains twelve
+authored positive, negative, duplicate, ambiguous, invalid-report, and defect
+coverage probes. Capture it and export a packet that withholds labels and
+structured history:
+
+```sh
+mkdir -p .local/calibration
+uv run skilleval capture examples/calibration/review-v1 \
+  --output .local/calibration/bundle > .local/calibration/evidence-receipt.json
+uv run skilleval calibration prepare .local/calibration/bundle \
+  --output .local/calibration/packet > .local/calibration/packet-receipt.json
+uv run skilleval schema calibration-result
+uv run skilleval calibration compare .local/calibration/bundle
+```
+
+The last command reports all opportunities as unassessed. It does not invent
+judgments or give missing results a zero score. An explicitly invoked judge gets
+only the packet and its receipt, including the exact packet digest. Once it has
+produced a result conforming to `schema calibration-result`:
+
+```sh
+uv run skilleval calibration record .local/calibration/bundle judge-result.json \
+  --output .local/calibration/results
+uv run skilleval calibration compare .local/calibration/bundle \
+  .local/calibration/results/JUDGE_RESULT_ID.json
+```
+
+Recording validates structure, identity, and citations. Comparison reports each
+run's confusion matrix and explicit missing/invalid/unresolved coverage against
+authored labels. It does not call a model, prove the labels independently correct,
+measure unaided defect discovery, or establish a benefit from skills.
+
+## Prepare a native review workspace
+
+For a historical review capture containing `.openbench-review.json` and a
+`review.patch` with full blob identities, reconstruct a writable source tree:
+
+```sh
+uv run skilleval workspace prepare CAPTURED_REVIEW_BUNDLE \
+  --sha256 RETAINED_MANIFEST_SHA256 --output fresh-review-workspace
+```
+
+This exports source only, preserves file bytes/modes, and reconstructs synthetic
+`base` and `candidate` commits whose diff represents the captured change. It
+retains ordinary repository instructions/tests while excluding grading inputs.
+It does not recover original commit identities or arbitrary Git history. Native
+Git plumbing processes the patch as data; imported programs, hooks, and filters
+are not executed. Unsupported patch/path forms fail closed. The tiny review
+example above has no reconstruction metadata and cannot use this command.
+
 ## Runtime qualification
 
-`qualification plan` binds an imported case, immutable OCI digest, resources, and
-explicit command argv arrays. Planning does not execute anything. Supply a
-prepared image that already contains the task's tools and dependencies, and a
-commands file such as `[["python3", "-m", "pytest"]]`.
+`qualification plan` binds an imported case, pinned image identity, resources,
+and explicit command argv arrays. Planning does not launch a VM or execute task
+code. Supply a prepared image that already contains the task's tools and
+dependencies, and a commands file such as `[["python3", "-m", "pytest"]]`.
 
 ```sh
 uv run skilleval qualification plan BUNDLE \
@@ -116,18 +171,50 @@ uv run skilleval qualification run plan.json --output qualification-result
 ```
 
 The second command explicitly creates a VM and may acquire an image from a public
-registry. The candidate adapter requires smolvm **1.32.3**, permits execution only
-for explicit `docker.io/` image references, supplies isolated runtime directories,
-and requests no guest network, mounts, or secrets. Other digest-pinned registry
-references can be planned but cannot run yet. The restriction avoids the pinned
-CLI's automatic packed-image policy import; it is not evidence of effective
+registry. The candidate adapter requires smolvm **1.32.3**, restricts registry
+execution to explicit `docker.io/` image references, supplies isolated runtime
+directories, and requests no guest network, mounts, or secrets. Other digest-pinned
+registry references can be planned but cannot run yet. The restriction avoids the
+pinned CLI's automatic packed-image policy import; it is not evidence of effective
 isolation. See [runtime boundaries](docs/system/ARCHITECTURE.md#runtime-and-harness).
 
 Only task source enters the guest. Commands run there, with bounded captured logs
 and best-effort stop/delete cleanup. A failure retains diagnostic state and the
-machine name. `offline_passed` means these explicit controls exited successfully;
-every result still has `admitted: false`. Native Git reconstruction, host/network
-boundary controls, provider access, and the real Codex loop remain unqualified.
+machine name. A short, isolated runtime HOME avoids macOS Unix-socket pathname
+limits. `offline_passed` means the explicit controls and cleanup succeeded; every
+result still has `admitted: false`. A prepared image has passed a captured real
+task's repository tests, guest Git history and exact-diff checks, and cleanup.
+The bounded native provider/tool loop also passed; full admission controls remain
+incomplete. The
+[Python image recipe](environments/python-review/README.md) keeps task source and
+credentials outside the build context.
+
+A local Docker-save archive is a separate supported image route. Its full
+SHA-256 is required; planning inspects bounded archive structure without
+extracting or executing layers. `run` copies and rechecks the pinned archive
+before supplying it to smolvm. For supported review metadata, `--reconstruct-git`
+prepares source plus synthetic history and verifies the expected commits, trees,
+clean worktree, and Git objects inside the guest:
+
+```sh
+uv run skilleval qualification plan BUNDLE \
+  --image-archive prepared-image.tar --image-sha256 ARCHIVE_SHA256 \
+  --reconstruct-git --commands controls.json --output local-plan.json
+uv run skilleval qualification run local-plan.json --output local-qualification
+```
+
+These options are implemented; a prepared image and its native task/model route
+still require live qualification. A structurally accepted archive is not an
+attestation of safe image contents or effective runtime isolation.
+
+The [native gateway](docs/system/GATEWAY.md) is an explicit Python interface for a
+bounded host broker and credential-free guest relay. It selects an existing
+ChatGPT login on the host; the guest receives only a mounted inference socket.
+Its pinned model/profile, request limits, and cleanup have deterministic controls.
+An explicit native control has exercised the authenticated tool loop, filesystem
+and network denials, and observed cleanup. Scored admission and broader lifecycle
+controls remain pending. The opt-in script and credential boundary are documented
+in the gateway reference; ordinary checks never start it or read credentials.
 
 ## CLI contract
 
@@ -164,5 +251,10 @@ execution, and semantic-versus-structural design precedents.
 The [source register](docs/project/SOURCES.md) links all of these, plus the runtime
 and harness references, and records what we may adopt and what remains unverified.
 These are influences and candidates, not endorsements or a list of dependencies.
-No implementation from those projects is vendored in this foundation. Preserve
-upstream licenses and notices when a future change actually incorporates code.
+The bounded gateway is adapted from a pinned public OpenBench revision,
+with its MIT notice retained in
+[`src/skilleval/_vendor/OPENBENCH_LICENSE`](src/skilleval/_vendor/OPENBENCH_LICENSE).
+The [gateway reference](docs/system/GATEWAY.md#provenance-and-maintenance) records
+the original source/hash, local compatibility patch, tests, and wrapper boundary. Other listed
+projects remain design influences or candidates unless the source register says
+otherwise.

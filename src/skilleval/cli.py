@@ -12,6 +12,7 @@ from typing import Any
 from pydantic import ValidationError
 
 from skilleval import __version__
+from skilleval.calibration import CalibrationResult
 from skilleval.contracts import Assessment, Attempt, Experiment, Record, Task
 from skilleval.errors import SkillEvalError
 
@@ -20,6 +21,7 @@ RECORDS: dict[str, type[Record]] = {
     "experiment": Experiment,
     "attempt": Attempt,
     "assessment": Assessment,
+    "calibration-result": CalibrationResult,
 }
 
 
@@ -53,11 +55,41 @@ def parser() -> argparse.ArgumentParser:
     record.add_argument("bundle", type=Path)
     record.add_argument("assessment", type=Path)
     record.add_argument("--output", type=Path, required=True)
+    calibration = commands.add_parser(
+        "calibration", help="Prepare semantic controls or compare explicit judge results"
+    )
+    calibration_commands = calibration.add_subparsers(dest="operation", required=True)
+    calibration_prepare = calibration_commands.add_parser("prepare")
+    calibration_prepare.add_argument("bundle", type=Path)
+    calibration_prepare.add_argument("--output", type=Path, required=True)
+    calibration_record = calibration_commands.add_parser("record")
+    calibration_record.add_argument("bundle", type=Path)
+    calibration_record.add_argument("result", type=Path)
+    calibration_record.add_argument("--output", type=Path, required=True)
+    calibration_compare = calibration_commands.add_parser("compare")
+    calibration_compare.add_argument("bundle", type=Path)
+    calibration_compare.add_argument("results", type=Path, nargs="*", help="Explicit result files")
+    workspace = commands.add_parser(
+        "workspace", help="Reconstruct source-only native review history"
+    )
+    workspace_commands = workspace.add_subparsers(dest="operation", required=True)
+    workspace_prepare = workspace_commands.add_parser("prepare")
+    workspace_prepare.add_argument("bundle", type=Path)
+    workspace_prepare.add_argument(
+        "--sha256", required=True, help="Expected manifest identity retained separately"
+    )
+    workspace_prepare.add_argument("--output", type=Path, required=True)
     qualification = commands.add_parser("qualification", help="Plan or run offline VM controls")
     qualification_commands = qualification.add_subparsers(dest="operation", required=True)
     plan = qualification_commands.add_parser("plan")
     plan.add_argument("bundle", type=Path)
-    plan.add_argument("--image", required=True, help="OCI reference pinned with @sha256:")
+    images = plan.add_mutually_exclusive_group(required=True)
+    images.add_argument("--image", help="OCI reference pinned with @sha256:")
+    images.add_argument("--image-archive", type=Path, help="Local Docker-save archive")
+    plan.add_argument("--image-sha256", help="Required digest for a local image archive")
+    plan.add_argument(
+        "--reconstruct-git", action="store_true", help="Rebuild captured review history"
+    )
     plan.add_argument("--commands", type=Path, required=True, help="JSON array of argv arrays")
     plan.add_argument("--output", type=Path, required=True)
     plan.add_argument("--cpus", type=int, default=2)
@@ -148,6 +180,22 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
                 args.bundle, args.output, include_reference=args.include_reference
             )
         return record_assessment(args.bundle, args.assessment, args.output)
+    if args.command == "calibration":
+        from skilleval.calibration import (
+            compare_calibration,
+            prepare_calibration,
+            record_calibration,
+        )
+
+        if args.operation == "prepare":
+            return prepare_calibration(args.bundle, args.output)
+        if args.operation == "record":
+            return record_calibration(args.bundle, args.result, args.output)
+        return compare_calibration(args.bundle, args.results)
+    if args.command == "workspace":
+        from skilleval.workspace import prepare_review as prepare_workspace
+
+        return prepare_workspace(args.bundle, args.sha256, args.output)
     if args.command == "qualification":
         from skilleval.qualification import plan_qualification, run_offline_qualification
 
@@ -159,7 +207,14 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
             ):
                 raise SkillEvalError("commands must be a nonempty JSON array of argv arrays")
             plan = plan_qualification(
-                args.bundle, args.image, controls, cpus=args.cpus, memory_mib=args.memory_mib
+                args.bundle,
+                args.image,
+                controls,
+                cpus=args.cpus,
+                memory_mib=args.memory_mib,
+                image_archive=args.image_archive,
+                image_sha256=args.image_sha256,
+                reconstruct_git=args.reconstruct_git,
             )
             write_new_json(args.output, plan)
             return {"status": "planned", "path": str(args.output), "plan": plan}

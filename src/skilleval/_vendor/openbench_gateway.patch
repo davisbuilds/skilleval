@@ -1,0 +1,17 @@
+--- a/openbench_gateway.py
++++ b/openbench_gateway.py
+@@ -275,7 +275,13 @@
+             if not raw.startswith(prefixes[prefix]):
+                 raise ValueError('image signature differs from declared type')
+             continue
+-        _keys(item, {"type", "text"}, {"type", "text"})
++        if isinstance(item, dict) and item.get("type") == "output_text":
++            _keys(item, {"type", "text", "annotations", "logprobs"}, {"type", "text"})
++            for metadata in ("annotations", "logprobs"):
++                if metadata in item and item[metadata] != []:
++                    raise ValueError("nonempty output text metadata is forbidden")
++        else:
++            _keys(item, {"type", "text"}, {"type", "text"})
+         if item["type"] not in {"input_text", "output_text"}:
+             raise ValueError("only text content is permitted")
+         _string(item["text"])

@@ -14,25 +14,32 @@ shipped history. Private provenance stays outside public entries and issues.
 
 ## Open
 
-- **Live environment qualification:** build a pinned dependency-complete image;
-  exercise actual smolvm lifecycle and host/network controls; compare Colima only
-  if needed. Current process fixtures do not test effective isolation.
-- **Git fidelity:** reconstruct captured base/candidate history and verify the
-  review diff with native Git. An imported source folder and `git --version` do
-  not establish this.
-- **Runtime recovery:** operator recovery from failed stop/delete or interrupted
-  cleanup; retain machine/state identity. No automatic resume or admission.
+- **Admission authority:** turn the observed task/Git, native protocol, and
+  boundary controls into an explicit admission decision bound to exact evidence,
+  image/archive, runtime, catalog, configuration, and harness identities. Enforce
+  it before scored dispatch; successful control receipts do not grant admission.
+- **Adversarial lifecycle controls:** qualify timeout and descendant/background
+  termination, stale workspace/session reuse, and failed stop/delete recovery.
+  Preserve known-present inventory checks and observe cleanup through the same
+  runtime state. Successful ordinary cleanup does not cover interrupted cleanup.
+- **Native workload compatibility:** extend the successful bounded provider/tool
+  control to longer real reviews and grader tasks, including reasoning/history
+  forms not exercised by the small control. Preserve strict capability checks,
+  actual version/catalog identity, failures, and native event/exit evidence.
+- **Skill packaging and observation:** preserve ordinary task instructions while
+  varying only skill availability, bind skill bytes, and observe actual discovery
+  and consultation. Reconcile native events with process outcomes and documented
+  usage semantics before matched trials.
 - **OCI portability:** attest media types/effective image policy before permitting
   registries other than explicit Docker Hub references in the pinned adapter.
-- **Native Codex execution:** credential route, tool-loop capture, treatment
-  packaging, contamination controls, event/exit reconciliation, version receipts.
-  Current code parses captured JSONL only.
-- **Grader calibration:** independent labels and executable reproductions;
-  semantic judge calls, configuration identity, prompt-injection controls,
-  disagreement routing, and human audit. Stored citations alone establish no truth.
-- **Coverage judgments:** represent missed known defects and novel defect families,
-  not only per-reported-finding verdicts. Define duplicates and severity weighting
-  before aggregate scores.
+- **Native judge and label audit:** run calibration through the declared native
+  route and independently audit authored labels and disagreements. One external
+  development judge's agreement does not establish general reliability. Check
+  injection, anchoring, position effects, treatment leakage, and repeat consistency.
+- **General review coverage:** extend targeted known-defect probes to an auditable
+  missed/novel-defect family contract for real reports. Explicit coverage hypotheses
+  do not measure unaided discovery or exhaustive recall. Define duplicate handling
+  and severity policy before aggregate scores.
 - **Assessment selection:** choose one declared assessment policy per analysis;
   explicitly handle branching revisions and disagreement. Storage preserves all
   records and does not select a winner.

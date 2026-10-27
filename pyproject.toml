@@ -22,6 +22,7 @@ exclude-newer = "7 days"
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+extend-exclude = ["src/skilleval/_vendor/openbench_gateway.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "W", "C4", "SIM", "ERA", "RUF", "PIE", "N"]
@@ -33,3 +34,8 @@ testpaths = ["tests"]
 python_version = "3.12"
 strict = true
 files = ["src/skilleval"]
+
+[[tool.mypy.overrides]]
+module = "skilleval._vendor.openbench_gateway"
+follow_imports = "skip"
+ignore_errors = true

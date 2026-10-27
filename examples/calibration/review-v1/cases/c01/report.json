@@ -1,0 +1,26 @@
+{
+  "report_id": "r01",
+  "outcome": "valid-report",
+  "run_completed": true,
+  "findings": [
+    {
+      "title": "Quantity lost",
+      "body": "checkout([(1200, 3)], 0) returns 1200, but the contract requires 3600."
+    },
+    {
+      "title": "Cart prices collapse",
+      "body": "Three copies of a 1200-cent item are charged as one; the subtotal adds only unit prices."
+    },
+    {
+      "title": "Threshold equality charges delivery",
+      "body": "checkout([(5000, 1)], 600) charges 600 shipping at the free-shipping threshold."
+    },
+    {
+      "title": "Arithmetic creates floating point cents",
+      "body": "The sum expression converts validated integer cents to floats and loses precision."
+    }
+  ],
+  "known_reference": "Only quantity multiplication was in an earlier reference.",
+  "arm": "WITHHELD-ARM-MARKER",
+  "historical_score": "WITHHELD-HISTORY-MARKER"
+}

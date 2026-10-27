@@ -14,45 +14,68 @@ Public GitHub hosting is the intended destination. The
 | Phase | Deliverable | Exit evidence | Current state |
 | --- | --- | --- | --- |
 | 0 — Foundation | Python package, provisional records, copied evidence, CLI, project boundaries | Offline workflow passes; a historical case can be imported without changing its source | Implemented |
-| 1A — Environment | Prepared OCI task image, fresh VM lifecycle, Codex adapter, explicit admission | Live controls on the exact host/runtime/image/tool route prove fidelity, isolation, bounded failure, cleanup, and a native model/tool loop | Candidate offline adapter only; no admission |
-| 1B — Grader | Evidence packets, executable outcomes, semantic rubric, revision history, calibration | Frozen positive/negative/ambiguous examples distinguish accurate findings from plausible mistakes; human audit measures judge errors | Packet and assessment storage implemented; calibration pending |
+| 1A — Environment | Prepared task image, fresh VM lifecycle, Codex adapter, explicit admission | Live controls on the exact host/runtime/image/tool route prove fidelity, isolation, bounded failure, cleanup, and a native model/tool loop | Prepared task/Git controls and authenticated native tool loop passed; adversarial lifecycle and explicit admission remain |
+| 1B — Grader | Evidence packets, executable outcomes, semantic rubric, revision history, calibration | Frozen positive/negative/ambiguous examples distinguish accurate findings from plausible mistakes; human audit measures judge errors | Authored controls and one development LLM judgment run completed; independent label audit and judge reliability checks pending |
 | 2 — First paired pilot | One real task in vanilla and skill configurations, separate assessment and report | Reproducible paired artifacts; treatment fidelity and invalid attempts visible; qualified environment and grader | Pending 1A and 1B |
 | 3 — Representative study | Declared task population, protected holdouts, repeated matched trials, uncertainty analysis | Enough independent task evidence for the prespecified decision; cost and failure effects reported | Pending pilot |
 | 4 — Expand usefully | Repair/implementation coverage, pi adapter, TypeScript review UI | Each addition meets the same contracts and addresses a demonstrated workflow need | Deferred |
 
-## Immediate slice
+## Current environment and grader slice
 
-Implemented: package and local checks; schema/validation commands; copied evidence
-with digest receipts and strict inventories; one-case historical review import;
-review packet and append-only assessment commands; a Codex JSONL parser; and a
-version-pinned candidate offline smolvm adapter. A private historical case was
-imported and prepared locally as development evidence. Private data is not part of
-this repository.
+Evidence capture, historical imports, review packets, append-only assessments,
+Codex event parsing, and candidate offline smolvm controls are implemented.
+Source-only workspace export now reconstructs synthetic base/candidate Git
+history from captured full-identity text patches. It has reproduced a real
+captured review diff offline without executing imported code on the host.
 
-Runtime tests exercise real subprocess fixtures, not real VMs. Grader tests
-exercise structural contracts, not semantic judge accuracy. No model was invoked
-and no scored campaign was run in this slice.
+Live smolvm execution passed the captured real task's repository tests using a
+hash-bound image built from its locked dependencies. Native guest Git confirmed
+the reconstructed commits, clean source tree, object integrity, and byte-identical
+review diff; stop/delete cleanup completed. The adapter uses a short isolated
+runtime HOME for macOS Unix sockets. The OpenBench-derived gateway and host-only
+authentication wrapper have deterministic controls. Both synthetic and real
+provider controls passed with native Codex code mode, host-file/network denial
+controls, and same-state inventory verification of cleanup. The authenticated
+control completed two real provider requests. A narrow gateway adaptation accepts
+empty assistant replay metadata; failed diagnostic attempts are retained.
+No runtime is admitted for scored campaigns.
+Detailed private task provenance and run logs remain outside tracked source.
+
+The public authored calibration set covers paraphrases, novel true findings,
+duplicates, false positives, missed/represented/absent defects, invalid and clean
+reports, and insufficient evidence. Its packet, result, and comparison workflow
+preserves missing and unresolved coverage. Structural checks and authored-label
+controls do not establish semantic judge accuracy. On 2026-10-27, a separate
+GPT-6.1 Sol/high collaboration agent assessed the label-free packet: all twelve
+judgments agreed with authored labels, including one unresolved judgment. This
+was one development run outside the guest runtime, with no independent human
+audit. It exposed a citation-contract mismatch that was corrected without
+editing the model result or packet. No scored campaign has run.
 
 ## Next: qualify the environment and grader
 
-For 1A, build a reproducible image with preinstalled task dependencies. Preserve
-real Git base/candidate history, ownership, modes, tool versions, and working
-directory semantics. Qualify smolvm on the intended host; retain Colima as an
-alternative if the actual route cannot satisfy the contract. A stopped VM or a
-generated deny setting is insufficient: use known-positive controls for host
-filesystem reachability, allowed and denied network destinations, credential
-delivery, stale workspace reuse, termination, and cleanup. Bind the receipt to
-image, adapter, runtime, harness, and relevant configuration identities; changed
-inputs invalidate admission. Keep provider access separate from task egress.
+For 1A, finish adversarial lifecycle controls and the explicit admission authority
+on the prepared image, then exercise the longer real-task route. The adapter
+accepts pinned local Docker-save archives and verifies reconstructed guest Git
+identity; live task, Git, and bounded provider controls passed. CLI help owns
+available options. Preserve the captured source and meaningful
+review diff, and check the task's supported platform. Retain Colima as an
+alternative if the selected execution route cannot satisfy the contract.
 
-For 1B, use historical review material to build calibration cases that include
-paraphrased correct findings, novel correct findings, duplicates, false positives,
-missed known defects, invalid reports, and uncertainty. Ground labels with
-reproductions or source evidence and independently audit a sample. Add an actual
-LLM judge only after its input, output, model configuration, and privacy route are
-defined. Preserve disagreements and assess positional bias, treatment leakage,
-reference anchoring, and repeated-judge consistency. Executable outcome evidence
-should complement judgment rather than be collapsed into a single opaque score.
+Use known-positive controls for host filesystem reachability, allowed and denied
+network destinations, credential delivery, stale workspace reuse, termination,
+and cleanup. Bind admission evidence to image, archive when applicable, adapter,
+runtime, harness, catalog, and relevant configuration identities; changed inputs
+invalidate admission. Keep provider access separate from task egress. A stopped
+VM or generated deny setting is insufficient.
+
+For 1B, execute the declared native judge route against the frozen authored set
+and retain actual instructions, packet digest, model/effort, and results.
+Independently audit labels and disagreements. Assess positional bias, treatment
+leakage, reference anchoring, prompt injection, and repeated-judge consistency.
+Targeted coverage probes supply known hypotheses; add evidence for unaided review
+coverage before claiming exhaustive recall. Executable outcomes complement
+judgment rather than collapse into an opaque score.
 
 These tracks can progress independently. The first paired pilot starts only when
 both meet their acceptance criteria. Its purpose is to validate the whole route

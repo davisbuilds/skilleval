@@ -1,0 +1,1 @@
+Review correctness against this contract. Cart totals multiply each unit price by its quantity. Shipping is free when merchandise subtotal reaches or exceeds the threshold. All inputs have been validated as nonnegative integer cents/quantities. A refund may be positive only up to paid cents minus all previous refunds. Do not execute code.
