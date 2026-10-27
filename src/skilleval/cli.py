@@ -98,6 +98,28 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument("plan", type=Path)
     run.add_argument("--output", type=Path, required=True)
     run.add_argument("--runtime", default="smolvm", help="Explicit trusted smolvm executable")
+    run.add_argument(
+        "--capture-identity",
+        action="store_true",
+        help="Bind complete local runtime and recovery evidence for admission",
+    )
+    recovery = qualification_commands.add_parser("recover", help="Recover one retained VM ticket")
+    recovery.add_argument("directory", type=Path, help="Original qualification output directory")
+    admission = commands.add_parser("admission", help="Seal or check bounded environment evidence")
+    admission_commands = admission.add_subparsers(dest="operation", required=True)
+    seal = admission_commands.add_parser("seal")
+    seal.add_argument("--plan", type=Path, required=True)
+    seal.add_argument("--offline", type=Path, required=True, help="Offline task report")
+    seal.add_argument("--native", type=Path, required=True, help="Authenticated native report")
+    seal.add_argument("--lifecycle", type=Path, required=True, help="Adversarial lifecycle report")
+    seal.add_argument("--catalog", type=Path, required=True)
+    seal.add_argument("--runtime", required=True)
+    seal.add_argument("--output", type=Path, required=True)
+    admission_check = admission_commands.add_parser("check")
+    admission_check.add_argument("snapshot", type=Path)
+    admission_check.add_argument(
+        "--sha256", required=True, help="Previously retained snapshot digest"
+    )
     return root
 
 
@@ -199,6 +221,15 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
     if args.command == "qualification":
         from skilleval.qualification import plan_qualification, run_offline_qualification
 
+        if args.operation == "recover":
+            from skilleval.lifecycle import recover
+
+            ticket = recover(args.directory)
+            return {
+                "status": "recovered" if ticket["cleanup_complete"] else "partial",
+                "admitted": False,
+                "ticket": ticket,
+            }
         if args.operation == "plan":
             controls = read_json(args.commands)
             if not isinstance(controls, list) or not all(
@@ -221,7 +252,23 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
         value = read_json(args.plan)
         if not isinstance(value, dict):
             raise SkillEvalError("qualification plan must be a JSON object")
-        return run_offline_qualification(value, args.output, runtime_binary=args.runtime)
+        return run_offline_qualification(
+            value, args.output, runtime_binary=args.runtime, capture_identity=args.capture_identity
+        )
+    if args.command == "admission":
+        from skilleval.admission import check_admission, seal_admission
+
+        if args.operation == "check":
+            return check_admission(args.snapshot, args.sha256)
+        return seal_admission(
+            args.plan,
+            args.offline,
+            args.native,
+            args.lifecycle,
+            args.catalog,
+            args.runtime,
+            args.output,
+        )
     raise SkillEvalError("unknown command")
 
 

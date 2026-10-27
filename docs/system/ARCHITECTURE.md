@@ -24,8 +24,9 @@ flowchart LR
 This diagram is the target scored flow. Prepared-image task/Git controls,
 synthetic and authenticated native tool controls, packets, assessments, and
 authored-label comparisons execute today. An externally invoked development
-judge has assessed the authored controls. Admission and independent judge
-calibration remain incomplete; paired scored analysis is not implemented.
+judge has assessed the authored controls. Bounded environment admission is
+implemented; independent judge calibration and paired scored dispatch/analysis
+remain incomplete.
 
 ## Records
 
@@ -104,8 +105,9 @@ pack resolver skips Docker Hub, while other registry references can automaticall
 import packed-machine policy, including network settings. Ordinary OCI pulls may
 contact a public registry from the host; that is distinct from guest network
 policy. The offline adapter requests no guest network, mounts, or secrets. The separate
-native control mounts only the declared inference socket. Admission still needs
-evidence for the exact selected route and adversarial lifecycle controls.
+native control mounts only the declared inference socket. The separate
+[environment admission workflow](ENVIRONMENT.md) requires evidence for the exact
+selected route, including adversarial lifecycle controls.
 
 The adapter follows the pinned upstream
 [machine CLI](https://github.com/smol-machines/smolvm/blob/v1.32.3/src/cli/machine.rs),
@@ -169,9 +171,14 @@ provider control. The complete authenticated native tool loop passed with two
 real provider requests, command/file effects, host/network controls, and observed
 cleanup. The host validator has one recorded compatibility patch for empty
 assistant-text replay metadata; native request bytes remain unchanged. Neither
-mode grants scored admission. Timeout, descendant/background termination, reuse, recovery, and the
-admission decision still require their declared controls. Exact invocation and
-cleanup receipts remain with the private run evidence rather than this reference.
+mode grants scored admission. The lifecycle probe exercises timeouts, detached
+guest work, fresh native workspace/session paths, and recovery after SIGTERM or
+SIGKILL of a controller. Identity-capturing offline and native routes share its
+durable recovery implementation. Admission validates the required receipts and
+retained artifacts, then binds them to an explicit snapshot checked with an
+externally retained digest. Changes invalidate that admission. Exact invocation
+and cleanup receipts remain with private evidence; [ENVIRONMENT.md](ENVIRONMENT.md)
+owns the recovery procedure and limits.
 
 ## Assessment
 

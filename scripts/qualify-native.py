@@ -38,6 +38,8 @@ from skilleval.gateway import (
     load_chatgpt_auth,
 )
 from skilleval.harnesses.codex import codex_version_identity, parse_codex_jsonl
+from skilleval.identity import snapshot_identity
+from skilleval.lifecycle import Lifecycle, LifecycleInterruptedError, interrupt_scope
 from skilleval.qualification import _image_archive, _invoke
 
 CATALOG_SHA256 = "943ca7fe1d19ed019054158303f0dbbd80b3bef43b3aa425a71aa7cb3fb52c2b"
@@ -519,6 +521,7 @@ def machine_names(raw: str) -> set[str]:
         raise ProbeError("machine observer returned an invalid JSON inventory") from None
 
 
+@interrupt_scope()
 def run(
     runtime: Path,
     image: Path,
@@ -532,6 +535,7 @@ def run(
     if digest(catalog) != CATALOG_SHA256:
         raise SkillEvalError("catalog differs from pinned Codex 0.164.0 source")
     image_identity = _image_archive(image, image_sha256)
+    run_identity = snapshot_identity(str(runtime))
     output.mkdir(mode=0o700, parents=True, exist_ok=False)
     state = output / "runtime-state"
     state.mkdir(mode=0o700)
@@ -556,6 +560,7 @@ def run(
     machine = "skilleval-native-" + uuid.uuid4().hex
     report: dict[str, Any] = {
         "schema_version": 1,
+        "identity": run_identity,
         "status": "partial",
         "admitted": False,
         "scope": "authenticated native provider/tool control"
@@ -584,6 +589,7 @@ def run(
         "inference_rejections": [],
     }
     created = False
+    session = None
     broker = None
     listener = socket.socket()
     accepted: list[bool] = []
@@ -727,6 +733,25 @@ def run(
             ),
             test_transport=None if authenticated else transport,
         ) as broker:
+            session = Lifecycle.register(
+                output,
+                state,
+                runtime_home,
+                env,
+                machine,
+                runtime,
+                image_identity,
+                {
+                    "cpus": 2,
+                    "memory_mib": 2048,
+                    "guest_network": False,
+                    "host_mounts": [],
+                    "secrets": [],
+                    "socket_mounts": [{"host": str(broker.socket_path), "guest": GUEST_SOCKET}],
+                },
+                identity=run_identity,
+            )
+            session.mark_create_attempted()
             created = True
             step(
                 "create",
@@ -756,6 +781,7 @@ def run(
             )
             if not report["machine_observer_positive"]:
                 raise ProbeError("machine inventory did not detect the known-present machine")
+            session.observe("machine_observer_positive")
             guest("codex_version", ["codex", "--version"])
             identity = codex_version_identity(report["steps"][-1]["stdout"])
             report["codex_identity"] = identity
@@ -793,6 +819,18 @@ def run(
                 ).encode(),
             }
             archive = state / "tooling.tar"
+            report["tooling_sha256"] = {
+                name: hashlib.sha256(content).hexdigest() for name, content in entries.items()
+            }
+            report["mode"] = mode
+            report["vm_config"] = session.ticket["config"]
+            report["broker_limits"] = {
+                "max_requests": mode["max_requests"],
+                "max_body_bytes": 4194304,
+                "timeout_seconds": mode["request_timeout_seconds"],
+                "max_concurrency": 1,
+                "lifetime_seconds": mode["lifetime_seconds"],
+            }
             with tarfile.open(archive, "w") as target:
                 for filename, content in entries.items():
                     info = tarfile.TarInfo(filename)
@@ -858,7 +896,7 @@ def run(
         report["status"] = (
             "authenticated_native_passed" if authenticated else "synthetic_native_passed"
         )
-    except (ProbeError, SkillEvalError, OSError) as error:
+    except (ProbeError, SkillEvalError, LifecycleInterruptedError, OSError) as error:
         report["error"] = (
             str(error)
             if isinstance(error, (ProbeError, SkillEvalError))
@@ -877,7 +915,16 @@ def run(
         listener.close()
         listener_thread.join(2)
         report["host_listener_stopped"] = not listener_thread.is_alive()
-        if created:
+        if session is not None:
+            ticket = session.cleanup()
+            for key in ("cleanup", "cleanup_complete", "runtime_home_removed", "identity_changed"):
+                report[key] = ticket.get(key)
+            report["machine_observer_positive"] = ticket["observer_positive"]
+            report["machine_observed_absent"] = ticket.get("observed_absent", False)
+            report["artifacts"] = {"recovery.json": digest(output / "recovery.json")}
+            if (state / "tooling.tar").exists():
+                report["artifacts"]["runtime-state/tooling.tar"] = digest(state / "tooling.tar")
+        elif created:
             for action in ("stop", "delete"):
                 arguments = [str(runtime), "machine", action, "--name", machine]
                 if action == "delete":
@@ -895,21 +942,22 @@ def run(
                 )
             except ProbeError:
                 report["machine_observed_absent"] = False
-        report["cleanup_complete"] = bool(report["cleanup"]) and all(
-            row["returncode"] == 0 and not row["timed_out"] for row in report["cleanup"]
-        )
+        if session is None:
+            report["cleanup_complete"] = bool(report["cleanup"]) and all(
+                row["returncode"] == 0 and not row["timed_out"] for row in report["cleanup"]
+            )
         if created:
             report["cleanup_complete"] = (
                 report["cleanup_complete"]
                 and report.get("machine_observer_positive") is True
                 and report.get("machine_observed_absent") is True
             )
-        if not created or report["cleanup_complete"]:
+        if session is None and (not created or report["cleanup_complete"]):
             shutil.rmtree(runtime_home)
             report["runtime_home_removed"] = True
-        elif created:
+        elif created and not report["cleanup_complete"]:
             report["status"] = "partial"
-        if not report["host_listener_stopped"]:
+        if not report["host_listener_stopped"] or report.get("identity_changed"):
             report["status"] = "partial"
         (output / "report.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
     return report

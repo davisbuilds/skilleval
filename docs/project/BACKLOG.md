@@ -14,18 +14,21 @@ shipped history. Private provenance stays outside public entries and issues.
 
 ## Open
 
-- **Admission authority:** turn the observed task/Git, native protocol, and
-  boundary controls into an explicit admission decision bound to exact evidence,
-  image/archive, runtime, catalog, configuration, and harness identities. Enforce
-  it before scored dispatch; successful control receipts do not grant admission.
-- **Adversarial lifecycle controls:** qualify timeout and descendant/background
-  termination, stale workspace/session reuse, and failed stop/delete recovery.
-  Preserve known-present inventory checks and observe cleanup through the same
-  runtime state. Successful ordinary cleanup does not cover interrupted cleanup.
+- **Recovery supervision:** the controller-interruption controls establish
+  explicit same-state recovery, not automatic recovery after host loss. Add
+  controller ownership/concurrency protection and supervision when study
+  orchestration needs them. Real runtime stop/delete failures and host reboot
+  remain outside the live controls; local fault-injection tests cover the
+  refusal/retry contract.
 - **Native workload compatibility:** extend the successful bounded provider/tool
   control to longer real reviews and grader tasks, including reasoning/history
   forms not exercised by the small control. Preserve strict capability checks,
   actual version/catalog identity, failures, and native event/exit evidence.
+- **Qualification packaging:** the opt-in controls and admission currently
+  require the source checkout. Move shared invocation policies into stable
+  package interfaces when adding the longer runner, preserving independent
+  outcome checks and producer/admission agreement tests. Installed-wheel
+  qualification is not yet a supported route.
 - **Skill packaging and observation:** preserve ordinary task instructions while
   varying only skill availability, bind skill bytes, and observe actual discovery
   and consultation. Reconcile native events with process outcomes and documented
@@ -43,8 +46,11 @@ shipped history. Private provenance stays outside public entries and issues.
 - **Assessment selection:** choose one declared assessment policy per analysis;
   explicitly handle branching revisions and disagreement. Storage preserves all
   records and does not select a winner.
-- **Study orchestration:** immutable expanded run matrix, admission checks,
-  interleaving, budget/timeout enforcement, retries as new attempts, paired report.
+- **Study orchestration:** immutable expanded run matrix, checked environment
+  admission at the actual dispatch boundary, interleaving, budget/timeout
+  enforcement, retries as new attempts, and paired report. The current seal
+  covers bounded controls; longer review budgets and skill packaging need fresh
+  controls before that scope expands.
 - **General task packages:** native inputs beyond the historical review exporter;
   protected holdouts, exposure tracking, and public/private packaging boundaries.
 - **Analysis:** prespecified estimands, clustered uncertainty, missing-data policy,

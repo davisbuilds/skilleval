@@ -14,7 +14,7 @@ Public GitHub hosting is the intended destination. The
 | Phase | Deliverable | Exit evidence | Current state |
 | --- | --- | --- | --- |
 | 0 — Foundation | Python package, provisional records, copied evidence, CLI, project boundaries | Offline workflow passes; a historical case can be imported without changing its source | Implemented |
-| 1A — Environment | Prepared task image, fresh VM lifecycle, Codex adapter, explicit admission | Live controls on the exact host/runtime/image/tool route prove fidelity, isolation, bounded failure, cleanup, and a native model/tool loop | Prepared task/Git controls and authenticated native tool loop passed; adversarial lifecycle and explicit admission remain |
+| 1A — Environment | Prepared task image, fresh VM lifecycle, Codex adapter, explicit admission | Live controls on the exact host/runtime/image/tool route prove fidelity, isolation, bounded failure, cleanup, and a native model/tool loop | Bounded environment controls and admission implemented; longer native review route and scored dispatch integration pending |
 | 1B — Grader | Evidence packets, executable outcomes, semantic rubric, revision history, calibration | Frozen positive/negative/ambiguous examples distinguish accurate findings from plausible mistakes; human audit measures judge errors | Authored controls and one development LLM judgment run completed; independent label audit and judge reliability checks pending |
 | 2 — First paired pilot | One real task in vanilla and skill configurations, separate assessment and report | Reproducible paired artifacts; treatment fidelity and invalid attempts visible; qualified environment and grader | Pending 1A and 1B |
 | 3 — Representative study | Declared task population, protected holdouts, repeated matched trials, uncertainty analysis | Enough independent task evidence for the prespecified decision; cost and failure effects reported | Pending pilot |
@@ -41,6 +41,18 @@ empty assistant replay metadata; failed diagnostic attempts are retained.
 No runtime is admitted for scored campaigns.
 Detailed private task provenance and run logs remain outside tracked source.
 
+The lifecycle slice added durable recovery tickets shared by the task and native
+controllers, full runtime/source/configuration fingerprints, and explicit
+environment admission. Fresh live controls passed on 2026-10-27: task tests and
+Git fidelity, synthetic and authenticated native loops, execution timeout,
+fresh native workspace/session state, and SIGTERM/SIGKILL controller recovery.
+The guest timeout stopped the detached heartbeat in this control; killing the
+host controller left guest work alive until explicit VM recovery. Same-state
+inventory and a live host observer confirmed cleanup, and repeated recovery
+succeeded. Fault-injected local tests additionally cover failed stop/delete and
+interrupted temporary-directory removal. These are bounded control results, not
+general crash-safety, longer-workload compatibility, or skill-effectiveness claims.
+
 The public authored calibration set covers paraphrases, novel true findings,
 duplicates, false positives, missed/represented/absent defects, invalid and clean
 reports, and insufficient evidence. Its packet, result, and comparison workflow
@@ -54,20 +66,20 @@ editing the model result or packet. No scored campaign has run.
 
 ## Next: qualify the environment and grader
 
-For 1A, finish adversarial lifecycle controls and the explicit admission authority
-on the prepared image, then exercise the longer real-task route. The adapter
+For 1A, exercise the longer real-task route and consume checked environment
+admission at the eventual scored-dispatch boundary. The adapter
 accepts pinned local Docker-save archives and verifies reconstructed guest Git
 identity; live task, Git, and bounded provider controls passed. CLI help owns
 available options. Preserve the captured source and meaningful
 review diff, and check the task's supported platform. Retain Colima as an
 alternative if the selected execution route cannot satisfy the contract.
 
-Use known-positive controls for host filesystem reachability, allowed and denied
-network destinations, credential delivery, stale workspace reuse, termination,
-and cleanup. Bind admission evidence to image, archive when applicable, adapter,
-runtime, harness, catalog, and relevant configuration identities; changed inputs
-invalidate admission. Keep provider access separate from task egress. A stopped
-VM or generated deny setting is insufficient.
+The implemented admission seal requires known-positive filesystem/network,
+native tool, fresh-state, termination, and cleanup controls. It binds the task,
+image, runtime distribution, host, harness, catalog, gateway, configuration, and
+control-source identities; changed inputs invalidate admission. Extend those
+controls when the workload or authority changes. Keep provider access separate
+from task egress. A stopped VM or generated deny setting is insufficient.
 
 For 1B, execute the declared native judge route against the frozen authored set
 and retain actual instructions, packet digest, model/effort, and results.

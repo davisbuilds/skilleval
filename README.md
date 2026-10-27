@@ -9,8 +9,9 @@ controls, and grader calibration workflows**. A prepared smolvm task image passe
 repository tests and Git fidelity checks. Native Codex completed a bounded real
 model/tool loop through a host-only inference gateway, with filesystem/network
 controls and observed cleanup. An external development judge assessed the authored
-calibration set. Scored admission, broader lifecycle controls, and independent
-grader validation remain pending; no scored campaign has run.
+calibration set. Environment admission now binds task, native, and lifecycle
+controls to exact local identities. Scored dispatch, longer native workloads,
+and independent grader validation remain pending; no scored campaign has run.
 
 Python owns the core and CLI. A TypeScript review UI and a pi adapter are later
 work. See the [roadmap](docs/project/ROADMAP.md),
@@ -179,13 +180,13 @@ pinned CLI's automatic packed-image policy import; it is not evidence of effecti
 isolation. See [runtime boundaries](docs/system/ARCHITECTURE.md#runtime-and-harness).
 
 Only task source enters the guest. Commands run there, with bounded captured logs
-and best-effort stop/delete cleanup. A failure retains diagnostic state and the
-machine name. A short, isolated runtime HOME avoids macOS Unix-socket pathname
-limits. `offline_passed` means the explicit controls and cleanup succeeded; every
+and stop/delete cleanup. A failure retains diagnostic state and the machine name.
+Use `--capture-identity` for complete runtime fingerprints and a durable recovery
+ticket checked through same-state inventory. A short, isolated runtime HOME avoids
+macOS Unix-socket pathname limits. `offline_passed` means the explicit controls and cleanup succeeded; every
 result still has `admitted: false`. A prepared image has passed a captured real
 task's repository tests, guest Git history and exact-diff checks, and cleanup.
-The bounded native provider/tool loop also passed; full admission controls remain
-incomplete. The
+The bounded native provider/tool loop also passed. The
 [Python image recipe](environments/python-review/README.md) keeps task source and
 credentials outside the build context.
 
@@ -200,7 +201,8 @@ clean worktree, and Git objects inside the guest:
 uv run skilleval qualification plan BUNDLE \
   --image-archive prepared-image.tar --image-sha256 ARCHIVE_SHA256 \
   --reconstruct-git --commands controls.json --output local-plan.json
-uv run skilleval qualification run local-plan.json --output local-qualification
+uv run skilleval qualification run local-plan.json --capture-identity \
+  --output local-qualification
 ```
 
 These options are implemented; a prepared image and its native task/model route
@@ -212,9 +214,17 @@ bounded host broker and credential-free guest relay. It selects an existing
 ChatGPT login on the host; the guest receives only a mounted inference socket.
 Its pinned model/profile, request limits, and cleanup have deterministic controls.
 An explicit native control has exercised the authenticated tool loop, filesystem
-and network denials, and observed cleanup. Scored admission and broader lifecycle
-controls remain pending. The opt-in script and credential boundary are documented
-in the gateway reference; ordinary checks never start it or read credentials.
+and network denials, and observed cleanup. The opt-in script and credential
+boundary are documented in the gateway reference; ordinary checks never start it
+or read credentials.
+
+The separate [environment workflow](docs/system/ENVIRONMENT.md) adds timeout,
+detached-process, fresh-state, and interrupted-controller controls. It seals and
+rechecks their evidence against the exact runtime, task, image, harness, and
+configuration. A separately retained snapshot digest is required for checking.
+This admits only the bounded environment control route; it does not authorize
+scored dispatch or establish grader reliability. Explicit `qualification recover`
+uses a retained ticket after a controller has stopped.
 
 ## CLI contract
 
@@ -225,7 +235,7 @@ are plain text. `schema KIND` exposes provisional version-1 records; `validate
 KIND FILE` checks structure, never experimental validity or truth.
 
 There is no automatic retry, resume, assessment selection, remote submission, or
-campaign execution. Runtime execution is opt-in through `qualification run`.
+campaign execution. Runtime execution and recovery are explicit opt-in operations.
 
 ## Development
 

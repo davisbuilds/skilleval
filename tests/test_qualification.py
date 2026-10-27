@@ -292,6 +292,111 @@ def test_lifecycle_timeout_attempts_stop_and_delete(
     assert [step["action"] for step in report["cleanup"]] == ["stop", "delete"]
 
 
+def test_sigterm_offline_controller_cleans_machine_child_and_writes_report(tmp_path: Path) -> None:
+    """Exercise the real controller with synthetic processes, never a real VM."""
+    import os
+    import signal
+    import subprocess
+    import sys
+    import time
+    from contextlib import suppress
+
+    from skilleval.lifecycle import recover
+
+    distribution = tmp_path / "distribution"
+    distribution.mkdir()
+    runtime = fake_runtime(tmp_path)
+    heartbeat = tmp_path / "control-heartbeat"
+    runtime.write_text(
+        runtime.read_text().replace(
+            "print('ok')",
+            "machines = state / 'machines.json'\n"
+            "names = json.loads(machines.read_text()) if machines.exists() else []\n"
+            "name = arguments[arguments.index('--name') + 1] if '--name' in arguments else None\n"
+            "if arguments[:2] == ['machine', 'create']:\n"
+            "    ticket = json.loads((state.parent / 'recovery.json').read_text())\n"
+            "    assert ticket['create_attempted']\n"
+            "    names.append(name); machines.write_text(json.dumps(names))\n"
+            "if arguments[:2] == ['machine', 'ls']:\n"
+            "    print(json.dumps([{'name': item} for item in names])); raise SystemExit\n"
+            "if arguments[:2] == ['machine', 'delete']:\n"
+            "    machines.write_text(json.dumps([item for item in names if item != name]))\n"
+            "if arguments[:2] == ['machine', 'exec'] and 'long-control' in arguments:\n"
+            f"    beat = pathlib.Path({str(heartbeat)!r})\n"
+            "    while True:\n"
+            "        sample = {'pid': os.getpid(), 'tick': time.monotonic_ns()}\n"
+            "        pending = beat.with_suffix('.pending')\n"
+            "        pending.write_text(json.dumps(sample)); pending.replace(beat)\n"
+            "        time.sleep(.05)\n"
+            "print('ok')",
+        )
+    )
+    runtime = runtime.rename(distribution / "smolvm")
+    for directory in ("lib", "agent-rootfs"):
+        (distribution / directory).mkdir()
+    for component in ("smolvm-bin", "storage-template.ext4", "overlay-template.ext4"):
+        (distribution / component).write_bytes(b"synthetic-runtime-component")
+    archive, digest = docker_archive(tmp_path / "image")
+    plan = plan_qualification(
+        bundle_at(tmp_path), None, [["long-control"]], image_archive=archive, image_sha256=digest
+    )
+    plan_path = tmp_path / "plan.json"
+    plan_path.write_text(json.dumps(plan))
+    output = tmp_path / "result"
+    controller = subprocess.Popen(
+        [
+            sys.executable,
+            "-c",
+            "import json; from pathlib import Path; "
+            "from skilleval.qualification import run_offline_qualification; "
+            f"run_offline_qualification(json.loads(Path({str(plan_path)!r}).read_text()), "
+            f"Path({str(output)!r}), {str(runtime)!r}, capture_identity=True)",
+        ],
+        env={"PATH": "/usr/bin:/bin", "PYTHONPATH": str(Path(__file__).parents[1] / "src")},
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    child_pid = None
+    try:
+        deadline = time.monotonic() + 5
+        while time.monotonic() < deadline:
+            if heartbeat.exists() and heartbeat.stat().st_size:
+                first = heartbeat.read_text()
+                child_pid = json.loads(first)["pid"]
+                time.sleep(0.15)
+                if heartbeat.read_text() != first:
+                    break
+            time.sleep(0.02)
+        else:
+            pytest.fail("synthetic project control did not establish a live heartbeat")
+        ticket_path = output / "recovery.json"
+        before = json.loads(ticket_path.read_text())
+        assert before["create_attempted"] and before["observer_positive"]
+        controller.send_signal(signal.SIGTERM)
+        controller.wait(timeout=5)
+        report = json.loads((output / "report.json").read_text())
+        assert report["status"] == "partial" and report["admitted"] is False
+        assert report["cleanup_complete"] and report["runtime_home_removed"]
+        assert report["machine_observer_positive"] and report["machine_observed_absent"]
+        assert not Path(before["runtime_home"]).exists()
+        last = heartbeat.read_text()
+        time.sleep(0.15)
+        assert heartbeat.read_text() == last
+        ticket = json.loads(ticket_path.read_text())
+        assert ticket["cleanup_complete"] and ticket["phase"] == "recovered"
+        assert [row["action"] for row in ticket["cleanup"]] == ["stop", "delete"]
+        assert recover(output) == ticket
+    finally:
+        if controller.poll() is None:
+            controller.kill()
+            controller.wait(timeout=5)
+        if child_pid is not None:
+            with suppress(ProcessLookupError):
+                os.killpg(child_pid, signal.SIGKILL)
+        if (output / "recovery.json").exists():
+            recover(output)
+
+
 def test_packed_registry_route_refused_before_any_subprocess(tmp_path: Path) -> None:
     """v1.32.3 non-Hub refs can restore a pack with manifest.network=true."""
     bundle = bundle_at(tmp_path)

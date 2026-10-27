@@ -189,6 +189,13 @@ the distinct `authenticated_native_passed` status and still reports
 `admitted: false`: it does not establish task quality, judge calibration, or
 campaign admission.
 
+The native control captures the complete local runtime/host and control-source
+identity before and after execution, hashes its rendered tooling, and registers
+a durable recovery ticket before creating the VM. Its cleanup shares the
+[environment lifecycle](ENVIRONMENT.md). That evidence can contribute to the
+separate bounded environment admission seal; it cannot independently admit a
+scored study. Keep the selected auth file outside the guest and retained tooling.
+
 ## Run the explicit control
 
 Use the [pinned native catalog](https://github.com/openai/codex/blob/6aaac694803004a63c6f393d153c96d22521a6b9/codex-rs/models-manager/models.json)

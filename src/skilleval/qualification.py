@@ -417,7 +417,27 @@ def _invoke(argv: list[str], cwd: Path, env: dict[str, str], timeout: int) -> di
 
 
 def run_offline_qualification(
-    plan: dict[str, Any], output: Path, runtime_binary: str = "smolvm"
+    plan: dict[str, Any],
+    output: Path,
+    runtime_binary: str = "smolvm",
+    *,
+    capture_identity: bool = False,
+) -> dict[str, Any]:
+    """Run the actual controller with catchable SIGTERM cleanup and durable recovery."""
+    from skilleval.lifecycle import interrupt_scope
+
+    with interrupt_scope():
+        return _run_offline_qualification(
+            plan, output, runtime_binary, capture_identity=capture_identity
+        )
+
+
+def _run_offline_qualification(
+    plan: dict[str, Any],
+    output: Path,
+    runtime_binary: str = "smolvm",
+    *,
+    capture_identity: bool = False,
 ) -> dict[str, Any]:
     """Explicitly run controls in a fresh VM, retaining bounded lifecycle receipts.
 
@@ -458,6 +478,12 @@ def run_offline_qualification(
     if resolved is None:
         raise SkillEvalError(f"runtime binary unavailable: {runtime_binary}; nothing launched")
     binary = str(Path(resolved).resolve())
+    # Legacy/offline probes remain usable with alternate trusted executables.
+    # Admission requires this explicit complete-distribution capture route.
+    from skilleval.identity import file_digest, snapshot_identity
+    from skilleval.lifecycle import Lifecycle, LifecycleInterruptedError
+
+    identity = snapshot_identity(binary) if capture_identity else None
     output = output.resolve()
     captured_root = bundle.resolve()
     if output == captured_root or captured_root in output.parents:
@@ -509,6 +535,20 @@ def run_offline_qualification(
         ],
     }
     attempted_create = False
+    session = None
+    if identity is not None:
+        report["identity"] = identity
+        session = Lifecycle.register(
+            output,
+            state,
+            runtime_home,
+            env,
+            name,
+            Path(binary),
+            plan["image_archive"],
+            {"cpus": plan["cpus"], "memory_mib": plan["memory_mib"], **plan["policy"]},
+            identity=identity,
+        )
 
     def step(label: str, arguments: list[str], timeout: int = 120) -> bool:
         result = _invoke([binary, *arguments], state, env, timeout)
@@ -573,6 +613,8 @@ def run_offline_qualification(
             # Inspect the actual immutable-path copy supplied to the runtime too.
             _image_archive(Path(image), plan["image_archive"]["sha256"])
         attempted_create = True
+        if session is not None:
+            session.mark_create_attempted()
         if not step(
             "create",
             [
@@ -591,6 +633,9 @@ def run_offline_qualification(
         ):
             return report
         if not step("start", ["machine", "start", "--name", name]):
+            return report
+        if session is not None and name not in session.observe("machine_observer_positive"):
+            report["error"] = "machine inventory did not detect the known-present machine"
             return report
         if not step("copy_source", ["machine", "cp", str(archive), name + ":/workspace/task.tar"]):
             return report
@@ -652,8 +697,21 @@ def run_offline_qualification(
         if passed:
             report["status"] = "offline_passed"
         return report
+    except LifecycleInterruptedError:
+        report["status"] = "partial"
+        report["error"] = "controller interrupted; inspect cleanup and recovery ticket"
+        return report
     finally:
-        if attempted_create:
+        if session is not None:
+            ticket = session.cleanup()
+            for key in ("cleanup", "cleanup_complete", "runtime_home_removed", "identity_changed"):
+                report[key] = ticket.get(key)
+            report["machine_observer_positive"] = ticket["observer_positive"]
+            report["machine_observed_absent"] = ticket.get("observed_absent", False)
+            report["artifacts"] = {"recovery.json": file_digest(output / "recovery.json")}
+            if not ticket["cleanup_complete"] or ticket.get("identity_changed"):
+                report["status"] = "partial"
+        elif attempted_create:
             for action in ("stop", "delete"):
                 arguments = [binary, "machine", action, "--name", name]
                 if action == "delete":
@@ -669,7 +727,7 @@ def run_offline_qualification(
             )
             if not report["cleanup_complete"]:
                 report["status"] = "partial"
-        if not attempted_create or report.get("cleanup_complete"):
+        if session is None and (not attempted_create or report.get("cleanup_complete")):
             try:
                 shutil.rmtree(runtime_home)
                 report["runtime_home_removed"] = True
