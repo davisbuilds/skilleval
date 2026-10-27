@@ -1,0 +1,24 @@
+#!/bin/sh
+set -eu
+cd "$(dirname "$0")/.."
+
+check() {
+  check_label=$1
+  shift
+  if [ "${GITHUB_ACTIONS:-}" = "true" ]; then
+    printf '::group::%s\n' "$check_label"
+  else
+    printf '%s\n' "$check_label"
+  fi
+  "$@"
+  if [ "${GITHUB_ACTIONS:-}" = "true" ]; then
+    printf '::endgroup::\n'
+  fi
+}
+
+check "Ruff lint" uv run --locked ruff check .
+check "Ruff format" uv run --locked ruff format --check .
+check "Type checking" uv run --locked mypy
+check "Tests" uv run --locked pytest -q
+check "Working-tree whitespace" git diff --check
+check "Staged whitespace" git diff --cached --check

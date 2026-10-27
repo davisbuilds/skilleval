@@ -1,0 +1,20 @@
+[
+  {
+    "case_id": "demo",
+    "report_id": "report-1",
+    "outcome": "valid-report",
+    "run_completed": true,
+    "findings": [
+      {"title": "Final price is omitted", "body": "For [100, 200], total_cents returns 100 instead of 300 because the slice excludes the last element."}
+    ]
+  },
+  {
+    "case_id": "demo",
+    "report_id": "report-2",
+    "outcome": "valid-report",
+    "run_completed": true,
+    "findings": [
+      {"title": "Empty lists raise IndexError", "body": "The slice raises when prices is empty."}
+    ]
+  }
+]

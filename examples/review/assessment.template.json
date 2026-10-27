@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "assessment_id": "demo-assessment-1",
+  "subject_id": "report-1",
+  "evidence_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "rubric_version": "review-v1",
+  "assessor_kind": "human",
+  "assessor": "authored-example",
+  "independent_blind": false,
+  "judgments": [
+    {
+      "finding_index": 0,
+      "verdict": "supported",
+      "reasoning": "The slice excludes the final item before summation; [100, 200] therefore contributes only 100.",
+      "citations": [{"path": "case/source/totals.py", "line_start": 1, "line_end": 2}]
+    }
+  ],
+  "limitations": ["Authored demonstration. Replace the zero digest with the capture receipt. Not a model judgment or calibration result."]
+}
