@@ -174,7 +174,9 @@ def test_native_controller_timeout_kills_real_process_group_descendant(tmp_path:
         f"subprocess.Popen([sys.executable,'-c',{child!r}])\n"
         "time.sleep(30)\n"
     )
-    result = _invoke([sys.executable, "-c", parent], tmp_path, {"PATH": "/usr/bin:/bin"}, 1)
+    # Allow both interpreters to start while native VM controls share the host.
+    # The positive heartbeat is still required before asserting group shutdown.
+    result = _invoke([sys.executable, "-c", parent], tmp_path, {"PATH": "/usr/bin:/bin"}, 5)
     assert result["timed_out"] and result["returncode"] < 0
     wait_for(beat)
     known_positive = beat.read_text()

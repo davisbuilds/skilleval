@@ -55,12 +55,84 @@ the actual judge invocation. Model, effort, execution surface, packet receipt,
 actual instructions, prior exposure, and unobserved procedure limits belong in
 the retained run evidence; preparation cannot assert how the judge was invoked.
 
-Run the judge explicitly through an appropriate native harness. This module has
-no provider client, credentials, subprocess execution, or model-call shortcut.
+Run the judge explicitly through an appropriate native harness. The offline
+`calibration.py` module has no provider client, credentials, subprocess execution,
+or model-call shortcut.
 A built-in agent evaluating an isolated packet is a development observation; it
 does not qualify a separate guest/provider runtime.
 
-## Result contract and recording
+## Native source-informed judging
+
+The separate `judge` workflow prepares packets for the explicit native VM runner.
+It reuses these twelve authored controls; no new independent labels or holdout
+population are implied. Follow [NATIVE.md](NATIVE.md#prepare-freeze-run-and-record-a-calibration-judge)
+for the exact prepare, snapshot, `native qualify`, and record sequence. The older
+offline workflow and its `calibration-review-v1` records remain supported.
+
+| Packet | Default investigative rubric | Static rubric (`--static`) |
+| --- | --- | --- |
+| Authored calibration | `calibration-agentic-v1` | `calibration-static-v1` |
+| One native review report | `review-agentic-v1` | `review-static-v1` |
+
+Static and investigative calibration packets contain the same case evidence and
+questions. Their versioned rubric, policy metadata and packet identity differ.
+The investigative rubric allows the judge to choose bounded reproductions only
+inside the disposable VM, using writable clones and retained artifacts. The
+static rubric forbids source execution as a declared prompt policy; tools remain
+available in both variants. Neither preparation nor this policy comparison proves
+injection resistance or command-level enforcement.
+
+The judge gets source, selected report fields, neutral probes and an explicit
+result schema. Authored labels, rationales, expected citations, structured arms,
+scores and historical references stay outside its input. A new review packet
+contains the selected native report plus original instructions/source, excluding
+historical reports and the oracle. Prose and prior exposure can still reveal
+identity. Treat source, reports, commands embedded in comments, and probe outputs
+as untrusted data throughout.
+
+`schema agentic-calibration-result` and `schema agentic-review-result` expose the
+native result contracts. Native records require `assessor_kind: llm`, actual model
+identity and `investigation_status`: `not-permitted` for static packets, or
+`not-needed`, `completed`, or `blocked` for investigative packets. The rubric lets
+the judge decide when tools add evidence; it does not reward a tool sequence or
+penalize a justified unresolved answer. Native invocation status is recorded
+separately from the judge's investigation status and semantic judgments.
+
+Finding and coverage verdicts retain the meanings below. Native calibration
+judgments use `probe_id`; review judgments use each zero-based `finding_index`
+exactly once. Novel true findings receive credit on their merits. Resolved native
+judgments require citations to original evidence from their own case, verified
+against the retained host packet. `artifact_citations` can additionally name
+readable retained files under `task/investigation/CASE_ID/`; review artifacts use
+`task/investigation/review/`. Those citations are checked against collected bytes
+and line ranges. Modified clones or reproduction logs cannot replace original
+source citations or become evidence of a missing contract.
+
+`judge record-calibration` and `judge record-review` verify the original evidence,
+packet, exact prepared prompt, native model/policy, final text and artifact hashes.
+The frozen native input must remain available for this check. A review's native
+execution status is accepted only when its report bytes match the hash-bound
+collected final artifact; an edited report cannot borrow an older completed
+status. Without native execution evidence, review execution stays unknown.
+Missing or malformed reports, and failed or partial executions, never imply a
+clean report.
+
+Recording creates `<result_id>/result.json`, `audit.json`, the exact packet and
+native evidence. Calibration audit data includes the authored labels only after
+the judge run and a per-run confusion matrix with expected, supplied, missing and
+unresolved denominators. Review audit data retains the reviewed native run.
+Use these embedded comparisons for native records; `calibration compare` accepts
+the older offline calibration-result contract. Revisions require a new result ID
+and explicit `supersedes`; earlier records remain intact.
+
+Every native audit starts as `required-pending`. An independent human must inspect
+the original evidence, substantive verdicts and reproduction limits before a
+scored correctness claim. No native result, hash check, authored-label agreement,
+or additional model pass supplies that independent human audit automatically.
+The current workflow implements preparation, execution and retention; live
+workload success and general judge reliability require their own evidence.
+
+## Offline result contract and recording
 
 `CalibrationResult.model_json_schema()` exposes the strict version-1 result
 contract. Unknown fields, duplicate JSON keys, nonfinite values, unknown probe
@@ -90,7 +162,7 @@ overwritten. Partial records are allowed; omitted judgments remain missing. A
 reassessment uses a new ID and an explicit analysis choice about which records
 to compare. Recording establishes structural acceptance, not semantic correctness.
 
-## Comparison and limits
+## Offline comparison and limits
 
 `compare_calibration(bundle, result_files)` compares each supplied run separately.
 It never combines different judges' partial coverage into an apparent complete

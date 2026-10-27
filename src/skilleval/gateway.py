@@ -352,6 +352,7 @@ def broker_scope(
     socket_path: Path | None = None,
     receipt: ReceiptSink | None = None,
     test_transport: TestTransport | None = None,
+    request_observer: Callable[[bytes], None] | None = None,
 ) -> Iterator[GatewayHandle]:
     """Serve one bounded host-only UDS capability; always stop and remove it.
 
@@ -400,11 +401,25 @@ def broker_scope(
                 raise SkillEvalError("gateway startup failed; cleanup incomplete") from None
         raise SkillEvalError("gateway startup failed") from None
     original_forward = server.forward
+    observation_failed = threading.Event()
 
     def forward(handler: _Handler, body: bytes) -> None:
+        if observation_failed.is_set():
+            handler._error(503, "request_observation_failed")
+            return
         if auth.expires_at <= time.time() + limits.timeout_seconds + 5:
             handler._error(503, "authentication_expired")
             return
+        if request_observer is not None:
+            try:
+                # Body bytes contain guest-supplied task/history, never the host
+                # authorization headers constructed by the forwarding transport.
+                request_observer(body)
+            except Exception:
+                observation_failed.set()
+                records.record({"event": "request_observation_failed", "outcome": "refused"})
+                handler._error(503, "request_observation_failed")
+                return
         original_forward(handler, body)
 
     server.forward = forward

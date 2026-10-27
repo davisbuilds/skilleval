@@ -21,6 +21,53 @@ def test_help_never_needs_a_runtime() -> None:
     assert not result.stderr
 
 
+def test_native_judge_requires_declared_policy_before_any_runtime_access() -> None:
+    result = invoke(
+        "native",
+        "qualify",
+        "missing-bundle",
+        "--sha256",
+        "0" * 64,
+        "--prompt",
+        "missing-prompt",
+        "--mode",
+        "judge",
+        "--runtime",
+        "missing-runtime",
+        "--image-archive",
+        "missing-image",
+        "--image-sha256",
+        "0" * 64,
+        "--catalog",
+        "missing-catalog",
+        "--auth-file",
+        "missing-auth",
+        "--output",
+        "missing-out",
+    )
+    assert result.returncode == 2
+    assert "judge mode requires --judge-policy" in result.stderr
+    assert not result.stdout
+
+
+def test_native_judge_packet_cli_preserves_hidden_labels(tmp_path: Path) -> None:
+    from skilleval.evidence import snapshot
+
+    corpus = Path(__file__).parents[1] / "examples/calibration/review-v1"
+    bundle = tmp_path / "bundle"
+    snapshot(corpus, bundle)
+    packet = tmp_path / "packet"
+    prepared = invoke("judge", "prepare-calibration", str(bundle), "--output", str(packet))
+    assert prepared.returncode == 0, prepared.stderr
+    receipt = json.loads(prepared.stdout)
+    assert receipt["investigation"] is True
+    assert not (packet / "suite.json").exists()
+    assert "expected" not in (packet / "probes.json").read_text()
+    frozen = invoke("capture", str(packet), "--output", str(tmp_path / "frozen"))
+    assert frozen.returncode == 0, frozen.stderr
+    assert json.loads(frozen.stdout)["manifest_sha256"] == receipt["input_digest"]
+
+
 def test_schema_is_structured_and_versioned() -> None:
     result = invoke("schema", "assessment")
     assert result.returncode == 0
@@ -53,10 +100,11 @@ def test_numeric_overflow_is_rejected_before_record_validation(tmp_path: Path) -
     assert json.loads(result.stderr)["error"] == "non-finite JSON number"
 
 
+@pytest.mark.parametrize("status", ["partial", "timed-out", "failed"])
 def test_partial_qualification_is_a_shell_failure(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], status: str
 ) -> None:
-    monkeypatch.setattr(cli, "dispatch", lambda _: {"status": "partial", "admitted": False})
+    monkeypatch.setattr(cli, "dispatch", lambda _: {"status": status, "admitted": False})
     assert cli.main(["qualification", "run", "plan.json", "--output", "result"]) == 1
     assert json.loads(capsys.readouterr().out)["admitted"] is False
 

@@ -213,6 +213,8 @@ def _reconstruct(root: Path, files: list[tuple[str, bytes, bool]], patch: bytes)
     ).strip()
     _git(root, "update-ref", "refs/heads/base", base.decode())
     _git(root, "update-ref", "refs/heads/candidate", candidate.decode())
+    _git(root, "update-ref", "refs/heads/review-base", base.decode())
+    _git(root, "update-ref", "refs/heads/review-candidate", candidate.decode())
     return {
         "base_commit": base.decode(),
         "candidate_commit": candidate.decode(),

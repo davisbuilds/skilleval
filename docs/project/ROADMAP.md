@@ -14,9 +14,9 @@ Public GitHub hosting is the intended destination. The
 | Phase | Deliverable | Exit evidence | Current state |
 | --- | --- | --- | --- |
 | 0 — Foundation | Python package, provisional records, copied evidence, CLI, project boundaries | Offline workflow passes; a historical case can be imported without changing its source | Implemented |
-| 1A — Environment | Prepared task image, fresh VM lifecycle, Codex adapter, explicit admission | Live controls on the exact host/runtime/image/tool route prove fidelity, isolation, bounded failure, cleanup, and a native model/tool loop | Bounded environment controls and admission implemented; longer native review route and scored dispatch integration pending |
-| 1B — Grader | Evidence packets, executable outcomes, semantic rubric, revision history, calibration | Frozen positive/negative/ambiguous examples distinguish accurate findings from plausible mistakes; human audit measures judge errors | Authored controls and one development LLM judgment run completed; independent label audit and judge reliability checks pending |
-| 2 — First paired pilot | One real task in vanilla and skill configurations, separate assessment and report | Reproducible paired artifacts; treatment fidelity and invalid attempts visible; qualified environment and grader | Pending 1A and 1B |
+| 1A — Environment | Prepared task image, fresh VM lifecycle, Codex adapter, explicit admission | Live controls on the exact host/runtime/image/tool route prove fidelity, isolation, bounded failure, cleanup, and a native model/tool loop | Bounded controls, admission and longer native runner implemented; scored dispatch integration pending |
+| 1B — Grader | Evidence packets, executable outcomes, semantic rubric, revision history, calibration | Frozen positive/negative/ambiguous examples distinguish accurate findings from plausible mistakes; human audit measures judge errors | Native static/investigative judge and authored controls implemented; independent label audit and reliability checks pending |
+| 2 — First paired pilot | One real task in vanilla and skill configurations, separate assessment and report | Reproducible paired artifacts; treatment fidelity and invalid attempts visible; qualified environment and grader | First development pair completed; scored pilot gated on 1A and 1B |
 | 3 — Representative study | Declared task population, protected holdouts, repeated matched trials, uncertainty analysis | Enough independent task evidence for the prespecified decision; cost and failure effects reported | Pending pilot |
 | 4 — Expand usefully | Repair/implementation coverage, pi adapter, TypeScript review UI | Each addition meets the same contracts and addresses a demonstrated workflow need | Deferred |
 
@@ -64,9 +64,44 @@ was one development run outside the guest runtime, with no independent human
 audit. It exposed a citation-contract mismatch that was corrected without
 editing the model result or packet. No scored campaign has run.
 
-## Next: qualify the environment and grader
+The native development route now runs complete reviews and prepares separate
+static or investigative judge sessions. Judge packets preserve captured source
+bytes and executable flags, withhold labels and structured treatment identity,
+and retain reproduction artifacts separately from original citations. Recording
+binds the exact prompt, packet, model, policy and collected final output; semantic
+accuracy still needs audit. The [native workflow](../system/NATIVE.md) owns the
+invocation and evidence contracts.
 
-For 1A, exercise the longer real-task route and consume checked environment
+On 2026-10-27, a first development pair completed on a captured real review task
+with identical task, prompt, model, harness and budget inputs. The selected skill
+was naturally available in one arm, and a successful complete skill read was
+observed there. Both reviewers reported the same defect. The executions overlapped,
+so no performance comparison is made. A request-content detector failed to match
+the skill despite the observed read; its exposure result remains unmeasured.
+This is end-to-end development evidence, not an admitted trial or an estimate of
+incremental skill benefit. The failed setup attempt and both completed runs are
+retained privately.
+
+The same day, fresh native static and investigative calibration sessions each
+agreed with all twelve authored labels: eleven resolved judgments, one unresolved
+judgment and no missing probes. Both completed recording and VM cleanup. The
+investigative judge chose source inspection alone for these small cases; no
+reproduction advantage was established. These observations exercise the native
+judgment/recording path, while independent label audit and reliability controls
+remain open.
+
+Fresh investigative judges then assessed each real report separately. Both
+traced repository contracts and ran bounded reproductions against unchanged
+cloned source inside their VMs, retaining scripts, outputs and citations. Both
+judged the reported finding supported, while identifying an existing test that
+encoded the faulty behavior. Original packet files remained unchanged. Final
+environment fidelity, native transport, lifecycle and bounded admission controls
+passed on the resulting source revision. None of these results replaces the
+pending human audit or admits a scored campaign.
+
+## Next: qualify the grader and scored dispatch
+
+For 1A, retain longer real-task evidence and consume checked environment
 admission at the eventual scored-dispatch boundary. The adapter
 accepts pinned local Docker-save archives and verifies reconstructed guest Git
 identity; live task, Git, and bounded provider controls passed. CLI help owns
@@ -81,17 +116,21 @@ control-source identities; changed inputs invalidate admission. Extend those
 controls when the workload or authority changes. Keep provider access separate
 from task egress. A stopped VM or generated deny setting is insufficient.
 
-For 1B, execute the declared native judge route against the frozen authored set
-and retain actual instructions, packet digest, model/effort, and results.
-Independently audit labels and disagreements. Assess positional bias, treatment
+For 1B, compare static and investigative native judgments against the frozen
+authored set, retaining exact prompts, packet identity, model/effort, tool traces
+and reproduction artifacts. The native judge and append-only recorder are
+implemented; independent human audit remains pending. Audit labels and
+disagreements before scored use. Assess positional bias, treatment
 leakage, reference anchoring, prompt injection, and repeated-judge consistency.
 Targeted coverage probes supply known hypotheses; add evidence for unaided review
 coverage before claiming exhaustive recall. Executable outcomes complement
 judgment rather than collapse into an opaque score.
 
-These tracks can progress independently. The first paired pilot starts only when
-both meet their acceptance criteria. Its purpose is to validate the whole route
-and estimate variance, not to decide that a skill works.
+These tracks can progress independently. Development pairs can exercise packaging,
+natural skill discovery and the complete review-to-judge path while the gates
+remain open. They cannot be reported as admitted scored trials. The scored pilot
+starts only when both tracks meet their acceptance criteria; its purpose is to
+validate the complete route and estimate variance, not decide that a skill works.
 
 ## Then: make the comparison informative
 

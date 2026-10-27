@@ -4,14 +4,17 @@ Local-first experiments measuring whether a skill improves an agent's work on
 real tasks. Compare matched skill and vanilla runs, preserve what happened, and
 grade outcomes using executable checks, semantic assessment, and human review.
 
-The foundation supports **evidence capture, native Git reconstruction, runtime
-controls, and grader calibration workflows**. A prepared smolvm task image passed
-repository tests and Git fidelity checks. Native Codex completed a bounded real
-model/tool loop through a host-only inference gateway, with filesystem/network
-controls and observed cleanup. An external development judge assessed the authored
-calibration set. Environment admission now binds task, native, and lifecycle
-controls to exact local identities. Scored dispatch, longer native workloads,
-and independent grader validation remain pending; no scored campaign has run.
+The foundation supports **evidence capture, native reviews, pinned skill inputs,
+and static or investigative judging**. Native Codex runs in fresh smolvm guests
+through a host-only inference gateway. Live controls cover repository tests, Git
+fidelity, filesystem/network boundaries, lifecycle recovery and cleanup;
+environment admission binds that evidence to exact local identities.
+
+A first development pair and native calibration sessions completed. Fresh judges
+also traced contracts and ran reproductions for the real reports, retaining
+original citations and investigation artifacts. These are development workflows:
+independent human grader audit and scored dispatch remain pending, and no scored
+campaign has run. The [roadmap](docs/project/ROADMAP.md) records the evidence limits.
 
 Python owns the core and CLI. A TypeScript review UI and a pi adapter are later
 work. See the [roadmap](docs/project/ROADMAP.md),
@@ -138,6 +141,28 @@ Recording validates structure, identity, and citations. Comparison reports each
 run's confusion matrix and explicit missing/invalid/unresolved coverage against
 authored labels. It does not call a model, prove the labels independently correct,
 measure unaided defect discovery, or establish a benefit from skills.
+
+## Run a native development workload
+
+The [native workflow](docs/system/NATIVE.md) prepares a source-only review or a
+label-free judge packet, freezes it with `capture`, explicitly runs native Codex
+in a fresh VM through `native qualify`, then records the retained judge result.
+The runner preserves process status, native events, usage observations, exact
+prompt/model identity, original-input checks, guest artifacts, and cleanup.
+It never grants scored admission.
+
+Agentic judges can inspect source and choose bounded VM reproductions. The static
+variant changes the declared prompt policy; native tools remain available.
+Original host evidence stays authoritative, and guest-produced artifacts remain
+untrusted evidence. Label withholding does not establish independent blinding.
+Recorded audit packets remain pending independent human review.
+
+`treatment capture` freezes an explicitly selected skill tree, source revision,
+and optional supplied root notice. A review run can make that skill available in
+its fresh guest Codex home. Availability, metadata exposure, body consultation,
+and semantic application are separate observations; missing telemetry is unknown.
+See the [treatment procedure](docs/system/NATIVE.md#skill-availability-and-consultation)
+before comparing runs.
 
 ## Prepare a native review workspace
 

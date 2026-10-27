@@ -73,6 +73,12 @@ def test_reconstructs_meaningful_history_without_changing_candidate(tmp_path: Pa
     bundle, digest = captured(tmp_path)
     target = tmp_path / "work"
     receipt = workspace.prepare_review(bundle, digest, target)
+    # The historical task instruction names these refs. Native callers must
+    # see the same diff without rewriting ordinary task instructions.
+    assert git(target, "diff", "--full-index", "review-base", "HEAD") == git(
+        target, "diff", "--full-index", "base", "candidate"
+    )
+    assert git(target, "rev-parse", "review-candidate") == git(target, "rev-parse", "HEAD")
     assert git(target, "show", "base:changed.txt") == b"before\n"
     assert git(target, "show", "base:deleted.txt") == b"old\n"
     assert git(target, "show", "candidate:changed.txt") == b"after\n"

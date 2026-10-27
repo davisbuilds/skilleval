@@ -53,6 +53,13 @@ directory, and raises a safe error if cleanup is incomplete. `GatewayHandle`
 contains socket/port metadata, copied receipts, and cleanup status; it contains
 no auth object. External receipt-sink failure revokes the service.
 
+An optional trusted `request_observer` receives actual guest request bytes before
+forwarding, without host authentication headers. The native development runner
+uses it to retain request hashes and skill exposure observations; it does not
+persist raw request bodies. An observer failure refuses the request and revokes
+later forwarding. An observed request is an attempted input, so correlate it with
+the successful provider receipt before claiming upstream exposure.
+
 `load_chatgpt_auth` accepts native `chatgpt` or legacy unspecified auth mode with
 token/account fields. It rejects missing, symlinked, oversized, malformed,
 duplicate-key, API-key-mode, or expired input with a value-free error. It opens
@@ -132,6 +139,11 @@ The host validator has one explicit adaptation from the pinned upstream source:
 They remain forbidden on `input_text`; nonempty, null, and unknown metadata
 remain rejected. Validation preserves the actual request bytes and history.
 No additional reasoning-field compatibility is implied.
+
+The longer [native runner](NATIVE.md) retains bounded field/type-only diagnostics
+for rejected histories. These diagnostics contain no prompt or encrypted values;
+they sample only part of the history and can leave a later unsupported shape
+unobserved. A rejection is a protocol failure, never a task-quality judgment.
 
 Receipts contain bounded known metadata fields, the actual upstream peer's
 validated numeric IP/port when observed, and nonnegative token usage when

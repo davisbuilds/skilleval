@@ -1,6 +1,6 @@
 # Architecture
 
-The Python package has five boundaries: typed experimental records, captured
+The Python package separates typed experimental records, captured
 evidence, runtime qualification, harness observations, and separate assessments.
 The CLI coordinates them through explicit files. It has no database, persistent
 daemon, or dependency on another local repository. An explicit bounded gateway
@@ -136,8 +136,9 @@ automatically retry or resume it.
 It preserves raw/unknown events, per-turn usage observations, item outcomes, and
 parse errors. It does not invoke Codex. Turn completion is not task success; failed
 tool commands can occur in otherwise completed turns. Malformed evidence makes
-stream status unknown. A future adapter must reconcile stream status with the
-actual process exit/timeout and aggregate usage with documented semantics.
+stream status unknown. The native workload runner retains these observations
+alongside process exit/timeout, broker receipts and cleanup. Usage remains a
+reported observation; the parser does not estimate missing tokens or cost.
 
 Harness compatibility is separate from run identity. Stable Codex patch and
 minor releases at or after the inspected baseline within the same major version
@@ -180,6 +181,39 @@ externally retained digest. Changes invalidate that admission. Exact invocation
 and cleanup receipts remain with private evidence; [ENVIRONMENT.md](ENVIRONMENT.md)
 owns the recovery procedure and limits.
 
+## Native development workloads and treatments
+
+`runner.py` coordinates a bounded native review or judge in a fresh VM. Its input
+is an explicitly frozen generic snapshot containing only the intended task or
+judge packet. The manifest stays on the host; the guest receives payload files.
+Imported source and native Codex execute in the VM. The host brokers inference
+using an explicitly selected existing login; no host auth cache enters the guest.
+The [native workflow](NATIVE.md) owns preparation, invocation and recording.
+
+The host retains the exact prompt, native model/effort and binary identity,
+process/event/provider observations, artifact inventory and cleanup evidence.
+It rechecks original input and compares original paths with the collected guest
+copy. The host snapshot remains canonical even when the guest modifies its copy.
+Collected archives are bounded and inspected without host extraction or source
+execution. Guest files, process reports and transcripts remain guest-authored;
+hashes establish identity and consistency, not semantic authenticity. Workload
+completion and successful cleanup do not imply a correct review. Every workload
+remains development-only with scored admission false.
+
+`treatments.py` freezes one selected skill with explicit source URL/revision and
+an optional supplied root notice. Installation targets only a fresh guest
+`CODEX_HOME/skills`, preserving tree bytes and executable flags. Ordinary task
+instructions remain; embedded skill and Codex configuration paths are rejected
+by the baseline check. Matched preparation keeps task and prompt bytes equal and
+varies skill availability separately. It does not force skill invocation.
+
+Availability alone does not establish native discovery. Conservative detectors
+record selected skill metadata or complete body in actual decoded broker requests,
+and complete pinned content in successful native read output. These observations
+separate catalog exposure from body exposure. A missing match stays unmeasured;
+an observed body does not establish semantic application or outcome quality.
+The runner has no scored pairing, automatic retries or trial-selection policy.
+
 ## Assessment
 
 `grading.py` creates fresh packets, defaulting to no oracle or provenance. Only
@@ -207,8 +241,8 @@ The [calibration reference](CALIBRATION.md) owns the semantic classes and proced
 Targeted known-defect questions include positive and negative controls; they do
 not measure unaided discovery or exhaustive recall. The implementation validates
 structure and evidence links and compares supplied verdicts with authored labels.
-It does not call an LLM, independently establish label truth, verify blinding,
-select assessment revisions, or aggregate campaign scores. The observed
+The offline implementation does not call an LLM, establish independent label
+truth, verify blinding, select assessment revisions, or aggregate campaign scores. The observed
 development judge was manually invoked through an external agent harness outside
 the guest runtime; its output was then recorded and compared through these offline
 APIs. It agreed
@@ -217,3 +251,28 @@ single development observation, not general reliability or independent human
 label validation. The roadmap owns its dated scope. Native-route calibration,
 declared analysis policies, and human adjudication remain necessary before
 scored comparisons.
+
+`judge.py` adds versioned static and investigative native packets for calibration
+and newly produced review reports. It withholds authored labels and structured
+treatment/history fields while preserving source and report evidence. This is
+label withholding, not independent blinding. The investigative rubric lets the
+judge choose bounded VM reproductions on writable source clones; the static
+rubric forbids execution as a prompt policy while native tools remain available.
+The runtime and overall deadline provide the execution boundary; the prompt does
+not provide separate command-level enforcement.
+
+Native recording binds the original snapshot, exact exported packet, prompt,
+model, declared investigation policy, final text and artifact manifest. Resolved
+judgments require original case citations; retained reproduction artifacts can
+supplement them through a separate citation field. Review recording requires
+every reported finding exactly once. Calibration may remain partial and retains
+explicit missing/unresolved opportunities and authored-label confusion counts.
+Failed reviewed executions and failed judge executions stay separate from
+finding judgments; missing or malformed reports never become empty clean reviews.
+
+Each native result gets a fresh append-only directory containing the packet,
+native evidence and an audit record marked `required-pending`. Native model output
+cannot attribute itself to a human assessor. Independent human review is still
+required before a scored correctness claim; storage validation and authored-label
+agreement cannot supply it. [CALIBRATION.md](CALIBRATION.md) owns the verdict and
+result semantics.

@@ -6,6 +6,12 @@ grader, skill consultation, or longer review workloads. Each underlying probe
 continues to report `admitted: false`; only the separate admission command can
 assemble and check the required evidence.
 
+The [native development runner](NATIVE.md) shares this lifecycle and records its
+own complete workload evidence. `native qualify` never consumes a bounded seal
+as permission for scored work, and successful reviews or judges do not expand
+that seal's scope. Source changes invalidate prior receipts; preserve those
+generations and qualify the changed route with fresh outputs.
+
 ## Identity and invalidation
 
 Admission requires new offline task, authenticated native, and adversarial
@@ -75,7 +81,8 @@ and session markers, then check that another VM created from the same image
 cannot see them.
 
 Identity-capturing offline and native controls share the lifecycle recovery
-implementation. It writes and fsyncs a private `recovery.json` before create can
+implementation with development reviews and judges. It writes and fsyncs a
+private `recovery.json` before create can
 have effects. The ticket preserves the machine name and isolated HOME/XDG paths.
 Cleanup requires a working inventory that observed the target, successful
 stop/delete, and observed absence before removing the runtime HOME. Failures
@@ -93,3 +100,9 @@ guesswork. Run recovery only after the original controller has stopped. There is
 no concurrent controller lock or watchdog service. SIGKILL and host failure
 cannot run Python cleanup; the durable ticket supports later recovery, not an
 automatic guarantee after host loss.
+
+Do not query smolvm through a retired runtime HOME after cleanup. Even a late
+`machine exec` query that returns "vm not found" can initialize an empty database
+and cache directory again. Inspect the retained ticket and filesystem first;
+progress observers must stop with their controller. A recreated empty namespace
+does not mean the deleted VM survived, and still needs scoped cleanup.

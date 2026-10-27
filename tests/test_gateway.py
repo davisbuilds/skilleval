@@ -134,6 +134,45 @@ def test_auth_is_private_and_freshness_is_required(tmp_path: Path) -> None:
         load_chatgpt_auth(write_auth(tmp_path, time.time() - 1))
 
 
+def test_request_observer_sees_actual_body_without_auth_headers(short_root: Path) -> None:
+    auth = load_chatgpt_auth(write_auth(short_root, time.time() + 600))
+    observed: list[bytes] = []
+    with broker_scope(
+        auth,
+        short_root / "observer",
+        limits=LIMITS,
+        test_transport=lambda *_: Stream(),
+        request_observer=observed.append,
+    ) as broker:
+        assert request(broker.socket_path)[0] == 200
+    assert observed == [json.dumps(BODY).encode()]
+    assert b"private-synthetic" not in observed[0]
+
+
+def test_request_observer_failure_refuses_provider_call(short_root: Path) -> None:
+    auth = load_chatgpt_auth(write_auth(short_root, time.time() + 600))
+    sent: list[bytes] = []
+
+    def fail(_: bytes) -> None:
+        raise RuntimeError("PRIVATE_FAILURE")
+
+    def transport(body: bytes, *_: object) -> Stream:
+        sent.append(body)
+        return Stream()
+
+    with broker_scope(
+        auth,
+        short_root / "observer",
+        limits=LIMITS,
+        test_transport=transport,
+        request_observer=fail,
+    ) as broker:
+        status, body = request(broker.socket_path)
+        assert status == 503
+        assert b"PRIVATE_FAILURE" not in body
+    assert not sent
+
+
 @pytest.mark.parametrize("expiration", [None, True, "private-value", 0, float("nan"), 10**400])
 def test_invalid_auth_expiry_fails_safely(tmp_path: Path, expiration: object) -> None:
     with pytest.raises(SkillEvalError) as error:

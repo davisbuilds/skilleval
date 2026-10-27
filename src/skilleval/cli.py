@@ -15,6 +15,7 @@ from skilleval import __version__
 from skilleval.calibration import CalibrationResult
 from skilleval.contracts import Assessment, Attempt, Experiment, Record, Task
 from skilleval.errors import SkillEvalError
+from skilleval.judge import AgenticCalibrationResult, AgenticReviewResult
 
 RECORDS: dict[str, type[Record]] = {
     "task": Task,
@@ -22,6 +23,8 @@ RECORDS: dict[str, type[Record]] = {
     "attempt": Attempt,
     "assessment": Assessment,
     "calibration-result": CalibrationResult,
+    "agentic-calibration-result": AgenticCalibrationResult,
+    "agentic-review-result": AgenticReviewResult,
 }
 
 
@@ -120,6 +123,50 @@ def parser() -> argparse.ArgumentParser:
     admission_check.add_argument(
         "--sha256", required=True, help="Previously retained snapshot digest"
     )
+    native = commands.add_parser("native", help="Explicit native development workloads")
+    native_commands = native.add_subparsers(dest="operation", required=True)
+    native_run = native_commands.add_parser("qualify", help="Run a development review or judge")
+    native_run.add_argument("bundle", type=Path, help="Frozen source-only snapshot")
+    native_run.add_argument("--sha256", required=True)
+    native_run.add_argument("--prompt", type=Path, required=True)
+    native_run.add_argument("--mode", choices=("review", "judge"), required=True)
+    native_run.add_argument("--judge-policy", choices=("static", "investigative"))
+    native_run.add_argument("--runtime", type=Path, required=True)
+    native_run.add_argument("--image-archive", type=Path, required=True)
+    native_run.add_argument("--image-sha256", required=True)
+    native_run.add_argument("--catalog", type=Path, required=True)
+    native_run.add_argument("--auth-file", type=Path, required=True)
+    native_run.add_argument("--output", type=Path, required=True)
+    native_run.add_argument("--timeout-seconds", type=int, default=600)
+    native_run.add_argument("--max-requests", type=int, default=32)
+    native_run.add_argument("--skill-bundle", type=Path)
+    native_run.add_argument("--skill-sha256")
+    judge = commands.add_parser("judge", help="Prepare or record native semantic assessments")
+    judge_commands = judge.add_subparsers(dest="operation", required=True)
+    for kind in ("calibration", "review"):
+        prepare_judge = judge_commands.add_parser("prepare-" + kind)
+        prepare_judge.add_argument("bundle", type=Path)
+        if kind == "review":
+            prepare_judge.add_argument("report", type=Path)
+        prepare_judge.add_argument("--output", type=Path, required=True)
+        prepare_judge.add_argument(
+            "--static", action="store_true", help="Source-only prompt policy"
+        )
+        record_judge = judge_commands.add_parser("record-" + kind)
+        record_judge.add_argument("bundle", type=Path)
+        if kind == "review":
+            record_judge.add_argument("report", type=Path)
+        record_judge.add_argument("packet", type=Path)
+        record_judge.add_argument("run", type=Path)
+        record_judge.add_argument("--output", type=Path, required=True)
+    treatment = commands.add_parser("treatment", help="Capture a pinned skill with attribution")
+    treatment_commands = treatment.add_subparsers(dest="operation", required=True)
+    skill = treatment_commands.add_parser("capture")
+    skill.add_argument("source", type=Path)
+    skill.add_argument("--license", type=Path, help="Existing root license or notice, if supplied")
+    skill.add_argument("--source-url", required=True)
+    skill.add_argument("--source-revision", required=True)
+    skill.add_argument("--output", type=Path, required=True)
     return root
 
 
@@ -169,6 +216,61 @@ def write_new_json(path: Path, value: object) -> None:
 
 
 def dispatch(args: argparse.Namespace) -> dict[str, Any]:
+    if args.command == "native":
+        from skilleval.gateway import GatewayLimits
+        from skilleval.grading import _read_regular
+        from skilleval.runner import run_native
+
+        if (args.mode == "judge") != (args.judge_policy is not None):
+            raise SkillEvalError("judge mode requires --judge-policy; review mode omits it")
+        return run_native(
+            args.bundle,
+            args.sha256,
+            _read_regular(args.prompt, 1024 * 1024).decode(),
+            args.output,
+            runtime=args.runtime.resolve(),
+            image=args.image_archive.absolute(),
+            image_sha256=args.image_sha256,
+            catalog=args.catalog.absolute(),
+            auth_file=args.auth_file.absolute(),
+            mode=args.mode,
+            native_timeout_seconds=args.timeout_seconds,
+            limits=GatewayLimits(
+                max_requests=args.max_requests, timeout_seconds=90, lifetime_seconds=900
+            ),
+            skill_bundle=args.skill_bundle,
+            skill_digest=args.skill_sha256,
+            investigation=None if args.mode == "review" else args.judge_policy == "investigative",
+        )
+    if args.command == "judge":
+        from skilleval.judge import (
+            prepare_agentic_calibration,
+            prepare_agentic_review,
+            record_agentic_calibration,
+            record_agentic_review,
+        )
+
+        if args.operation == "prepare-calibration":
+            return prepare_agentic_calibration(
+                args.bundle, args.output, investigation=not args.static
+            )
+        if args.operation == "prepare-review":
+            return prepare_agentic_review(
+                args.bundle, args.report, args.output, investigation=not args.static
+            )
+        if args.operation == "record-calibration":
+            return record_agentic_calibration(args.bundle, args.packet, args.run, args.output)
+        return record_agentic_review(args.bundle, args.report, args.packet, args.run, args.output)
+    if args.command == "treatment":
+        from skilleval.treatments import capture_skill
+
+        return capture_skill(
+            args.source,
+            args.license,
+            args.output,
+            source_url=args.source_url,
+            source_revision=args.source_revision,
+        )
     if args.command == "schema":
         return RECORDS[args.kind].model_json_schema()
     if args.command == "validate":
@@ -290,7 +392,11 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps({"status": "error", "error": message}), file=sys.stderr)
         return 2
     print(json.dumps(result, indent=2, ensure_ascii=False, allow_nan=False))
-    return 1 if result.get("status") in ("failed", "incomplete", "error", "partial") else 0
+    return (
+        1
+        if result.get("status") in ("failed", "incomplete", "error", "partial", "timed-out")
+        else 0
+    )
 
 
 if __name__ == "__main__":

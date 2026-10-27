@@ -14,43 +14,41 @@ shipped history. Private provenance stays outside public entries and issues.
 
 ## Open
 
+- **Judge reliability and label audit:** independently audit authored labels,
+  native verdicts and disagreements. The human audit remains pending; agreement
+  with authored labels does not establish general reliability. Check
+  injection, anchoring, position effects, treatment leakage, and repeat consistency.
+  Include cross-model or human checks before relying on judgments from the same
+  model family as the evaluated agents.
+- **General review coverage:** extend targeted known-defect probes to an auditable
+  missed/novel-defect family contract for real reports. Explicit coverage hypotheses
+  do not measure unaided discovery or exhaustive recall. Define duplicate handling
+  and severity policy before aggregate scores.
+- **Study orchestration:** immutable expanded run matrix, checked environment
+  admission at the actual dispatch boundary, interleaving, budget/timeout
+  enforcement, retries as new attempts, and paired report. The current seal
+  covers bounded controls. Incorporate retained full-workload and treatment
+  evidence into an explicit dispatch scope before any scored campaign.
+- **Assessment selection:** choose one declared assessment policy per analysis;
+  explicitly handle branching revisions and disagreement. Storage preserves all
+  records and does not select a winner.
+- **Request exposure telemetry:** a native development run observed a complete
+  successful read of the pinned skill, but the request-content detector matched
+  neither catalog metadata nor body. Investigate the actual native serialization
+  with a controlled public skill before expanding that detector. Preserve this
+  as unmeasured request exposure; failed matches do not prove absence.
 - **Recovery supervision:** the controller-interruption controls establish
   explicit same-state recovery, not automatic recovery after host loss. Add
   controller ownership/concurrency protection and supervision when study
   orchestration needs them. Real runtime stop/delete failures and host reboot
   remain outside the live controls; local fault-injection tests cover the
   refusal/retry contract.
-- **Native workload compatibility:** extend the successful bounded provider/tool
-  control to longer real reviews and grader tasks, including reasoning/history
-  forms not exercised by the small control. Preserve strict capability checks,
-  actual version/catalog identity, failures, and native event/exit evidence.
-- **Qualification packaging:** the opt-in controls and admission currently
-  require the source checkout. Move shared invocation policies into stable
-  package interfaces when adding the longer runner, preserving independent
-  outcome checks and producer/admission agreement tests. Installed-wheel
-  qualification is not yet a supported route.
-- **Skill packaging and observation:** preserve ordinary task instructions while
-  varying only skill availability, bind skill bytes, and observe actual discovery
-  and consultation. Reconcile native events with process outcomes and documented
-  usage semantics before matched trials.
+- **Qualification packaging:** the opt-in controls, native runner and admission
+  currently require the source checkout and share private package helpers.
+  Stabilize those interfaces when supporting installed-wheel qualification,
+  preserving independent outcome checks and producer/admission agreement tests.
 - **OCI portability:** attest media types/effective image policy before permitting
   registries other than explicit Docker Hub references in the pinned adapter.
-- **Native judge and label audit:** run calibration through the declared native
-  route and independently audit authored labels and disagreements. One external
-  development judge's agreement does not establish general reliability. Check
-  injection, anchoring, position effects, treatment leakage, and repeat consistency.
-- **General review coverage:** extend targeted known-defect probes to an auditable
-  missed/novel-defect family contract for real reports. Explicit coverage hypotheses
-  do not measure unaided discovery or exhaustive recall. Define duplicate handling
-  and severity policy before aggregate scores.
-- **Assessment selection:** choose one declared assessment policy per analysis;
-  explicitly handle branching revisions and disagreement. Storage preserves all
-  records and does not select a winner.
-- **Study orchestration:** immutable expanded run matrix, checked environment
-  admission at the actual dispatch boundary, interleaving, budget/timeout
-  enforcement, retries as new attempts, and paired report. The current seal
-  covers bounded controls; longer review budgets and skill packaging need fresh
-  controls before that scope expands.
 - **General task packages:** native inputs beyond the historical review exporter;
   protected holdouts, exposure tracking, and public/private packaging boundaries.
 - **Analysis:** prespecified estimands, clustered uncertainty, missing-data policy,

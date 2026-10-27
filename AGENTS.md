@@ -13,6 +13,7 @@ Native repository tools remain the authority for task-specific executable checks
 - `docs/system/CALIBRATION.md`: public authored controls, judge records, and limits.
 - `docs/system/GATEWAY.md`: explicit host inference capability and vendor provenance.
 - `docs/system/ENVIRONMENT.md`: evidence-bound admission, invalidation, and recovery.
+- `docs/system/NATIVE.md`: native reviews, static/investigative judges, and skill inputs.
 - `docs/project/BACKLOG.md`: concrete deferred work.
 - `docs/project/SOURCES.md`: evaluated sources, reuse candidates, and attribution.
 - `CONTRIBUTING.md`: scope, agent-assisted contributions, and review expectations.
