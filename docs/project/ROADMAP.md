@@ -16,7 +16,7 @@ Public GitHub hosting is the intended destination. The
 | 0 — Foundation | Python package, provisional records, copied evidence, CLI, project boundaries | Offline workflow passes; a historical case can be imported without changing its source | Implemented |
 | 1A — Environment | Prepared task image, fresh VM lifecycle, Codex adapter, explicit admission | Live controls on the exact host/runtime/image/tool route prove fidelity, isolation, bounded failure, cleanup, and a native model/tool loop | Bounded controls, admission, native runner and development dispatch implemented; scored scope pending |
 | 1B — Grader | Evidence packets, executable outcomes, semantic rubric, revision history, calibration | Frozen positive/negative/ambiguous examples distinguish accurate findings from plausible mistakes; human audit measures judge errors | Native judges, authored controls and separate reliability workflow implemented; independent audit and representative reliability evidence pending |
-| 2 — First paired pilot | Relevant real tasks with explicit skill ON/OFF, joint quality and efficiency reporting | Reproducible paired artifacts; invocation fidelity; validated usage/cost/time accounting; qualified environment and grader | Natural-availability development controller implemented; explicit use, representative tasks and accounting pending; scored pilot gated on 1A and 1B |
+| 2 — First paired pilot | Relevant real tasks with explicit skill ON/OFF, joint quality and efficiency reporting | Reproducible paired artifacts; invocation fidelity; validated usage/cost/time accounting; qualified environment and grader | Explicit-use/accounting integration verified live; representative repair adapter, independent quality and uncertainty pending; scored pilot gated on 1A and 1B |
 | 3 — Representative study | Declared task population, protected holdouts, repeated matched trials, uncertainty analysis | Enough independent task evidence for the prespecified decision; cost and failure effects reported | Pending pilot |
 | 4 — Expand usefully | More task families, natural discovery, pi adapter, TypeScript review UI | Each addition meets the same contracts and addresses a demonstrated workflow need | Deferred beyond adapters needed for the first selected skills |
 
@@ -106,20 +106,41 @@ environment fidelity, native transport, lifecycle and bounded admission controls
 passed on the resulting source revision. None of these results replaces the
 pending human audit or admits a scored campaign.
 
-## Next: explicit-use evaluation on relevant tasks
+## Next: a grounded repair pilot and joint outcome evidence
 
-Select skill/task candidates and independent outcome criteria, then prepare a
-development pilot to assess ceiling effects, task feasibility and grader gaps.
-Use separate frozen evaluation cases for the eventual comparison. The tiny
-authored examples remain grader sanity controls; their pending label audit does
-not block this design work. Human audit of representative evidence, environment
-qualification and a declared assessment policy still gate scored use.
+The reviewed [pilot shortlist](PILOT-CANDIDATES.md) proposes a public Python repair
+as the first development candidate, with browser implementation and writing as
+broader families. These are grounded candidates, not captured evaluation cases.
+Prepare the repair task/result adapter, frozen source and independent outcome
+checks; assess ceiling effects, feasibility and grader gaps before freezing
+separate evaluation tasks. Tiny authored examples remain grader sanity controls,
+not task-difficulty or ability evidence. Their pending label audit does not block
+this design work; representative human audit still gates scored use.
 
-Extend the current controller with an explicit-use treatment and the task/grader
-adapters required by the selected work. Qualify usage accounting, add dated cost
-estimates distinct from observed charges, separate agent and infrastructure time,
-and report quality/efficiency tradeoffs. The [vision](VISION.md) owns these outcome
-and comparison principles; [Backlog](BACKLOG.md#open) records the implementation gaps.
+New schema-2 study plans default to explicit-use ON/OFF, freezing the selected
+skill name, complete package and minimal invocation prefix with the shared task
+brief. Legacy schema-1 plans keep their natural-availability identity. Optional
+dated price schedules, normalized terminal native usage, broker core-total
+reconciliation and separate guest/host timings are implemented. The
+[accounting reference](../system/ACCOUNTING.md) owns their exact scopes: cache
+partition can remain native-only, estimates are conditional API equivalents,
+and actual charges remain unknown.
+
+Reports now expose descriptive ON-minus-OFF efficiency differences for eligible
+first attempts and operational ledgers including failures/retries. Quality remains
+unassessed and uncertainty is not estimated. Live verification on 2026-10-28
+completed an explicit-use pair on Codex 0.164.0: core token totals matched the
+broker in both arms, the ON skill body appeared in all eleven observed requests,
+and agent/stage timers and conditional prices reached the report. No separate
+skill read was observed; body exposure does not establish semantic application.
+Offline, authenticated and lifecycle controls renewed bounded admission on this
+source revision. All eight VM runs cleaned up and pruned disposable image copies;
+the pending audit remained unchanged. This verifies treatment delivery and
+accounting integration, not a representative pilot or an efficiency effect.
+Independent quality assessment, broader accounting qualification and joint
+quality/efficiency analysis remain next work. The
+[vision](VISION.md) owns comparison principles; [Backlog](BACKLOG.md#open) owns
+the unresolved implementation and evidence gaps.
 
 The [development study controller](../system/STUDIES.md) now supplies the frozen
 matrix, sequential randomized pairing, explicit budgets, append-only attempts,

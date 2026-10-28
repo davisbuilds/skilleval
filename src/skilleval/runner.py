@@ -11,11 +11,13 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import math
 import os
 import re
 import stat
 import sys
 import tarfile
+import time
 from collections.abc import Callable
 from dataclasses import asdict
 from pathlib import Path, PurePosixPath
@@ -23,6 +25,7 @@ from typing import Any, Literal
 
 from skilleval import evidence, guest_runner
 from skilleval._vendor import openbench_gateway as vendor
+from skilleval.accounting import normalize_codex_usage
 from skilleval.errors import SkillEvalError
 from skilleval.gateway import (
     EFFORT,
@@ -622,6 +625,7 @@ def run_native(
     Prompt contents are retained privately. Neither auth bytes nor host settings
     are mounted/copied. Every call needs a fresh, non-nested output directory.
     """
+    started = time.monotonic()
     if (
         mode not in {"review", "judge"}
         or not isinstance(prompt, str)
@@ -686,6 +690,20 @@ def run_native(
     protocol_rejections: list[dict[str, Any]] = []
     skill_detector: Callable[[bytes], dict[str, Any]] | None = None
     guest_skill_path: str | None = None
+    parsed: dict[str, Any] = {"events": [], "parse_errors": []}
+    timings: dict[str, Any] = {
+        "schema_version": 1,
+        "agent_seconds": None,
+        "setup_seconds": None,
+        "native_step_seconds": None,
+        "collection_seconds": None,
+        "cleanup_seconds": None,
+        "total_seconds": None,
+        "agent_basis": "guest monotonic native subprocess lifetime including termination",
+        "host_basis": "host monotonic stages through VM cleanup; excludes receipt publication",
+    }
+    native_started: float | None = None
+    collection_started: float | None = None
 
     def observe_request(raw: bytes) -> None:
         if len(request_records) >= 32:
@@ -797,11 +815,15 @@ def run_native(
                 ),
                 "prepare_task",
             )
+            native_started = time.monotonic()
+            timings["setup_seconds"] = native_started - started
             native = session.guest(
                 "native_task",
                 ["python3", GUEST_ROOT + "/runner.py", GUEST_ROOT, GUEST_WORK],
                 native_timeout_seconds + 30,
             )
+            collection_started = time.monotonic()
+            timings["native_step_seconds"] = collection_started - native_started
             report["native_controller"] = native
             collection = session.guest(
                 "collection_status", ["cat", GUEST_ROOT + "/collection.json"]
@@ -821,6 +843,14 @@ def run_native(
                 "manifest_sha256": file_digest(output / "artifacts.json"),
             }
             process, raw, final = _read_native(archive, max_artifact_bytes)
+            agent_seconds = process.get("agent_elapsed_seconds")
+            if (
+                isinstance(agent_seconds, (int, float))
+                and not isinstance(agent_seconds, bool)
+                and 0 <= agent_seconds <= timings["native_step_seconds"] + 1
+                and math.isfinite(agent_seconds)
+            ):
+                timings["agent_seconds"] = agent_seconds
             _exclusive(output / "events.jsonl", raw)
             _exclusive(output / "final.txt", final)
             report.update({"process": process, "final_text": "final.txt", "events": "events.jsonl"})
@@ -893,7 +923,24 @@ def run_native(
             report["request_count"] = sum(row.get("event") == "request" for row in broker.receipts)
         report["request_observations"] = request_records
         report["protocol_rejections"] = protocol_rejections
+        cleanup_started = time.monotonic()
+        if collection_started is not None:
+            timings["collection_seconds"] = cleanup_started - collection_started
+        elif native_started is None:
+            timings["setup_seconds"] = cleanup_started - started
         ticket = session.cleanup()
+        timings["cleanup_seconds"] = time.monotonic() - cleanup_started
+        timings["total_seconds"] = time.monotonic() - started
+        report["timings"] = timings
+        report["usage_accounting"] = normalize_codex_usage(
+            parsed["events"],
+            codex_identity=report.get("codex_identity", {}),
+            model=MODEL,
+            provider_observations=[
+                row for row in report.get("broker_receipts", []) if row.get("event") == "request"
+            ],
+            parse_errors=parsed["parse_errors"],
+        )
         for key in (
             "cleanup_complete",
             "runtime_home_removed",

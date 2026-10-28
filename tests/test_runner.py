@@ -69,14 +69,18 @@ elif args[:2]==['machine','exec']:
   (state/'scenario.json').write_text(json.dumps(scenario))
   fault=scenario.get('fault')
   process={'returncode':0,'timed_out':False,'codex_version':'codex-cli 0.164.0'}
+  if scenario.get('complete_usage'):process['agent_elapsed_seconds']=0.01
   output_size=5*1024*1024 if fault=='large-output' else 90000
   events=[{'type':'thread.started','thread_id':'synthetic'},
    {'type':'item.completed','item':{'type':'command_execution','status':'completed',
     'command':'synthetic-fixture-command',
     'exit_code':1,'aggregated_output':'expected failing probe '+('x'*output_size)}}]
+  if scenario.get('complete_usage'):events.insert(1,{'type':'turn.started'})
   if fault=='events-error':events.append({'type':'error','message':'synthetic failure'})
   if fault=='timed-out':process.update(returncode=-15,timed_out=True)
   if fault!='timed-out':events.append({'type':'turn.completed','usage':{'input_tokens':3}})
+  if scenario.get('complete_usage') and fault!='timed-out':
+   events[-1]['usage']={'input_tokens':3,'cached_input_tokens':1,'output_tokens':2}
   raw='\n'.join(json.dumps(e) for e in events).encode()
   entries['evidence/events.jsonl']=(raw,0o600)
   if fault!='timed-out':entries['evidence/final.txt']=(b'Final synthetic answer',0o600)
@@ -113,7 +117,16 @@ def route(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
         handle = SimpleNamespace(
             socket_path=directory / "inference.sock",
             clean=True,
-            receipts=[{"event": "request", "outcome": "complete", "upstream_status": 200}],
+            receipts=[
+                {
+                    "event": "request",
+                    "outcome": "complete",
+                    "upstream_status": 200,
+                    "request_id": "synthetic-request",
+                    "model": "gpt-6.1-sol",
+                    "usage": {"input_tokens": 3, "output_tokens": 2, "total_tokens": 5},
+                }
+            ],
         )
         try:
             yield handle
@@ -408,6 +421,7 @@ def test_actual_native_child_deadline_retains_streamed_output_and_kills_group(
         [sys.executable, str(child)], {"PATH": os.defpath}, prompt, tmp_path, tmp_path, 1
     )
     assert result["timed_out"] is True and result["returncode"] != 0
+    assert 1 <= result["agent_elapsed_seconds"] < 8
     assert (tmp_path / "events.jsonl").stat().st_size > 90000
     assert (tmp_path / "events.jsonl").read_text().startswith("explicit input")
     assert "descendant-ready" in (tmp_path / "stderr.log").read_text()

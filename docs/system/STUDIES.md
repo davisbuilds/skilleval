@@ -5,11 +5,14 @@ grader audit remains pending. It never grants scored admission or converts an
 execution status into a correctness score. Judge reliability controls and native
 assessment recording remain separate workflows.
 
-This document describes the implemented natural-availability controller. The
-selected next scope is explicit-use ON/OFF evaluation with joint quality and
-efficiency reporting; see [the roadmap](../project/ROADMAP.md). Current usage fields
-are retained observations, not validated aggregate token accounting or prices.
-Existing plans and runs keep their original treatment identity.
+New plans default to explicit-use ON/OFF. Legacy plans and runs retain their
+natural-availability identity. Native usage normalization, optional conditional
+pricing and descriptive efficiency reporting are implemented; the
+[accounting contract](ACCOUNTING.md) states their semantics and remaining limits.
+Live development verification on 2026-10-28 completed both arms, matched core
+usage against broker receipts and observed the full ON skill body in the first
+provider request. No execution status or efficiency difference establishes task
+quality or skill benefit.
 
 ## Freeze and execute
 
@@ -17,7 +20,7 @@ Existing plans and runs keep their original treatment identity.
 `examples/studies/development.template.json`, supplying frozen native task
 snapshots, their separately retained digests, a captured skill bundle, and the
 explicit runtime/image/catalog paths. Source images and task bundles stay outside
-run directories. Task prompts are identical across the two arms. The native route
+run directories. The common task brief is unchanged across arms. The native route
 currently pins GPT-6.1 Sol/high; the observed Codex version remains in each outcome.
 Duplicate task snapshots are repetitions, not independent task IDs.
 
@@ -31,10 +34,29 @@ uv run skilleval study report study-plan.json --sha256 PLAN_SHA256 \
 
 Planning does not launch a VM or read credentials. It freezes prompt/task/skill
 identities, runtime and control-source fingerprints, image identity, native
-budgets, retry limit, and expanded dispatch order. Task/repetition blocks are
-shuffled with the declared seed; each adjacent pair has randomly ordered absent
-and available arms. Execution is sequential. Natural skill availability is the
-only treatment; forced consultation is outside this comparison.
+budgets, optional price schedule, retry limit, and expanded dispatch order. New
+schema-2 plans also freeze the skill name and each arm's exact invocation:
+
+- OFF (`absent`) receives the original task prompt without the selected skill.
+- ON (`available`) installs the complete captured package and prefixes that prompt
+  with `Use $skill-name for this task.` followed by a blank line.
+
+This is an explicit request through the native harness, not a guarantee of
+consultation or successful application. Missing read observations remain unknown;
+explicit native injection can expose the complete body without a separate read.
+The native receipt retains request-exposure observations independently of reads.
+Selecting `natural-availability` keeps both prompts identical. Schema-1 plans
+remain natural-availability comparisons and cannot acquire invocation or pricing
+policies by reinterpretation; retain their original bytes and digests.
+
+Task/repetition blocks are shuffled with the declared seed; each adjacent pair
+has randomly ordered absent and available arms. Execution is sequential.
+
+An optional `price_schedule` is embedded in the study spec and frozen plan;
+`null` leaves cost unknown. `schema price-schedule` owns its fields. The dated
+[standard API scenario](../../examples/pricing/gpt-6.1-sol-standard-2026-10-28.json)
+is an example input, not an observed charge or a claim about subscription billing.
+Preserve its source, retrieval date and applicability limits when selecting it.
 
 Retain the returned plan digest separately. Changed inputs or code require a new
 plan. Before every attempt, including retries, the controller rechecks the frozen
@@ -81,14 +103,29 @@ lock nor reconciliation is a host-loss watchdog or automatic recovery service.
 
 Primary comparisons always use the first attempt for each cell. A successful
 retry cannot replace an earlier failure in that comparison. All later attempts,
-unstarted cells and incomplete cleanup remain visible. Paired elapsed differences
-require completed first attempts, known elapsed values and matching observed
-harness identities; elapsed includes setup and teardown. Usage is retained with
-its reported fields, and missing usage remains null.
+unstarted cells and incomplete cleanup remain visible. Descriptive paired
+efficiency differences use ON minus OFF and require clean completed first attempts
+with matching non-null observed harness identities. Each token/time difference
+requires its own complete observations; cost differences additionally require
+identical frozen schedules. Missing values stay null. The legacy whole-attempt
+elapsed difference includes infrastructure work; guest agent time and host stage
+timings are separate observations, not interchangeable durations.
 
-Task quality and quality differences remain unassessed. Native completion, a skill
-read, a parseable judgment or a stable judge is not correctness or skill benefit.
+The operational ledger includes every recorded attempt, including failures,
+unfinished attempts and retries. It reports known subtotals and unknown counts;
+an incomplete subtotal is not a total. Different schedules remain separate, and
+unstarted cells are not zero-cost observations. See [accounting](ACCOUNTING.md)
+for native/provider reconciliation, cache limitations, pricing and timing scopes.
+
+Task quality and quality differences remain unassessed; uncertainty is not
+estimated. Native completion, a skill read, a parseable judgment or a stable judge
+is not correctness or skill benefit.
 The human audit packet remains frozen. Before scored studies, extend admission to
 the actual task/treatment/dispatch route, resolve independent grader validation,
 and freeze duplicate/severity/coverage and assessment-selection policies. Known
 defect probes do not measure exhaustive review recall.
+
+The [pilot shortlist](../project/PILOT-CANDIDATES.md) proposes a Python repair as
+the first development candidate. Its repair task/result adapter, independent
+checks and workload qualification remain next work. Explicit-use support does
+not convert that candidate into a review task or a captured evaluation case.

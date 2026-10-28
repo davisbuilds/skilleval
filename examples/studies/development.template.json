@@ -2,6 +2,8 @@
   "schema_version": 1,
   "study_id": "development-pair",
   "scope": "development-only",
+  "invocation_policy": "explicit-use",
+  "price_schedule": null,
   "tasks": [
     {
       "task_id": "review-task",

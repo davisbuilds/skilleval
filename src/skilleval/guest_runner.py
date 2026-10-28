@@ -49,6 +49,7 @@ def _execute_native(
         (evidence / "stderr.log").open("wb") as stderr,
         prompt.open("rb") as stdin,
     ):
+        started = time.monotonic()
         process = subprocess.Popen(
             argv,
             stdin=stdin,
@@ -65,7 +66,11 @@ def _execute_native(
             timed_out = True
         finally:
             _stop(process)
-    return {"returncode": process.returncode, "timed_out": timed_out}
+    return {
+        "returncode": process.returncode,
+        "timed_out": timed_out,
+        "agent_elapsed_seconds": time.monotonic() - started,
+    }
 
 
 def _archive(root: Path, work: Path, maximum: int, count: int) -> dict[str, Any]:

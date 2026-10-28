@@ -16,11 +16,15 @@ The [judge reliability workflow](docs/system/RELIABILITY.md) prepares separately
 versioned repeat/order/perturbation controls and compares retained native results.
 The [study controller](docs/system/STUDIES.md) freezes development pairs, budgets
 and retry policy, records every attempt, and reports first-attempt comparisons.
-Its current treatment is natural availability; explicit invocation and validated
-efficiency accounting remain implementation work in the [roadmap](docs/project/ROADMAP.md).
+New plans default to explicit-use ON/OFF; legacy plans retain natural availability.
+[Accounting](docs/system/ACCOUNTING.md) separates normalized native usage,
+conditional API-equivalent estimates, agent time and infrastructure stages. Paired
+efficiency differences are descriptive; quality remains unassessed and uncertainty
+is not estimated. A development pair on 2026-10-28 verified explicit invocation,
+broker-matched core token totals and separate agent timing on Codex 0.164.0.
 Independent human audit and scored-study admission remain pending.
 
-A first development pair and native calibration sessions completed. Fresh judges
+Earlier development pairs and native calibration sessions completed. Fresh judges
 also traced contracts and ran reproductions for the real reports, retaining
 original citations and investigation artifacts. These are development workflows:
 independent human grader audit and scored dispatch remain pending, and no scored
@@ -29,6 +33,9 @@ campaign has run. The [roadmap](docs/project/ROADMAP.md) records the evidence li
 Python owns the core and CLI. A TypeScript review UI and a pi adapter are later
 work. See the [roadmap](docs/project/ROADMAP.md),
 [vision](docs/project/VISION.md), and [architecture](docs/system/ARCHITECTURE.md).
+The [pilot shortlist](docs/project/PILOT-CANDIDATES.md) grounds the next task
+adapters in repair, browser implementation and writing; these are candidates,
+not captured evaluation cases or admitted trials.
 
 ## Start locally
 
@@ -275,8 +282,10 @@ invalid input or an operational error, and 130 means interruption. Help/version
 are plain text. `schema KIND` exposes provisional version-1 records; `validate
 KIND FILE` checks structure, never experimental validity or truth.
 
-There is no automatic retry, resume, assessment selection, remote submission, or
-campaign execution. Runtime execution and recovery are explicit opt-in operations.
+The development study controller supports declared retries and explicit resume;
+first attempts remain primary. There is no automatic assessment selection, remote
+submission or scored campaign execution. Runtime execution and recovery are
+explicit opt-in operations.
 
 ## Development
 

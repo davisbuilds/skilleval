@@ -14,27 +14,22 @@ shipped history. Private provenance stays outside public entries and issues.
 
 ## Open
 
-- **Skill-relevant task population:** define the work and plausible contribution
-  of selected independently supplied skills, then choose real task candidates
-  with independent quality criteria. Current review exports and tiny authored
-  controls do not cover that population. Pilot for ceiling effects and feasibility,
-  retain selection decisions, and freeze separate evaluation cases; do not retain
-  only vanilla failures or observed skill wins. Add required task/grader adapters
-  as the selected work demands them.
-- **Explicit-use treatment:** the controller currently compares absent versus
-  naturally available skills. Implement a separately identified explicit-use ON
-  treatment, freezing the minimal invocation difference, full package and common
-  task/environment inputs. Keep existing runs unchanged and consultation failures
-  visible. Upstream-versus-adaptation comparisons are outside initial scope.
-- **Quality and efficiency accounting:** qualify reported usage semantics before
-  summing turns or applying rates; capture independent observations where available.
-  Report input/cached/output usage without double counting, missing fields as
-  unknown, and observed charges separately from dated rate-based estimates.
-  Include skill overhead and failed/retried attempts under the declared policy;
-  keep judge/evaluation spend separate. Separate agent time from setup/cleanup,
-  retain cache behavior, and report paired quality/cost/time tradeoffs with
-  uncertainty. Current study output retains usage and whole-attempt elapsed time
-  but does not implement these accounting or analysis contracts.
+- **Skill-relevant task pilot:** use the grounded
+  [shortlist](PILOT-CANDIDATES.md) to prepare the first Python repair task/result
+  adapter, independent outcome checks and a frozen development snapshot. Qualify
+  its actual writable route rather than force it into review output. Check
+  headroom and feasibility, retain selection decisions, and freeze separate
+  evaluation cases; do not retain only vanilla failures or observed skill wins.
+  Browser and writing candidates need their own environments/graders when selected.
+- **Joint quality and efficiency analysis:** connect independently assessed task
+  outcomes to consumption and report quality/cost/time tradeoffs with uncertainty.
+  Preserve failures, retries and missing observations; keep judge/evaluation spend
+  separate. Current differences are descriptive, task quality is unassessed, and
+  no uncertainty estimate is implemented. Add independently supported cache
+  partition evidence and actual tier/context/charge contracts before broadening
+  the conditional API-equivalent scenario; never infer observed charges from it.
+  Prespecify estimands, missing-data policy and repeated-run analysis, with
+  uncertainty that respects task/repository clustering.
 - **Judge reliability and label audit:** independently audit authored labels,
   native verdicts and disagreements. The human audit remains pending; agreement
   with authored labels does not establish general reliability. The separate
@@ -64,6 +59,9 @@ shipped history. Private provenance stays outside public entries and issues.
   a public skill before supporting aliases or broadening the detector. Preserve
   the earlier all-unmatched run as unresolved historical evidence; the new positive
   body control does not explain or repair it. Failed matches do not prove absence.
+  An explicit-use pair on 2026-10-28 matched body and metadata in every ON request,
+  including the first. That native injection path does not resolve the earlier
+  natural-availability catalog mismatch or establish semantic application.
 - **Recovery supervision:** the controller-interruption controls establish
   explicit same-state recovery, not automatic recovery after host loss. Study
   outputs now have a local controller lock, durable attempt publication and
@@ -79,8 +77,6 @@ shipped history. Private provenance stays outside public entries and issues.
   registries other than explicit Docker Hub references in the pinned adapter.
 - **General task packages:** protected holdouts, exposure tracking, and
   public/private packaging boundaries for the selected task population.
-- **Analysis:** prespecified estimands, clustered uncertainty, missing-data policy
-  and repeated-run variance; use the task population and accounting contracts above.
 - **Portability checks:** run filesystem/process tests on Linux in addition to the
   initial macOS validation. Synthetic subprocess tests cannot establish real VM
   compatibility on either platform.

@@ -123,8 +123,10 @@ The recorder requires a `findings` array with nonempty `title` and `body` string
 locations, original priority/severity fields and an optional summary supply
 additional context. Do not replace a task's numeric priority convention with an
 invented severity scale. `[]` is valid report content; a missing or malformed
-findings list is not a clean report. Use the same task and prompt for matched
-absent/available skill inputs. Review mode omits `--judge-policy`.
+findings list is not a clean report. Keep the task brief fixed across arms; the
+[study controller](STUDIES.md) freezes the minimal explicit-use invocation
+difference. Natural-availability comparisons use identical prompts. Review mode
+omits `--judge-policy`.
 
 Once the review run has stopped and its evidence is retained, prepare the judge
 against the original captured evidence and the native final report:
@@ -182,8 +184,10 @@ The runner installs the selected skill only into the fresh guest
 `CODEX_HOME/skills/<name>`. Ordinary task instructions remain intact; baseline
 checks reject embedded skill and Codex configuration paths. The Python
 `treatments.prepare_pair` operation prepares equal task/prompt bytes and separate
-absent/available Codex homes. Native execution is still explicit; no scored paired
-dispatcher or forced skill invocation is supplied.
+absent/available Codex homes for natural-availability controls. The separate
+[study controller](STUDIES.md) defaults new plans to explicit native skill
+invocation and freezes each arm's prompt. Neither workflow admits scored work
+or guarantees successful skill application.
 
 Distinguish these observations:
 

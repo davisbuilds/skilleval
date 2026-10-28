@@ -7,6 +7,7 @@ import hashlib
 import json
 import os
 import random
+import re
 import tempfile
 import time
 import uuid
@@ -18,8 +19,10 @@ from typing import Any, Literal
 from pydantic import Field, model_validator
 
 from skilleval import evidence, runner
+from skilleval.accounting import PriceSchedule, estimate_api_equivalent_cost
 from skilleval.admission import check_admission
 from skilleval.contracts import Digest, Identifier, Record
+from skilleval.efficiency import efficiency_ledger, pair_efficiency
 from skilleval.errors import SkillEvalError
 from skilleval.gateway import EFFORT, MODEL, GatewayLimits
 from skilleval.grading import _read_regular
@@ -48,6 +51,8 @@ class StudySpec(Record):
     catalog: str = Field(min_length=1)
     repetitions: int = Field(default=1, ge=1, le=100)
     order_seed: int = Field(ge=0)
+    invocation_policy: Literal["explicit-use", "natural-availability"] = "explicit-use"
+    price_schedule: PriceSchedule | None = None
     max_attempts_per_cell: int = Field(default=1, ge=1, le=5)
     native_timeout_seconds: int = Field(default=600, ge=1, le=780)
     max_requests_per_attempt: int = Field(default=32, ge=1, le=32)
@@ -58,6 +63,8 @@ class StudySpec(Record):
 
     @model_validator(mode="after")
     def distinct_inputs(self) -> StudySpec:
+        if self.price_schedule is not None and self.price_schedule.model != MODEL:
+            raise ValueError("price schedule must cover the study model")
         if len({task.task_id for task in self.tasks}) != len(self.tasks):
             raise ValueError("task IDs must be unique")
         if len({task.input_sha256 for task in self.tasks}) != len(self.tasks):
@@ -121,6 +128,22 @@ def _matrix(spec: StudySpec) -> list[dict[str, Any]]:
     return cells
 
 
+def _invocations(spec: StudySpec, skill_name: str) -> dict[str, dict[str, str]]:
+    """Freeze task prompts separately from the minimal selected-skill request."""
+    if (
+        not isinstance(skill_name, str)
+        or re.fullmatch(r"[a-z0-9][a-z0-9-]{0,63}", skill_name) is None
+    ):
+        raise SkillEvalError("invalid frozen skill name")
+    prefix = (
+        f"Use ${skill_name} for this task.\n\n" if spec.invocation_policy == "explicit-use" else ""
+    )
+    return {
+        task.task_id: {"absent": task.prompt, "available": prefix + task.prompt}
+        for task in spec.tasks
+    }
+
+
 def _check_inputs(spec: StudySpec) -> dict[str, Any]:
     for task in spec.tasks:
         manifest = evidence.verify(Path(task.input_bundle), task.input_sha256)
@@ -146,8 +169,10 @@ def prepare_study(spec: StudySpec, destination: Path) -> dict[str, Any]:
     identity = snapshot_identity(spec.runtime)
     destination = Path(os.path.abspath(destination))
     _outside_inputs(spec, destination)
+    skill_manifest, _ = _verified_skill(Path(spec.skill_bundle), spec.skill_sha256)
+    skill_name = skill_manifest["meta"]["skill_name"]
     value: dict[str, Any] = {
-        "schema_version": 1,
+        "schema_version": 2,
         "kind": "skilleval-study-plan",
         "spec": spec.model_dump(mode="json"),
         "model": MODEL,
@@ -155,6 +180,8 @@ def prepare_study(spec: StudySpec, destination: Path) -> dict[str, Any]:
         "identity": identity,
         "image": image,
         "assignments": _matrix(spec),
+        "skill_name": skill_name,
+        "invocations": _invocations(spec, skill_name),
     }
     digest = _new(destination, value)
     cells = len(value["assignments"])
@@ -188,9 +215,20 @@ def _plan(path: Path, expected: str) -> tuple[dict[str, Any], StudySpec]:
     value = evidence._parse_json(raw)
     if not isinstance(value, dict):
         raise SkillEvalError("expected a study JSON object")
-    if value.get("kind") != "skilleval-study-plan" or value.get("schema_version") != 1:
+    if value.get("kind") != "skilleval-study-plan" or value.get("schema_version") not in {1, 2}:
         raise SkillEvalError("unsupported study plan")
-    spec = StudySpec.model_validate_json(json.dumps(value["spec"]))
+    data = dict(value["spec"])
+    if value["schema_version"] == 1:
+        if "invocation_policy" in data or "price_schedule" in data:
+            raise SkillEvalError("legacy plans cannot declare new treatment or pricing policies")
+        data["invocation_policy"] = "natural-availability"
+    elif "invocation_policy" not in data or "price_schedule" not in data:
+        raise SkillEvalError("new plans must freeze invocation and pricing policies")
+    spec = StudySpec.model_validate_json(json.dumps(data))
+    if value["schema_version"] == 2 and value.get("invocations") != _invocations(
+        spec, value.get("skill_name", "")
+    ):
+        raise SkillEvalError("frozen invocation prompts differ from treatment policy")
     if value["assignments"] != _matrix(spec) or (value["model"], value["effort"]) != (
         MODEL,
         EFFORT,
@@ -202,6 +240,10 @@ def _plan(path: Path, expected: str) -> tuple[dict[str, Any], StudySpec]:
 def _dispatch_check(plan: dict[str, Any], spec: StudySpec) -> dict[str, Any] | None:
     if snapshot_identity(spec.runtime) != plan["identity"] or _check_inputs(spec) != plan["image"]:
         raise SkillEvalError("study inputs or execution identity changed; prepare a new plan")
+    if plan["schema_version"] == 2:
+        manifest, _ = _verified_skill(Path(spec.skill_bundle), spec.skill_sha256)
+        if manifest["meta"]["skill_name"] != plan["skill_name"]:
+            raise SkillEvalError("frozen skill invocation name differs from captured package")
     if spec.admission is None:
         return None
     assert spec.admission_sha256 is not None
@@ -269,6 +311,10 @@ def _terminal(path: Path, plan_sha: str, cell: dict[str, Any]) -> dict[str, Any]
         _check_native(path, report)
         if any(outcome[key] != value for key, value in _summary_fields(report).items()):
             raise SkillEvalError("attempt summary differs from native evidence")
+    if "cost" in outcome:
+        native = _document(path / "native/native-run.json") if receipt is not None else None
+        if outcome["cost"] != _cost(path, native):
+            raise SkillEvalError("attempt cost differs from frozen rates and usage evidence")
     if (path / "reconciled-recovery.json").exists():
         recovery = _document(path / "reconciled-recovery.json")
         if (
@@ -308,7 +354,18 @@ def _summary_fields(report: dict[str, Any]) -> dict[str, Any]:
         "request_count": report.get("request_count"),
         "skill_consultation": report.get("skill_consultation"),
         "harness_identity": report.get("codex_identity"),
+        **{key: report[key] for key in ("usage_accounting", "timings") if key in report},
     }
+
+
+def _cost(path: Path, report: dict[str, Any] | None) -> dict[str, Any]:
+    schedule = _document(path / "dispatch.json").get("price_schedule")
+    usage = (report or {}).get("usage_accounting", {"model": MODEL, "status": "unknown"})
+    return estimate_api_equivalent_cost(
+        usage,
+        PriceSchedule.model_validate_json(json.dumps(schedule)) if schedule is not None else None,
+        model=MODEL,
+    )
 
 
 def _check_native(path: Path, report: dict[str, Any]) -> None:
@@ -372,6 +429,7 @@ def _record_outcome(
         "harness_identity": report.get("codex_identity") if report else None,
         "task_quality": "unassessed",
         "error_kind": error,
+        "cost": _cost(path, report),
     }
     if report is not None:
         value.update(_summary_fields(report))
@@ -425,11 +483,16 @@ def run_study(
                 admission = _dispatch_check(plan, spec)
                 path = output / "attempts" / cell["cell_id"] / f"attempt-{len(attempts) + 1:03}"
                 task = tasks[cell["task_id"]]
+                prompt = (
+                    plan["invocations"][task.task_id][cell["arm"]]
+                    if plan["schema_version"] == 2
+                    else task.prompt
+                )
                 path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
                 expected = {
                     "mode": "review",
                     "input_digest": task.input_sha256,
-                    "prompt_sha256": hashlib.sha256(task.prompt.encode()).hexdigest(),
+                    "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
                     "model": MODEL,
                     "effort": EFFORT,
                     "image": plan["image"],
@@ -450,6 +513,10 @@ def run_study(
                             "admission": admission,
                             "scope": "development-only",
                             "native_expected": expected,
+                            "invocation_policy": spec.invocation_policy,
+                            "price_schedule": spec.price_schedule.model_dump(mode="json")
+                            if spec.price_schedule is not None
+                            else None,
                         },
                     )
                     evidence._publish(Path(temporary), path)
@@ -464,7 +531,7 @@ def run_study(
                     report = runner.run_native(
                         Path(task.input_bundle),
                         task.input_sha256,
-                        task.prompt,
+                        prompt,
                         path / "native",
                         runtime=Path(spec.runtime),
                         image=Path(spec.image),
@@ -540,7 +607,7 @@ def report_study(plan_path: Path, expected_sha256: str, output: Path) -> dict[st
             }
         )
         pairs.setdefault(cell["pair_id"], {})[cell["arm"]] = primary
-    paired = []
+    paired: list[dict[str, Any]] = []
     for pair_id, arms in pairs.items():
         both = all(arms.get(arm) is not None for arm in ("absent", "available"))
         comparable = (
@@ -561,6 +628,9 @@ def report_study(plan_path: Path, expected_sha256: str, output: Path) -> dict[st
                 if timed
                 else None,
                 "task_quality_difference": None,
+                "efficiency": pair_efficiency(
+                    arms.get("available"), arms.get("absent"), comparable=comparable
+                ),
             }
         )
     settled = all(
@@ -579,13 +649,33 @@ def report_study(plan_path: Path, expected_sha256: str, output: Path) -> dict[st
         "scored_admitted": False,
         "human_audit": "required-pending",
         "primary_attempt_policy": spec.primary_attempt_policy,
+        "invocation_policy": spec.invocation_policy,
         "cells": cells,
         "pairs": paired,
+        "efficiency_ledger": efficiency_ledger(cells),
+        "pair_coverage": {
+            "planned": len(paired),
+            "harness_comparable": sum(pair["harness_comparable"] for pair in paired),
+            "known_token_delta": sum(
+                pair["efficiency"]["token_deltas"]["total_tokens"] is not None for pair in paired
+            ),
+            "known_cost_delta": sum(
+                pair["efficiency"]["estimated_api_equivalent_usd_delta"] is not None
+                for pair in paired
+            ),
+            "known_agent_time_delta": sum(
+                pair["efficiency"]["timing_deltas_seconds"]["agent_seconds"] is not None
+                for pair in paired
+            ),
+        },
         "planned_cells": len(cells),
         "primary_completed_cells": sum(c["primary"] is not None for c in cells),
         "limits": [
             "Execution completion is not correctness or skill effectiveness.",
             "Elapsed time includes VM setup and teardown; missing usage stays unknown.",
+            "Stage timings separate native subprocess time from host setup and cleanup.",
+            "Cost is a conditional API-equivalent estimate, not an observed charge.",
+            "Descriptive efficiency differences do not establish quality or statistical effects.",
             "Retries remain separate and never replace the first attempt in primary comparisons.",
         ],
     }

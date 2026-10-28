@@ -139,6 +139,10 @@ tool commands can occur in otherwise completed turns. Malformed evidence makes
 stream status unknown. The native workload runner retains these observations
 alongside process exit/timeout, broker receipts and cleanup. Usage remains a
 reported observation; the parser does not estimate missing tokens or cost.
+The runner's separate [accounting layer](ACCOUNTING.md) normalizes one complete
+cumulative terminal snapshot, cross-checks broker core totals and records timing
+scopes. Study reports apply an optional frozen price scenario and retain unknowns;
+they do not infer actual charges or assessed task quality.
 
 Harness compatibility is separate from run identity. Stable Codex patch and
 minor releases at or after the inspected baseline within the same major version
@@ -205,7 +209,9 @@ an optional supplied root notice. Installation targets only a fresh guest
 `CODEX_HOME/skills`, preserving tree bytes and executable flags. Ordinary task
 instructions remain; embedded skill and Codex configuration paths are rejected
 by the baseline check. Matched preparation keeps task and prompt bytes equal and
-varies skill availability separately. It does not force skill invocation.
+varies skill availability separately. That helper does not request invocation;
+the [study controller](STUDIES.md) separately freezes the explicit-use prefix for
+new ON arms and preserves natural-availability semantics for legacy plans.
 
 Availability alone does not establish native discovery. Conservative detectors
 record selected skill metadata or complete body in actual decoded broker requests,

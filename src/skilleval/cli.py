@@ -12,6 +12,7 @@ from typing import Any
 from pydantic import ValidationError
 
 from skilleval import __version__
+from skilleval.accounting import PriceSchedule
 from skilleval.calibration import CalibrationResult
 from skilleval.contracts import Assessment, Attempt, Experiment, Record, Task
 from skilleval.errors import SkillEvalError
@@ -30,6 +31,7 @@ RECORDS: dict[str, type[Record]] = {
     "reliability-suite": ReliabilitySuite,
     "reliability-observations": ReliabilityObservations,
     "study-spec": StudySpec,
+    "price-schedule": PriceSchedule,
 }
 
 
