@@ -1,8 +1,10 @@
 # skilleval
 
-Local-first experiments measuring whether a skill improves an agent's work on
-real tasks. Compare matched skill and vanilla runs, preserve what happened, and
-grade outcomes using executable checks, semantic assessment, and human review.
+Local-first experiments measuring how a skill changes an agent's quality,
+outcomes, token consumption, cost and time on relevant real tasks. The selected
+direction is explicit-use skill ON/OFF comparisons for independently supplied
+skills from any source. Preserve what happened and grade outcomes using
+executable checks, semantic assessment, and human review.
 
 The foundation supports **evidence capture, native reviews, pinned skill inputs,
 and static or investigative judging**. Native Codex runs in fresh smolvm guests
@@ -14,6 +16,8 @@ The [judge reliability workflow](docs/system/RELIABILITY.md) prepares separately
 versioned repeat/order/perturbation controls and compares retained native results.
 The [study controller](docs/system/STUDIES.md) freezes development pairs, budgets
 and retry policy, records every attempt, and reports first-attempt comparisons.
+Its current treatment is natural availability; explicit invocation and validated
+efficiency accounting remain implementation work in the [roadmap](docs/project/ROADMAP.md).
 Independent human audit and scored-study admission remain pending.
 
 A first development pair and native calibration sessions completed. Fresh judges

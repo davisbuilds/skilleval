@@ -14,6 +14,27 @@ shipped history. Private provenance stays outside public entries and issues.
 
 ## Open
 
+- **Skill-relevant task population:** define the work and plausible contribution
+  of selected independently supplied skills, then choose real task candidates
+  with independent quality criteria. Current review exports and tiny authored
+  controls do not cover that population. Pilot for ceiling effects and feasibility,
+  retain selection decisions, and freeze separate evaluation cases; do not retain
+  only vanilla failures or observed skill wins. Add required task/grader adapters
+  as the selected work demands them.
+- **Explicit-use treatment:** the controller currently compares absent versus
+  naturally available skills. Implement a separately identified explicit-use ON
+  treatment, freezing the minimal invocation difference, full package and common
+  task/environment inputs. Keep existing runs unchanged and consultation failures
+  visible. Upstream-versus-adaptation comparisons are outside initial scope.
+- **Quality and efficiency accounting:** qualify reported usage semantics before
+  summing turns or applying rates; capture independent observations where available.
+  Report input/cached/output usage without double counting, missing fields as
+  unknown, and observed charges separately from dated rate-based estimates.
+  Include skill overhead and failed/retried attempts under the declared policy;
+  keep judge/evaluation spend separate. Separate agent time from setup/cleanup,
+  retain cache behavior, and report paired quality/cost/time tradeoffs with
+  uncertainty. Current study output retains usage and whole-attempt elapsed time
+  but does not implement these accounting or analysis contracts.
 - **Judge reliability and label audit:** independently audit authored labels,
   native verdicts and disagreements. The human audit remains pending; agreement
   with authored labels does not establish general reliability. The separate
@@ -56,10 +77,10 @@ shipped history. Private provenance stays outside public entries and issues.
   preserving independent outcome checks and producer/admission agreement tests.
 - **OCI portability:** attest media types/effective image policy before permitting
   registries other than explicit Docker Hub references in the pinned adapter.
-- **General task packages:** native inputs beyond the historical review exporter;
-  protected holdouts, exposure tracking, and public/private packaging boundaries.
-- **Analysis:** prespecified estimands, clustered uncertainty, missing-data policy,
-  token/cost semantics, repeated-run variance, representative task sampling.
+- **General task packages:** protected holdouts, exposure tracking, and
+  public/private packaging boundaries for the selected task population.
+- **Analysis:** prespecified estimands, clustered uncertainty, missing-data policy
+  and repeated-run variance; use the task population and accounting contracts above.
 - **Portability checks:** run filesystem/process tests on Linux in addition to the
   initial macOS validation. Synthetic subprocess tests cannot establish real VM
   compatibility on either platform.
@@ -74,4 +95,4 @@ shipped history. Private provenance stays outside public entries and issues.
   its phase needs it. Pin and inspect that revision's license/NOTICE and tests
   before copying, adapting, or declaring it as a dependency. A research influence
   is not an adopted implementation.
-- **Later:** pi support, repair/implementation task adapters, TypeScript review UI.
+- **Later:** natural-discovery comparisons, pi support, TypeScript review UI.

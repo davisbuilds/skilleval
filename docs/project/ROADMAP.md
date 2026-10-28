@@ -1,6 +1,6 @@
 ---
 status: in-progress
-updated: 2026-10-27
+updated: 2026-10-28
 ---
 
 # Roadmap
@@ -16,9 +16,16 @@ Public GitHub hosting is the intended destination. The
 | 0 — Foundation | Python package, provisional records, copied evidence, CLI, project boundaries | Offline workflow passes; a historical case can be imported without changing its source | Implemented |
 | 1A — Environment | Prepared task image, fresh VM lifecycle, Codex adapter, explicit admission | Live controls on the exact host/runtime/image/tool route prove fidelity, isolation, bounded failure, cleanup, and a native model/tool loop | Bounded controls, admission, native runner and development dispatch implemented; scored scope pending |
 | 1B — Grader | Evidence packets, executable outcomes, semantic rubric, revision history, calibration | Frozen positive/negative/ambiguous examples distinguish accurate findings from plausible mistakes; human audit measures judge errors | Native judges, authored controls and separate reliability workflow implemented; independent audit and representative reliability evidence pending |
-| 2 — First paired pilot | One real task in vanilla and skill configurations, separate assessment and report | Reproducible paired artifacts; treatment fidelity and invalid attempts visible; qualified environment and grader | Development pair and frozen study controller implemented; scored pilot gated on 1A and 1B |
+| 2 — First paired pilot | Relevant real tasks with explicit skill ON/OFF, joint quality and efficiency reporting | Reproducible paired artifacts; invocation fidelity; validated usage/cost/time accounting; qualified environment and grader | Natural-availability development controller implemented; explicit use, representative tasks and accounting pending; scored pilot gated on 1A and 1B |
 | 3 — Representative study | Declared task population, protected holdouts, repeated matched trials, uncertainty analysis | Enough independent task evidence for the prespecified decision; cost and failure effects reported | Pending pilot |
-| 4 — Expand usefully | Repair/implementation coverage, pi adapter, TypeScript review UI | Each addition meets the same contracts and addresses a demonstrated workflow need | Deferred |
+| 4 — Expand usefully | More task families, natural discovery, pi adapter, TypeScript review UI | Each addition meets the same contracts and addresses a demonstrated workflow need | Deferred beyond adapters needed for the first selected skills |
+
+The selected focus is a standalone evaluator for independently supplied skills,
+starting with explicit-use ON/OFF comparisons. Quality, outcomes and actual
+token/cost/time consumption are joint measurements under a common budget policy.
+Comparisons between upstream skills and adaptations are outside the initial scope.
+Task relevance and independent success criteria determine the next task adapters;
+the existing review examples do not define the benchmark population.
 
 ## Current environment and grader slice
 
@@ -99,7 +106,20 @@ environment fidelity, native transport, lifecycle and bounded admission controls
 passed on the resulting source revision. None of these results replaces the
 pending human audit or admits a scored campaign.
 
-## Next: qualify the grader and scored dispatch
+## Next: explicit-use evaluation on relevant tasks
+
+Select skill/task candidates and independent outcome criteria, then prepare a
+development pilot to assess ceiling effects, task feasibility and grader gaps.
+Use separate frozen evaluation cases for the eventual comparison. The tiny
+authored examples remain grader sanity controls; their pending label audit does
+not block this design work. Human audit of representative evidence, environment
+qualification and a declared assessment policy still gate scored use.
+
+Extend the current controller with an explicit-use treatment and the task/grader
+adapters required by the selected work. Qualify usage accounting, add dated cost
+estimates distinct from observed charges, separate agent and infrastructure time,
+and report quality/efficiency tradeoffs. The [vision](VISION.md) owns these outcome
+and comparison principles; [Backlog](BACKLOG.md#open) records the implementation gaps.
 
 The [development study controller](../system/STUDIES.md) now supplies the frozen
 matrix, sequential randomized pairing, explicit budgets, append-only attempts,
@@ -155,7 +175,7 @@ coverage before claiming exhaustive recall. Executable outcomes complement
 judgment rather than collapse into an opaque score.
 
 These tracks can progress independently. Development pairs can exercise packaging,
-natural skill discovery and the complete review-to-judge path while the gates
+invocation fidelity and the complete task-to-grader path while the gates
 remain open. They cannot be reported as admitted scored trials. The scored pilot
 starts only when both tracks meet their acceptance criteria; its purpose is to
 validate the complete route and estimate variance, not decide that a skill works.
@@ -164,13 +184,18 @@ validate the complete route and estimate variance, not decide that a skill works
 
 Freeze task selection, skill bytes, model/harness configuration, budgets, primary
 outcomes, execution-validity rules, and retry policy before dispatch. Randomize
-and interleave matched runs; retain every attempt. Compare skill-absent and
-skill-available behavior first. Forced consultation is a distinct diagnostic
-treatment, not a replacement for natural skill use. Verify exposure and observed
-consultation without counting a file read as successful use.
+and interleave matched runs; retain every attempt. Compare skill OFF with explicit
+skill use first. Keep the task brief fixed except for the declared invocation;
+do not include the skill's methodology in the shared prompt. Native discovery is
+a later distinct treatment. Preserve the natural-availability identity of earlier
+runs. Verify exposure and observed consultation without counting a file read as
+successful use or excluding runs that ignored the requested skill.
 
 Report task quality, execution reliability, consultation, latency, token usage,
-and cost separately. Do not treat null usage as zero or incomplete runs as clean
+and cost separately, including paired quality/efficiency differences. Equal budget
+ceilings need not imply equal actual consumption. Distinguish inference spend from
+grader spend, reported charges from estimates, and agent time from setup/cleanup.
+Do not treat null usage as zero or incomplete runs as clean
 reviews. Review quality needs supported findings, false positives, duplicate
 handling, and coverage of known opportunities, with space for novel defects.
 Freeze assessment-selection rules before analysis, including how revisions and
@@ -179,4 +204,5 @@ disagreement affect aggregates.
 Choose repeats and sample size from pilot variance and the decision we want to
 make; do not set an arbitrary run quota. Estimate paired effects with uncertainty
 that respects task/repository clustering. Report inconclusive results as such.
-Only after this workflow is useful should pi, broader tasks, or a UI expand it.
+Add task adapters when the selected skill needs them; expand harnesses and UI
+after the evaluation workflow is useful.

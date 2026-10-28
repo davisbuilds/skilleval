@@ -5,6 +5,12 @@ grader audit remains pending. It never grants scored admission or converts an
 execution status into a correctness score. Judge reliability controls and native
 assessment recording remain separate workflows.
 
+This document describes the implemented natural-availability controller. The
+selected next scope is explicit-use ON/OFF evaluation with joint quality and
+efficiency reporting; see [the roadmap](../project/ROADMAP.md). Current usage fields
+are retained observations, not validated aggregate token accounting or prices.
+Existing plans and runs keep their original treatment identity.
+
 ## Freeze and execute
 
 `schema study-spec` owns the exact input contract. Start from

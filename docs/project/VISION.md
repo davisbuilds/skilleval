@@ -1,23 +1,61 @@
 # Vision
 
-Skilleval should answer a practical question: on the work we actually delegate,
-when does adding a particular skill improve the result enough to justify its
-cost? Its first audience is a person maintaining skills and evaluating coding
-agents against their own repositories.
+Skilleval should answer a practical question: on realistic tasks where a skill is
+relevant, how does explicitly using it change a capable agent's task quality,
+outcomes, token consumption, cost and time compared with the same agent without
+it? Its first audience is people choosing, maintaining or evaluating skills for
+work they actually delegate.
+
+This is a standalone evaluator for independently supplied skills from any source.
+No particular skill collection is privileged, and comparing an adaptation with
+its upstream version is outside the initial scope. The initial experiment is
+one pinned skill ON versus OFF. Source popularity can motivate selection; it
+does not establish quality or effectiveness.
 
 The unit of work is a reproducible task with an explicit environment and evidence
 contract. The unit of comparison is a matched experiment with a vanilla baseline,
 a precisely identified skill treatment, repeated attempts, and separately
 versioned assessments. Preserve execution failures, missing observations, novel
-findings, and inconclusive comparisons.
+findings, and inconclusive comparisons. ON explicitly requests use of the selected
+skill through the harness's supported invocation route; OFF supplies the same
+task without that skill or request. Keep the task brief, ordinary repository
+guidance, environment, model/effort, capabilities and budget policy comparable.
+Freeze the minimal invocation difference and complete skill package. If supplied
+helpers change capabilities, declare that package treatment rather than attributing
+its whole effect to prose. Record consultation failures without discarding them.
+Natural discovery and selection are a later, separately identified experiment.
 
-Start with repository review tasks because historical material is available and
-grading errors are visible. Use exposed historical cases to develop the
-instrument. Introduce held-out real reviews, repairs, and bounded implementation
-tasks before claiming coverage of ordinary engineering work. Task selection must
+Review tasks supplied the first implementation and exposed historical cases
+developed the instrument. The evaluation population must now follow each selected
+skill's intended work and plausible contribution. Choose meaningful tasks and
+independent outcome criteria before looking at treatment results; do not turn
+skill instructions into a checklist that rewards their own use. Small authored
+grader controls are sanity checks, not representative task evidence. Task selection must
 describe the target population, repository and language mix, difficulty, natural
 versus seeded defects, and exposure history. A convenient case collection alone
 does not establish representativeness.
+
+Use development pilots to identify ceiling effects, infeasible tasks and grader
+gaps, then freeze separate evaluation tasks. Do not select the final population
+only from vanilla failures or skill wins. Measure ordinary and challenging work
+separately where relevant; difficulty alone is not relevance. Support the task
+and grader adapters required by selected skills rather than forcing every task
+into a review report.
+
+Quality and efficiency are joint outcomes. Report task-specific quality, accepted
+outcomes, failure rates, token categories, cost and elapsed time separately, with
+paired differences and uncertainty. Include skill loading and subsequent context
+overhead in task-agent usage. Keep evaluation/judge spend separate; retain failures
+and retry costs under the declared attempt policy. An early cheap failure is not
+an efficiency win, and higher quality at higher cost is an explicit tradeoff.
+
+Validate usage semantics at the observed harness/provider version before summing
+or pricing them; cached tokens, per-turn observations and totals can overlap.
+Preserve missing fields as unknown. Distinguish provider-reported charges from
+estimates using a dated, source-backed rate schedule; a price-equivalent estimate
+for subscription-backed execution is not an observed bill. Separate agent time
+from environment setup, cleanup and grading. Compare under the same budget ceilings
+while retaining actual consumption, cache behavior and all attempts.
 
 Success means a maintainer can inspect why a run was valid, why a judgment was
 made, and what a comparison can support. A result can be useful when it shows no
