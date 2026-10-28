@@ -404,6 +404,10 @@ class Lifecycle:
             self.ticket["cleanup_complete"] = False
         finally:
             self.save()
+            if self.ticket["cleanup_complete"]:
+                from skilleval.retention import prune_image
+
+                prune_image(self.output, apply=True)
         return self.ticket
 
 

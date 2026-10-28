@@ -108,6 +108,13 @@ def parser() -> argparse.ArgumentParser:
     )
     recovery = qualification_commands.add_parser("recover", help="Recover one retained VM ticket")
     recovery.add_argument("directory", type=Path, help="Original qualification output directory")
+    storage = commands.add_parser("storage", help="Inspect and prune disposable image staging")
+    storage_commands = storage.add_subparsers(dest="operation", required=True)
+    prune = storage_commands.add_parser("prune", help="Preview verified copies in completed runs")
+    prune.add_argument("directories", type=Path, nargs="+", help="Explicit run output directories")
+    prune.add_argument(
+        "--apply", action="store_true", help="Delete eligible copies; default is dry-run"
+    )
     admission = commands.add_parser("admission", help="Seal or check bounded environment evidence")
     admission_commands = admission.add_subparsers(dest="operation", required=True)
     seal = admission_commands.add_parser("seal")
@@ -357,6 +364,10 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
         return run_offline_qualification(
             value, args.output, runtime_binary=args.runtime, capture_identity=args.capture_identity
         )
+    if args.command == "storage":
+        from skilleval.retention import prune_images
+
+        return prune_images(args.directories, apply=args.apply)
     if args.command == "admission":
         from skilleval.admission import check_admission, seal_admission
 

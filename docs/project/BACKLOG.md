@@ -29,13 +29,6 @@ shipped history. Private provenance stays outside public entries and issues.
   enforcement, retries as new attempts, and paired report. The current seal
   covers bounded controls. Incorporate retained full-workload and treatment
   evidence into an explicit dispatch scope before any scored campaign.
-- **Image storage and retention:** lifecycle preparation retains a full verified
-  image archive per attempt after VM cleanup. A 2026-10-27 filesystem and SHA-256
-  audit found 31 identical 658 MB archives plus an older duplicate, totaling about
-  20.4 GB of redundant allocated storage. Deduplicate by image digest while
-  preserving recovery, admission validation and original run evidence. Separate
-  reusable image/build caches from retained results before expanding studies;
-  report sparse files' apparent and allocated sizes separately.
 - **Assessment selection:** choose one declared assessment policy per analysis;
   explicitly handle branching revisions and disagreement. Storage preserves all
   records and does not select a winner.

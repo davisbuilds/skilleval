@@ -215,6 +215,12 @@ The bounded native provider/tool loop also passed. The
 [Python image recipe](environments/python-review/README.md) keeps task source and
 credentials outside the build context.
 
+Completed runs release their image staging copy after verifying the retained
+source archive. Original evidence stays in place. Use `skilleval storage prune
+RUN_DIRECTORY` to preview cleanup of older runs, and add `--apply` to perform it;
+see [image retention](docs/system/ENVIRONMENT.md#image-retention) for refusal and
+recovery behavior.
+
 A local Docker-save archive is a separate supported image route. Its full
 SHA-256 is required; planning inspects bounded archive structure without
 extracting or executing layers. `run` copies and rechecks the pinned archive

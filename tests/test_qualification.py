@@ -471,7 +471,8 @@ def test_local_archive_run_copies_hash_bound_bytes_without_registry_route(tmp_pa
     assert report["cleanup_complete"] is True
     state = tmp_path / "result" / "runtime-state"
     copied = state / "image.tar"
-    assert copied.read_bytes() == archive.read_bytes()
+    assert not copied.exists()
+    assert archive.is_file()
     create = next(item for item in report["steps"] if item["label"] == "create")
     assert create["argv"][create["argv"].index("--image") + 1] == str(copied)
     assert "--net" not in create["argv"]

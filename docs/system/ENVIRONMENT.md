@@ -106,3 +106,45 @@ Do not query smolvm through a retired runtime HOME after cleanup. Even a late
 and cache directory again. Inspect the retained ticket and filesystem first;
 progress observers must stop with their controller. A recreated empty namespace
 does not mean the deleted VM survived, and still needs scoped cleanup.
+
+## Image retention
+
+Keep each reusable source image outside run output directories, preferably in a
+dedicated image directory. Preparation verifies and copies it to the run's
+`runtime-state/image.tar`; the runtime consumes that independent staging copy.
+After whole-machine cleanup and runtime HOME removal, the controller removes the
+staging copy only when both it and the retained source still match the recorded
+image identity. Active runs, failed cleanup, identity drift, changed copies, and
+missing or changed source images retain staging for inspection or recovery.
+This policy applies to offline qualification, native controls, reviews, and judges.
+Copies exist while runs are active; there is no shared mutable image file or new
+global cache. Distinct source image versions remain operator-owned.
+
+To inspect older runs or retry retained copies, name each run directory explicitly:
+
+```sh
+uv run skilleval storage prune .local/run-one .local/run-two
+uv run skilleval storage prune .local/run-one .local/run-two --apply
+```
+
+The default is read-only preview; `--apply` removes only verified staging archives.
+JSON output includes per-run eligibility/refusal, image identity, retained source,
+and logical/allocated byte counts. Exit 1 means at least one target was refused or
+an operation failed; other targets may have completed. Repeated application is
+safe. Applied actions and refusals have separate `image-retention.json` receipts;
+original reports, recovery tickets, logs, task artifacts and assessments are not
+rewritten. Run this after the original controllers have stopped. It does not run
+smolvm, recover VMs, or infer cleanup from a directory's age.
+
+Historical recovery tickets can be inspected without the current control-source
+identity matching: pruning reads their terminal cleanup evidence and checks the
+retained image bytes, but neither recovers nor upgrades the old runtime evidence.
+Legacy qualification reports without tickets require explicit successful
+stop/delete records and an absent runtime HOME. A malformed ticket never falls
+back to a legacy report. Admission checks need the original image and recorded
+artifacts, not a completed run's disposable image copy. Changes to retention code
+still invalidate prior admission through the control-source fingerprint.
+
+Measure storage with allocated bytes as well as apparent file lengths. Sparse
+VM templates can have large logical capacities while occupying little disk;
+removing staging copies does not modify those runtime-bound templates.

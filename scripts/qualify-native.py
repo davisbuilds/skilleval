@@ -960,6 +960,10 @@ def run(
         if not report["host_listener_stopped"] or report.get("identity_changed"):
             report["status"] = "partial"
         (output / "report.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
+        if session is None and report.get("cleanup_complete"):
+            from skilleval.retention import prune_image
+
+            prune_image(output, apply=True)
     return report
 
 

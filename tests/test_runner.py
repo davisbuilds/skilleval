@@ -157,6 +157,8 @@ def test_complete_capture_exceeds_client_stdout_cap_and_preserves_originals(
     report = invoke(tmp_path, route)
     assert report["status"] == "completed", report.get("error")
     assert report["cleanup_complete"] and report["observed_absent"] and report["observer_positive"]
+    assert not (tmp_path / "run/runtime-state/image.tar").exists()
+    assert json.loads((tmp_path / "run/image-retention.json").read_text())["status"] == "removed"
     assert not report["scored_admitted"] and report["task_quality"] == "unassessed"
     assert (tmp_path / "run/events.jsonl").stat().st_size > 65536
     assert report["usage"] == {"input_tokens": 3}

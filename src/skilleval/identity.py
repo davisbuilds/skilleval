@@ -19,6 +19,7 @@ from skilleval.errors import SkillEvalError
 SOURCES = (
     "src/skilleval/identity.py",
     "src/skilleval/lifecycle.py",
+    "src/skilleval/retention.py",
     "src/skilleval/qualification.py",
     "src/skilleval/gateway.py",
     "src/skilleval/harnesses/codex.py",

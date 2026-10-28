@@ -100,6 +100,8 @@ def test_durable_ticket_env_positive_inventory_and_idempotent_recovery(tmp_path:
     recovered = recover(session.output)
     assert recovered["cleanup_complete"] and recovered["runtime_home_removed"]
     assert not home.exists()
+    assert not (session.output / "runtime-state/image.tar").exists()
+    assert Path(session.ticket["image"]["path"]).is_file()
     assert recovered["admitted"] is False
     assert recovered["observer_positive"]
     assert json.loads(recovered["steps"][-1]["stdout"]) == []
@@ -118,11 +120,13 @@ def test_cleanup_failure_retains_namespace_until_explicit_recovery(
     first = session.cleanup()
     assert first["cleanup_complete"] is False
     assert home.is_dir()
+    assert (session.output / "runtime-state/image.tar").is_file()
     assert (session.output / "recovery.json").is_file()
     trigger.unlink()
     repaired = recover(session.output)
     assert repaired["cleanup_complete"] is True
     assert not home.exists()
+    assert not (session.output / "runtime-state/image.tar").exists()
 
 
 def test_inventory_failure_cannot_masquerade_as_absence(tmp_path: Path) -> None:

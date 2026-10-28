@@ -735,3 +735,7 @@ def _run_offline_qualification(
                 report["status"] = "partial"
                 report["error"] = "runtime home cleanup failed; inspect retained state"
         (output / "report.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
+        if session is None and report.get("cleanup_complete"):
+            from skilleval.retention import prune_image
+
+            prune_image(output, apply=True)
