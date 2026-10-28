@@ -213,8 +213,11 @@ Missing/invalid final JSON is refused by judge recording rather than filled in.
 Recording verifies the original frozen input, packet bytes/digests, exact prompt,
 native model and declared policy, report/final bindings, artifact hashes, the referenced full audit and
 original versus artifact citations. Originals must still be present for those
-checks. A new result ID creates a fresh directory; explicit supersession retains
-earlier generations. Calibration records also retain authored labels outside the
+checks. An original citation may use the canonical packet path or a single
+`task/` prefix whose collected bytes exactly match that allowed host original;
+the recorder preserves the supplied path. Investigation artifacts remain a
+separate citation class. A new result ID creates a fresh directory; explicit
+supersession retains earlier generations. Calibration records also retain authored labels outside the
 judge's input; review records retain the reviewed native run.
 
 Each audit starts with `independent_audit: required-pending`. A human independent

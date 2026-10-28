@@ -102,8 +102,12 @@ Finding and coverage verdicts retain the meanings below. Native calibration
 judgments use `probe_id`; review judgments use each zero-based `finding_index`
 exactly once. Novel true findings receive credit on their merits. Resolved native
 judgments require citations to original evidence from their own case, verified
-against the retained host packet. `artifact_citations` can additionally name
-readable retained files under `task/investigation/CASE_ID/`; review artifacts use
+against the retained host packet. Native recording also accepts exactly one
+`task/` prefix on an otherwise allowed original path when that collected guest
+member exists and its bytes equal the host original. The raw citation is retained;
+the alias does not admit other cases, modified files or out-of-range lines.
+Offline calibration still requires canonical packet paths. `artifact_citations`
+can additionally name readable retained files under `task/investigation/CASE_ID/`; review artifacts use
 `task/investigation/review/`. Those citations are checked against collected bytes
 and line ranges. Modified clones or reproduction logs cannot replace original
 source citations or become evidence of a missing contract.

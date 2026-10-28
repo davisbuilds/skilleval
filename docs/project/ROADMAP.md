@@ -14,9 +14,9 @@ Public GitHub hosting is the intended destination. The
 | Phase | Deliverable | Exit evidence | Current state |
 | --- | --- | --- | --- |
 | 0 — Foundation | Python package, provisional records, copied evidence, CLI, project boundaries | Offline workflow passes; a historical case can be imported without changing its source | Implemented |
-| 1A — Environment | Prepared task image, fresh VM lifecycle, Codex adapter, explicit admission | Live controls on the exact host/runtime/image/tool route prove fidelity, isolation, bounded failure, cleanup, and a native model/tool loop | Bounded controls, admission and longer native runner implemented; scored dispatch integration pending |
-| 1B — Grader | Evidence packets, executable outcomes, semantic rubric, revision history, calibration | Frozen positive/negative/ambiguous examples distinguish accurate findings from plausible mistakes; human audit measures judge errors | Native static/investigative judge and authored controls implemented; independent label audit and reliability checks pending |
-| 2 — First paired pilot | One real task in vanilla and skill configurations, separate assessment and report | Reproducible paired artifacts; treatment fidelity and invalid attempts visible; qualified environment and grader | First development pair completed; scored pilot gated on 1A and 1B |
+| 1A — Environment | Prepared task image, fresh VM lifecycle, Codex adapter, explicit admission | Live controls on the exact host/runtime/image/tool route prove fidelity, isolation, bounded failure, cleanup, and a native model/tool loop | Bounded controls, admission, native runner and development dispatch implemented; scored scope pending |
+| 1B — Grader | Evidence packets, executable outcomes, semantic rubric, revision history, calibration | Frozen positive/negative/ambiguous examples distinguish accurate findings from plausible mistakes; human audit measures judge errors | Native judges, authored controls and separate reliability workflow implemented; independent audit and representative reliability evidence pending |
+| 2 — First paired pilot | One real task in vanilla and skill configurations, separate assessment and report | Reproducible paired artifacts; treatment fidelity and invalid attempts visible; qualified environment and grader | Development pair and frozen study controller implemented; scored pilot gated on 1A and 1B |
 | 3 — Representative study | Declared task population, protected holdouts, repeated matched trials, uncertainty analysis | Enough independent task evidence for the prespecified decision; cost and failure effects reported | Pending pilot |
 | 4 — Expand usefully | Repair/implementation coverage, pi adapter, TypeScript review UI | Each addition meets the same contracts and addresses a demonstrated workflow need | Deferred |
 
@@ -100,6 +100,34 @@ passed on the resulting source revision. None of these results replaces the
 pending human audit or admits a scored campaign.
 
 ## Next: qualify the grader and scored dispatch
+
+The [development study controller](../system/STUDIES.md) now supplies the frozen
+matrix, sequential randomized pairing, explicit budgets, append-only attempts,
+local ownership lock, recovery reconciliation and first-attempt reporting policy.
+It checks any supplied bounded seal at each dispatch without promoting its scope.
+The [separate reliability workflow](../system/RELIABILITY.md) preserves the pending
+audit generation while adding repeat, order and perturbation controls. These
+implemented workflows leave independent semantic audit and scored admission open.
+
+Development validation on 2026-10-27 completed three fresh investigative judge
+sessions, each resolving all fourteen authored probes with matching labels.
+Repeated and reversed-probe-order judgments were stable on all fourteen probes;
+the twelve within-packet perturbation pairs were stable in each session. A native
+`task/` citation-prefix mismatch initially blocked one recording. After verifying
+collected originals byte-for-byte, a narrow recorder fix accepted the unchanged
+result in a new recording generation; the original failure remains retained.
+These small, related controls do not establish independent correctness or general
+injection resistance.
+
+The controller also completed a sequential real-task development pair with
+first-attempt evidence for both arms. The available arm read the pinned skill,
+and its complete body was observed in fourteen of fifteen broker requests.
+Catalog presentation remains unmeasured by the stricter metadata detector, and
+the earlier unmatched request trace remains unresolved. Task quality stays
+unassessed; one pair supplies no dependable effectiveness or efficiency estimate.
+Offline task fidelity, authenticated native execution, lifecycle recovery and
+bounded admission were renewed on the resulting source revision. All temporary
+VM state and per-run image copies were removed; the pending audit stayed frozen.
 
 For 1A, retain longer real-task evidence and consume checked environment
 admission at the eventual scored-dispatch boundary. The adapter

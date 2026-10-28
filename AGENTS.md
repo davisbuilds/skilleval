@@ -11,6 +11,8 @@ Native repository tools remain the authority for task-specific executable checks
 - `docs/project/ROADMAP.md`: selected phases and evidence of completion.
 - `docs/system/ARCHITECTURE.md`: evidence, runtime, harness, and grader boundaries.
 - `docs/system/CALIBRATION.md`: public authored controls, judge records, and limits.
+- `docs/system/RELIABILITY.md`: separately versioned judge stress controls and comparisons.
+- `docs/system/STUDIES.md`: frozen development matrices, attempts, recovery, and reporting.
 - `docs/system/GATEWAY.md`: explicit host inference capability and vendor provenance.
 - `docs/system/ENVIRONMENT.md`: evidence-bound admission, invalidation, and recovery.
 - `docs/system/NATIVE.md`: native reviews, static/investigative judges, and skill inputs.

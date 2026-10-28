@@ -212,7 +212,16 @@ record selected skill metadata or complete body in actual decoded broker request
 and complete pinned content in successful native read output. These observations
 separate catalog exposure from body exposure. A missing match stays unmeasured;
 an observed body does not establish semantic application or outcome quality.
-The runner has no scored pairing, automatic retries or trial-selection policy.
+Every request also retains bounded, value-free protocol shape and input kind/role
+counts. Selected-skill component matches are counted separately by request
+surface. Unknown values and omitted samples remain explicit; arbitrary keys and
+raw request content are not retained. Components found in different strings do
+not establish a complete catalog/body match.
+
+The [study controller](STUDIES.md) adds frozen development pairs, bounded retries
+and an explicit first-attempt reporting policy around the native runner. Neither
+layer grants scored admission. [Reliability controls](RELIABILITY.md) compare
+judge stability separately from authored-label agreement and independent audit.
 
 ## Assessment
 

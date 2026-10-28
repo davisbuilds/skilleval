@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "study_id": "development-pair",
+  "scope": "development-only",
+  "tasks": [
+    {
+      "task_id": "review-task",
+      "input_bundle": "/path/to/frozen-native-input",
+      "input_sha256": "REPLACE_WITH_CAPTURE_DIGEST",
+      "prompt": "Review the base-to-candidate change and report actionable defects supported by the repository."
+    }
+  ],
+  "skill_bundle": "/path/to/captured-skill",
+  "skill_sha256": "REPLACE_WITH_SKILL_DIGEST",
+  "runtime": "/path/to/smolvm",
+  "image": "/path/to/prepared-image.tar",
+  "image_sha256": "REPLACE_WITH_IMAGE_DIGEST",
+  "catalog": "/path/to/models.json",
+  "repetitions": 1,
+  "order_seed": 7,
+  "max_attempts_per_cell": 1,
+  "native_timeout_seconds": 600,
+  "max_requests_per_attempt": 32
+}

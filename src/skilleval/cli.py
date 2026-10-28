@@ -16,6 +16,8 @@ from skilleval.calibration import CalibrationResult
 from skilleval.contracts import Assessment, Attempt, Experiment, Record, Task
 from skilleval.errors import SkillEvalError
 from skilleval.judge import AgenticCalibrationResult, AgenticReviewResult
+from skilleval.reliability import ReliabilityObservations, ReliabilitySuite
+from skilleval.study import StudySpec
 
 RECORDS: dict[str, type[Record]] = {
     "task": Task,
@@ -25,6 +27,9 @@ RECORDS: dict[str, type[Record]] = {
     "calibration-result": CalibrationResult,
     "agentic-calibration-result": AgenticCalibrationResult,
     "agentic-review-result": AgenticReviewResult,
+    "reliability-suite": ReliabilitySuite,
+    "reliability-observations": ReliabilityObservations,
+    "study-spec": StudySpec,
 }
 
 
@@ -72,6 +77,36 @@ def parser() -> argparse.ArgumentParser:
     calibration_compare = calibration_commands.add_parser("compare")
     calibration_compare.add_argument("bundle", type=Path)
     calibration_compare.add_argument("results", type=Path, nargs="*", help="Explicit result files")
+    reliability = commands.add_parser(
+        "reliability", help="Prepare and compare judge stability controls"
+    )
+    reliability_commands = reliability.add_subparsers(dest="operation", required=True)
+    reliability_prepare = reliability_commands.add_parser("prepare")
+    reliability_prepare.add_argument("bundle", type=Path)
+    reliability_prepare.add_argument("--output", type=Path, required=True)
+    reliability_prepare.add_argument("--static", action="store_true")
+    reliability_compare = reliability_commands.add_parser("compare")
+    reliability_compare.add_argument("prepared", type=Path)
+    reliability_compare.add_argument("observations", type=Path)
+    study = commands.add_parser(
+        "study", help="Frozen sequential development studies; no scored runs"
+    )
+    study_commands = study.add_subparsers(dest="operation", required=True)
+    study_prepare = study_commands.add_parser("prepare")
+    study_prepare.add_argument("spec", type=Path)
+    study_prepare.add_argument("--output", type=Path, required=True)
+    for name in ("run", "report", "reconcile"):
+        operation = study_commands.add_parser(name)
+        operation.add_argument("plan", type=Path)
+        operation.add_argument("--sha256", required=True, help="Externally retained plan digest")
+        operation.add_argument("--output", type=Path, required=True, help="Study output directory")
+        if name == "run":
+            operation.add_argument("--auth-file", type=Path, required=True)
+            operation.add_argument(
+                "--development",
+                action="store_true",
+                help="Explicit unscored development execution; required",
+            )
     workspace = commands.add_parser(
         "workspace", help="Reconstruct source-only native review history"
     )
@@ -223,6 +258,30 @@ def write_new_json(path: Path, value: object) -> None:
 
 
 def dispatch(args: argparse.Namespace) -> dict[str, Any]:
+    if args.command == "reliability":
+        from skilleval.reliability import compare_reliability, prepare_reliability
+
+        if args.operation == "prepare":
+            return prepare_reliability(args.bundle, args.output, investigation=not args.static)
+        return compare_reliability(args.prepared, args.observations)
+    if args.command == "study":
+        from skilleval.grading import _read_regular
+        from skilleval.study import prepare_study, reconcile_study, report_study, run_study
+
+        if args.operation == "prepare":
+            spec = StudySpec.model_validate_json(_read_regular(args.spec, 4 * 1024 * 1024))
+            return prepare_study(spec, args.output)
+        if args.operation == "run":
+            return run_study(
+                args.plan,
+                args.sha256,
+                args.output,
+                auth_file=args.auth_file,
+                development=args.development,
+            )
+        if args.operation == "reconcile":
+            return reconcile_study(args.plan, args.sha256, args.output)
+        return report_study(args.plan, args.sha256, args.output)
     if args.command == "native":
         from skilleval.gateway import GatewayLimits
         from skilleval.grading import _read_regular

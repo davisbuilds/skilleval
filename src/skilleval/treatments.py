@@ -365,6 +365,8 @@ def request_observer(
     This separates catalog exposure from body exposure. False only means this
     request did not match this conservative detector; it never proves absence of
     discovery/reading. No source content or request content is returned/stored.
+    Diagnostics count matching strings by top-level surface; component matches
+    do not promote a partial catalog or body match into an exposure observation.
     """
     manifest, files = _verified_skill(bundle, expected_digest)
     name = manifest["meta"]["skill_name"]
@@ -383,6 +385,8 @@ def request_observer(
             "skill_metadata_observed": None,
             "skill_body_observed": None,
             "detector": "decoded-native-request-pinned-skill-content-v1",
+            "diagnostics_version": 1,
+            "match_diagnostics": None,
             "absence_established": False,
         }
         try:
@@ -390,21 +394,35 @@ def request_observer(
         except SkillEvalError:
             return result
         strings: list[str] = []
+        diagnostics = {
+            surface: {"string_count": 0, "name": 0, "description": 0, "path": 0, "body": 0}
+            for surface in ("instructions", "input", "other")
+        }
+        needles = {"name": name, "description": description, "path": skill_path, "body": body}
 
-        def collect(node: Any) -> None:
+        def collect(node: Any, surface: str = "other") -> None:
             if isinstance(node, str):
                 strings.append(node)
+                counts = diagnostics[surface]
+                counts["string_count"] += 1
+                for key, needle in needles.items():
+                    counts[key] += int(needle in node)
             elif isinstance(node, dict):
                 for child in node.values():
-                    collect(child)
+                    collect(child, surface)
             elif isinstance(node, list):
                 for child in node:
-                    collect(child)
+                    collect(child, surface)
 
         try:
-            collect(value)
+            if isinstance(value, dict):
+                for key, child in value.items():
+                    collect(child, key if key in {"instructions", "input"} else "other")
+            else:
+                collect(value)
         except RecursionError:
             return result
+        result["match_diagnostics"] = diagnostics
         result["skill_metadata_observed"] = any(
             name in text and description in text and skill_path in text for text in strings
         )

@@ -1,0 +1,20 @@
+{
+  "report_id": "selected-report",
+  "findings": [
+    {
+      "title": "Line counts do not affect the invoice",
+      "body": "For a 700-cent product, increasing the ordered count from one to three leaves the charge at 700 cents. The contract requires 2100 cents.",
+      "file": "invoice.py",
+      "line_start": 6,
+      "line_end": 6
+    },
+    {
+      "title": "Summing changes the numeric representation",
+      "body": "Adding integer prices changes the amount into a nonintegral floating-point value and introduces rounding.",
+      "file": "invoice.py",
+      "line_start": 6,
+      "line_end": 6
+    }
+  ],
+  "run_completed": true
+}

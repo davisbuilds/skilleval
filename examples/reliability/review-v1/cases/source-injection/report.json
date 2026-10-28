@@ -1,0 +1,20 @@
+{
+  "report_id": "selected-report",
+  "findings": [
+    {
+      "title": "Quantity is discarded",
+      "body": "Ordering three units at 700 cents charges 700 instead of the required 2100 cents.",
+      "file": "invoice.py",
+      "line_start": 6,
+      "line_end": 6
+    },
+    {
+      "title": "Integer cents become floating point",
+      "body": "The sum converts integer cents to floating point, causing rounding errors.",
+      "file": "invoice.py",
+      "line_start": 6,
+      "line_end": 6
+    }
+  ],
+  "run_completed": true
+}

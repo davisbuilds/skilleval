@@ -16,31 +16,38 @@ shipped history. Private provenance stays outside public entries and issues.
 
 - **Judge reliability and label audit:** independently audit authored labels,
   native verdicts and disagreements. The human audit remains pending; agreement
-  with authored labels does not establish general reliability. Check
-  injection, anchoring, position effects, treatment leakage, and repeat consistency.
+  with authored labels does not establish general reliability. The separate
+  reliability suite now checks repeat/probe-order stability and within-packet
+  paraphrase, anchor, injection and treatment-cue invariance. Expand to isolated
+  perturbation sessions and representative cases; shared-packet controls cannot
+  isolate contamination or establish general injection resistance.
   Include cross-model or human checks before relying on judgments from the same
   model family as the evaluated agents.
 - **General review coverage:** extend targeted known-defect probes to an auditable
   missed/novel-defect family contract for real reports. Explicit coverage hypotheses
   do not measure unaided discovery or exhaustive recall. Define duplicate handling
   and severity policy before aggregate scores.
-- **Study orchestration:** immutable expanded run matrix, checked environment
-  admission at the actual dispatch boundary, interleaving, budget/timeout
-  enforcement, retries as new attempts, and paired report. The current seal
-  covers bounded controls. Incorporate retained full-workload and treatment
-  evidence into an explicit dispatch scope before any scored campaign.
+- **Scored study admission:** the development controller now freezes randomized
+  paired matrices, checks optional bounded admission before each dispatch, enforces
+  per-attempt budgets, retains retries and reports first attempts. Extend the seal
+  to retained full-workload/treatment evidence and independent grader qualification
+  before implementing scored dispatch. The existing bounded seal cannot grant it.
 - **Assessment selection:** choose one declared assessment policy per analysis;
   explicitly handle branching revisions and disagreement. Storage preserves all
   records and does not select a winner.
-- **Request exposure telemetry:** a native development run observed a complete
-  successful read of the pinned skill, but the request-content detector matched
-  neither catalog metadata nor body. Investigate the actual native serialization
-  with a controlled public skill before expanding that detector. Preserve this
-  as unmeasured request exposure; failed matches do not prove absence.
+- **Catalog exposure telemetry:** fresh development evidence observed the complete
+  pinned skill body in 14 of 15 broker requests and a successful native read.
+  Catalog matching remains unmeasured: the detector requires the exact name,
+  description and full installed path in one decoded string. Component counts
+  cannot establish that presentation. Capture value-free locator diagnostics with
+  a public skill before supporting aliases or broadening the detector. Preserve
+  the earlier all-unmatched run as unresolved historical evidence; the new positive
+  body control does not explain or repair it. Failed matches do not prove absence.
 - **Recovery supervision:** the controller-interruption controls establish
-  explicit same-state recovery, not automatic recovery after host loss. Add
-  controller ownership/concurrency protection and supervision when study
-  orchestration needs them. Real runtime stop/delete failures and host reboot
+  explicit same-state recovery, not automatic recovery after host loss. Study
+  outputs now have a local controller lock, durable attempt publication and
+  explicit reconciliation. Cross-study coordination and host-loss supervision
+  remain open. Real runtime stop/delete failures and host reboot
   remain outside the live controls; local fault-injection tests cover the
   refusal/retry contract.
 - **Qualification packaging:** the opt-in controls, native runner and admission

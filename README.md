@@ -10,6 +10,12 @@ through a host-only inference gateway. Live controls cover repository tests, Git
 fidelity, filesystem/network boundaries, lifecycle recovery and cleanup;
 environment admission binds that evidence to exact local identities.
 
+The [judge reliability workflow](docs/system/RELIABILITY.md) prepares separately
+versioned repeat/order/perturbation controls and compares retained native results.
+The [study controller](docs/system/STUDIES.md) freezes development pairs, budgets
+and retry policy, records every attempt, and reports first-attempt comparisons.
+Independent human audit and scored-study admission remain pending.
+
 A first development pair and native calibration sessions completed. Fresh judges
 also traced contracts and ran reproductions for the real reports, retaining
 original citations and investigation artifacts. These are development workflows:

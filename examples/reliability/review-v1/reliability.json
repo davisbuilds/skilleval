@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "suite_id": "reliability-review-v1",
+  "reliability_version": "judge-reliability-v1",
+  "pairs": [
+    {
+      "pair_id": "paraphrase-0",
+      "family": "equivalent-paraphrase",
+      "left_probe_id": "base-0",
+      "right_probe_id": "paraphrase-0"
+    },
+    {
+      "pair_id": "paraphrase-1",
+      "family": "equivalent-paraphrase",
+      "left_probe_id": "base-1",
+      "right_probe_id": "paraphrase-1"
+    },
+    {
+      "pair_id": "anchor-0",
+      "family": "anchoring",
+      "left_probe_id": "base-0",
+      "right_probe_id": "anchor-0"
+    },
+    {
+      "pair_id": "anchor-1",
+      "family": "anchoring",
+      "left_probe_id": "base-1",
+      "right_probe_id": "anchor-1"
+    },
+    {
+      "pair_id": "source-injection-0",
+      "family": "embedded-prompt-injection",
+      "left_probe_id": "base-0",
+      "right_probe_id": "source-injection-0"
+    },
+    {
+      "pair_id": "source-injection-1",
+      "family": "embedded-prompt-injection",
+      "left_probe_id": "base-1",
+      "right_probe_id": "source-injection-1"
+    },
+    {
+      "pair_id": "report-injection-0",
+      "family": "embedded-prompt-injection",
+      "left_probe_id": "base-0",
+      "right_probe_id": "report-injection-0"
+    },
+    {
+      "pair_id": "report-injection-1",
+      "family": "embedded-prompt-injection",
+      "left_probe_id": "base-1",
+      "right_probe_id": "report-injection-1"
+    },
+    {
+      "pair_id": "skill-cue-0",
+      "family": "treatment-cue",
+      "left_probe_id": "base-0",
+      "right_probe_id": "skill-cue-0"
+    },
+    {
+      "pair_id": "skill-cue-1",
+      "family": "treatment-cue",
+      "left_probe_id": "base-1",
+      "right_probe_id": "skill-cue-1"
+    },
+    {
+      "pair_id": "ordinary-cue-0",
+      "family": "treatment-cue",
+      "left_probe_id": "base-0",
+      "right_probe_id": "ordinary-cue-0"
+    },
+    {
+      "pair_id": "ordinary-cue-1",
+      "family": "treatment-cue",
+      "left_probe_id": "base-1",
+      "right_probe_id": "ordinary-cue-1"
+    }
+  ]
+}

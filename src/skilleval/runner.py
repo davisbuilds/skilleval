@@ -110,15 +110,94 @@ def protocol_shape(raw: bytes) -> dict[str, Any]:
                 "unknown_field_count": sum(key not in fields for key in value),
             }
         if isinstance(value, list):
-            return {"length": len(value), "items": [shape(item, depth + 1) for item in value[:8]]}
+            return {
+                "length": len(value),
+                "items": [shape(item, depth + 1) for item in value[:8]],
+                "items_omitted": max(0, len(value) - 8),
+            }
         return type(value).__name__
 
     try:
         value = json.loads(raw)
         result = shape(value.get("input", []) if isinstance(value, dict) else value)
-        return {"shape": result} if len(_json(result)) <= 16_384 else {"shape": "limit-exceeded"}
+        diagnostics = {
+            "shape": result,
+            "shape_limits": {"max_depth": 3, "list_items": 8},
+            "request_structure": _request_structure(value),
+        }
+        if len(_json(diagnostics)) > 16_384:
+            diagnostics["shape"] = "limit-exceeded"
+        return diagnostics
     except (ValueError, RecursionError):
         return {"shape": "invalid-json"}
+
+
+def _request_structure(value: Any) -> dict[str, Any]:
+    """Count all top-level input kinds; only fixed field names and enum values escape."""
+    result: dict[str, Any] = {"schema_version": 1, "root_type": type(value).__name__}
+    if not isinstance(value, dict):
+        return result
+    fields = {
+        "model",
+        "instructions",
+        "input",
+        "tools",
+        "tool_choice",
+        "parallel_tool_calls",
+        "reasoning",
+        "text",
+        "store",
+        "stream",
+        "include",
+        "prompt_cache_key",
+        "max_output_tokens",
+        "service_tier",
+        "metadata",
+        "previous_response_id",
+    }
+    result["fields"] = {key: type(item).__name__ for key, item in value.items() if key in fields}
+    result["unknown_root_field_count"] = sum(key not in fields for key in value)
+    if "input" not in value:
+        result["input"] = {"type": "missing"}
+        return result
+    items = value["input"]
+    summary: dict[str, Any] = {"type": type(items).__name__}
+    result["input"] = summary
+    if not isinstance(items, list):
+        return result
+    kinds = {
+        "message",
+        "reasoning",
+        "function_call",
+        "function_call_output",
+        "custom_tool_call",
+        "custom_tool_call_output",
+        "item_reference",
+        "compaction",
+        "tool_search_call",
+        "tool_search_output",
+    }
+    roles = {"system", "developer", "user", "assistant", "tool"}
+    summary.update(item_count=len(items), non_object_count=0, kind_counts={}, role_counts={})
+    for item in items:
+        if not isinstance(item, dict):
+            summary["non_object_count"] += 1
+            continue
+        for field, allowed, destination in (
+            ("type", kinds, "kind_counts"),
+            ("role", roles, "role_counts"),
+        ):
+            token = item.get(field)
+            bucket = (
+                "missing"
+                if field not in item
+                else token
+                if isinstance(token, str) and token in allowed
+                else "unknown"
+            )
+            counts = summary[destination]
+            counts[bucket] = counts.get(bucket, 0) + 1
+    return result
 
 
 def _json(value: object) -> bytes:
@@ -615,6 +694,7 @@ def run_native(
             "index": len(request_records) + 1,
             "input_sha256": hashlib.sha256(raw).hexdigest(),
             "input_bytes": len(raw),
+            **protocol_shape(raw),
         }
         if skill_detector is not None:
             record.update(skill_detector(raw))

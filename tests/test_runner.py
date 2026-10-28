@@ -476,9 +476,11 @@ def test_host_broker_observer_keeps_hashes_without_raw_values(
             "index": 1,
             "input_sha256": hashlib.sha256(secret).hexdigest(),
             "input_bytes": len(secret),
+            **runner.protocol_shape(secret),
         }
     ]
     assert b"PRIVATE_TASK_VALUE" not in (tmp_path / "run/native-run.json").read_bytes()
+    assert report["request_observations"][0]["request_structure"]["input"] == {"type": "str"}
 
 
 def test_available_skill_is_installed_outside_identical_task_and_prompt(

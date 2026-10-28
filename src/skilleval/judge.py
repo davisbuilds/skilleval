@@ -331,6 +331,28 @@ def _check_packet(packet: Path, payloads: dict[str, bytes]) -> None:
         raise SkillEvalError("prepared judge packet is incomplete")
 
 
+def _original_citation(
+    citation: Citation, originals: dict[str, bytes], collected: dict[str, bytes]
+) -> str:
+    """Resolve one native task-root alias without changing the supplied citation.
+
+    A collected guest copy is an alias only when its bytes equal an allowlisted
+    host original. Investigation artifacts cannot supply original authority.
+    Canonical packet paths always refer directly to the retained host originals.
+    """
+    canonical = citation.path
+    if canonical not in originals and canonical.startswith("task/"):
+        candidate = canonical.removeprefix("task/")
+        if candidate in originals:
+            if collected.get(canonical) != originals[candidate]:
+                raise SkillEvalError(
+                    "native original citation alias requires matching collected original bytes"
+                )
+            canonical = candidate
+    calibration._citation(citation.model_copy(update={"path": canonical}), originals)
+    return canonical
+
+
 def _validate_judgments(
     result: AgenticCalibrationResult,
     context: tuple[calibration.CalibrationSuite, str, dict[str, bytes], str],
@@ -355,7 +377,7 @@ def _validate_judgments(
             if name.startswith(f"cases/{probe.case_id}/")
         }
         for citation in judgment.citations:
-            calibration._citation(citation, case)
+            _original_citation(citation, case, artifacts)
         if judgment.verdict != "unresolved" and not judgment.citations:
             raise SkillEvalError("resolved judgments require original same-case evidence")
         scoped_artifacts = {
@@ -549,7 +571,10 @@ def _run_files(
                     "sha256"
                 ):
                     raise SkillEvalError("native artifact does not match manifest")
-                if member.name.startswith("task/investigation/"):
+                if (
+                    member.name.startswith(("task/investigation/", "task/cases/", "task/case/"))
+                    or member.name == "task/report.json"
+                ):
                     artifacts[member.name] = data
                 if member.name in {"evidence/final.txt", "evidence/events.jsonl"}:
                     managed[member.name] = data
@@ -913,12 +938,14 @@ def record_agentic_review(
     for judgment in result.judgments:
         if judgment.verdict != "unresolved" and not judgment.citations:
             raise SkillEvalError("resolved findings require original case evidence")
-        for citation in judgment.citations:
-            calibration._citation(
-                citation, {**case_payloads, "report.json": payloads["report.json"]}
+        original_paths = [
+            _original_citation(
+                citation, {**case_payloads, "report.json": payloads["report.json"]}, artifacts
             )
+            for citation in judgment.citations
+        ]
         if judgment.verdict != "unresolved" and not any(
-            citation.path in case_payloads for citation in judgment.citations
+            path in case_payloads for path in original_paths
         ):
             raise SkillEvalError("resolved findings require original case evidence")
         for citation in judgment.artifact_citations:
