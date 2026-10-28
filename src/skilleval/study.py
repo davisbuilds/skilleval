@@ -33,6 +33,7 @@ from skilleval.treatments import _verified_skill, check_task_baseline
 
 
 class StudyTask(Record):
+    mode: Literal["review", "repair"] = "review"
     task_id: Identifier
     input_bundle: str = Field(min_length=1)
     input_sha256: Digest
@@ -172,7 +173,7 @@ def prepare_study(spec: StudySpec, destination: Path) -> dict[str, Any]:
     skill_manifest, _ = _verified_skill(Path(spec.skill_bundle), spec.skill_sha256)
     skill_name = skill_manifest["meta"]["skill_name"]
     value: dict[str, Any] = {
-        "schema_version": 2,
+        "schema_version": 3,
         "kind": "skilleval-study-plan",
         "spec": spec.model_dump(mode="json"),
         "model": MODEL,
@@ -215,7 +216,7 @@ def _plan(path: Path, expected: str) -> tuple[dict[str, Any], StudySpec]:
     value = evidence._parse_json(raw)
     if not isinstance(value, dict):
         raise SkillEvalError("expected a study JSON object")
-    if value.get("kind") != "skilleval-study-plan" or value.get("schema_version") not in {1, 2}:
+    if value.get("kind") != "skilleval-study-plan" or value.get("schema_version") not in {1, 2, 3}:
         raise SkillEvalError("unsupported study plan")
     data = dict(value["spec"])
     if value["schema_version"] == 1:
@@ -224,8 +225,12 @@ def _plan(path: Path, expected: str) -> tuple[dict[str, Any], StudySpec]:
         data["invocation_policy"] = "natural-availability"
     elif "invocation_policy" not in data or "price_schedule" not in data:
         raise SkillEvalError("new plans must freeze invocation and pricing policies")
+    if value["schema_version"] < 3 and any("mode" in task for task in data["tasks"]):
+        raise SkillEvalError("legacy study plans cannot declare task modes")
+    if value["schema_version"] == 3 and any("mode" not in task for task in data["tasks"]):
+        raise SkillEvalError("new study plans must freeze task modes")
     spec = StudySpec.model_validate_json(json.dumps(data))
-    if value["schema_version"] == 2 and value.get("invocations") != _invocations(
+    if value["schema_version"] >= 2 and value.get("invocations") != _invocations(
         spec, value.get("skill_name", "")
     ):
         raise SkillEvalError("frozen invocation prompts differ from treatment policy")
@@ -240,7 +245,7 @@ def _plan(path: Path, expected: str) -> tuple[dict[str, Any], StudySpec]:
 def _dispatch_check(plan: dict[str, Any], spec: StudySpec) -> dict[str, Any] | None:
     if snapshot_identity(spec.runtime) != plan["identity"] or _check_inputs(spec) != plan["image"]:
         raise SkillEvalError("study inputs or execution identity changed; prepare a new plan")
-    if plan["schema_version"] == 2:
+    if plan["schema_version"] >= 2:
         manifest, _ = _verified_skill(Path(spec.skill_bundle), spec.skill_sha256)
         if manifest["meta"]["skill_name"] != plan["skill_name"]:
             raise SkillEvalError("frozen skill invocation name differs from captured package")
@@ -392,7 +397,7 @@ def _check_native(path: Path, report: dict[str, Any]) -> None:
     if report.get("status") == "completed":
         from skilleval.judge import _run_files
 
-        _run_files(path / "native", mode="review")
+        _run_files(path / "native", mode=expected["mode"])
         if (
             not isinstance(treatment, dict)
             or treatment.get("manifest_sha256") != expected["skill_sha256"]
@@ -485,12 +490,12 @@ def run_study(
                 task = tasks[cell["task_id"]]
                 prompt = (
                     plan["invocations"][task.task_id][cell["arm"]]
-                    if plan["schema_version"] == 2
+                    if plan["schema_version"] >= 2
                     else task.prompt
                 )
                 path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
                 expected = {
-                    "mode": "review",
+                    "mode": task.mode,
                     "input_digest": task.input_sha256,
                     "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
                     "model": MODEL,
@@ -538,7 +543,7 @@ def run_study(
                         image_sha256=spec.image_sha256,
                         catalog=Path(spec.catalog),
                         auth_file=auth_file,
-                        mode="review",
+                        mode=task.mode,
                         native_timeout_seconds=spec.native_timeout_seconds,
                         limits=GatewayLimits(
                             max_requests=spec.max_requests_per_attempt,

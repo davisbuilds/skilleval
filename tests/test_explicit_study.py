@@ -22,7 +22,7 @@ def test_explicit_skill_request_reaches_actual_native_prompt(prepared: dict[str,
     }
     assert prompts["absent"] == plan["spec"]["tasks"][0]["prompt"]
     assert prompts["available"] == "Use $study-control for this task.\n\n" + prompts["absent"]
-    assert plan["schema_version"] == 2
+    assert plan["schema_version"] == 3
     assert plan["invocations"]["task"] == prompts
     assert result["invocation_policy"] == "explicit-use"
     assert result["cells"][0]["attempts"][0]["task_quality"] == "unassessed"
@@ -34,6 +34,8 @@ def test_legacy_plan_without_policy_is_still_natural_availability(
     path = prepared["plan_path"]
     plan = json.loads(path.read_text())
     plan["schema_version"] = 1
+    for task in plan["spec"]["tasks"]:
+        task.pop("mode")
     for key in ("invocation_policy", "price_schedule"):
         plan["spec"].pop(key, None)
     for key in ("invocations", "skill_name"):
@@ -102,3 +104,39 @@ def test_invalid_frozen_invocation_cannot_dispatch(prepared: dict[str, Any], mut
     with pytest.raises(SkillEvalError):
         study.run_study(**prepared, development=True)
     assert not prepared["output"].exists()
+
+
+def test_repair_study_dispatches_a_distinct_native_mode(prepared: dict[str, Any]) -> None:
+    plan = json.loads(prepared["plan_path"].read_text())
+    plan["spec"]["tasks"][0]["mode"] = "repair"
+    spec = study.StudySpec.model_validate_json(json.dumps(plan["spec"]))
+    target = prepared["plan_path"].parent / "repair-plan.json"
+    receipt = study.prepare_study(spec, target)
+    prepared.update(plan_path=target, expected_sha256=receipt["sha256"])
+    result = study.run_study(**prepared, development=True)
+    assert result["primary_completed_cells"] == 2
+    for cell in result["cells"]:
+        native = json.loads(
+            (Path(cell["attempts"][0]["path"]) / "native/native-run.json").read_text()
+        )
+        assert native["mode"] == "repair"
+        assert native["task_quality"] == "unassessed"
+
+
+def test_schema_two_stays_review_only_with_explicit_invocation(prepared: dict[str, Any]) -> None:
+    path = prepared["plan_path"]
+    plan = json.loads(path.read_text())
+    plan["schema_version"] = 2
+    for task in plan["spec"]["tasks"]:
+        task.pop("mode")
+    raw = json.dumps(plan).encode()
+    path.write_bytes(raw)
+    digest = hashlib.sha256(raw).hexdigest()
+    _, spec = study._plan(path, digest)
+    assert spec.tasks[0].mode == "review"
+    assert spec.invocation_policy == "explicit-use"
+    plan["spec"]["tasks"][0]["mode"] = "repair"
+    raw = json.dumps(plan).encode()
+    path.write_bytes(raw)
+    with pytest.raises(SkillEvalError, match="legacy"):
+        study._plan(path, hashlib.sha256(raw).hexdigest())

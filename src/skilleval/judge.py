@@ -487,7 +487,7 @@ def _native_audit(run_dir: Path, receipt: dict[str, Any]) -> bytes | None:
 
 
 def _run_files(
-    run_dir: Path, *, mode: Literal["review", "judge"] = "judge"
+    run_dir: Path, *, mode: Literal["review", "repair", "judge"] = "judge"
 ) -> tuple[dict[str, Any], dict[str, bytes], dict[str, bytes]]:
     """Bind collected artifacts to the native receipt without extracting the tar."""
     raw = grading._read_regular(run_dir / "native-run.json", grading.MAX_ASSESSMENT_BYTES)
@@ -572,7 +572,14 @@ def _run_files(
                 ):
                     raise SkillEvalError("native artifact does not match manifest")
                 if (
-                    member.name.startswith(("task/investigation/", "task/cases/", "task/case/"))
+                    (
+                        mode == "repair"
+                        and (
+                            member.name.startswith("task/")
+                            or member.name == "evidence/filesystem-links.json"
+                        )
+                    )
+                    or member.name.startswith(("task/investigation/", "task/cases/", "task/case/"))
                     or member.name == "task/report.json"
                 ):
                     artifacts[member.name] = data
@@ -582,14 +589,18 @@ def _run_files(
         raise SkillEvalError("cannot inspect native artifact archive") from None
     if seen != set(entries):
         raise SkillEvalError("native artifact archive is incomplete")
-    if managed.get("evidence/final.txt") != retained["final.txt"]:
+    # Interrupted repairs can leave useful source edits without final text or
+    # events. The runner retains empty files for absent members; allow only that
+    # exact representation, and never relax completed or judge/review evidence.
+    missing = b"" if mode == "repair" and receipt["status"] != "completed" else None
+    if managed.get("evidence/final.txt", missing) != retained["final.txt"]:
         raise SkillEvalError("native final text differs from collected artifact")
     retained.update({"artifacts.json": manifest_raw, "artifacts.tar": archive_raw})
     if receipt.get("events") == "events.jsonl":
         retained["events.jsonl"] = grading._read_regular(
             run_dir / "events.jsonl", evidence.MAX_FILE_BYTES
         )
-        if managed.get("evidence/events.jsonl") != retained["events.jsonl"]:
+        if managed.get("evidence/events.jsonl", missing) != retained["events.jsonl"]:
             raise SkillEvalError("native events differ from collected artifact")
     if receipt.get("prompt_sha256") is not None:
         retained["prompt.txt"] = grading._read_regular(

@@ -9,7 +9,8 @@
       "task_id": "review-task",
       "input_bundle": "/path/to/frozen-native-input",
       "input_sha256": "REPLACE_WITH_CAPTURE_DIGEST",
-      "prompt": "Review the base-to-candidate change and report actionable defects supported by the repository."
+      "prompt": "Review the base-to-candidate change and report actionable defects supported by the repository.",
+      "mode": "review"
     }
   ],
   "skill_bundle": "/path/to/captured-skill",

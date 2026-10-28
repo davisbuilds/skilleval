@@ -82,6 +82,18 @@ repository and does not copy private review content.
 
 ## How adoption is recorded
 
+The 2026-10-28 receipt-admission development seed uses OpenBench's public
+[parent source](https://github.com/davisbuilds/openbench/tree/2afa7b355a48f8aa6f81eb071db9114ffdbca02b)
+and [historical repair](https://github.com/davisbuilds/openbench/commit/47e49af284218f3cb9c116ca2aa20bbbe30f7afa)
+as separate controls. Source exports retain the original MIT notice and remain
+outside tracked examples. The brief and observation fixtures in
+`examples/repair/receipt-admission` are newly authored against those public
+contracts; they do not copy the historical implementation or tests. The worker
+separates raw observations from host verdicts, informed by the evaluated confined
+worker design. It is an independent smolvm implementation, not adoption of
+OpenBench's Docker/Harbor runner. [Repair documentation](../system/REPAIRS.md)
+states the fixture and security limits.
+
 For a selected component, record its exact public source/revision, intended use,
 and local owner. Check the license and any NOTICE or file-level terms at that
 revision before copying code, prompts, assets, or fixtures. Retain required

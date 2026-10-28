@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "task_id": "receipt-admission-development",
+  "input_bundle": "/explicit/frozen/source",
+  "input_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "prompt": "Repair the quality-receipt admission bug in this repository.\n\nA saved receipt can claim that quality controls passed even when replaying the\nsame bound sources now gives different outcomes. Campaign admission must reject\nsuch stale or edited claims. Preserve existing identity and workflow validation,\nverify the declared controls and their outcomes at admission, and return current\nobservations for a valid receipt. Valid receipts must continue to work; rejecting\nevery receipt is not a repair. Changes to a bound control's identity, role, source\nor failure targets must not silently inherit an earlier receipt's authority.\n\nImplement the repair and add appropriate regression coverage. The editable files\nfor this bounded task are obench/repair_validation.py,\nobench/tests/test_repair_validation.py and docs/repair-validation.md. Preserve\nother project files. Use /tmp for scratch work. The snapshot contains ordinary\nsource, guidance, tests and contracts; unavailable Docker services are outside\nthis development task's execution scope. Run relevant checks available in the\noffline Python environment and explain any verification limits in your final\nresponse. Leave the changes in the workspace; the evaluator collects the actual\nfile bytes. Do not submit a review findings JSON or a claimed score.\n",
+  "editable_paths": [
+    "obench/repair_validation.py",
+    "obench/tests/test_repair_validation.py",
+    "docs/repair-validation.md"
+  ],
+  "worker": "examples/repair/receipt-admission/worker.py",
+  "worker_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "timeout_seconds": 60,
+  "source_url": "https://github.com/davisbuilds/openbench",
+  "source_revision": "2afa7b355a48f8aa6f81eb071db9114ffdbca02b",
+  "probes": [
+    {
+      "probe_id": "fresh-receipt",
+      "request": {
+        "scenario": "fresh-receipt"
+      },
+      "expected": {
+        "accepted": true,
+        "fresh_observations": true
+      }
+    },
+    {
+      "probe_id": "forged-valid",
+      "request": {
+        "scenario": "forged-valid"
+      },
+      "expected": {
+        "accepted": false
+      }
+    },
+    {
+      "probe_id": "forged-invalid",
+      "request": {
+        "scenario": "forged-invalid"
+      },
+      "expected": {
+        "accepted": false
+      }
+    },
+    {
+      "probe_id": "changed-id",
+      "request": {
+        "scenario": "changed-id"
+      },
+      "expected": {
+        "accepted": false
+      }
+    },
+    {
+      "probe_id": "changed-target",
+      "request": {
+        "scenario": "changed-target"
+      },
+      "expected": {
+        "accepted": false
+      }
+    },
+    {
+      "probe_id": "stale-workflow",
+      "request": {
+        "scenario": "stale-workflow"
+      },
+      "expected": {
+        "accepted": false
+      }
+    },
+    {
+      "probe_id": "stale-source",
+      "request": {
+        "scenario": "stale-source"
+      },
+      "expected": {
+        "accepted": false
+      }
+    },
+    {
+      "probe_id": "invalid-saved-verdict",
+      "request": {
+        "scenario": "invalid-saved-verdict"
+      },
+      "expected": {
+        "accepted": false
+      }
+    },
+    {
+      "probe_id": "malformed-control",
+      "request": {
+        "scenario": "malformed-control"
+      },
+      "expected": {
+        "accepted": false
+      }
+    },
+    {
+      "probe_id": "replay-error",
+      "request": {
+        "scenario": "replay-error"
+      },
+      "expected": {
+        "accepted": false
+      }
+    }
+  ]
+}

@@ -18,6 +18,7 @@ from skilleval.contracts import Assessment, Attempt, Experiment, Record, Task
 from skilleval.errors import SkillEvalError
 from skilleval.judge import AgenticCalibrationResult, AgenticReviewResult
 from skilleval.reliability import ReliabilityObservations, ReliabilitySuite
+from skilleval.repair import RepairSpec
 from skilleval.study import StudySpec
 
 RECORDS: dict[str, type[Record]] = {
@@ -32,6 +33,7 @@ RECORDS: dict[str, type[Record]] = {
     "reliability-observations": ReliabilityObservations,
     "study-spec": StudySpec,
     "price-schedule": PriceSchedule,
+    "repair-spec": RepairSpec,
 }
 
 
@@ -169,11 +171,13 @@ def parser() -> argparse.ArgumentParser:
     )
     native = commands.add_parser("native", help="Explicit native development workloads")
     native_commands = native.add_subparsers(dest="operation", required=True)
-    native_run = native_commands.add_parser("qualify", help="Run a development review or judge")
+    native_run = native_commands.add_parser(
+        "qualify", help="Run a development review, repair or judge"
+    )
     native_run.add_argument("bundle", type=Path, help="Frozen source-only snapshot")
     native_run.add_argument("--sha256", required=True)
     native_run.add_argument("--prompt", type=Path, required=True)
-    native_run.add_argument("--mode", choices=("review", "judge"), required=True)
+    native_run.add_argument("--mode", choices=("review", "repair", "judge"), required=True)
     native_run.add_argument("--judge-policy", choices=("static", "investigative"))
     native_run.add_argument("--runtime", type=Path, required=True)
     native_run.add_argument("--image-archive", type=Path, required=True)
@@ -211,6 +215,27 @@ def parser() -> argparse.ArgumentParser:
     skill.add_argument("--source-url", required=True)
     skill.add_argument("--source-revision", required=True)
     skill.add_argument("--output", type=Path, required=True)
+    repair = commands.add_parser("repair", help="Collect repair artifacts and run offline checks")
+    repair_commands = repair.add_subparsers(dest="operation", required=True)
+    prepare_repair = repair_commands.add_parser("prepare", help="Freeze source, scope and checks")
+    prepare_repair.add_argument("spec", type=Path)
+    prepare_repair.add_argument("--output", type=Path, required=True)
+    for repair_operation in ("collect", "control", "check"):
+        command = repair_commands.add_parser(repair_operation)
+        command.add_argument("task", type=Path)
+        command.add_argument("--task-sha256", required=True)
+        command.add_argument("--output", type=Path, required=True)
+        if repair_operation == "collect":
+            command.add_argument("--run", type=Path, required=True)
+        elif repair_operation == "control":
+            command.add_argument("--candidate", type=Path, required=True)
+            command.add_argument("--candidate-sha256", required=True)
+        else:
+            command.add_argument("--result", type=Path, required=True)
+            command.add_argument("--result-sha256", required=True)
+            command.add_argument("--runtime", type=Path, required=True)
+            command.add_argument("--image-archive", type=Path, required=True)
+            command.add_argument("--image-sha256", required=True)
     return root
 
 
@@ -260,6 +285,29 @@ def write_new_json(path: Path, value: object) -> None:
 
 
 def dispatch(args: argparse.Namespace) -> dict[str, Any]:
+    if args.command == "repair":
+        from skilleval.repair import collect_control, collect_repair, prepare_repair
+        from skilleval.repair_check import check_repair
+
+        if args.operation == "prepare":
+            repair_spec = RepairSpec.model_validate_json(json.dumps(read_json(args.spec)))
+            return prepare_repair(repair_spec, args.output)
+        if args.operation == "collect":
+            return collect_repair(args.task, args.task_sha256, args.run, args.output)
+        if args.operation == "control":
+            return collect_control(
+                args.task, args.task_sha256, args.candidate, args.candidate_sha256, args.output
+            )
+        return check_repair(
+            args.task,
+            args.task_sha256,
+            args.result,
+            args.result_sha256,
+            args.output,
+            runtime=args.runtime,
+            image=args.image_archive,
+            image_sha256=args.image_sha256,
+        )
     if args.command == "reliability":
         from skilleval.reliability import compare_reliability, prepare_reliability
 
@@ -290,7 +338,7 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
         from skilleval.runner import run_native
 
         if (args.mode == "judge") != (args.judge_policy is not None):
-            raise SkillEvalError("judge mode requires --judge-policy; review mode omits it")
+            raise SkillEvalError("judge mode requires --judge-policy; task modes omit it")
         return run_native(
             args.bundle,
             args.sha256,
@@ -308,7 +356,7 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
             ),
             skill_bundle=args.skill_bundle,
             skill_digest=args.skill_sha256,
-            investigation=None if args.mode == "review" else args.judge_policy == "investigative",
+            investigation=None if args.mode != "judge" else args.judge_policy == "investigative",
         )
     if args.command == "judge":
         from skilleval.judge import (
@@ -466,7 +514,9 @@ def main(argv: list[str] | None = None) -> int:
     print(json.dumps(result, indent=2, ensure_ascii=False, allow_nan=False))
     return (
         1
-        if result.get("status") in ("failed", "incomplete", "error", "partial", "timed-out")
+        if result.get("status")
+        in ("failed", "incomplete", "error", "partial", "timed-out", "invalid-scope")
+        or result.get("accepted_by_checks") is False
         else 0
     )
 

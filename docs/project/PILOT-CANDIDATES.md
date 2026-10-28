@@ -1,11 +1,14 @@
 # Explicit-use pilot candidates
 
 Shortlist dated **2026-10-28**, not a frozen task suite or launch authorization.
+Candidate A now has a captured development snapshot, repair adapter and live
+polarity controls. B and C remain uncaptured proposals; none is an admitted
+evaluation task or established representative sample.
 Each comparison uses one complete pinned skill package explicitly ON versus OFF;
 there is no upstream-versus-adaptation comparison. Public repository visibility
 and linked revisions were checked through GitHub. Source and history inspection
-establish the candidate provenance below, not task capture, executable fidelity,
-grader accuracy, runtime admission, or skill effectiveness.
+establish candidate provenance. The separate development controls below have a
+bounded scope; they do not establish grader accuracy or skill effectiveness.
 
 Start development with **A**, subject to its feasibility and headroom checks. It
 fits the existing Python/Linux direction without browser or Apple tooling. B and
@@ -35,8 +38,11 @@ the original failure. These are hypotheses, not grading requirements.
 tests without later Git history. Derive a symptom-led brief from the public
 contract: edited saved verdicts must not admit failing controls; valid evidence
 must remain usable. Do not reveal the historical patch or prescribe its algorithm.
-Retain the fix and later tests outside the agent workspace. No snapshot has yet
-been captured for this candidate.
+Retain the fix and later tests outside the agent workspace. The captured
+development snapshot preserves 2,196 source files plus synthetic baseline Git
+metadata. It omits unrelated imported benchmark datasets, result data, experiment
+trees and gateway-probe logs; ordinary source, guidance, unit tests, contracts and
+local task fixtures remain. It contains no later source history.
 
 **Outcome checks.** Independently author hidden acceptance checks for forged
 verdicts, changed control declarations, legitimate receipts, fresh returned
@@ -46,16 +52,27 @@ controlled replay. Demonstrate that checks reject the parent defect, accept the
 historical repair and reject an always-fail/always-pass shortcut. Preserve ordinary
 regression results. An arm-blind semantic assessment checks scope, contract
 preservation and whether the claimed verification matches the evidence; patch
-similarity and following the skill's steps earn no credit.
+similarity and following the skill's steps earn no credit. That repair-specific
+semantic assessment remains pending. The newly authored
+[observation adapter](../../examples/repair/receipt-admission/README.md) passed
+live polarity controls: the historical repair passed all ten checks, the parent
+failed six, always-accept failed all ten and always-reject failed the valid-receipt
+check. Counts describe related controls, not independent task samples.
 
 **Environment and limits.** The parent declares Python >=3.11 and a stdlib-only
-runtime. Existing Python/Linux infrastructure is a plausible fit, not qualified
-compatibility. Qualify imports and focused checks inside the exact guest image;
+runtime. The Python/Linux route ran focused project tests on both parent and
+historical repair in the exact guest image. Qualify changed tools and inputs;
 execute no imported source on the host. Controlled replay can assess receipt
 decision semantics, not real Docker grading or isolation. A claim about the full
 production grading boundary would require additional runtime capabilities and
-controls. Writable repair output, collection, assessment and accounting still
-need qualification beyond the current review-oriented route.
+controls. Writable repair collection and separate offline checks are now
+implemented. Live worker controls covered allowed reads/scratch writes and denied
+source writes, checker reads through direct/link/subprocess routes, and a tested
+external connection. A development solver's broader suite reported failures and
+missing assets/configuration in this snapshot; full-suite baseline equivalence
+has not been established. Preserve and qualify the required assets before using
+this lineage in an evaluation. General semantic grading and full-workload admission remain
+open; the bounded environment seal does not grant them.
 
 ## B. Browser implementation: preserve user settings across failure states
 

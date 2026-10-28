@@ -14,13 +14,28 @@ shipped history. Private provenance stays outside public entries and issues.
 
 ## Open
 
-- **Skill-relevant task pilot:** use the grounded
-  [shortlist](PILOT-CANDIDATES.md) to prepare the first Python repair task/result
-  adapter, independent outcome checks and a frozen development snapshot. Qualify
-  its actual writable route rather than force it into review output. Check
-  headroom and feasibility, retain selection decisions, and freeze separate
-  evaluation cases; do not retain only vanilla failures or observed skill wins.
+- **Skill-relevant task population:** use the grounded
+  [shortlist](PILOT-CANDIDATES.md) and exposed receipt-repair seed to assess
+  feasibility and headroom, then freeze separate evaluation cases. The repair
+  adapter, source capture and polarity controls are implemented; one seed's
+  related probes are not independent tasks or representative capability evidence.
+  Retain selection decisions; do not retain only vanilla failures or skill wins.
   Browser and writing candidates need their own environments/graders when selected.
+- **Repair snapshot fidelity beyond focused tests:** the development solver's
+  broader test run reported missing assets/configuration and additional failures
+  in the captured source. Focused parent/reference checks passed, but full-suite
+  baseline equivalence is unverified. Before admitting a task from this lineage,
+  compare the original baseline in the intended environment, retain required test
+  assets and distinguish snapshot omissions from pre-existing failures. Do not
+  turn a convenient partial export into a representative environment claim.
+- **Repair semantic assessment and outcome linking:** prepare an arm-blind packet
+  of original source, candidate patch, stated work and independently collected
+  check observations. Define supported contract/regression/claim judgments with
+  an unresolved option, calibrate them and record them separately. Link those
+  assessments and functional checks to study attempts without rewriting native
+  outcomes. `accepted_by_checks` is not complete task quality. Observation workers
+  share a process with candidate imports; preserve that limit and test additional
+  adversarial behaviors before claiming resistance to grader manipulation.
 - **Joint quality and efficiency analysis:** connect independently assessed task
   outcomes to consumption and report quality/cost/time tradeoffs with uncertainty.
   Preserve failures, retries and missing observations; keep judge/evaluation spend
@@ -76,7 +91,9 @@ shipped history. Private provenance stays outside public entries and issues.
 - **OCI portability:** attest media types/effective image policy before permitting
   registries other than explicit Docker Hub references in the pinned adapter.
 - **General task packages:** protected holdouts, exposure tracking, and
-  public/private packaging boundaries for the selected task population.
+  public/private packaging boundaries for the selected task population. Extend
+  repair filename support beyond its initial portable ASCII subset when selected
+  repositories require it, preserving path/alias and exact-byte patch guarantees.
 - **Portability checks:** run filesystem/process tests on Linux in addition to the
   initial macOS validation. Synthetic subprocess tests cannot establish real VM
   compatibility on either platform.

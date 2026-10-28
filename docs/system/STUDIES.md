@@ -1,12 +1,13 @@
 # Development study orchestration
 
-The study controller runs explicit native review comparisons while independent
-grader audit remains pending. It never grants scored admission or converts an
-execution status into a correctness score. Judge reliability controls and native
+The study controller runs explicit native review and repair comparisons while
+independent grader audit remains pending. It never grants scored admission or
+converts an execution status into a correctness score. Judge reliability controls and native
 assessment recording remain separate workflows.
 
-New plans default to explicit-use ON/OFF. Legacy plans and runs retain their
-natural-availability identity. Native usage normalization, optional conditional
+New plans default to explicit-use ON/OFF. Schema-1 plans retain natural availability;
+schema-2 plans retain their declared invocation policy. Both older versions remain
+review-only. Native usage normalization, optional conditional
 pricing and descriptive efficiency reporting are implemented; the
 [accounting contract](ACCOUNTING.md) states their semantics and remaining limits.
 Live development verification on 2026-10-28 completed both arms, matched core
@@ -35,7 +36,8 @@ uv run skilleval study report study-plan.json --sha256 PLAN_SHA256 \
 Planning does not launch a VM or read credentials. It freezes prompt/task/skill
 identities, runtime and control-source fingerprints, image identity, native
 budgets, optional price schedule, retry limit, and expanded dispatch order. New
-schema-2 plans also freeze the skill name and each arm's exact invocation:
+schema-3 plans also freeze each task's `mode` (`review` or `repair`), the skill name
+and each arm's exact invocation:
 
 - OFF (`absent`) receives the original task prompt without the selected skill.
 - ON (`available`) installs the complete captured package and prefixes that prompt
@@ -48,6 +50,8 @@ The native receipt retains request-exposure observations independently of reads.
 Selecting `natural-availability` keeps both prompts identical. Schema-1 plans
 remain natural-availability comparisons and cannot acquire invocation or pricing
 policies by reinterpretation; retain their original bytes and digests.
+Schema-2 plans keep their existing invocation and pricing policies. Neither older
+plan version can acquire a repair task by reinterpretation.
 
 Task/repetition blocks are shuffled with the declared seed; each adjacent pair
 has randomly ordered absent and available arms. Execution is sequential.
@@ -125,7 +129,9 @@ the actual task/treatment/dispatch route, resolve independent grader validation,
 and freeze duplicate/severity/coverage and assessment-selection policies. Known
 defect probes do not measure exhaustive review recall.
 
-The [pilot shortlist](../project/PILOT-CANDIDATES.md) proposes a Python repair as
-the first development candidate. Its repair task/result adapter, independent
-checks and workload qualification remain next work. Explicit-use support does
-not convert that candidate into a review task or a captured evaluation case.
+The [repair workflow](REPAIRS.md) binds the corresponding task contract to collected
+source bytes, scopes edits, and checks a candidate in a separate offline VM.
+Checking remains an explicit operation outside the study's task-agent loop; its
+result does not overwrite native outcomes or fill in unassessed semantic quality.
+The [pilot shortlist](../project/PILOT-CANDIDATES.md) separates the first exposed
+repair seed from a still-unselected representative evaluation population.

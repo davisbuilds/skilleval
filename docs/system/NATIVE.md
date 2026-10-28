@@ -1,11 +1,14 @@
 # Native development workloads
 
-This reference owns the explicit native review and judge procedure. These runs
-use a fresh VM, the bounded host inference gateway, and retained evidence. They
+This reference owns the explicit native review, repair and judge procedure. These
+runs use a fresh VM, the bounded host inference gateway, and retained evidence. They
 remain development-only: `native qualify` never grants scored admission, and a
 completed native turn does not establish a correct review or calibrated judge.
 The [environment reference](ENVIRONMENT.md) owns runtime admission and recovery;
 the [gateway reference](GATEWAY.md) owns authentication and provider limits.
+The [repair reference](REPAIRS.md) owns editable scope, patch collection and offline
+checks. Repair mode receives a normal implementation brief and leaves file edits;
+review findings schemas and semantic review recording do not apply to it.
 
 ## Inputs and boundaries
 
@@ -28,7 +31,11 @@ outside the guest and available through recording.
 Native Codex and imported source execute only in the VM. The host validates and
 retains outputs without extracting or executing guest archives. The runner
 enforces overall time, inference and artifact bounds and records cleanup. The
-investigative rubric additionally asks for small reproductions, each limited to
+native staging area uses `/var/tmp/native` on the guest disk, outside the task
+tree. The qualified image's `/run` filesystem has only 64 MiB; retaining input
+archives, transcripts and output there exhausted capacity on the repair workload.
+Input transfer also uses guest disk storage. These paths disappear with VM cleanup.
+The investigative rubric additionally asks for small reproductions, each limited to
 30 seconds and 64 KiB of recorded output, without installs, external services or
 persistent processes. These per-probe instructions are prompt policy, not an
 independent command-level sandbox.

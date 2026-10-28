@@ -16,7 +16,7 @@ Public GitHub hosting is the intended destination. The
 | 0 — Foundation | Python package, provisional records, copied evidence, CLI, project boundaries | Offline workflow passes; a historical case can be imported without changing its source | Implemented |
 | 1A — Environment | Prepared task image, fresh VM lifecycle, Codex adapter, explicit admission | Live controls on the exact host/runtime/image/tool route prove fidelity, isolation, bounded failure, cleanup, and a native model/tool loop | Bounded controls, admission, native runner and development dispatch implemented; scored scope pending |
 | 1B — Grader | Evidence packets, executable outcomes, semantic rubric, revision history, calibration | Frozen positive/negative/ambiguous examples distinguish accurate findings from plausible mistakes; human audit measures judge errors | Native judges, authored controls and separate reliability workflow implemented; independent audit and representative reliability evidence pending |
-| 2 — First paired pilot | Relevant real tasks with explicit skill ON/OFF, joint quality and efficiency reporting | Reproducible paired artifacts; invocation fidelity; validated usage/cost/time accounting; qualified environment and grader | Explicit-use/accounting integration verified live; representative repair adapter, independent quality and uncertainty pending; scored pilot gated on 1A and 1B |
+| 2 — First paired pilot | Relevant real tasks with explicit skill ON/OFF, joint quality and efficiency reporting | Reproducible paired artifacts; invocation fidelity; validated usage/cost/time accounting; qualified environment and grader | Explicit-use accounting and repair adapter implemented; functional polarity controls passed; representative population, semantic repair quality and uncertainty pending; scored pilot gated on 1A and 1B |
 | 3 — Representative study | Declared task population, protected holdouts, repeated matched trials, uncertainty analysis | Enough independent task evidence for the prespecified decision; cost and failure effects reported | Pending pilot |
 | 4 — Expand usefully | More task families, natural discovery, pi adapter, TypeScript review UI | Each addition meets the same contracts and addresses a demonstrated workflow need | Deferred beyond adapters needed for the first selected skills |
 
@@ -106,20 +106,39 @@ environment fidelity, native transport, lifecycle and bounded admission controls
 passed on the resulting source revision. None of these results replaces the
 pending human audit or admits a scored campaign.
 
-## Next: a grounded repair pilot and joint outcome evidence
+## Next: representative tasks and joint outcome evidence
 
-The reviewed [pilot shortlist](PILOT-CANDIDATES.md) proposes a public Python repair
-as the first development candidate, with browser implementation and writing as
-broader families. These are grounded candidates, not captured evaluation cases.
-Prepare the repair task/result adapter, frozen source and independent outcome
-checks; assess ceiling effects, feasibility and grader gaps before freezing
+The reviewed [pilot shortlist](PILOT-CANDIDATES.md) now includes a captured public
+Python repair seed, with browser implementation and writing as broader proposed
+families. The [repair adapter](../system/REPAIRS.md) collects actual source bytes,
+generates a patch and runs independent checks in a fresh offline VM. Live polarity
+controls accepted the historical repair and rejected the parent and blanket
+accept/reject variants. Focused project tests and effective worker permission
+controls passed. These are development cases, not captured evaluation holdouts.
+Assess ceiling effects, feasibility and semantic grader gaps before freezing
 separate evaluation tasks. Tiny authored examples remain grader sanity controls,
 not task-difficulty or ability evidence. Their pending label audit does not block
 this design work; representative human audit still gates scored use.
 
-New schema-2 study plans default to explicit-use ON/OFF, freezing the selected
+One explicit-use repair pair completed on 2026-10-28. Both artifacts stayed in
+scope and passed focused project tests in independent offline guests. The ON
+artifact passed ten behavioral checks; OFF passed nine and rejected the
+valid-receipt fixture. Both retained complete native usage with matched broker
+core totals. These observations provide a concrete semantic-assessment case,
+not a skill-effect estimate. Full-suite baseline equivalence remains unverified:
+the broader native test run encountered missing assets/configuration and failures.
+The original pair failed during collection after exhausting the guest's 64 MiB
+`/run`; those failures remain retained. Moving staging to guest disk passed the
+same-workload collection control. Final collection and offline checks reproduced
+the corrected pair's outcomes after local-review fixes, without rewriting either
+native run. Repair semantic assessment and representative task selection remain
+the next evidence gaps.
+
+New schema-3 study plans freeze review/repair mode and default to explicit-use
+ON/OFF, freezing the selected
 skill name, complete package and minimal invocation prefix with the shared task
-brief. Legacy schema-1 plans keep their natural-availability identity. Optional
+brief. Schema-1 plans keep their natural-availability identity; schema-2 keeps its
+declared invocation policy. Both earlier versions remain review-only. Optional
 dated price schedules, normalized terminal native usage, broker core-total
 reconciliation and separate guest/host timings are implemented. The
 [accounting reference](../system/ACCOUNTING.md) owns their exact scopes: cache

@@ -1,0 +1,19 @@
+Repair the quality-receipt admission bug in this repository.
+
+A saved receipt can claim that quality controls passed even when replaying the
+same bound sources now gives different outcomes. Campaign admission must reject
+such stale or edited claims. Preserve existing identity and workflow validation,
+verify the declared controls and their outcomes at admission, and return current
+observations for a valid receipt. Valid receipts must continue to work; rejecting
+every receipt is not a repair. Changes to a bound control's identity, role, source
+or failure targets must not silently inherit an earlier receipt's authority.
+
+Implement the repair and add appropriate regression coverage. The editable files
+for this bounded task are obench/repair_validation.py,
+obench/tests/test_repair_validation.py and docs/repair-validation.md. Preserve
+other project files. Use /tmp for scratch work. The snapshot contains ordinary
+source, guidance, tests and contracts; unavailable Docker services are outside
+this development task's execution scope. Run relevant checks available in the
+offline Python environment and explain any verification limits in your final
+response. Leave the changes in the workspace; the evaluator collects the actual
+file bytes. Do not submit a review findings JSON or a claimed score.

@@ -46,7 +46,7 @@ elif args[:2]==['machine','stop']:
  scenario=json.loads((state/'scenario.json').read_text())
  if scenario.get('fault')=='stop-failure':raise SystemExit(7)
 elif args[:2]==['machine','cp']:
- if args[2].endswith(':/run/native/artifacts.tar'):
+ if args[2].endswith(':/var/tmp/native/artifacts.tar'):
   scenario=json.loads((state/'scenario.json').read_text())
   if scenario.get('fault')=='large-copy':
    with open(args[3],'wb') as out:
@@ -59,7 +59,17 @@ elif args[:2]==['machine','exec']:
   print('codex-cli 0.164.0');raise SystemExit
  if command[0]=='cat':
   print(json.dumps({'status':'complete'}));raise SystemExit
- if len(command)>1 and command[1]=='/run/native/runner.py':
+ if len(command)>1 and command[1]=='/run/native/controller.py':
+  (state/'scenario.json').write_text('{}')
+  with tarfile.open(state/'tooling-copy.tar') as source:
+   payload=json.loads(source.extractfile('native/requests.json').read())
+   assert set(payload)=={'timeout_seconds','requests'}
+   assert all('expected' not in r for r in payload['requests'])
+   observed=[r.get('value') for r in payload['requests']]
+  print(json.dumps({'schema_version':1,'returncode':0,'timed_out':False,
+   'output_limit_reached':False,'stdout':json.dumps({'observations':observed}),
+   'stderr':'','worker_uid':65534,'expected_answers_supplied':False}));raise SystemExit
+ if len(command)>1 and command[1]=='/var/tmp/native/runner.py':
   entries={}
   with tarfile.open(state/'tooling-copy.tar') as source:
    for m in source:
@@ -85,7 +95,12 @@ elif args[:2]==['machine','exec']:
   entries['evidence/events.jsonl']=(raw,0o600)
   if fault!='timed-out':entries['evidence/final.txt']=(b'Final synthetic answer',0o600)
   entries['evidence/process.json']=(json.dumps(process).encode(),0o600)
-  entries['task/investigation/probe.txt']=(b'observed synthetic artifact',0o644)
+  entries['evidence/filesystem-links.json']=(b'[]',0o600)
+  if 'repair_files' in scenario:
+   for filename,content in scenario['repair_files'].items():
+    if content is None:entries.pop('task/'+filename,None)
+    else:entries['task/'+filename]=(content.encode(),0o644)
+  else:entries['task/investigation/probe.txt']=(b'observed synthetic artifact',0o644)
   if fault=='drift':
    original=pathlib.Path(scenario['original']);original.chmod(0o600)
    original.write_text('changed')

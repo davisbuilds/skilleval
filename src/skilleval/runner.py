@@ -47,7 +47,10 @@ from skilleval.qualification import _invoke, _plain_tar_headers
 
 CATALOG_SHA256 = "943ca7fe1d19ed019054158303f0dbbd80b3bef43b3aa425a71aa7cb3fb52c2b"
 DEFAULT_LIMITS = GatewayLimits(max_requests=32, timeout_seconds=90, lifetime_seconds=900)
-GUEST_ROOT = "/run/native"
+# /run is a 64 MiB tmpfs in the qualified guest. Repository archives, native
+# logs and output collection need guest disk capacity, outside the task tree.
+GUEST_ROOT = "/var/tmp/native"
+GUEST_TOOLING = "/var/tmp/skilleval-tooling.tar"
 GUEST_WORK = "/workspace/task"
 MAX_ARTIFACT_BYTES = 256 * 1024 * 1024
 MAX_ARTIFACT_FILES = 10_000
@@ -563,7 +566,7 @@ def _copy_artifacts(session: Lifecycle, destination: Path, maximum: int) -> dict
             session.ticket["identity"]["runtime"]["binary"],
             "machine",
             "cp",
-            session.machine + ":/run/native/artifacts.tar",
+            session.machine + ":" + GUEST_ROOT + "/artifacts.tar",
             str(destination),
         ],
         Path(session.ticket["runtime_state"]),
@@ -610,7 +613,7 @@ def run_native(
     image_sha256: str,
     catalog: Path,
     auth_file: Path,
-    mode: Literal["review", "judge"] = "review",
+    mode: Literal["review", "repair", "judge"] = "review",
     limits: GatewayLimits = DEFAULT_LIMITS,
     native_timeout_seconds: int = 600,
     max_artifact_bytes: int = 64 * 1024 * 1024,
@@ -627,7 +630,7 @@ def run_native(
     """
     started = time.monotonic()
     if (
-        mode not in {"review", "judge"}
+        mode not in {"review", "repair", "judge"}
         or not isinstance(prompt, str)
         or not prompt.strip()
         or len(prompt.encode()) > 1024 * 1024
@@ -641,13 +644,13 @@ def run_native(
         or not 1 <= max_artifact_files <= MAX_ARTIFACT_FILES
         or (skill_bundle is None) != (skill_digest is None)
         or (mode == "judge" and type(investigation) is not bool)
-        or (mode == "review" and investigation is not None)
+        or (mode != "judge" and investigation is not None)
         or (mode == "judge" and skill_bundle is not None)
     ):
         raise SkillEvalError("invalid native workload, deadline, or artifact limit")
     input_bundle, output = evidence._paths(input_bundle, output)
     manifest, files = _snapshot_files(input_bundle, expected_digest)
-    if mode == "review":
+    if mode != "judge":
         from skilleval.treatments import check_task_baseline
 
         check_task_baseline(input_bundle)
@@ -802,7 +805,7 @@ def run_native(
             _required(
                 session.invoke(
                     "copy_tooling",
-                    ["machine", "cp", str(tooling), session.machine + ":/run/tooling.tar"],
+                    ["machine", "cp", str(tooling), session.machine + ":" + GUEST_TOOLING],
                     60,
                 ),
                 "copy_tooling",
@@ -810,7 +813,7 @@ def run_native(
             _required(
                 session.guest(
                     "prepare_task",
-                    preparation_argv(Path("/run/tooling.tar"), Path(GUEST_WORK), Path(GUEST_ROOT)),
+                    preparation_argv(Path(GUEST_TOOLING), Path(GUEST_WORK), Path(GUEST_ROOT)),
                     60,
                 ),
                 "prepare_task",

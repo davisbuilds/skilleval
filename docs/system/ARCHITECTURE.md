@@ -224,6 +224,13 @@ surface. Unknown values and omitted samples remain explicit; arbitrary keys and
 raw request content are not retained. Components found in different strings do
 not establish a complete catalog/body match.
 
+The [repair adapter](REPAIRS.md) binds an editable source scope and separate
+observation contract. It derives candidate bytes and a Git patch from validated
+native artifacts, then observes a candidate in a fresh offline VM. The worker is
+unprivileged, expected answers remain on the host, and host comparisons retain
+per-probe evidence. These finite functional checks leave semantic quality
+unassessed and grant no scored admission.
+
 The [study controller](STUDIES.md) adds frozen development pairs, bounded retries
 and an explicit first-attempt reporting policy around the native runner. Neither
 layer grants scored admission. [Reliability controls](RELIABILITY.md) compare
