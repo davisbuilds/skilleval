@@ -37,6 +37,49 @@ an operator who can replace both evidence and its expected digest. These opt-in
 controls currently require the complete source checkout and unpacked runtime.
 They do not claim installed-wheel or cross-host runtime qualification.
 
+## Task capture and baseline fidelity
+
+Qualify the task's ordinary commands separately from runtime isolation and checker
+polarity. A source tree that imports successfully or passes one focused test can
+still omit ordinary assets, historical objects or tool-dependent coverage. The
+[receipt-admission example](../../examples/repair/receipt-admission/environment.md)
+records a concrete baseline/reference comparison and its remaining limits.
+
+Freeze source at an explicit revision and retain bytes, executable modes, required
+assets and usable Git context. Inspect dependencies reached through tests **and
+fixtures**: a manifest can name a historical verifier commit that the test source
+does not mention. A shallow checkout's reachable history may omit those objects.
+Record any excluded working-tree paths and the exact validation lanes that remain
+unsupported; an entire directory called `data` or `experiments` is not inherently
+unrelated to the task.
+
+Construct fresh Git metadata from a constrained object inventory. Preserve the
+required commit/tree closures and shallow boundaries without copying unrelated
+refs, reflogs, configuration, alternates or the full source repository object
+store. Establish known-positive object reads before asserting that a later repair
+commit or its distinctive blobs are absent. Keep reference repairs outside the
+solver capture, in a separate control generation.
+
+Run untouched and reference source under the same pinned image, shell invocation,
+working directory and declared environment. Record the effective UID/GID, username,
+Python/platform and tool resolution. A launcher environment is not necessarily a
+tool-shell environment: a login shell can change PATH. If an identity comparison
+is needed, first establish that both identities can access the same source and
+actually execute the target tests; an import error is not a passing control.
+
+Retain complete, bounded stdout/stderr, command exits, deadlines, log hashes, test
+identities, failures and skips. Verify source before and after execution and compare
+the common test population separately from reference-added tests. A command that
+exits zero with every task skipped validates no tasks. A diagnostic controller's
+successful collection is not a successful test suite. Retain shared baseline
+failures rather than patching historical tests or silently excluding them.
+
+Capture corrections create new inputs, contracts and evidence generations. Old
+agent attempts keep their original input identities; improved environment evidence
+does not retroactively qualify them. A full pipeline also needs artifact-budget
+checks: before/after source packets plus investigation copies can exceed native
+collection limits even when a solver's single working tree fits.
+
 ## Run and check
 
 Use a pinned local Docker-save image containing the task and harness dependencies.

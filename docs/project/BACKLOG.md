@@ -21,15 +21,19 @@ shipped history. Private provenance stays outside public entries and issues.
   related probes are not independent tasks or representative capability evidence.
   Retain selection decisions; do not retain only vanilla failures or skill wins.
   Browser and writing candidates need their own environments/graders when selected.
-- **Repair snapshot fidelity beyond focused tests:** source tracing of the
-  development solver's broader failures identified omitted ordinary test assets,
-  missing historical Git objects and root-user-sensitive fixtures. The complete
-  broad-run log was not exported, and the run overlapped further edits. Focused
-  checks passed, but full-suite baseline equivalence remains unverified. Make a
-  new dependency/history-complete capture and compare untouched/reference source
-  in the intended image and execution identity, retaining complete logs. Preserve
-  the original capture and failures; do not attribute them to the candidate or
-  dismiss them as harmless without that comparison.
+- **Task environment profile and coverage:** the restored receipt-repair capture
+  now has matching baseline/reference unit failures and skips, with required
+  assets/history retained. The [environment record](../../examples/repair/receipt-admission/environment.md)
+  identifies two root-sensitive failures, eight unit skips and zero local tasks
+  validated. Before scored use, choose and qualify the solver user profile and
+  required tool-dependent lanes; the narrow non-root diagnostic does not qualify
+  an unprivileged Codex route. Imported validation and upstream CI platform/version
+  parity remain outside the current scope. Preserve historical tests and evidence.
+- **Larger judge artifact budgets:** the restored capture has over 5,300 files in
+  a before/after source packet. Copying both complete trees for investigation can
+  exceed the native 10,000-file ceiling. Qualify selective investigation/export
+  behavior on the actual workload before another judge run; retain canonical input
+  identity and original citations rather than silently dropping evidence.
 - **Representative repair grader validation:** semantic packets, native recording
   and explicit outcome linking are implemented. Audit representative verdicts,
   fixture suitability and alternative solutions; tiny positive/negative/unknown
@@ -90,6 +94,8 @@ shipped history. Private provenance stays outside public entries and issues.
   currently require the source checkout and share private package helpers.
   Stabilize those interfaces when supporting installed-wheel qualification,
   preserving independent outcome checks and producer/admission agreement tests.
+  Generalize case-specific dependency capture and baseline comparison after the
+  next selected task families clarify their interface.
 - **OCI portability:** attest media types/effective image policy before permitting
   registries other than explicit Docker Hub references in the pinned adapter.
 - **General task packages:** protected holdouts, exposure tracking, and

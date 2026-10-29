@@ -22,7 +22,11 @@ task contract outside solver input. Only the frozen source and task prompt go to
 the solver. Preserve ordinary guidance, tests, contracts and usable tooling; a
 large repository export can omit unrelated datasets only with a recorded reason
 and a workload fidelity check. Synthetic baseline Git history may be included;
-later source history must not reveal the repair.
+later source history must not reveal the repair. Follow the
+[task-fidelity contract](ENVIRONMENT.md#task-capture-and-baseline-fidelity) before
+promoting a capture: ordinary test dependencies may include data directories and
+historical objects named inside fixtures. Preserve failures and skips when comparing
+untouched and reference source in the actual solver profile.
 
 The [receipt-admission example](../../examples/repair/receipt-admission/README.md)
 provides a public brief, observation adapter and contract template. It remains an

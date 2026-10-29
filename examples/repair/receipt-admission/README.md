@@ -32,3 +32,7 @@ The prompt is embedded as plain text; the CLI does not expand template variables
 Use the same shared prompt/input in a `mode: repair` study task. See the
 [repair procedure](../../../docs/system/REPAIRS.md) for collection and offline checks.
 Keep source exports and generated task contracts outside tracked examples.
+
+The [environment qualification](environment.md) records required assets/history,
+baseline/reference results and the root-sensitive failures and skipped capabilities
+that remain outside a clean full-CI claim.

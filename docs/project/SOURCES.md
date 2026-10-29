@@ -98,7 +98,11 @@ worker design. It is an independent smolvm implementation, not adoption of
 OpenBench's Docker/Harbor runner. [Repair documentation](../system/REPAIRS.md)
 states the fixture and security limits. The versioned worker correction adds
 production replay identity fields after semantic investigation exposed a false
-rejection; original fixture bytes remain available for earlier evidence.
+rejection; original fixture bytes remain available for earlier evidence. The separate
+[environment record](../../examples/repair/receipt-admission/environment.md)
+documents restored ordinary dependencies, required historical object closures and
+baseline/reference validation. Imported source and raw evidence remain external;
+no additional implementation was copied into the public package.
 
 For a selected component, record its exact public source/revision, intended use,
 and local owner. Check the license and any NOTICE or file-level terms at that

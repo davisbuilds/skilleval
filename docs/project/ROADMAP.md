@@ -125,8 +125,10 @@ scope and passed focused project tests in independent offline guests. The ON
 artifact passed ten behavioral checks; OFF passed nine and rejected the
 valid-receipt fixture. Both retained complete native usage with matched broker
 core totals. These observations provide a concrete semantic-assessment case,
-not a skill-effect estimate. Full-suite baseline equivalence remains unverified:
-the broader native test run encountered missing assets/configuration and failures.
+not a skill-effect estimate. That original capture lacked full-suite baseline
+evidence: the broader native run encountered missing assets/configuration and
+failures. A later capture is qualified separately below; it does not upgrade the
+original attempts.
 The original pair failed during collection after exhausting the guest's 64 MiB
 `/run`; those failures remain retained. Moving staging to guest disk passed the
 same-workload collection control. Final collection and offline checks reproduced
@@ -134,8 +136,18 @@ the corrected pair's outcomes after local-review fixes, without rewriting either
 native run. Repair-specific semantic packets and recording now assess contract behavior,
 regressions and verification claims separately. Explicit selections join checks
 and judgments to immutable attempts, keeping judge consumption separate. These
-records remain unaudited; representative task selection and full-suite baseline
-equivalence are still evidence gaps.
+records remain unaudited; representative task selection and full-workload
+qualification are still evidence gaps.
+
+The [task environment capture](../../examples/repair/receipt-admission/environment.md)
+now preserves ordinary dependencies and required historical objects. Under the
+current solver profile, baseline and reference run 2,006 and 2,010 unit tests with
+the same two root-sensitive failures, eight skips and no errors. All four added
+reference tests pass; core validation passes ten tasks, while local validation
+skips all five. Fresh narrow identity controls explain the two failures without
+patching historical tests. This closes the missing-assets/history comparison gap
+for the declared lanes. Choosing the solver user profile, qualifying omitted
+capabilities and larger judge artifacts remain before scored use.
 
 On 2026-10-29, native repair judgments assessed both retained artifacts with
 bounded reproductions and supported each in its inspected scope. One judge
