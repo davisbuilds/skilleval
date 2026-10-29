@@ -1,4 +1,4 @@
-# Repair artifacts and offline checks
+# Repair artifacts, checks and semantic assessments
 
 Repair mode asks the agent to change a frozen source tree. It uses the same native
 Codex/VM route as reviews, with a separate task-mode identity. It does not require
@@ -28,7 +28,10 @@ The [receipt-admission example](../../examples/repair/receipt-admission/README.m
 provides a public brief, observation adapter and contract template. It remains an
 exposed development seed. Its independent fixtures exercise real receipt logic
 with controlled task inspection and Docker replay observations. It does not
-establish production Docker grading behavior or task difficulty.
+establish production Docker grading behavior or task difficulty. Use its versioned
+current worker: the original fixture omitted production replay identity fields
+and falsely rejected one valid repair. Preserve old task/check generations when
+correcting a fixture; a semantic judge may identify a checker defect.
 
 ## Run and collect
 
@@ -101,18 +104,94 @@ process/protocol/runtime failure leaves acceptance unknown, not a fabricated
 clean pass or reliable negative control. Cleanup failure also withholds acceptance.
 The report binds the task, candidate, worker, runtime/source and image identities.
 Recovery and automatic staging retention use the existing
-[lifecycle contract](ENVIRONMENT.md). No native model calls occur in grading;
+[lifecycle contract](ENVIRONMENT.md). No native model calls occur in these executable checks;
 its costs are separate from task-agent accounting.
 
-## Evidence limits and next boundary
+## Assess the repair independently
 
-Polarity controls must show that the checker accepts intended repairs and rejects
-plausible wrong results. Always-accept and always-reject controls distinguish a
-working behavioral check from a blanket rule. An executable check cannot establish
-its own coverage, independence or representative task difficulty.
+`schema repair-assessment-spec` describes an explicit selection of a frozen repair
+result and one or more hash-pinned check reports. Checks must describe the same
+candidate, original input and task prompt. Preparation revalidates their worker,
+source, recovery evidence and host comparisons. Incomplete checks retain their
+unknown state and diagnostics.
 
-`task_quality` and `semantic_assessment` remain unassessed. Repair-specific blinded
-semantic assessment is still needed for contract preservation, unsupported claims,
-regressions outside these checks and acceptable alternate implementations. Human
-calibration and full-workload admission remain prerequisites for scored studies.
-A bounded environment seal and a passing repair check do not grant that admission.
+```sh
+uv run skilleval repair prepare-assessment assessment-spec.json --output PACKET
+# Capture PACKET and run the returned prompt in native judge mode.
+uv run skilleval repair record-assessment assessment-spec.json \
+  --packet PACKET --run JUDGE_RUN --output ASSESSMENTS
+```
+
+The prepared packet contains original and candidate source, the generated patch,
+the shared task instruction, the solver's retained final statement, bounded command
+observations and separately collected worker observations. It withholds structured
+arm/skill identity, host provenance, consumption, expected answers and check pass
+labels. The same filter withholds harness/skill-access commands in both arms;
+individual commands/outputs and the list have explicit truncation indicators.
+Original raw traces stay retained outside the packet. Free-form prose or source
+can still reveal treatment cues: this is metadata masking, not proven independent
+blinding. The judge can question check fixtures rather than inherit their grades.
+
+The rubric separates `task-contract`, `scope-and-regressions` and
+`verification-claims`. Each permits `satisfied`, `violated` or `unresolved`, with
+missing criteria kept missing. Regression attribution must distinguish baseline
+or environment failures from candidate changes. Solver command observations may
+precede later edits; only separately collected checks bind the final candidate.
+A claimed test pass without its supporting evidence remains unresolved.
+
+Investigative mode permits bounded reproductions against copies inside the judge
+VM. Static mode prohibits investigation by policy. Both bind the exact packet,
+prompt, mode and model. Size the native artifact budget for both supplied source
+and investigation copies, including export overhead: large before/after packets
+can exceed the default 64 MiB. Set `native qualify --max-artifact-bytes` and
+`--max-artifact-files` explicitly when needed. The current maximum is 256 MiB
+and 10,000 files.
+A collection-limit failure retains diagnostics, not a usable judgment; any retry
+uses a fresh directory and keeps the failed attempt.
+
+Resolved judgments need substantive original source,
+check or tool citations; final statements cannot substantiate themselves.
+Investigation artifacts under `task/investigation/repair/` supplement original
+citations, whose bytes and line spans are verified. This validates evidence
+location and identity, not whether the model's reasoning is correct.
+
+Recording retains the native result and artifacts, copied packet, selected source
+specification, judgment and summary in an append-only result-ID directory. A
+separately retained record digest pins every retained file. Read-back regenerates
+the packet and validates the native result and bindings. Preserve the selected
+source, check and original native-input captures as external dependencies. A
+revision has a fresh ID and explicit `supersedes`; it must assess the same repair
+evidence and never replaces the original. Failed judge execution stays unusable,
+even if its partial response is parseable. Independent audit remains pending.
+
+The [authored assessment controls](../../examples/repair/assessment-v1/README.md)
+exercise valid, defective and unsupported-claim judgments. Labels stay outside
+judge packets. These tiny examples test the grader path, not frontier-agent
+ability or representative task difficulty.
+
+## Select outcomes for a study report
+
+`schema repair-outcomes` freezes a study plan digest and explicit cell/attempt
+selections. Each selection supplies check references and optionally one assessment
+record path and digest. Reporting validates the original native attempt receipt,
+candidate and exact check selection. It never chooses the latest or most favorable
+judgment automatically.
+
+```sh
+uv run skilleval study report PLAN --sha256 PLAN_DIGEST --output STUDY_RUN \
+  --outcomes SELECTION --outcomes-sha256 SELECTION_DIGEST
+```
+
+The report preserves all attempts, original native outcomes and task-agent usage.
+Missing selections remain null and checked-but-unjudged repairs remain unassessed.
+Primary repair outcomes follow the existing first-attempt eligibility policy;
+a later successful repair cannot replace an earlier failure. The selected judge record's consumption appears separately; this is not a complete
+ledger of failed or unselected judge invocations. Functional results and semantic verdicts are separate fields,
+with no invented scalar quality score or uncertainty estimate.
+
+Polarity controls must show that checks accept intended repairs and reject
+plausible wrong results. Neither finite checks, model agreement nor structurally
+valid citations establish exhaustive correctness, skill benefit or an audited
+grader. Human calibration, representative task selection and full-workload
+admission remain prerequisites for scored studies. A bounded environment seal and
+a passing repair check do not grant that admission.

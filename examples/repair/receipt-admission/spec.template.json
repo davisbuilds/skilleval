@@ -9,7 +9,7 @@
     "obench/tests/test_repair_validation.py",
     "docs/repair-validation.md"
   ],
-  "worker": "examples/repair/receipt-admission/worker.py",
+  "worker": "examples/repair/receipt-admission/worker-v2.py",
   "worker_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
   "timeout_seconds": 60,
   "source_url": "https://github.com/davisbuilds/openbench",

@@ -80,6 +80,10 @@ This is source adoption, not an endorsement, live provider proof, or evidence of
 runtime isolation. The public calibration corpus was newly authored for this
 repository and does not copy private review content.
 
+The tiny repair-assessment controls in `examples/repair/assessment-v1` are newly
+authored here. They contain no imported implementation or private task content;
+they exercise grader behavior rather than representative task performance.
+
 ## How adoption is recorded
 
 The 2026-10-28 receipt-admission development seed uses OpenBench's public
@@ -92,7 +96,9 @@ contracts; they do not copy the historical implementation or tests. The worker
 separates raw observations from host verdicts, informed by the evaluated confined
 worker design. It is an independent smolvm implementation, not adoption of
 OpenBench's Docker/Harbor runner. [Repair documentation](../system/REPAIRS.md)
-states the fixture and security limits.
+states the fixture and security limits. The versioned worker correction adds
+production replay identity fields after semantic investigation exposed a false
+rejection; original fixture bytes remain available for earlier evidence.
 
 For a selected component, record its exact public source/revision, intended use,
 and local owner. Check the license and any NOTICE or file-level terms at that

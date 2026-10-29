@@ -21,26 +21,28 @@ shipped history. Private provenance stays outside public entries and issues.
   related probes are not independent tasks or representative capability evidence.
   Retain selection decisions; do not retain only vanilla failures or skill wins.
   Browser and writing candidates need their own environments/graders when selected.
-- **Repair snapshot fidelity beyond focused tests:** the development solver's
-  broader test run reported missing assets/configuration and additional failures
-  in the captured source. Focused parent/reference checks passed, but full-suite
-  baseline equivalence is unverified. Before admitting a task from this lineage,
-  compare the original baseline in the intended environment, retain required test
-  assets and distinguish snapshot omissions from pre-existing failures. Do not
-  turn a convenient partial export into a representative environment claim.
-- **Repair semantic assessment and outcome linking:** prepare an arm-blind packet
-  of original source, candidate patch, stated work and independently collected
-  check observations. Define supported contract/regression/claim judgments with
-  an unresolved option, calibrate them and record them separately. Link those
-  assessments and functional checks to study attempts without rewriting native
-  outcomes. `accepted_by_checks` is not complete task quality. Observation workers
-  share a process with candidate imports; preserve that limit and test additional
-  adversarial behaviors before claiming resistance to grader manipulation.
+- **Repair snapshot fidelity beyond focused tests:** source tracing of the
+  development solver's broader failures identified omitted ordinary test assets,
+  missing historical Git objects and root-user-sensitive fixtures. The complete
+  broad-run log was not exported, and the run overlapped further edits. Focused
+  checks passed, but full-suite baseline equivalence remains unverified. Make a
+  new dependency/history-complete capture and compare untouched/reference source
+  in the intended image and execution identity, retaining complete logs. Preserve
+  the original capture and failures; do not attribute them to the candidate or
+  dismiss them as harmless without that comparison.
+- **Representative repair grader validation:** semantic packets, native recording
+  and explicit outcome linking are implemented. Audit representative verdicts,
+  fixture suitability and alternative solutions; tiny positive/negative/unknown
+  controls cannot establish reliability. Treatment metadata masking is not proven
+  blinding. Observation workers share candidate imports; test adversarial output
+  and independent perturbation sessions before claiming resistance to manipulation.
 - **Joint quality and efficiency analysis:** connect independently assessed task
   outcomes to consumption and report quality/cost/time tradeoffs with uncertainty.
   Preserve failures, retries and missing observations; keep judge/evaluation spend
-  separate. Current differences are descriptive, task quality is unassessed, and
-  no uncertainty estimate is implemented. Add independently supported cache
+  separate. Add an operational judge ledger including failed/unselected invocations;
+  selected-record consumption alone is not total grading cost. Current efficiency
+  differences are descriptive, semantic judgments remain unaudited, and no
+  uncertainty estimate is implemented. Add independently supported cache
   partition evidence and actual tier/context/charge contracts before broadening
   the conditional API-equivalent scenario; never infer observed charges from it.
   Prespecify estimands, missing-data policy and repeated-run analysis, with

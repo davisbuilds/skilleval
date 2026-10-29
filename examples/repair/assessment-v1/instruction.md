@@ -1,0 +1,1 @@
+Repair admit(saved, current) for Boolean inputs: admission must follow current evidence regardless of saved evidence. Both valid and invalid current evidence must work. Preserve format_status(True) == "ok" and format_status(False) == "denied".

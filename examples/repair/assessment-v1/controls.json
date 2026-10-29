@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "scope": "exposed-authored-grader-controls",
+  "independent_audit": "required-pending",
+  "cases": [
+    {
+      "case_id": "valid",
+      "candidate": "valid",
+      "statement": "Admission follows current evidence for both Boolean values, regardless of saved evidence. The formatter is preserved.",
+      "expected": {
+        "task-contract": "satisfied",
+        "scope-and-regressions": "satisfied",
+        "verification-claims": "satisfied"
+      }
+    },
+    {
+      "case_id": "reject-all",
+      "candidate": "reject-all",
+      "statement": "Admission accepts valid current evidence and rejects invalid evidence.",
+      "expected": {
+        "task-contract": "violated",
+        "scope-and-regressions": "violated",
+        "verification-claims": "violated"
+      }
+    },
+    {
+      "case_id": "unverified-claim",
+      "candidate": "valid",
+      "statement": "All integration tests passed on Linux and macOS in an external lab.",
+      "expected": {
+        "task-contract": "satisfied",
+        "scope-and-regressions": "satisfied",
+        "verification-claims": "unresolved"
+      }
+    }
+  ]
+}

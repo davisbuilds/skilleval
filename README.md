@@ -7,7 +7,7 @@ skills from any source. Preserve what happened and grade outcomes using
 executable checks, semantic assessment, and human review.
 
 The foundation supports **evidence capture, native reviews and repairs, pinned
-skill inputs, and static or investigative review judging**. Native Codex runs
+skill inputs, and static or investigative judging**. Native Codex runs
 in fresh smolvm guests through a host-only inference gateway. Live controls cover repository tests, Git
 fidelity, filesystem/network boundaries, lifecycle recovery and cleanup;
 environment admission binds that evidence to exact local identities.
@@ -19,8 +19,8 @@ and retry policy, records every attempt, and reports first-attempt comparisons.
 New plans default to explicit-use ON/OFF; earlier plans retain their frozen treatment.
 [Accounting](docs/system/ACCOUNTING.md) separates normalized native usage,
 conditional API-equivalent estimates, agent time and infrastructure stages. Paired
-efficiency differences are descriptive; quality remains unassessed and uncertainty
-is not estimated. A development pair on 2026-10-28 verified explicit invocation,
+efficiency differences are descriptive; selected repair judgments remain unaudited
+and uncertainty is not estimated. A development pair on 2026-10-28 verified explicit invocation,
 broker-matched core token totals and separate agent timing on Codex 0.164.0.
 Independent human audit and scored-study admission remain pending.
 
@@ -28,7 +28,11 @@ The [repair workflow](docs/system/REPAIRS.md) collects actual source changes and
 checks them in a fresh offline VM, with expected answers and comparison authority
 on the host. The receipt-admission development seed rejects the untouched defect
 and blanket accept/reject controls while accepting the historical repair. These
-finite checks leave semantic repair quality and representativeness unassessed.
+finite checks remain separate from semantic judgments. Repair packets withhold
+structured treatment metadata and check grades; native judges assess behavior,
+regressions and verification claims with cited evidence. Explicit outcome selection
+links them to attempts while preserving task-agent accounting and separate judge
+consumption. Representativeness and independent grader audit remain open.
 
 Earlier development pairs and native calibration sessions completed. Fresh judges
 also traced contracts and ran reproductions for the real reports, retaining

@@ -621,3 +621,60 @@ def test_guest_preparation_refuses_ambient_state_without_overwriting(
         assert not native.exists()
     else:
         assert not task.exists()
+
+
+@pytest.mark.parametrize(
+    "maximum, expected_status", [(256 * 1024 * 1024, 0), (257 * 1024 * 1024, 2)]
+)
+def test_native_cli_artifact_budget_reaches_bounded_runner(
+    tmp_path, route, capsys, maximum, expected_status
+):
+    from skilleval import cli
+
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "scenario.json").write_text("{}")
+    (source / "code.py").write_text("raise RuntimeError('VM-only imported code')\n")
+    frozen = evidence.snapshot(source, tmp_path / "frozen")
+    prompt = tmp_path / "prompt.txt"
+    prompt.write_text("Review the source.")
+    output = tmp_path / "run"
+    status = cli.main(
+        [
+            "native",
+            "qualify",
+            str(tmp_path / "frozen"),
+            "--sha256",
+            frozen["manifest_sha256"],
+            "--prompt",
+            str(prompt),
+            "--mode",
+            "review",
+            "--runtime",
+            str(route["runtime"]),
+            "--image-archive",
+            str(route["image"]),
+            "--image-sha256",
+            route["image_sha256"],
+            "--catalog",
+            str(route["catalog"]),
+            "--auth-file",
+            str(route["auth_file"]),
+            "--output",
+            str(output),
+            "--max-artifact-bytes",
+            str(maximum),
+            "--max-artifact-files",
+            "9000",
+        ]
+    )
+    assert status == expected_status
+    captured = capsys.readouterr()
+    if status == 0:
+        report = json.loads(captured.out)
+        assert report["status"] == "completed"
+        assert report["artifact_limits"] == {"bytes": maximum, "files": 9000}
+        assert report["cleanup_complete"] is True
+    else:
+        assert "invalid native workload" in captured.err
+        assert not output.exists()

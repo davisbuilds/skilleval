@@ -13,7 +13,7 @@ Native repository tools remain the authority for task-specific executable checks
 - `docs/system/CALIBRATION.md`: public authored controls, judge records, and limits.
 - `docs/system/RELIABILITY.md`: separately versioned judge stress controls and comparisons.
 - `docs/system/STUDIES.md`: frozen development matrices, attempts, recovery, and reporting.
-- `docs/system/REPAIRS.md`: source repair collection, frozen scope, and offline observations.
+- `docs/system/REPAIRS.md`: repair collection, offline observations, semantic records and outcome selection.
 - `docs/system/ACCOUNTING.md`: native usage semantics, conditional pricing, timing, and efficiency limits.
 - `docs/system/GATEWAY.md`: explicit host inference capability and vendor provenance.
 - `docs/system/ENVIRONMENT.md`: evidence-bound admission, invalidation, and recovery.

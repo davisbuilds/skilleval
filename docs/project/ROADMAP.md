@@ -1,6 +1,6 @@
 ---
 status: in-progress
-updated: 2026-10-28
+updated: 2026-10-29
 ---
 
 # Roadmap
@@ -16,7 +16,7 @@ Public GitHub hosting is the intended destination. The
 | 0 — Foundation | Python package, provisional records, copied evidence, CLI, project boundaries | Offline workflow passes; a historical case can be imported without changing its source | Implemented |
 | 1A — Environment | Prepared task image, fresh VM lifecycle, Codex adapter, explicit admission | Live controls on the exact host/runtime/image/tool route prove fidelity, isolation, bounded failure, cleanup, and a native model/tool loop | Bounded controls, admission, native runner and development dispatch implemented; scored scope pending |
 | 1B — Grader | Evidence packets, executable outcomes, semantic rubric, revision history, calibration | Frozen positive/negative/ambiguous examples distinguish accurate findings from plausible mistakes; human audit measures judge errors | Native judges, authored controls and separate reliability workflow implemented; independent audit and representative reliability evidence pending |
-| 2 — First paired pilot | Relevant real tasks with explicit skill ON/OFF, joint quality and efficiency reporting | Reproducible paired artifacts; invocation fidelity; validated usage/cost/time accounting; qualified environment and grader | Explicit-use accounting and repair adapter implemented; functional polarity controls passed; representative population, semantic repair quality and uncertainty pending; scored pilot gated on 1A and 1B |
+| 2 — First paired pilot | Relevant real tasks with explicit skill ON/OFF, joint quality and efficiency reporting | Reproducible paired artifacts; invocation fidelity; validated usage/cost/time accounting; qualified environment and grader | Explicit-use accounting and repair adapter implemented; functional polarity controls passed; semantic repair judgments and outcome linking implemented; representative population, independent audit and uncertainty pending; scored pilot gated on 1A and 1B |
 | 3 — Representative study | Declared task population, protected holdouts, repeated matched trials, uncertainty analysis | Enough independent task evidence for the prespecified decision; cost and failure effects reported | Pending pilot |
 | 4 — Expand usefully | More task families, natural discovery, pi adapter, TypeScript review UI | Each addition meets the same contracts and addresses a demonstrated workflow need | Deferred beyond adapters needed for the first selected skills |
 
@@ -131,8 +131,30 @@ The original pair failed during collection after exhausting the guest's 64 MiB
 `/run`; those failures remain retained. Moving staging to guest disk passed the
 same-workload collection control. Final collection and offline checks reproduced
 the corrected pair's outcomes after local-review fixes, without rewriting either
-native run. Repair semantic assessment and representative task selection remain
-the next evidence gaps.
+native run. Repair-specific semantic packets and recording now assess contract behavior,
+regressions and verification claims separately. Explicit selections join checks
+and judgments to immutable attempts, keeping judge consumption separate. These
+records remain unaudited; representative task selection and full-suite baseline
+equivalence are still evidence gaps.
+
+On 2026-10-29, native repair judgments assessed both retained artifacts with
+bounded reproductions and supported each in its inspected scope. One judge
+identified a checker-fixture defect: mocked replay omitted production identity
+fields, causing the earlier valid-receipt rejection. A versioned correction
+preserved the original worker and results. Fresh offline checks now accept both
+repairs on all ten probes and the historical reference, while rejecting the
+untouched and blanket variants. Thus the earlier ten-versus-nine observation
+does not establish a functional difference between the repairs. Original-packet
+judgments and corrected check selections remain separate evidence generations.
+
+Three separate tiny native grader controls matched nine authored expectations,
+including an unresolved unsupported-testing claim. Their purpose is to exercise
+the grader, not establish task difficulty or independent reliability. Two real
+judge attempts exceeded artifact collection budgets after copying source;
+fresh attempts at the existing 256 MiB ceiling completed. Failed runs remain
+retained. The final deterministic gate passed 608 tests; local review found one
+incomplete-output omission that was fixed, and its follow-up was clean. Bounded
+runtime qualification was renewed, with human audit and scored admission pending.
 
 New schema-3 study plans freeze review/repair mode and default to explicit-use
 ON/OFF, freezing the selected

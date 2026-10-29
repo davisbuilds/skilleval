@@ -121,7 +121,9 @@ an incomplete subtotal is not a total. Different schedules remain separate, and
 unstarted cells are not zero-cost observations. See [accounting](ACCOUNTING.md)
 for native/provider reconciliation, cache limitations, pricing and timing scopes.
 
-Task quality and quality differences remain unassessed; uncertainty is not
+Repair checks and explicitly selected semantic assessments can be attached with
+`--outcomes SELECTION --outcomes-sha256 DIGEST`; see [repair reporting](REPAIRS.md).
+Audit-backed task quality, scalar quality differences and uncertainty are not
 estimated. Native completion, a skill read, a parseable judgment or a stable judge
 is not correctness or skill benefit.
 The human audit packet remains frozen. Before scored studies, extend admission to
@@ -132,6 +134,7 @@ defect probes do not measure exhaustive review recall.
 The [repair workflow](REPAIRS.md) binds the corresponding task contract to collected
 source bytes, scopes edits, and checks a candidate in a separate offline VM.
 Checking remains an explicit operation outside the study's task-agent loop; its
-result does not overwrite native outcomes or fill in unassessed semantic quality.
+results and optional native judgments are linked without overwriting native
+outcomes. Judge consumption stays separate; pending audit remains explicit.
 The [pilot shortlist](../project/PILOT-CANDIDATES.md) separates the first exposed
 repair seed from a still-unselected representative evaluation population.

@@ -19,6 +19,8 @@ from skilleval.errors import SkillEvalError
 from skilleval.judge import AgenticCalibrationResult, AgenticReviewResult
 from skilleval.reliability import ReliabilityObservations, ReliabilitySuite
 from skilleval.repair import RepairSpec
+from skilleval.repair_assessment import RepairAssessment, RepairAssessmentSpec
+from skilleval.repair_outcomes import RepairOutcomeSelection
 from skilleval.study import StudySpec
 
 RECORDS: dict[str, type[Record]] = {
@@ -34,6 +36,9 @@ RECORDS: dict[str, type[Record]] = {
     "study-spec": StudySpec,
     "price-schedule": PriceSchedule,
     "repair-spec": RepairSpec,
+    "repair-assessment-spec": RepairAssessmentSpec,
+    "repair-assessment": RepairAssessment,
+    "repair-outcomes": RepairOutcomeSelection,
 }
 
 
@@ -104,6 +109,11 @@ def parser() -> argparse.ArgumentParser:
         operation.add_argument("plan", type=Path)
         operation.add_argument("--sha256", required=True, help="Externally retained plan digest")
         operation.add_argument("--output", type=Path, required=True, help="Study output directory")
+        if name == "report":
+            operation.add_argument(
+                "--outcomes", type=Path, help="Explicit repair outcome selection"
+            )
+            operation.add_argument("--outcomes-sha256", help="Retained selection digest")
         if name == "run":
             operation.add_argument("--auth-file", type=Path, required=True)
             operation.add_argument(
@@ -187,6 +197,8 @@ def parser() -> argparse.ArgumentParser:
     native_run.add_argument("--output", type=Path, required=True)
     native_run.add_argument("--timeout-seconds", type=int, default=600)
     native_run.add_argument("--max-requests", type=int, default=32)
+    native_run.add_argument("--max-artifact-bytes", type=int, default=64 * 1024 * 1024)
+    native_run.add_argument("--max-artifact-files", type=int, default=10_000)
     native_run.add_argument("--skill-bundle", type=Path)
     native_run.add_argument("--skill-sha256")
     judge = commands.add_parser("judge", help="Prepare or record native semantic assessments")
@@ -220,6 +232,13 @@ def parser() -> argparse.ArgumentParser:
     prepare_repair = repair_commands.add_parser("prepare", help="Freeze source, scope and checks")
     prepare_repair.add_argument("spec", type=Path)
     prepare_repair.add_argument("--output", type=Path, required=True)
+    for action in ("prepare-assessment", "record-assessment"):
+        command = repair_commands.add_parser(action)
+        command.add_argument("spec", type=Path)
+        command.add_argument("--output", type=Path, required=True)
+        if action == "record-assessment":
+            command.add_argument("--packet", type=Path, required=True)
+            command.add_argument("--run", type=Path, required=True)
     for repair_operation in ("collect", "control", "check"):
         command = repair_commands.add_parser(repair_operation)
         command.add_argument("task", type=Path)
@@ -289,6 +308,21 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
         from skilleval.repair import collect_control, collect_repair, prepare_repair
         from skilleval.repair_check import check_repair
 
+        if args.operation in ("prepare-assessment", "record-assessment"):
+            from skilleval.repair_assessment import (
+                prepare_assessment,
+            )
+            from skilleval.repair_assessment import (
+                record_assessment as record_repair_assessment,
+            )
+
+            assessment_spec = RepairAssessmentSpec.model_validate_json(
+                json.dumps(read_json(args.spec))
+            )
+            if args.operation == "prepare-assessment":
+                return prepare_assessment(assessment_spec, args.output)
+            return record_repair_assessment(assessment_spec, args.packet, args.run, args.output)
+
         if args.operation == "prepare":
             repair_spec = RepairSpec.model_validate_json(json.dumps(read_json(args.spec)))
             return prepare_repair(repair_spec, args.output)
@@ -331,7 +365,14 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
             )
         if args.operation == "reconcile":
             return reconcile_study(args.plan, args.sha256, args.output)
-        return report_study(args.plan, args.sha256, args.output)
+        if (args.outcomes is None) != (args.outcomes_sha256 is None):
+            raise SkillEvalError("repair outcomes require both selection and digest")
+        study_report = report_study(args.plan, args.sha256, args.output)
+        if args.outcomes is not None:
+            from skilleval.repair_outcomes import attach_outcomes
+
+            return attach_outcomes(study_report, args.sha256, args.outcomes, args.outcomes_sha256)
+        return study_report
     if args.command == "native":
         from skilleval.gateway import GatewayLimits
         from skilleval.grading import _read_regular
@@ -351,6 +392,8 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
             auth_file=args.auth_file.absolute(),
             mode=args.mode,
             native_timeout_seconds=args.timeout_seconds,
+            max_artifact_bytes=args.max_artifact_bytes,
+            max_artifact_files=args.max_artifact_files,
             limits=GatewayLimits(
                 max_requests=args.max_requests, timeout_seconds=90, lifetime_seconds=900
             ),
