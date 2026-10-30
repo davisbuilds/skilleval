@@ -10,8 +10,14 @@ it does not establish provider billing accuracy, task correctness or skill benef
 
 ## Native usage and independent reconciliation
 
-`usage_accounting` normalizes one fresh Codex exec thread/turn from its single
-terminal `turn.completed.usage` snapshot. It does not sum cumulative snapshots.
+`usage_accounting` normalizes one fresh Codex thread/turn from a single cumulative
+usage snapshot in canonical events. The legacy `codex-exec-json` surface uses its
+terminal `turn.completed.usage` snapshot. The `codex-app-server-jsonrpc-v2` surface
+uses the latest matched-thread `thread/tokenUsage/updated.params.tokenUsage.total`
+before the matched `turn/completed` notification. The app-server adapter places
+that snapshot in the canonical `turn.completed.usage` field; it does not sum
+updates or use `tokenUsage.last`. Raw RPC observations remain separate from the
+derived canonical events. Missing native usage remains unknown.
 Full start evidence, ordered events, an admitted observed adapter version and
 consistent nonnegative integer counts are required. Parse errors, native failure
 events, missing terminal evidence, multiple turns/threads or unreviewed fields
@@ -19,13 +25,21 @@ prevent a complete observation. Missing telemetry stays unknown; an all-zero
 native snapshot needs matching provider observations because zero can be a native
 missing-telemetry fallback.
 
-The accounting provenance records the observed harness identity and the
+For legacy exec, accounting provenance records the observed harness identity and the
 [reviewed Codex JSONL source revision](https://github.com/openai/codex/blob/1c0c45bfc372fb7d7d581508fdef5eef8235eab7/codex-rs/exec/src/event_processor_with_jsonl_output.rs#L118-L128).
 That source reference does not prove equivalence to the observed binary. Input
 includes cached input: `uncached_input_tokens = input_tokens - cached_input_tokens`;
 `total_tokens = input_tokens + output_tokens`. Optional reasoning tokens remain a
 subset of output and are not added again. Absent cache-write or reasoning detail
 remains null rather than zero.
+
+The normalizer's optional `surface` argument defaults to `codex-exec-json`,
+preserving legacy provenance and behavior. Unknown surfaces are rejected. The
+app-server surface records `app-server-v2-to-canonical-v1` as its adapter and
+the [reviewed app-server notification source](https://github.com/openai/codex/blob/6aaac694803004a63c6f393d153c96d22521a6b9/codex-rs/app-server/src/bespoke_event_handling.rs#L1602-L1615).
+It retains the observed Codex identity and leaves binary equivalence unverified.
+The caller supplies canonical events and adapter parse errors; choosing a surface
+does not itself validate a raw RPC transcript or establish adapter correctness.
 
 The native runner supplies the host broker's provider-request receipts as an
 independent core-total cross-check. Reconciliation checks request identity,

@@ -80,7 +80,8 @@ elif args[:2]==['machine','exec']:
   (state/'scenario.json').write_text(json.dumps(scenario))
   fault=scenario.get('fault')
   process={'returncode':0,'timed_out':False,'codex_version':'codex-cli 0.164.0',
-   'pipe_drain_incomplete':False,
+   'pipe_drain_incomplete':False,'output_limit_reached':False,
+   'protocol':{'transport':'stdio-jsonrpc','complete':True,'permissions_confirmed':True},
    'boundary':{'schema_version':1,'profile':'solver-isolated-v1','status':'ready',
     'uid':61000,'gid':61000,'groups':[],'no_new_privs':True,'capabilities_cleared':True,
     'transport_filter':'vsock-deny-v1','seccomp':True,
@@ -101,11 +102,17 @@ elif args[:2]==['machine','exec']:
   if fault=='boundary-not-reaped':process['boundary']['namespace_reaped']=False
   if fault=='boundary-privileged':process['boundary']['uid']=0
   if fault=='pipe-drain-incomplete':process['pipe_drain_incomplete']=True
+  if fault=='output-limit-reached':process['output_limit_reached']=True
+  if fault=='protocol-missing':process.pop('protocol')
+  if fault=='protocol-incomplete':process['protocol']['complete']=False
+  if fault=='permissions-unconfirmed':process['protocol']['permissions_confirmed']=False
   if fault!='timed-out':events.append({'type':'turn.completed','usage':{'input_tokens':3}})
   if scenario.get('complete_usage') and fault!='timed-out':
    events[-1]['usage']={'input_tokens':3,'cached_input_tokens':1,'output_tokens':2}
   raw='\n'.join(json.dumps(e) for e in events).encode()
   entries['evidence/events.jsonl']=(raw,0o600)
+  entries['evidence/app-server-rpc.jsonl']=(b'{"method":"synthetic/retained"}\n',0o600)
+  entries['evidence/app-server-input.jsonl']=(b'{"method":"initialize","id":1}\n',0o600)
   if fault!='timed-out':entries['evidence/final.txt']=(b'Final synthetic answer',0o600)
   entries['evidence/process.json']=(json.dumps(process).encode(),0o600)
   entries['evidence/filesystem-links.json']=(b'[]',0o600)
@@ -209,6 +216,12 @@ def test_complete_capture_exceeds_client_stdout_cap_and_preserves_originals(
     assert report["input_changes"]["created"] == ["investigation/probe.txt"]
     assert report["original_input_unchanged"]
     assert (tmp_path / "run/final.txt").read_text() == "Final synthetic answer"
+    assert (tmp_path / "run/app-server-rpc.jsonl").read_bytes() == (
+        b'{"method":"synthetic/retained"}\n'
+    )
+    assert (tmp_path / "run/app-server-input.jsonl").read_bytes() == (
+        b'{"method":"initialize","id":1}\n'
+    )
     assert not (tmp_path / "run/task").exists()  # Archive was never extracted.
     assert (tmp_path / "run/native-run.json").stat().st_mode & 0o077 == 0
     with pytest.raises(SkillEvalError, match="already exists"):
@@ -349,6 +362,10 @@ def test_audit_overflow_retains_private_bytes_and_usable_partial_record(
         ("boundary-not-reaped", "failed"),
         ("boundary-privileged", "failed"),
         ("pipe-drain-incomplete", "failed"),
+        ("output-limit-reached", "failed"),
+        ("protocol-missing", "failed"),
+        ("protocol-incomplete", "failed"),
+        ("permissions-unconfirmed", "failed"),
         ("timed-out", "timed-out"),
         ("drift", "partial"),
         ("large-copy", "partial"),
@@ -370,6 +387,25 @@ def test_failures_remain_failures_with_evidence_and_machine_cleanup(
     if fault == "timed-out":
         assert report["process"]["timed_out"]
         assert (tmp_path / "run/events.jsonl").exists()
+
+
+def test_terminal_usage_without_complete_rpc_capture_is_not_complete_accounting(
+    tmp_path: Path, route: dict[str, Any]
+) -> None:
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "scenario.json").write_text(
+        json.dumps({"fault": "protocol-incomplete", "complete_usage": True})
+    )
+    frozen = tmp_path / "frozen"
+    receipt = evidence.snapshot(source, frozen)
+    report = runner.run_native(
+        frozen, receipt["manifest_sha256"], "Inspect the task.", tmp_path / "run", **route
+    )
+    assert report["status"] == "failed"
+    assert report["execution"]["execution_status"] == "unknown"
+    assert report["usage_accounting"]["status"] == "incomplete"
+    assert report["usage"] == {"input_tokens": 3, "cached_input_tokens": 1, "output_tokens": 2}
 
 
 def test_input_drift_refused_before_vm_create(tmp_path: Path, route: dict[str, Any]) -> None:

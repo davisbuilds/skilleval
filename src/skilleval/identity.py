@@ -41,6 +41,7 @@ SOURCES = (
     "src/skilleval/_vendor/openbench_gateway.py",
     "src/skilleval/runner.py",
     "src/skilleval/guest_runner.py",
+    "src/skilleval/app_server.py",
     "src/skilleval/solver_boundary.py",
     "src/skilleval/context_guard.py",
     "src/skilleval/judge.py",

@@ -27,8 +27,10 @@ their [scope](../system/NATIVE.md#operator-state-and-effective-context) remains
 separate from scored admission. Judge controls cover authored labels and selected
 repeat/order/perturbation cases. The [solver boundary](../system/TASK-PRESENTATION.md)
 now separates filesystem/process authority and denies guest management transport,
-with working native task controls. Native permission wording, representative
-task/image coverage, independent semantic audit and scored-study admission
+with working native task controls. App-server now declares external enforcement
+and produces restricted-network wording in captured requests. Generic filesystem
+wording remains an upstream limitation. Representative task/image coverage,
+independent semantic audit and scored-study admission
 remain pending. Development workflows can progress while those gates
 are open; they cannot become scored trials by relabeling their results.
 
@@ -39,9 +41,9 @@ and the adapted OpenBench gateway. External skills remain experimental inputs.
 
 ## Now: solver visibility, useful tasks and independent judgment audit
 
-1. **Finish native presentation and task coverage before new comparisons.** Align
-   native capability descriptions with external enforcement, preserving local
-   task tools and the qualified solver boundary. Use ordinary work briefs; review
+1. **Finish task presentation and coverage before new comparisons.** Preserve the
+   qualified external-enforcement route and track its documented native wording
+   limits. Use ordinary work briefs; review
    actual instructions, accessible files/history, skill resources and tool outputs
    for evaluation disclosures. Neutral labels alone do not satisfy this boundary.
 2. **Broaden the skill-relevant population.** Start with the engineering source

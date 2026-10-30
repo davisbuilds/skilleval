@@ -19,13 +19,14 @@ import subprocess
 import sys
 import tarfile
 import time
-from contextlib import suppress
+from contextlib import nullcontext, suppress
 from pathlib import Path
 from typing import Any
 
 if __package__:
-    from skilleval import context_guard, solver_boundary
+    from skilleval import app_server, context_guard, solver_boundary
 else:
+    import app_server  # type: ignore[no-redef,import-not-found]
     import context_guard  # type: ignore[no-redef,import-not-found]
     import solver_boundary  # type: ignore[no-redef,import-not-found]
 
@@ -61,6 +62,7 @@ def _execute_native(
     timeout: int,
     *,
     stream_limit_bytes: int | None = None,
+    protocol: app_server.Session | None = None,
 ) -> dict[str, Any]:
     """Keep controller file descriptors outside the child; stream bounded pipes.
 
@@ -68,11 +70,24 @@ def _execute_native(
     process-group fallback here also serves the trusted relay and host tests.
     """
     with (
-        (evidence / "events.jsonl").open("wb") as stdout,
+        (evidence / ("app-server-rpc.jsonl" if protocol else "events.jsonl")).open("wb") as stdout,
         (evidence / "stderr.log").open("wb") as stderr,
+        (
+            (evidence / "app-server-input.jsonl").open("wb") if protocol else nullcontext()
+        ) as rpc_input,
         selectors.DefaultSelector() as selector,
     ):
-        pending = memoryview(prompt.read_bytes())
+        pending = b"" if protocol else prompt.read_bytes()
+        received = b""
+        protocol_error = None
+
+        def enqueue(messages: list[dict[str, Any]]) -> None:
+            nonlocal pending
+            for message in messages:
+                pending += json.dumps(message, ensure_ascii=False).encode() + b"\n"
+
+        if protocol:
+            enqueue(protocol.start())
         started = time.monotonic()
         process = subprocess.Popen(
             argv,
@@ -97,8 +112,12 @@ def _execute_native(
         try:
             while selector.get_map():
                 now = time.monotonic()
-                if stopped_at is None and (process.poll() is not None or now - started >= timeout):
+                if stopped_at is None and (
+                    process.poll() is not None or now - started >= timeout or protocol_error
+                ):
                     timed_out = process.poll() is None
+                    if protocol_error:
+                        timed_out = False
                     _stop(process)
                     stopped_at = time.monotonic()
                 if stopped_at is not None and now - stopped_at > 1:
@@ -108,12 +127,18 @@ def _execute_native(
                     if key.data is None:
                         if pending:
                             try:
-                                pending = pending[os.write(key.fd, pending[:4096]) :]
+                                written = os.write(key.fd, pending[:4096])
+                                if rpc_input is not None:
+                                    rpc_input.write(pending[:written])
+                                pending = pending[written:]
                             except BrokenPipeError:
-                                pending = memoryview(b"")
+                                pending = b""
+                                if protocol:
+                                    protocol_error = "app-server input closed early"
                         if not pending:
                             selector.unregister(key.fileobj)
-                            process.stdin.close()
+                            if protocol is None or protocol.settled or protocol_error:
+                                process.stdin.close()
                         continue
                     block = os.read(key.fd, 65536)
                     if not block:
@@ -125,6 +150,22 @@ def _execute_native(
                         truncated |= len(block) > available
                         block = block[:available]
                     output.write(block)
+                    if protocol and output is stdout and not protocol_error:
+                        received += block
+                        if truncated or len(received) > 4 * 1024 * 1024:
+                            protocol_error = "app-server output limit exceeded"
+                            continue
+                        try:
+                            while b"\n" in received:
+                                line, received = received.split(b"\n", 1)
+                                enqueue(protocol.receive(json.loads(line)))
+                            if pending and not process.stdin.closed:
+                                if process.stdin not in selector.get_map():
+                                    selector.register(process.stdin, selectors.EVENT_WRITE, None)
+                            elif protocol.settled and not process.stdin.closed:
+                                process.stdin.close()
+                        except (ValueError, UnicodeError) as error:
+                            protocol_error = str(error)[:1024]
             # A process can close all streams before it exits.
             if stopped_at is None:
                 try:
@@ -135,13 +176,31 @@ def _execute_native(
             _stop(process)
             for stream in (process.stdin, process.stdout, process.stderr):
                 stream.close()
-    return {
+    result = {
         "returncode": process.returncode,
         "timed_out": timed_out,
         "agent_elapsed_seconds": time.monotonic() - started,
         "output_limit_reached": truncated,
         "pipe_drain_incomplete": drain_incomplete,
     }
+    if protocol:
+        if received and protocol_error is None:
+            protocol_error = "incomplete app-server JSON line"
+        (evidence / "events.jsonl").write_text(
+            "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in protocol.events)
+        )
+        complete = protocol.complete and protocol_error is None and not timed_out
+        (evidence / "final.txt").write_text(protocol.final_text if complete else "")
+        result["protocol"] = {
+            "transport": "stdio-jsonrpc",
+            "harness": "codex-app-server-jsonrpc-v2",
+            "adapter": "app-server-v2-to-canonical-v1",
+            "complete": complete,
+            "permissions_confirmed": protocol.permissions_confirmed,
+            "error": protocol_error,
+            "errors": protocol.errors,
+        }
+    return result
 
 
 def _archive(root: Path, work: Path, maximum: int, count: int) -> dict[str, Any]:
@@ -226,17 +285,7 @@ def run(root: Path, work: Path) -> int:
         "CODEX_HOME": str(codex_home),
         "LANG": "C.UTF-8",
     }
-    argv = [
-        "codex",
-        "exec",
-        "--json",
-        "--skip-git-repo-check",
-        "--color",
-        "never",
-        "--output-last-message",
-        str(home / "final.txt"),
-        "-",
-    ]
+    argv = ["codex", "app-server"]
     relay: subprocess.Popen[bytes] | None = None
     boundary_started = False
     safe_to_collect = True
@@ -319,6 +368,8 @@ def run(root: Path, work: Path) -> int:
                 work,
                 evidence,
                 settings["native_timeout_seconds"],
+                stream_limit_bytes=maximum,
+                protocol=app_server.Session((root / "prompt.txt").read_text(), str(work)),
             )
         )
         boundary = json.loads((root / "boundary.json").read_bytes())
@@ -328,16 +379,6 @@ def run(root: Path, work: Path) -> int:
             raise ValueError("solver boundary failed")
         result["launcher_elapsed_seconds"] = result["agent_elapsed_seconds"]
         result["agent_elapsed_seconds"] = boundary["native_elapsed_seconds"]
-        # The solver never holds a controller evidence FD. Read its final result
-        # only after the kernel has terminated every member of its PID namespace.
-        final_path = home / "final.txt"
-        if final_path.exists() or final_path.is_symlink():
-            descriptor = os.open(final_path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
-            with os.fdopen(descriptor, "rb") as source:
-                info = os.fstat(source.fileno())
-                if not stat.S_ISREG(info.st_mode) or info.st_size > maximum:
-                    raise ValueError("invalid native final output")
-                (evidence / "final.txt").write_bytes(source.read(maximum + 1))
         result["context_skills_after"] = context_guard.inventory(codex_home / "skills")
     except (OSError, ValueError, subprocess.SubprocessError) as error:
         result["error"] = type(error).__name__
