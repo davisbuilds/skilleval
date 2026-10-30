@@ -14,15 +14,20 @@ shipped history. Private provenance stays outside public entries and issues.
 
 ## Open
 
-- **Skill-relevant task population:** use the grounded
-  [shortlist](PILOT-CANDIDATES.md) and exposed receipt-repair seed to assess
-  feasibility and headroom, then freeze separate evaluation cases. The repair
+- **Skill-relevant task population:** use the current
+  [engineering source priorities](PILOT-CANDIDATES.md#current-selection-direction)
+  to select concrete debugging, implementation, review, UI, performance or QA
+  work that maintainers actually delegate, then freeze separate evaluation cases.
+  Establish the task brief, skill fit and independent outcomes before capture;
+  the earlier shortlist does not select the next population. The repair
   adapter, source capture and polarity controls are implemented; one seed's
   related probes are not independent tasks or representative capability evidence.
   Retain selection decisions; do not retain only vanilla failures or skill wins.
-  A second, source-grounded writing task now exercises a complete upstream skill
-  and document grader. Both seeds remain exposed development work. The browser
-  candidate still needs its own environment and rendered-outcome validation.
+  A source-grounded writing task exercises a complete upstream skill and document
+  grader; expansion of that source collection is deferred. Both seeds remain
+  exposed development work. Selected browser tasks will need environment and
+  rendered-outcome validation; the narrow proposed game repair is a weak design
+  skill comparison.
 - **Task environment profile and coverage:** the restored receipt-repair capture
   now has matching baseline/reference unit failures and skips, with required
   assets/history retained. The [environment record](../../examples/repair/receipt-admission/environment.md)
@@ -42,7 +47,7 @@ shipped history. Private provenance stays outside public entries and issues.
   controls cannot establish reliability. Treatment metadata masking is not proven
   blinding. Observation workers share candidate imports; test adversarial output
   and independent perturbation sessions before claiming resistance to manipulation.
-- **Representative writing grader validation:** the document rubric and artifact
+- **Representative writing grader validation (deferred):** the document rubric and artifact
   path are implemented, with different valid drafts and a format-valid false-claim
   control. Independently audit judgments on varied real writing tasks and preserve
   disagreements; model agreement on authored drafts does not establish reliability,

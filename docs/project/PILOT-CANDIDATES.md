@@ -1,5 +1,34 @@
 # Explicit-use pilot candidates
 
+## Current selection direction
+
+As of **2026-10-30**, prioritize ordinary engineering work using skills from
+[Addy Osmani](https://github.com/addyosmani/agent-skills),
+[Matt Pocock](https://github.com/mattpocock/skills),
+[Emil Kowalski](https://github.com/emilkowalski/skills),
+[Cursor pstack](https://github.com/cursor/plugins/tree/main/pstack), and
+[gstack](https://github.com/garrytan/gstack).
+Defer new task selection involving blacktwist, charlie947, coreyhaines31, and
+google-design-md. Existing writing captures, judgments, and pending audit
+materials remain retained; this changes expansion priority, not earlier evidence.
+
+Select concrete jobs a maintainer would actually delegate, with normal project
+context and a useful deliverable. Debugging, feature implementation, change-impact
+review, UI interaction work, performance, and release QA are candidate families,
+not yet a selected or frozen suite. Establish skill fit and independent outcome
+criteria for each actual task before implementation. Preserve package dependencies
+and qualify required harness/tools; a shortened prompt or unsupported delegation
+path cannot silently stand in for the upstream package.
+
+The earlier shortlist below records development provenance. It does not determine
+the next population: A remains an exposed development seed, B's narrow repair is
+a weak fit for a design skill, and C's source collection is now deferred for
+expansion. Ordinary tasks may be straightforward for a capable baseline; equal
+quality with different consumption is still informative. Select cases before
+seeing treatment outcomes, not only cases where vanilla fails.
+
+## Earlier development shortlist
+
 Shortlist dated **2026-10-28**, not a frozen task suite or launch authorization.
 Candidate A now has a captured development snapshot, repair adapter and live
 polarity controls. C has a captured source packet and document adapter; B remains
@@ -11,7 +40,7 @@ and linked revisions were checked through GitHub. Source and history inspection
 establish candidate provenance. The separate development controls below have a
 bounded scope; they do not establish grader accuracy or skill effectiveness.
 
-Start development with **A**, subject to its feasibility and headroom checks. It
+The initial development route started with **A**. It
 fits the existing Python/Linux direction without browser or Apple tooling. B and
 C deliberately broaden the population beyond code review. The existing native
 review workflow cannot define their deliverables: repair tasks need collected
@@ -114,6 +143,10 @@ human interaction is inherently required; visual evidence and its assessment are
 still unqualified. Do not run a full film/render workflow merely to grade this fix.
 
 ## C. Source-grounded marketing writing
+
+**Expansion deferred as of 2026-10-30.** Preserve this completed development
+generation and its unaudited assessments; prioritize the engineering sources above
+for new tasks.
 
 **Real product source; authored commission, not a historical case.** AgentMonitor's
 [README at
