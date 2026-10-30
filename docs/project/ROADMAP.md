@@ -37,6 +37,8 @@ and the adapted OpenBench gateway. External skills remain experimental inputs.
    priorities in the [candidate register](PILOT-CANDIDATES.md#current-selection-direction)
    and concrete work maintainers actually delegate. Discuss task briefs, skill fit,
    deliverables and independent outcome checks before capturing the next cases.
+   Start with one independently usable skill and its required resources; defer
+   packages that require a larger multi-skill or orchestration workflow.
    Repair and writing have exposed development captures; new engineering cases
    remain unselected. Preserve selection reasons and exclusions. Do not retain
    only vanilla failures or wins for the skill.
@@ -45,9 +47,11 @@ and the adapted OpenBench gateway. External skills remain experimental inputs.
    Tiny authored label controls test the grader machinery; their difficulty does
    not define the task population. Preserve the pending audit generation.
 3. **Close task-specific environment gaps.** Choose and qualify the solver user
-   profile and required tools. Keep baseline failures, skipped lanes, unsupported
-   platforms, and artifact-budget limits explicit. Capture corrections do not
-   upgrade earlier attempts.
+   profile and required tools. Before interpreting new ON/OFF pairs, verify the
+   actual harness context excludes operator instructions and machine state, with
+   contamination canaries and working positive controls. Keep baseline failures,
+   skipped lanes, unsupported platforms, and artifact-budget limits explicit.
+   Capture corrections do not upgrade earlier attempts.
 
 These tracks can progress independently. Add an adapter when the selected task
 requires it, rather than expanding harnesses or infrastructure in advance.
@@ -74,9 +78,10 @@ judgment, model agreement, or successful skill read cannot satisfy those gates.
 
 ## Later
 
-Expand to natural discovery, the pi harness, and a TypeScript evidence/review UI
-when the evaluation workflow demonstrates a need. Protected holdouts, additional
-task families, and automation follow the same evidence and accounting contracts.
+Expand to multi-skill/workflow treatments, natural discovery, the pi harness, and
+a TypeScript evidence/review UI when the evaluation workflow demonstrates a need.
+Protected holdouts, additional task families, and automation follow the same
+evidence and accounting contracts.
 A universal leaderboard and automatic skill optimization are outside the initial
 scope.
 

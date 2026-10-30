@@ -54,6 +54,25 @@ Collected files are cited as `task/investigation/CASE_ID/...`; review judges use
 transcripts remain untrusted evidence. Their hashes establish consistency, not
 semantic authenticity or independent correctness.
 
+### Operator state and effective context
+
+The runner creates fresh guest `HOME` and `CODEX_HOME` directories, writes its own
+provider configuration, and launches Codex with an explicit process environment.
+VM creation declares no host directory mounts; task, tooling and the selected
+skill are explicit copied inputs. The host runtime also gets separate HOME/XDG
+state. The intended boundary excludes the operator's parent-directory and global
+`AGENTS.md`, personal skill installations and prior Codex sessions through those
+host paths. Task-repository instructions remain frozen, shared task context.
+
+This is not yet a complete audit of what the harness loads. Image/system defaults,
+built-in skills and task-local instruction/configuration surfaces require effective
+context observation at the actual harness version. Any retained harness defaults
+must be declared and identical between arms. Existing request telemetry
+checks the selected skill; it does not enumerate all possible instruction sources.
+The [ambient isolation backlog](../project/BACKLOG.md) owns the remaining inventory
+and synthetic contamination controls. Preserve this limit when interpreting
+earlier runs; ordinary filesystem tests cannot establish native context isolation.
+
 ## Prepare, freeze, run and record a calibration judge
 
 The following uses the public authored development controls. Choose new output

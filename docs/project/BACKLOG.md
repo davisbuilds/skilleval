@@ -28,6 +28,20 @@ shipped history. Private provenance stays outside public entries and issues.
   exposed development work. Selected browser tasks will need environment and
   rendered-outcome validation; the narrow proposed game repair is a weak design
   skill comparison.
+- **Ambient instruction isolation:** fresh guest homes, explicit process
+  environments and no host directory mounts limit accidental inheritance, but
+  current selected-skill telemetry does not inventory every effective instruction,
+  skill, plugin, hook or configuration source. Before interpreting the next
+  single-skill pairs, add a version-bound inventory and native request/tool
+  observations for the actual runner. Use synthetic parent/global instructions,
+  user skills/configuration and prior-run state in disposable fixtures, with a
+  deliberately exposed positive control and an isolated negative control; never
+  modify or copy the operator's real personal guidance for the probe. Cover
+  image/system defaults as well as host state, prove ordinary task instructions
+  still load, and verify only the selected treatment differs between arms.
+  Keep unexpected or unobservable context explicit and refuse qualification when
+  the relevant boundary is unresolved. Existing filesystem/network controls and
+  offline tests do not establish this complete context claim.
 - **Task environment profile and coverage:** the restored receipt-repair capture
   now has matching baseline/reference unit failures and skips, with required
   assets/history retained. The [environment record](../../examples/repair/receipt-admission/environment.md)

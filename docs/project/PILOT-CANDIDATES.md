@@ -20,6 +20,13 @@ criteria for each actual task before implementation. Preserve package dependenci
 and qualify required harness/tools; a shortened prompt or unsupported delegation
 path cannot silently stand in for the upstream package.
 
+For the first comparisons, select one independently usable skill with its own
+required resources. A collection's priority does not make its whole plugin or
+workflow the treatment. Defer candidates requiring other skills or substantial
+orchestration until the single-skill comparison is established. Qualify isolation
+from operator instructions and machine state before interpreting the new pairs;
+the [vision](VISION.md) owns that boundary.
+
 The earlier shortlist below records development provenance. It does not determine
 the next population: A remains an exposed development seed, B's narrow repair is
 a weak fit for a design skill, and C's source collection is now deferred for
