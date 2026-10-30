@@ -23,7 +23,8 @@ from skilleval import evidence
 from skilleval.errors import SkillEvalError
 
 _NAME = re.compile(r"[a-z0-9][a-z0-9-]{0,63}")
-_NOTICE = ".skilleval-notices/ROOT_LICENSE"
+_NOTICE = ".source-notices/ROOT_LICENSE"
+_LEGACY_NOTICE = ".skilleval-notices/ROOT_LICENSE"
 
 
 def _inventory(files: list[tuple[str, bytes, bool]]) -> list[dict[str, Any]]:
@@ -96,7 +97,8 @@ def capture_skill(
     content = {name: data for name, data, _ in files}
     if "SKILL.md" not in content:
         raise SkillEvalError("selected skill tree requires SKILL.md")
-    if any(name.casefold().startswith(".skilleval-notices/") for name in content):
+    reserved = {Path(path).parts[0] for path in (_NOTICE, _LEGACY_NOTICE)}
+    if any(Path(path.casefold()).parts[0] in reserved for path in content):
         raise SkillEvalError("selected skill uses a reserved notice directory")
     name = _skill_name(content["SKILL.md"])
     notice: bytes | None = None
@@ -128,6 +130,7 @@ def capture_skill(
             "source_url": source_url,
             "source_revision": source_revision,
             "license_status": "provided" if notice is not None else "not-provided",
+            "notice_path": _NOTICE,
             "discovery": "CODEX_HOME/skills",
             "permissions": "bytes-and-executable-flag",
         },
@@ -143,12 +146,16 @@ def _verified_skill(
     manifest = evidence.verify(bundle, expected_digest)
     meta = manifest["meta"]
     name = meta.get("skill_name")
+    # Old immutable captures keep their original name and bytes. Never rename a
+    # pinned package during installation; neutral presentation needs a new capture.
+    notice_path = meta.get("notice_path", _LEGACY_NOTICE)
     if (
         manifest["kind"] != "snapshot"
         or meta.get("purpose") != "skill-treatment"
         or not isinstance(name, str)
         or _NAME.fullmatch(name) is None
         or meta.get("license_status") not in {"provided", "not-provided"}
+        or notice_path not in (_NOTICE, _LEGACY_NOTICE)
     ):
         raise SkillEvalError("bundle is not a supported captured skill")
     prefix = f"skills/{name}/"
@@ -159,7 +166,7 @@ def _verified_skill(
     content = {relative: data for relative, data, _ in files}
     if (
         any(not relative.startswith(prefix) for relative in content)
-        or ((prefix + _NOTICE in content) != (meta["license_status"] == "provided"))
+        or ((prefix + notice_path in content) != (meta["license_status"] == "provided"))
         or prefix + "SKILL.md" not in content
         or _skill_name(content[prefix + "SKILL.md"]) != name
     ):

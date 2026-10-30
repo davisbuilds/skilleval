@@ -17,5 +17,5 @@ readers understand what they can inspect, who the product serves, and what tryin
 it involves. Preserve relevant limits: single-user local use, estimated costs,
 history versus live activity, and differences in provider detail. Do not invent
 customers, testimonials, measured savings, conversion results, guarantees, pricing,
-or availability. No external research or product installation is needed. Leave
-the actual file in the workspace; the evaluator collects its bytes.
+or availability. No external research or product installation is needed. Save
+the finished copy in page.md.

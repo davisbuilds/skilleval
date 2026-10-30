@@ -4,6 +4,9 @@ This reference owns the explicit native review, repair and judge procedure. Thes
 runs use a fresh VM, the bounded host inference gateway, and retained evidence. They
 remain development-only: `native qualify` never grants scored admission, and a
 completed native turn does not establish a correct review or calibrated judge.
+The [task-presentation audit](TASK-PRESENTATION.md) identifies evaluation disclosures
+and the remaining solver access to controller files. This route is not yet
+qualified to conceal evaluation infrastructure from the task agent.
 The [environment reference](ENVIRONMENT.md) owns runtime admission and recovery;
 the [gateway reference](GATEWAY.md) owns authentication and provider limits.
 The [repair reference](REPAIRS.md) owns editable scope, patch collection and offline
@@ -103,7 +106,9 @@ from capability comparisons. Synthetic receipts have the distinct kind
 Retain the summary, original synthetic requests, native audits/artifacts and
 recovery tickets. Evidence binds the actual source, runtime, image and harness
 identities. The 2026-10-30 control passed all 56 assertions across five fresh VMs
-on Codex 0.164.0 and smolvm 1.32.3, after removing image-build launcher residue.
+on Codex 0.164.0 and smolvm 1.32.3, after removing image-build launcher residue,
+and passed again with the neutral provider profile. Each generation retains its
+exact configuration identity rather than granting evidence to later profiles.
 Earlier failed generations remain retained. This establishes the tested context
 boundary and comparison, not model behavior, general resistance to malicious
 guest code, every future discovery path, or skill effectiveness. It does not
@@ -241,7 +246,10 @@ uv run skilleval treatment capture SELECTED_SKILL_TREE \
 
 The capture preserves all files in that tree, including references, scripts and
 existing notices, plus executable flags. It does not install a host skill or run
-its scripts. For the available review input, supply `--skill-bundle` and
+its scripts. A supplied root notice is added at `.source-notices/ROOT_LICENSE`,
+with its location recorded in host metadata. Older captures without that metadata
+keep their original `.skilleval-notices/ROOT_LICENSE` bytes and location. Do not
+rename pinned inputs in place. For the available review input, supply `--skill-bundle` and
 `--skill-sha256` together to `native qualify`. Omit both for the absent selected
 skill. Judge mode rejects skill bundles. CLI help owns the exact invocation.
 

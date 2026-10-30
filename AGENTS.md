@@ -20,6 +20,8 @@ interfaces. Do not load every reference for a small change.
   paired plans, attempts, reporting, and usage/cost/time semantics.
 - [ENVIRONMENT.md](docs/system/ENVIRONMENT.md), [GATEWAY.md](docs/system/GATEWAY.md),
   [NATIVE.md](docs/system/NATIVE.md): qualification, recovery, inference, and native runs.
+- [TASK-PRESENTATION.md](docs/system/TASK-PRESENTATION.md): solver-visible context,
+  evaluation disclosures, and the remaining controller access boundary.
 - [CALIBRATION.md](docs/system/CALIBRATION.md), [RELIABILITY.md](docs/system/RELIABILITY.md):
   judge contracts, authored controls, stability checks, and independent audit limits.
 - [PILOT-CANDIDATES.md](docs/project/PILOT-CANDIDATES.md),
@@ -46,6 +48,9 @@ belong in an explicit external directory or ignored `.local/`.
 - Keep execution validity, task quality, skill exposure/consultation, and usage
   separate. Missing telemetry is unknown. A read is not semantic application;
   authored controls are not holdouts; one pair is not a skill-effect estimate.
+- Give solvers ordinary work briefs without evaluation announcements. Keep
+  evaluation-only context inaccessible; operator-state isolation alone does not
+  establish that boundary. Preserve faithful upstream skill bytes and old evidence.
 - Grade outcomes independently of the skill's instructions. Preserve alternative
   valid solutions, novel findings, failures, disagreements, and unresolved verdicts.
   Scored correctness requires independent grader audit and applicable admission.

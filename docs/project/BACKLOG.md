@@ -14,6 +14,16 @@ shipped history. Private provenance stays outside public entries and issues.
 
 ## Open
 
+- **Solver visibility boundary:** the [task-presentation audit](../system/TASK-PRESENTATION.md)
+  found that the full-access native solver can read controller files, settings,
+  staging archives and process arguments as root. Direct brief/provider/notice
+  disclosures are corrected for new inputs, but wording does not enforce separation.
+  Before new ON/OFF comparisons, isolate controller/evaluator state from the
+  solver's readable filesystem and process namespace, qualify an unprivileged
+  user profile, and prove allowed task work and denied controller reads through
+  native tools. Audit task/skill/history content too; retain old disclosed inputs
+  as historical development evidence. The historical review exporter needs a
+  separately defined neutral presentation path, without rewriting pinned captures.
 - **Skill-relevant task population:** use the current
   [engineering source priorities](PILOT-CANDIDATES.md#current-selection-direction)
   to select concrete debugging, implementation, review, UI, performance or QA

@@ -230,14 +230,15 @@ def test_vendor_bytes_and_fixed_native_configuration() -> None:
     assert config["model"] == "gpt-6.1-sol"
     assert config["model_reasoning_effort"] == "high"
     assert config["model_catalog_json"] == "/run/models.json"
-    provider = config["model_providers"]["qualification-broker"]
+    provider = config["model_providers"][config["model_provider"]]
     assert provider == {
-        "name": "skilleval qualification",
+        "name": "Local gateway",
         "base_url": "http://127.0.0.1:8123",
         "wire_api": "responses",
         "requires_openai_auth": False,
         "supports_websockets": False,
     }
+    assert config["model_provider"] == "local-gateway"
     assert config["web_search"] == "disabled"
     assert not config["features"]["output_token_replay"]
     assert not config["features"]["concurrent_reasoning_summaries"]

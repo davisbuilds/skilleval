@@ -103,7 +103,10 @@ the separately qualified VM. Write the profile and pinned native catalog as
 read-only tooling in a fresh guest `CODEX_HOME`; supply no host auth cache,
 provider key, plugins, MCP settings, or ambient host configuration.
 
-The provider display name is `skilleval qualification`. In pinned Codex,
+The provider key is `local-gateway` and its display name is `Local gateway`, so
+the generated solver-readable profile does not announce evaluation. This naming
+change does not hide the controller or establish [solver visibility isolation](TASK-PRESENTATION.md).
+In pinned Codex,
 [`is_openai()` and request construction](https://github.com/openai/codex/blob/6aaac694803004a63c6f393d153c96d22521a6b9/codex-rs/core/src/client.rs#L1048)
 use the exact display name `OpenAI` to retain private message metadata and
 encrypted non-reasoning replay fields. The custom display name suppresses those
