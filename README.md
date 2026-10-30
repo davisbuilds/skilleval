@@ -49,6 +49,11 @@ has been exercised on Apple Silicon macOS with Linux ARM64 guests; this is not a
 claim of runtime portability. Windows is unsupported. See
 [environment requirements](docs/system/ENVIRONMENT.md).
 
+Hosted CI runs the deterministic gate and package build on Linux and macOS, plus
+workflow auditing and full-history secret scanning. See the
+[repository and CI policy](docs/project/GIT_HISTORY_POLICY.md) for required checks
+and review expectations.
+
 ### Try an offline example
 
 This small authored review fixture demonstrates evidence capture and packet

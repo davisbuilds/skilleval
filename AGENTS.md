@@ -25,6 +25,8 @@ interfaces. Do not load every reference for a small change.
 - [PILOT-CANDIDATES.md](docs/project/PILOT-CANDIDATES.md),
   [SOURCES.md](docs/project/SOURCES.md): task selection and external provenance.
 - [CONTRIBUTING.md](CONTRIBUTING.md): contribution scope and review expectations.
+- [GIT_HISTORY_POLICY.md](docs/project/GIT_HISTORY_POLICY.md): hosting, required
+  checks, review, and merge policy; [CI tools](.github/ci-tools/README.md): tool renewal.
 
 ## Command quickstart
 
@@ -80,8 +82,9 @@ possible instead of calling the model again. Avoid unrelated requalification.
 - Clarify material ambiguity; proceed with authorized, bounded work.
 - Stage explicit paths, inspect the staged set, and commit coherent changes. Push
   or publish only when requested. Never include private `.local/` evidence.
-- Intended GitHub policy is merge + rebase, defaulting to merge commits, with
-  merged branches deleted. Verify live hosting/settings before relying on them.
+- GitHub policy is merge + rebase, defaulting to merge commits, with merged
+  branches deleted and required checks on `main`. Verify live hosting/settings
+  against the repository policy before relying on them.
   Request Codex review on PRs when available; resolve actionable review threads.
 - Update the owning reference when a contract, boundary, procedure, or direction
   changes. Keep roadmap priorities current and backlog entries future-only.

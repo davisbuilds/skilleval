@@ -1,0 +1,20 @@
+version: 2
+updates:
+  - package-ecosystem: uv
+    directories: ["/", "/.github/ci-tools"]
+    schedule:
+      interval: weekly
+    # Eight days avoids the boundary of the seven-day installation quarantine.
+    # Security updates bypass Dependabot cooldown and still require review.
+    cooldown:
+      default-days: 8
+    groups:
+      minor-and-patch:
+        applies-to: version-updates
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 8

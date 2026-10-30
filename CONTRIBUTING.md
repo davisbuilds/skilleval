@@ -46,10 +46,11 @@ compatibility, and material risks. Identify changed tests or weakened guards.
 The [PR template](.github/pull_request_template.md) provides the review shape;
 omit empty sections and scale detail to the change.
 
-The intended history policy is merge + rebase, recorded in [AGENTS.md](AGENTS.md).
-Verify actual hosting settings before relying on that policy. Release automation
-and hosted CI activation remain tracked in the backlog; a local check is not an
-observed GitHub check.
+The [repository and CI policy](docs/project/GIT_HISTORY_POLICY.md) defines merge
+and rebase support, required hosted checks, and review expectations. Hosted Linux
+and macOS checks run the same deterministic gate; they do not qualify native VM
+execution. Workflow changes also need the [CI-tool checks](.github/ci-tools/README.md).
+Release automation and package-registry publication are separate work.
 
 Original project work uses [Apache-2.0](LICENSE). Contributions are supplied under
 that license unless explicitly stated otherwise. Preserve the distinct MIT notice

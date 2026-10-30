@@ -106,6 +106,11 @@ shipped history. Private provenance stays outside public entries and issues.
   captures. Extend supported validation formats and environment profiles only
   when selected task families require them; preserve current source/history and
   expected-exception evidence when doing so.
+- **Completed-run storage collection:** extend the preview/apply retention path
+  to disposable checker, validation, and native tooling staging archives. Require
+  terminal recovery and runtime HOME absence, distinguish qualification tooling
+  still consumed by admission, and verify downstream readers. The current image
+  pruner does not cover these archives; manual cleanup is not automatic retention.
 - **OCI portability:** attest media types/effective image policy before permitting
   registries other than explicit Docker Hub references in the pinned adapter.
 - **General task packages:** protected holdouts, exposure tracking, and
