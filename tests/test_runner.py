@@ -235,6 +235,40 @@ def test_large_command_output_stays_in_raw_artifacts_with_a_usable_receipt(
     assert retained["native-audit.json"] == (tmp_path / "run/native-audit.json").read_bytes()
 
 
+def test_resource_heavy_skill_process_record_is_read_with_bounded_limits(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, work = tmp_path / "native", tmp_path / "task"
+    work.mkdir()
+    home = root / "codex-home"
+    resources = home / "skills/selected/references"
+    resources.mkdir(parents=True)
+    for index in range(500):
+        (resources / f"reference-{index:04}.md").write_text("Resource content.\n")
+    process = {
+        "returncode": 0,
+        "context_preflight": {"initial_codex_home": runner.context_guard.inventory(home)},
+        "context_skills_after": runner.context_guard.inventory(home / "skills"),
+    }
+    raw = json.dumps(process).encode()
+    assert len(raw) > 128 * 1024
+    output = root / "evidence"
+    output.mkdir()
+    (output / "process.json").write_bytes(raw)
+    events, final = b'{"type":"turn.completed"}\n', b"Completed task."
+    (output / "events.jsonl").write_bytes(events)
+    (output / "final.txt").write_bytes(final)
+    maximum = 8 * 1024 * 1024
+    assert guest_runner._archive(root, work, maximum, 1000)["status"] == "complete"
+    archive = root / "artifacts.tar"
+    assert runner._read_native(archive, maximum) == (process, events, final)
+    with pytest.raises(SkillEvalError, match="member size limit exceeded"):
+        runner._read_native(archive, len(raw) - 1)
+    monkeypatch.setattr(runner, "MAX_NATIVE_AUDIT_BYTES", len(raw) - 1)
+    with pytest.raises(SkillEvalError, match="member size limit exceeded"):
+        runner._read_native(archive, maximum)
+
+
 def test_execution_and_inventory_metadata_is_bounded_and_full_audit_retained(
     tmp_path: Path,
 ) -> None:

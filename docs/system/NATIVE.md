@@ -283,7 +283,10 @@ analysis; availability and observed consultation answer different questions.
 
 Inspect the bounded `native-run.json` together with its hash-bound
 `native-audit.json`, `events.jsonl`, `final.txt`, retained prompt and artifact
-inventory. Complete command outputs stay in the raw events/archive; compact
+inventory. The process record includes complete context inventories and is read
+up to the smaller of the run's artifact budget and the 32 MiB full-audit ceiling.
+Overall audit and compact-receipt limits still apply; overflow remains partial
+evidence, not successful recording. Complete command outputs stay in the raw events/archive; compact
 metadata exposes hashes, counts and explicit sample omissions. Completion requires the observed process, native
 turn, provider requests and cleanup to agree; it leaves task quality unassessed.
 A timeout, partial collection or failed execution is not an empty clean report.

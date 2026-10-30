@@ -598,7 +598,12 @@ def _required(result: dict[str, Any], label: str) -> None:
 
 def _read_native(archive: Path, maximum: int) -> tuple[dict[str, Any], bytes, bytes]:
     try:
-        process = json.loads(_member(archive, "evidence/process.json", 128 * 1024))
+        # This record includes complete preflight and post-start inventories.
+        # Bound it by the artifact budget and the downstream full-audit ceiling,
+        # rather than the old small process-status allowance.
+        process = json.loads(
+            _member(archive, "evidence/process.json", min(maximum, MAX_NATIVE_AUDIT_BYTES))
+        )
         try:
             events = _member(archive, "evidence/events.jsonl", maximum)
         except KeyError:
