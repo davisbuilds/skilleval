@@ -23,7 +23,7 @@ from dataclasses import asdict
 from pathlib import Path, PurePosixPath
 from typing import Any, Literal
 
-from skilleval import evidence, guest_runner
+from skilleval import context_guard, evidence, guest_runner
 from skilleval._vendor import openbench_gateway as vendor
 from skilleval.accounting import normalize_codex_usage
 from skilleval.errors import SkillEvalError
@@ -31,6 +31,8 @@ from skilleval.gateway import (
     EFFORT,
     MODEL,
     GatewayLimits,
+    HostAuth,
+    TestTransport,
     broker_scope,
     codex_provider_config,
     load_chatgpt_auth,
@@ -55,6 +57,17 @@ GUEST_WORK = "/workspace/task"
 MAX_ARTIFACT_BYTES = 256 * 1024 * 1024
 MAX_ARTIFACT_FILES = 10_000
 MAX_NATIVE_AUDIT_BYTES = evidence.MAX_FILE_BYTES
+
+_VERSION_PROGRAM = """
+import pathlib,subprocess,sys,tempfile
+with tempfile.TemporaryDirectory(prefix='skilleval-version-') as home:
+    result=subprocess.run(['codex','--version'],capture_output=True,timeout=15,cwd='/',
+        env={'PATH':'/usr/local/bin:/usr/bin:/bin','HOME':home,'CODEX_HOME':home+'/codex-home',
+             'LANG':'C.UTF-8'})
+    sys.stdout.buffer.write(result.stdout)
+    sys.stderr.buffer.write(result.stderr)
+    sys.exit(result.returncode)
+"""
 
 _PREPARE_TASK_PROGRAM = """
 import os,pathlib,stat,sys,tarfile
@@ -585,7 +598,12 @@ def _required(result: dict[str, Any], label: str) -> None:
 
 def _read_native(archive: Path, maximum: int) -> tuple[dict[str, Any], bytes, bytes]:
     try:
-        process = json.loads(_member(archive, "evidence/process.json", 128 * 1024))
+        # This record includes complete preflight and post-start inventories.
+        # Bound it by the artifact budget and the downstream full-audit ceiling,
+        # rather than the old small process-status allowance.
+        process = json.loads(
+            _member(archive, "evidence/process.json", min(maximum, MAX_NATIVE_AUDIT_BYTES))
+        )
         try:
             events = _member(archive, "evidence/events.jsonl", maximum)
         except KeyError:
@@ -612,7 +630,7 @@ def run_native(
     image: Path,
     image_sha256: str,
     catalog: Path,
-    auth_file: Path,
+    auth_file: Path | None,
     mode: Literal["review", "repair", "judge"] = "review",
     limits: GatewayLimits = DEFAULT_LIMITS,
     native_timeout_seconds: int = 600,
@@ -621,12 +639,16 @@ def run_native(
     skill_bundle: Path | None = None,
     skill_digest: str | None = None,
     investigation: bool | None = None,
+    synthetic_transport: TestTransport | None = None,
+    context_control: Literal["dirty-system"] | None = None,
 ) -> dict[str, Any]:
     """Execute explicitly authorized development work; never creates admission.
 
     ``input_bundle`` must already exclude hidden labels and unrelated context.
     Prompt contents are retained privately. Neither auth bytes nor host settings
     are mounted/copied. Every call needs a fresh, non-nested output directory.
+    A programmatic synthetic transport uses no credential and produces a distinct
+    context-control receipt, which task/judgment consumers must reject.
     """
     started = time.monotonic()
     if (
@@ -646,26 +668,36 @@ def run_native(
         or (mode == "judge" and type(investigation) is not bool)
         or (mode != "judge" and investigation is not None)
         or (mode == "judge" and skill_bundle is not None)
+        or (synthetic_transport is not None and auth_file is not None)
+        or (context_control is not None and synthetic_transport is None)
+        or context_control not in {None, "dirty-system"}
     ):
         raise SkillEvalError("invalid native workload, deadline, or artifact limit")
     input_bundle, output = evidence._paths(input_bundle, output)
     manifest, files = _snapshot_files(input_bundle, expected_digest)
-    if mode != "judge":
-        from skilleval.treatments import check_task_baseline
+    from skilleval.treatments import check_task_baseline
 
-        check_task_baseline(input_bundle)
+    check_task_baseline(input_bundle)
     if file_digest(catalog) != CATALOG_SHA256:
         raise SkillEvalError("native model catalog differs from pinned source")
-    auth = load_chatgpt_auth(auth_file, minimum_validity_seconds=limits.lifetime_seconds + 30)
+    if synthetic_transport is None:
+        if auth_file is None:
+            raise SkillEvalError("native inference requires an explicit auth file")
+        auth = load_chatgpt_auth(auth_file, minimum_validity_seconds=limits.lifetime_seconds + 30)
+    else:
+        auth = HostAuth("synthetic-context-control", "synthetic", time.time() + 3600)
     session = Lifecycle.prepare(output, runtime, image, image_sha256)
     state = Path(session.ticket["runtime_state"])
     report: dict[str, Any] = {
         "schema_version": 1,
-        "kind": "skilleval-native-run",
+        "kind": "skilleval-native-run"
+        if synthetic_transport is None
+        else "skilleval-native-context-control",
+        "inference_mode": "authenticated" if synthetic_transport is None else "synthetic",
         "investigation": investigation,
         "mode": mode,
         "status": "partial",
-        "scope": "development-only",
+        "scope": "development-only" if synthetic_transport is None else "context-isolation-control",
         "admitted": False,
         "scored_admitted": False,
         "identity": session.ticket["identity"],
@@ -717,9 +749,22 @@ def run_native(
             "input_bytes": len(raw),
             **protocol_shape(raw),
         }
+        request_records.append(record)
+        if synthetic_transport is not None:
+            _exclusive(output / f"request-{record['index']}.json", raw)
+        try:
+            record["context"] = context_guard.request_context(raw)
+            context_guard.check_request_context(
+                record["context"],
+                GUEST_WORK,
+                GUEST_ROOT + "/codex-home",
+                report.get("skill_treatment", {}).get("skill_name"),
+            )
+        except (ValueError, KeyError, TypeError, RecursionError) as error:
+            record["context_error"] = type(error).__name__
+            raise ValueError("native context observation refused") from None
         if skill_detector is not None:
             record.update(skill_detector(raw))
-        request_records.append(record)
         try:
             vendor.validate_body(
                 raw,
@@ -740,20 +785,21 @@ def run_native(
 
     try:
         config = codex_provider_config(8765, Path(GUEST_ROOT) / "models.json")
-        settings = {
+        settings: dict[str, Any] = {
             "native_timeout_seconds": native_timeout_seconds,
             "request_timeout_seconds": limits.timeout_seconds,
             "max_body_bytes": limits.max_body_bytes,
             "max_artifact_bytes": max_artifact_bytes,
             "max_artifact_files": max_artifact_files,
+            "context_control": context_control,
         }
         entries = [("task/" + name, data, executable) for name, data, executable in files]
         entries += [
             ("native/models.json", catalog.read_bytes(), False),
             ("native/config.toml", config.encode(), False),
             ("native/prompt.txt", prompt.encode(), False),
-            ("native/settings.json", _json(settings), False),
             ("native/runner.py", Path(guest_runner.__file__).read_bytes(), False),
+            ("native/context_guard.py", Path(context_guard.__file__).read_bytes(), False),
         ]
         if skill_bundle is not None and skill_digest is not None:
             from skilleval.treatments import install_skill, request_observer
@@ -774,6 +820,16 @@ def run_native(
                 ]
         else:
             report["skill_treatment"] = {"arm": "absent", "skill_bundle": None}
+        settings["expected_codex_home"] = sorted(
+            [{"path": "config.toml", **context_guard.identity(config.encode())}]
+            + [
+                {"path": name.removeprefix("native/codex-home/"), **context_guard.identity(data)}
+                for name, data, _ in entries
+                if name.startswith("native/codex-home/")
+            ],
+            key=lambda row: row["path"],
+        )
+        entries.append(("native/settings.json", _json(settings), False))
         tooling = state / "tooling.tar"
         _tar(tooling, entries)
         report["tooling_sha256"] = file_digest(tooling)
@@ -787,6 +843,7 @@ def run_native(
             Path(session.ticket["runtime_home"]) / "b",
             limits=limits,
             request_observer=observe_request,
+            test_transport=synthetic_transport,
         ) as broker:
             session.ticket["config"].update(
                 {
@@ -800,7 +857,12 @@ def run_native(
             session.save()
             report["vm_config"] = session.ticket["config"].copy()
             session.create()
-            _required(session.guest("codex_version", ["codex", "--version"]), "codex_version")
+            _required(
+                session.guest(
+                    "codex_version", ["python3", "-c", _VERSION_PROGRAM, "skilleval-version-probe"]
+                ),
+                "codex_version",
+            )
             report["codex_identity"] = codex_version_identity(session.ticket["steps"][-1]["stdout"])
             _required(
                 session.invoke(
@@ -846,6 +908,11 @@ def run_native(
                 "manifest_sha256": file_digest(output / "artifacts.json"),
             }
             process, raw, final = _read_native(archive, max_artifact_bytes)
+            report["context"] = {
+                "preflight": process.get("context_preflight"),
+                "skills_after": process.get("context_skills_after"),
+                "error": process.get("context_error"),
+            }
             agent_seconds = process.get("agent_elapsed_seconds")
             if (
                 isinstance(agent_seconds, (int, float))
@@ -906,6 +973,12 @@ def run_native(
                 and not parsed["parse_errors"]
                 and final.strip()
                 and provider_complete
+                and process.get("context_preflight", {}).get("status") == "passed"
+                and process["context_preflight"].get("initial_codex_home")
+                == settings["expected_codex_home"]
+                and isinstance(process.get("context_skills_after"), list)
+                and request_records
+                and not any("context_error" in row for row in request_records)
             ):
                 report["status"] = "completed"
             evidence.verify(input_bundle, expected_digest)

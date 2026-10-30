@@ -4,6 +4,9 @@ This reference owns the explicit native review, repair and judge procedure. Thes
 runs use a fresh VM, the bounded host inference gateway, and retained evidence. They
 remain development-only: `native qualify` never grants scored admission, and a
 completed native turn does not establish a correct review or calibrated judge.
+The [task-presentation audit](TASK-PRESENTATION.md) identifies evaluation disclosures
+and the remaining solver access to controller files. This route is not yet
+qualified to conceal evaluation infrastructure from the task agent.
 The [environment reference](ENVIRONMENT.md) owns runtime admission and recovery;
 the [gateway reference](GATEWAY.md) owns authentication and provider limits.
 The [repair reference](REPAIRS.md) owns editable scope, patch collection and offline
@@ -53,6 +56,66 @@ Collected files are cited as `task/investigation/CASE_ID/...`; review judges use
 `review` as the case identifier. Guest source copies, logs, process reports and
 transcripts remain untrusted evidence. Their hashes establish consistency, not
 semantic authenticity or independent correctness.
+
+### Operator state and effective context
+
+The production runner creates fresh guest `HOME` and `CODEX_HOME` directories,
+writes its own provider configuration, and launches Codex with an explicit process
+environment. VM creation declares no host directory mounts; task, tooling and the
+selected skill are explicit copied inputs. The host runtime also gets separate
+HOME/XDG state. Task-repository instructions remain frozen, shared task context.
+
+Before native execution, the copied context guard checks the exact initial Codex
+home and empty user home, rejects ambient instructions/configuration in the known
+ancestor, user and system discovery roots, and inventories task instructions.
+All review, repair and judge inputs reject embedded skills and `.codex` state,
+including hooks and managed configuration; they retain ordinary `AGENTS.md` and
+`AGENTS.override.md`. Hooks, plugins, memories and shell snapshots are disabled in
+the generated profile. Version probes use disposable homes too: even
+`codex --version` can create launcher state, which must not remain in the image's
+default home. The [image recipe](../../environments/python-review/README.md) owns
+build preparation.
+
+Every broker request records bounded message, top-level instruction and tool
+definition identities, native instruction-source headers and advertised skill
+names/paths. Inline message images have separate position/content identities;
+they are not parsed as instruction prose, and gateway image validation still applies.
+Unsupported observations and unexpected instruction/skill roots are
+refused. Codex's auto-installed built-in skills remain declared harness defaults:
+the runner retains their post-start file inventory and rejects a selected skill
+name that collides with an advertised builtin. Installed bytes, advertised
+metadata, successful full-body reads and semantic use remain different evidence.
+
+Run the opt-in production-route controls without credentials or real inference:
+
+```sh
+uv run python scripts/qualify-context.py \
+  --runtime NATIVE_RUNTIME --image-archive IMAGE_ARCHIVE \
+  --image-sha256 IMAGE_SHA256 --catalog MODEL_CATALOG --output FRESH_OUTPUT
+```
+
+The control creates synthetic operator instructions, configuration, skills,
+memories, hooks, shell initialization and prior sessions outside the copied task.
+It runs OFF, ON, fresh OFF, a deliberately exposed instruction marker, and a
+system-context refusal through `run_native` and the production guest runner.
+It verifies intended task instructions, selected metadata/full-body exposure,
+successful reads, shared base instructions and tool definitions, identical
+advertised/on-disk builtins, the explicit invocation difference, fresh sessions,
+and cleanup. Per-run tool-record IDs are retained in original requests but excluded
+from capability comparisons. Synthetic receipts have the distinct kind
+`skilleval-native-context-control`; task/judge recorders and studies reject them.
+
+Retain the summary, original synthetic requests, native audits/artifacts and
+recovery tickets. Evidence binds the actual source, runtime, image and harness
+identities. The 2026-10-30 control passed all 56 assertions across five fresh VMs
+on Codex 0.164.0 and smolvm 1.32.3, after removing image-build launcher residue,
+and passed again with the neutral provider profile. Each generation retains its
+exact configuration identity rather than granting evidence to later profiles.
+Earlier failed generations remain retained. This establishes the tested context
+boundary and comparison, not model behavior, general resistance to malicious
+guest code, every future discovery path, or skill effectiveness. It does not
+retroactively qualify earlier attempts or grant a scored-study seal; full-workload
+admission still needs treatment-specific evidence and independent grader audit.
 
 ## Prepare, freeze, run and record a calibration judge
 
@@ -185,7 +248,10 @@ uv run skilleval treatment capture SELECTED_SKILL_TREE \
 
 The capture preserves all files in that tree, including references, scripts and
 existing notices, plus executable flags. It does not install a host skill or run
-its scripts. For the available review input, supply `--skill-bundle` and
+its scripts. A supplied root notice is added at `.source-notices/ROOT_LICENSE`,
+with its location recorded in host metadata. Older captures without that metadata
+keep their original `.skilleval-notices/ROOT_LICENSE` bytes and location. Do not
+rename pinned inputs in place. For the available review input, supply `--skill-bundle` and
 `--skill-sha256` together to `native qualify`. Omit both for the absent selected
 skill. Judge mode rejects skill bundles. CLI help owns the exact invocation.
 
@@ -217,7 +283,10 @@ analysis; availability and observed consultation answer different questions.
 
 Inspect the bounded `native-run.json` together with its hash-bound
 `native-audit.json`, `events.jsonl`, `final.txt`, retained prompt and artifact
-inventory. Complete command outputs stay in the raw events/archive; compact
+inventory. The process record includes complete context inventories and is read
+up to the smaller of the run's artifact budget and the 32 MiB full-audit ceiling.
+Overall audit and compact-receipt limits still apply; overflow remains partial
+evidence, not successful recording. Complete command outputs stay in the raw events/archive; compact
 metadata exposes hashes, counts and explicit sample omissions. Completion requires the observed process, native
 turn, provider requests and cleanup to agree; it leaves task quality unassessed.
 A timeout, partial collection or failed execution is not an empty clean report.

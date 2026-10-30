@@ -29,6 +29,8 @@ finite checks leaves semantic quality and representativeness unassessed.
 Start from `spec.template.json`: replace the source path/digest and the worker
 SHA-256 with independently retained identities, then run `repair prepare`.
 The prompt is embedded as plain text; the CLI does not expand template variables.
+The current template omits evaluator-specific wording. Previously frozen prompts
+and results retain that wording; using this revision requires a new task generation.
 Use the same shared prompt/input in a `mode: repair` study task. See the
 [repair procedure](../../../docs/system/REPAIRS.md) for collection and offline checks.
 Keep source exports and generated task contracts outside tracked examples.

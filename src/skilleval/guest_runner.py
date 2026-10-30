@@ -22,6 +22,11 @@ from contextlib import suppress
 from pathlib import Path
 from typing import Any
 
+if __package__:
+    from skilleval import context_guard
+else:
+    import context_guard  # type: ignore[no-redef,import-not-found]
+
 
 def _stop(process: subprocess.Popen[bytes]) -> None:
     with suppress(ProcessLookupError):
@@ -163,7 +168,17 @@ def run(root: Path, work: Path) -> int:
     result["environment"] = environment
     result["cwd"] = str(work)
     result["config_sha256"] = hashlib.sha256((codex_home / "config.toml").read_bytes()).hexdigest()
+    for name in ("events.jsonl", "stderr.log", "final.txt"):
+        (evidence / name).touch(exist_ok=False)
     try:
+        # Synthetic negative control is never available on the authenticated route.
+        if settings.get("context_control") == "dirty-system":
+            contaminated = Path("/etc/codex")
+            contaminated.mkdir(exist_ok=True)
+            (contaminated / "hooks.json").write_text('{"hooks": {}}')
+        result["context_preflight"] = context_guard.preflight(
+            root, work, settings["expected_codex_home"]
+        )
         version = subprocess.run(
             ["codex", "--version"], capture_output=True, env=environment, timeout=15, check=False
         )
@@ -229,8 +244,10 @@ def run(root: Path, work: Path) -> int:
                 settings["native_timeout_seconds"],
             )
         )
+        result["context_skills_after"] = context_guard.inventory(codex_home / "skills")
     except (OSError, ValueError, subprocess.SubprocessError) as error:
         result["error"] = type(error).__name__
+        result["context_error"] = str(error)[:1024]
     finally:
         if relay is not None:
             _stop(relay)

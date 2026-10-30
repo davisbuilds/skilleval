@@ -471,7 +471,7 @@ def codex_provider_config(port: int, catalog_path: Path) -> str:
     if not catalog_path.is_absolute() or ".." in catalog_path.parts:
         raise SkillEvalError("model catalog must use an absolute guest path")
     return f'''model = "{MODEL}"
-model_provider = "qualification-broker"
+model_provider = "local-gateway"
 model_reasoning_effort = "{EFFORT}"
 model_reasoning_summary = "none"
 model_catalog_json = {json.dumps(str(catalog_path))}
@@ -486,9 +486,13 @@ output_token_replay = false
 concurrent_reasoning_summaries = false
 enable_request_compression = false
 apps = false
+hooks = false
+plugins = false
+memories = false
+shell_snapshot = false
 
-[model_providers.qualification-broker]
-name = "skilleval qualification"
+[model_providers.local-gateway]
+name = "Local gateway"
 base_url = "http://127.0.0.1:{port}"
 wire_api = "responses"
 requires_openai_auth = false

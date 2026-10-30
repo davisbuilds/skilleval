@@ -55,7 +55,7 @@ elif args[:2]==['machine','cp']:
  else:shutil.copyfile(args[2],state/'tooling-copy.tar')
 elif args[:2]==['machine','exec']:
  command=args[args.index('--')+1:]
- if command==['codex','--version']:
+ if command==['codex','--version'] or command[-1]=='skilleval-version-probe':
   print('codex-cli 0.164.0');raise SystemExit
  if command[0]=='cat':
   print(json.dumps({'status':'complete'}));raise SystemExit
@@ -72,13 +72,16 @@ elif args[:2]==['machine','exec']:
  if len(command)>1 and command[1]=='/var/tmp/native/runner.py':
   entries={}
   with tarfile.open(state/'tooling-copy.tar') as source:
+   settings=json.loads(source.extractfile('native/settings.json').read())
    for m in source:
     if m.name.startswith('task/'):
      entries[m.name]=(source.extractfile(m).read(),m.mode)
   scenario=json.loads(entries['task/scenario.json'][0])
   (state/'scenario.json').write_text(json.dumps(scenario))
   fault=scenario.get('fault')
-  process={'returncode':0,'timed_out':False,'codex_version':'codex-cli 0.164.0'}
+  process={'returncode':0,'timed_out':False,'codex_version':'codex-cli 0.164.0',
+   'context_preflight':{'status':'passed','initial_codex_home':settings['expected_codex_home']},
+   'context_skills_after':[]}
   if scenario.get('complete_usage'):process['agent_elapsed_seconds']=0.01
   output_size=5*1024*1024 if fault=='large-output' else 90000
   events=[{'type':'thread.started','thread_id':'synthetic'},
@@ -144,6 +147,7 @@ def route(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
             ],
         )
         try:
+            kwargs["request_observer"](b'{"input": []}')
             yield handle
         finally:
             directory.rmdir()
@@ -229,6 +233,40 @@ def test_large_command_output_stays_in_raw_artifacts_with_a_usable_receipt(
     verified, retained, _artifacts = _run_files(tmp_path / "run", mode="review")
     assert verified["status"] == "completed" and retained["events.jsonl"] == raw
     assert retained["native-audit.json"] == (tmp_path / "run/native-audit.json").read_bytes()
+
+
+def test_resource_heavy_skill_process_record_is_read_with_bounded_limits(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, work = tmp_path / "native", tmp_path / "task"
+    work.mkdir()
+    home = root / "codex-home"
+    resources = home / "skills/selected/references"
+    resources.mkdir(parents=True)
+    for index in range(500):
+        (resources / f"reference-{index:04}.md").write_text("Resource content.\n")
+    process = {
+        "returncode": 0,
+        "context_preflight": {"initial_codex_home": runner.context_guard.inventory(home)},
+        "context_skills_after": runner.context_guard.inventory(home / "skills"),
+    }
+    raw = json.dumps(process).encode()
+    assert len(raw) > 128 * 1024
+    output = root / "evidence"
+    output.mkdir()
+    (output / "process.json").write_bytes(raw)
+    events, final = b'{"type":"turn.completed"}\n', b"Completed task."
+    (output / "events.jsonl").write_bytes(events)
+    (output / "final.txt").write_bytes(final)
+    maximum = 8 * 1024 * 1024
+    assert guest_runner._archive(root, work, maximum, 1000)["status"] == "complete"
+    archive = root / "artifacts.tar"
+    assert runner._read_native(archive, maximum) == (process, events, final)
+    with pytest.raises(SkillEvalError, match="member size limit exceeded"):
+        runner._read_native(archive, len(raw) - 1)
+    monkeypatch.setattr(runner, "MAX_NATIVE_AUDIT_BYTES", len(raw) - 1)
+    with pytest.raises(SkillEvalError, match="member size limit exceeded"):
+        runner._read_native(archive, maximum)
 
 
 def test_execution_and_inventory_metadata_is_bounded_and_full_audit_retained(
@@ -377,9 +415,12 @@ def test_extension_headers_are_rejected_before_tarfile_can_expand_them(tmp_path:
         runner._member(archive, "evidence/final.txt", 1024)
 
 
-@pytest.mark.parametrize("name", [".codex/config.toml", ".agents/skills/ambient/SKILL.md"])
+@pytest.mark.parametrize("mode", ["review", "repair", "judge"])
+@pytest.mark.parametrize(
+    "name", [".codex/config.toml", ".codex/hooks.json", ".agents/skills/ambient/SKILL.md"]
+)
 def test_review_refuses_ambient_discovery_before_auth_or_vm(
-    tmp_path: Path, route: dict[str, Any], name: str
+    tmp_path: Path, route: dict[str, Any], name: str, mode: str
 ) -> None:
     source = tmp_path / "source"
     target = source / name
@@ -388,7 +429,15 @@ def test_review_refuses_ambient_discovery_before_auth_or_vm(
     frozen = tmp_path / "frozen"
     receipt = evidence.snapshot(source, frozen)
     with pytest.raises(SkillEvalError, match=r"ambient|native|skills|configuration"):
-        runner.run_native(frozen, receipt["manifest_sha256"], "Review", tmp_path / "run", **route)
+        runner.run_native(
+            frozen,
+            receipt["manifest_sha256"],
+            "Review",
+            tmp_path / "run",
+            mode=mode,
+            investigation=True if mode == "judge" else None,
+            **route,
+        )
     assert not (tmp_path / "run").exists()
 
 
@@ -482,7 +531,10 @@ def test_cleanup_failure_retains_ticket_and_namespace_until_recovered(
 def test_host_broker_observer_keeps_hashes_without_raw_values(
     tmp_path: Path, route: dict[str, Any], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    secret = b'{"input":"PRIVATE_TASK_VALUE"}'
+    secret = (
+        b'{"input":[{"type":"message","role":"user","content":'
+        b'[{"type":"input_text","text":"PRIVATE_TASK_VALUE"}]}]}'
+    )
 
     @contextmanager
     def broker(auth: Any, directory: Path, **kwargs: Any) -> Iterator[Any]:
@@ -506,10 +558,11 @@ def test_host_broker_observer_keeps_hashes_without_raw_values(
             "input_sha256": hashlib.sha256(secret).hexdigest(),
             "input_bytes": len(secret),
             **runner.protocol_shape(secret),
+            "context": runner.context_guard.request_context(secret),
         }
     ]
     assert b"PRIVATE_TASK_VALUE" not in (tmp_path / "run/native-run.json").read_bytes()
-    assert report["request_observations"][0]["request_structure"]["input"] == {"type": "str"}
+    assert report["request_observations"][0]["request_structure"]["input"]["type"] == "list"
 
 
 def test_available_skill_is_installed_outside_identical_task_and_prompt(

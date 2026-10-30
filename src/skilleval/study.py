@@ -418,6 +418,8 @@ def _cost(path: Path, report: dict[str, Any] | None) -> dict[str, Any]:
 
 
 def _check_native(path: Path, report: dict[str, Any]) -> None:
+    if report.get("kind") != "skilleval-native-run" or report.get("inference_mode") == "synthetic":
+        raise SkillEvalError("study requires a native model run, not a synthetic control")
     expected = _document(path / "dispatch.json")["native_expected"]
     if any(
         report.get(key) != value

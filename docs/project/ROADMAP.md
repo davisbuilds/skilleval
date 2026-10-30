@@ -1,6 +1,6 @@
 ---
 status: in-progress
-updated: 2026-10-29
+updated: 2026-10-30
 ---
 
 # Roadmap
@@ -21,8 +21,13 @@ usage comparisons. [Task packages](../system/TASKS.md) and
 
 Runtime controls cover bounded filesystem/network behavior, task fidelity,
 termination, recovery, and cleanup on the tested smolvm route. Admission is tied
-to exact execution identities. Judge controls cover authored labels and selected
-repeat/order/perturbation cases. **Independent semantic audit and scored-study
+to exact execution identities. Native context controls now exercise production
+OFF/ON/fresh OFF, declared defaults, contamination detection and preflight refusal;
+their [scope](../system/NATIVE.md#operator-state-and-effective-context) remains
+separate from scored admission. Judge controls cover authored labels and selected
+repeat/order/perturbation cases. The [presentation audit](../system/TASK-PRESENTATION.md)
+found readable controller state; operator isolation does not conceal evaluation
+infrastructure. **Solver visibility isolation, independent semantic audit and scored-study
 admission remain pending.** Development workflows can progress while those gates
 are open; they cannot become scored trials by relabeling their results.
 
@@ -31,28 +36,38 @@ SkillsBench/Harbor packaging, Tessl fixtures and explicit variants,
 Anthropic/Engram assessment patterns, gstack's separation of validity and benefit,
 and the adapted OpenBench gateway. External skills remain experimental inputs.
 
-## Now: public foundation and informative development tasks
+## Now: solver visibility, useful tasks and independent judgment audit
 
-1. **Make the project usable from a fresh checkout.** Keep public docs, examples,
-   contributor guidance, licenses, and source attribution self-contained. Complete
-   the first-publication checks in [Backlog](BACKLOG.md#open) before pushing.
-2. **Broaden the skill-relevant population.** Use the
-   [pilot shortlist](PILOT-CANDIDATES.md) to assess feasible tasks and ceiling
-   effects, then freeze separate evaluation cases. Repair and writing have exposed
-   development captures; browser implementation remains proposed. Preserve
-   selection reasons and exclusions. Do not retain only vanilla failures or wins
-   for the skill.
+1. **Close the solver visibility gap before new comparisons.** Enforce separation
+   from controller/evaluator files and processes, then verify it through native
+   tools alongside working task capabilities. Use ordinary work briefs; review
+   actual instructions, accessible files/history, skill resources and tool outputs
+   for evaluation disclosures. Neutral labels alone do not satisfy this boundary.
+2. **Broaden the skill-relevant population.** Start with the engineering source
+   priorities in the [candidate register](PILOT-CANDIDATES.md#current-selection-direction)
+   and concrete work maintainers actually delegate. Discuss task briefs, skill fit,
+   deliverables and independent outcome checks before capturing the next cases.
+   Start with one independently usable skill and its required resources; defer
+   packages that require a larger multi-skill or orchestration workflow.
+   Repair and writing have exposed development captures; new engineering cases
+   remain unselected. Preserve selection reasons and exclusions. Do not retain
+   only vanilla failures or wins for the skill.
 3. **Audit representative judgments.** Review actual artifacts, source support,
    novel findings, alternative solutions, checker defects, and disagreements.
    Tiny authored label controls test the grader machinery; their difficulty does
    not define the task population. Preserve the pending audit generation.
 4. **Close task-specific environment gaps.** Choose and qualify the solver user
-   profile and required tools. Keep baseline failures, skipped lanes, unsupported
-   platforms, and artifact-budget limits explicit. Capture corrections do not
-   upgrade earlier attempts.
+   profile and required tools. Before interpreting new ON/OFF pairs, verify the
+   actual harness context excludes operator instructions and machine state, with
+   contamination canaries and working positive controls. Keep baseline failures,
+   skipped lanes, unsupported platforms, and artifact-budget limits explicit.
+   Capture corrections do not upgrade earlier attempts.
 
-These tracks can progress independently. Add an adapter when the selected task
+Task design and judgment audit can progress alongside isolation; new comparisons
+depend on the visibility boundary. Add an adapter when the selected task
 requires it, rather than expanding harnesses or infrastructure in advance.
+Maintain the public foundation and [hosted checks](GIT_HISTORY_POLICY.md) as this
+work develops; publication is complete and does not qualify evaluation outcomes.
 
 ## Next: repeated, interpretable comparisons
 
@@ -74,9 +89,10 @@ judgment, model agreement, or successful skill read cannot satisfy those gates.
 
 ## Later
 
-Expand to natural discovery, the pi harness, and a TypeScript evidence/review UI
-when the evaluation workflow demonstrates a need. Protected holdouts, additional
-task families, and automation follow the same evidence and accounting contracts.
+Expand to multi-skill/workflow treatments, natural discovery, the pi harness, and
+a TypeScript evidence/review UI when the evaluation workflow demonstrates a need.
+Protected holdouts, additional task families, and automation follow the same
+evidence and accounting contracts.
 A universal leaderboard and automatic skill optimization are outside the initial
 scope.
 

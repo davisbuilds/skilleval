@@ -290,7 +290,7 @@ def declared_tools(body: dict[str, Any]) -> list[tuple[str | None, dict[str, Any
     return found
 
 
-def tool_item(body: dict[str, Any]) -> dict[str, Any]:
+def tool_item(body: dict[str, Any], command: str = TOOL_COMMAND) -> dict[str, Any]:
     tools = declared_tools(body)
     for namespace, tool in tools:
         if tool.get("name") == "exec" and tool.get("type") == "custom":
@@ -301,7 +301,7 @@ def tool_item(body: dict[str, Any]) -> dict[str, Any]:
                 "name": "exec",
                 "status": "completed",
                 "input": "const result = await tools.exec_command({cmd: "
-                + json.dumps(TOOL_COMMAND)
+                + json.dumps(command)
                 + "}); text(result);",
             }
             if namespace is not None:
@@ -312,11 +312,11 @@ def tool_item(body: dict[str, Any]) -> dict[str, Any]:
             if tool.get("name") != desired or tool.get("type") != "function":
                 continue
             if desired == "exec_command":
-                arguments: dict[str, Any] = {"cmd": TOOL_COMMAND}
+                arguments: dict[str, Any] = {"cmd": command}
             elif desired == "shell_command":
-                arguments = {"command": TOOL_COMMAND}
+                arguments = {"command": command}
             else:
-                arguments = {"command": ["/bin/sh", "-c", TOOL_COMMAND]}
+                arguments = {"command": ["/bin/sh", "-c", command]}
             item = {
                 "type": "function_call",
                 "id": "fc_synthetic",

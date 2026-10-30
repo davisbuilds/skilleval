@@ -41,9 +41,11 @@ SOURCES = (
     "src/skilleval/_vendor/openbench_gateway.py",
     "src/skilleval/runner.py",
     "src/skilleval/guest_runner.py",
+    "src/skilleval/context_guard.py",
     "src/skilleval/judge.py",
     "src/skilleval/treatments.py",
     "scripts/qualify-native.py",
+    "scripts/qualify-context.py",
     "scripts/qualify-lifecycle.py",
 )
 
