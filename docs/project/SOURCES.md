@@ -50,6 +50,24 @@ and observation/verdict boundary.
 | [Codex explicit skill invocation](https://learn.chatgpt.com/docs/build-skills), [terminal usage source](https://github.com/openai/codex/blob/1c0c45bfc372fb7d7d581508fdef5eef8235eab7/codex-rs/exec/src/event_processor_with_jsonl_output.rs#L118-L128), [OpenAI API pricing](https://developers.openai.com/api/docs/pricing) | Reviewed 2026-10-28 for native explicit-use treatment, cumulative usage semantics and an optional dated API-equivalent price scenario; independent local implementation | [Accounting](../system/ACCOUNTING.md) owns the observation and pricing limits. Source inspection is not binary equivalence; missing cache details and actual charges remain unknown. |
 | [Pi](https://github.com/earendil-works/pi), [CLI integration](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/cli-integration.md) | Later native harness through JSON/RPC interfaces | Keep Pi's native agent/resources and compare ON/OFF within Pi. Avoid silently substituting SDK defaults or confounding skill treatment with harness choice. |
 
+The solver boundary was rechecked on **2026-10-30** against smolvm 1.32.3's
+[VSOCK listener](https://github.com/smol-machines/smolvm/blob/d36ff1e30d07b224c83017cc0cc3e7f6f3f3bc7e/crates/smolvm-agent/src/vsock.rs)
+and [agent dispatch](https://github.com/smol-machines/smolvm/blob/d36ff1e30d07b224c83017cc0cc3e7f6f3f3bc7e/crates/smolvm-agent/src/main.rs),
+Linux's [seccomp contract](https://www.kernel.org/doc/html/latest/userspace-api/seccomp_filter.html)
+and [io_uring socket implementation](https://github.com/torvalds/linux/blob/v6.18/io_uring/net.c#L1738).
+The local namespace/UID/transport filter is original implementation. Actual
+unprivileged Ping reachability motivated AF_VSOCK and io_uring denial; hiding
+controller files alone was insufficient. [Task presentation](../system/TASK-PRESENTATION.md)
+owns the resulting contract and limits.
+
+Colima 0.10.3 and Lima 2.2.1 remain alternatives. The inspected
+[Colima forwarding type](https://github.com/abiosoft/colima/blob/00f6c297e92a82c04a4ab507db0a61435650d7e8/environment/vm/lima/limaconfig/config.go)
+does not expose Lima's reverse-socket field, so the current inference transport
+would need an explicit, qualified bridge. Standard container isolation offers
+a broader maintained syscall policy, but switching engines still needs actual
+solver/control separation and lifecycle proof. Revisit if representative tool
+support or maintenance of the present boundary becomes fragile.
+
 ## Existing project precedents
 
 These public repositories were also inspected. Their visibility was checked

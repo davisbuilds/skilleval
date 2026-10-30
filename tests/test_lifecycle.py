@@ -82,6 +82,19 @@ def test_image_copy_tamper_refused_before_create(tmp_path: Path) -> None:
         session.cleanup()
 
 
+def test_new_machine_names_are_neutral_and_legacy_recovery_remains_readable(tmp_path: Path) -> None:
+    session = session_at(tmp_path)
+    try:
+        assert session.machine.startswith("workspace-")
+        assert "skilleval" not in session.machine
+        ticket = {**session.ticket, "machine_name": "skilleval-lifecycle-" + "a" * 32}
+        (session.output / "recovery.json").write_text(json.dumps(ticket))
+        loaded = Lifecycle.load(session.output)
+        assert loaded.machine == ticket["machine_name"]
+    finally:
+        session.cleanup()
+
+
 def test_durable_ticket_env_positive_inventory_and_idempotent_recovery(tmp_path: Path) -> None:
     session = session_at(tmp_path)
     home = Path(session.ticket["runtime_home"])

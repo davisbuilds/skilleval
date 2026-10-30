@@ -14,16 +14,18 @@ shipped history. Private provenance stays outside public entries and issues.
 
 ## Open
 
-- **Solver visibility boundary:** the [task-presentation audit](../system/TASK-PRESENTATION.md)
-  found that the full-access native solver can read controller files, settings,
-  staging archives and process arguments as root. Direct brief/provider/notice
-  disclosures are corrected for new inputs, but wording does not enforce separation.
-  Before new ON/OFF comparisons, isolate controller/evaluator state from the
-  solver's readable filesystem and process namespace, qualify an unprivileged
-  user profile, and prove allowed task work and denied controller reads through
-  native tools. Audit task/skill/history content too; retain old disclosed inputs
-  as historical development evidence. The historical review exporter needs a
-  separately defined neutral presentation path, without rewriting pinned captures.
+- **Native capability description and task presentation:** the CLI's permission
+  message still says networking is enabled despite VM-disabled general egress.
+  Codex 0.164.0's external-sandbox policy is programmatic-only; its legacy
+  restricted-network route also denies ordinary local sockets. Qualify a native
+  adapter that can accurately declare external enforcement while preserving task
+  capabilities, tool calls and accounting. The [solver boundary](../system/TASK-PRESENTATION.md)
+  now separates controller files/processes and denies management transport;
+  this does not sanitize task, skill or Git-history content. Review those inputs
+  before new comparisons. The historical review exporter needs a neutral
+  presentation path without rewriting pinned captures. New images need runtime
+  tree checks and required-tool controls; io_uring-only tasks are outside the
+  current profile.
 - **Skill-relevant task population:** use the current
   [engineering source priorities](PILOT-CANDIDATES.md#current-selection-direction)
   to select concrete debugging, implementation, review, UI, performance or QA
@@ -42,9 +44,9 @@ shipped history. Private provenance stays outside public entries and issues.
   now has matching baseline/reference unit failures and skips, with required
   assets/history retained. The [environment record](../../examples/repair/receipt-admission/environment.md)
   identifies two root-sensitive failures, eight unit skips and zero local tasks
-  validated. Before scored use, choose and qualify the solver user profile and
-  required tool-dependent lanes; the narrow non-root diagnostic does not qualify
-  an unprivileged Codex route. Imported validation and upstream CI platform/version
+  validated. Revalidate the restored task under `solver-isolated-v1` and qualify
+  required tool-dependent lanes; old root diagnostics do not qualify the new
+  native profile. Imported validation and upstream CI platform/version
   parity remain outside the current scope. Preserve historical tests and evidence.
 - **Larger judge artifact budgets:** the restored capture has over 5,300 files in
   a before/after source packet. Copying both complete trees for investigation can

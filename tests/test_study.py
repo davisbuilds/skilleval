@@ -6,8 +6,9 @@ from typing import Any
 
 import pytest
 from test_runner import route as route
+from test_task_package import package_spec
 
-from skilleval import evidence, runner, study, treatments
+from skilleval import evidence, repair, runner, study, task_package, treatments
 from skilleval.errors import SkillEvalError
 
 
@@ -88,6 +89,69 @@ def test_scored_refusal_precedes_output_or_auth_access(prepared: dict[str, Any])
     with pytest.raises(SkillEvalError, match="scored dispatch unavailable"):
         study.run_study(**prepared)
     assert not prepared["output"].exists()
+
+
+def test_native_study_requires_solver_profile_from_selected_task_validation(
+    prepared: dict[str, Any],
+    route: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Exercise the linkage guard; selected validation integrity has its own parser checks."""
+    plan = json.loads(prepared["plan_path"].read_text())
+    spec = study.StudySpec.model_validate_json(json.dumps(plan["spec"]))
+    original = spec.tasks[0]
+    worker = prepared["plan_path"].parent / "checker.py"
+    worker.write_text("raise RuntimeError('checker must never execute on host')\n")
+    artifact = repair.RepairSpec(
+        task_id=original.task_id,
+        input_bundle=original.input_bundle,
+        input_sha256=original.input_sha256,
+        prompt=original.prompt,
+        editable_paths=("code.py",),
+        worker=str(worker),
+        worker_sha256=study.file_digest(worker),
+        probes=(repair.RepairProbe(probe_id="result", request={}, expected=True),),
+        source_url="https://example.invalid/control",
+        source_revision="v1",
+    )
+    artifact_path = worker.with_name("artifact-task.json")
+    artifact_receipt = repair.prepare_repair(artifact, artifact_path)
+    selected = study.StudyTask(
+        mode="repair",
+        task_id=artifact.task_id,
+        input_bundle=artifact.input_bundle,
+        input_sha256=artifact.input_sha256,
+        prompt=artifact.prompt,
+        package="selected-package.json",
+        package_sha256="a" * 64,
+        environment_validation="selected-validation.json",
+        environment_validation_sha256="b" * 64,
+    )
+    spec = spec.model_copy(update={"tasks": (selected,)})
+    package = package_spec(
+        {
+            "task": artifact_path,
+            "digest": artifact_receipt["sha256"],
+            "base": Path(artifact.input_bundle),
+            "spec": artifact,
+        },
+        route,
+    )
+    package = package.model_copy(
+        update={
+            "environment": package.environment.model_copy(update={"required_paths": ("code.py",)})
+        }
+    )
+    validation = {"cases": [{"identity": study.snapshot_identity(spec.runtime)}]}
+    monkeypatch.setattr(task_package, "checked_validation", lambda *args: (package, validation))
+    with pytest.raises(SkillEvalError, match="solver-isolated-v1 task validation"):
+        study._check_inputs(spec)
+    package = package.model_copy(
+        update={
+            "environment": package.environment.model_copy(update={"profile": "solver-isolated-v1"})
+        }
+    )
+    assert study._check_inputs(spec) == study._image_archive(Path(spec.image), spec.image_sha256)
 
 
 def test_changed_plan_or_source_cannot_dispatch(prepared: dict[str, Any]) -> None:

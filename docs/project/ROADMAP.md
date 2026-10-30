@@ -25,10 +25,11 @@ to exact execution identities. Native context controls now exercise production
 OFF/ON/fresh OFF, declared defaults, contamination detection and preflight refusal;
 their [scope](../system/NATIVE.md#operator-state-and-effective-context) remains
 separate from scored admission. Judge controls cover authored labels and selected
-repeat/order/perturbation cases. The [presentation audit](../system/TASK-PRESENTATION.md)
-found readable controller state; operator isolation does not conceal evaluation
-infrastructure. **Solver visibility isolation, independent semantic audit and scored-study
-admission remain pending.** Development workflows can progress while those gates
+repeat/order/perturbation cases. The [solver boundary](../system/TASK-PRESENTATION.md)
+now separates filesystem/process authority and denies guest management transport,
+with working native task controls. Native permission wording, representative
+task/image coverage, independent semantic audit and scored-study admission
+remain pending. Development workflows can progress while those gates
 are open; they cannot become scored trials by relabeling their results.
 
 The [source register](SOURCES.md) records adopted ideas and implementation:
@@ -38,9 +39,9 @@ and the adapted OpenBench gateway. External skills remain experimental inputs.
 
 ## Now: solver visibility, useful tasks and independent judgment audit
 
-1. **Close the solver visibility gap before new comparisons.** Enforce separation
-   from controller/evaluator files and processes, then verify it through native
-   tools alongside working task capabilities. Use ordinary work briefs; review
+1. **Finish native presentation and task coverage before new comparisons.** Align
+   native capability descriptions with external enforcement, preserving local
+   task tools and the qualified solver boundary. Use ordinary work briefs; review
    actual instructions, accessible files/history, skill resources and tool outputs
    for evaluation disclosures. Neutral labels alone do not satisfy this boundary.
 2. **Broaden the skill-relevant population.** Start with the engineering source
@@ -56,8 +57,9 @@ and the adapted OpenBench gateway. External skills remain experimental inputs.
    novel findings, alternative solutions, checker defects, and disagreements.
    Tiny authored label controls test the grader machinery; their difficulty does
    not define the task population. Preserve the pending audit generation.
-4. **Close task-specific environment gaps.** Choose and qualify the solver user
-   profile and required tools. Before interpreting new ON/OFF pairs, verify the
+4. **Close task-specific environment gaps.** Revalidate the selected tasks under
+   the unprivileged solver profile and required tools. Before interpreting new
+   ON/OFF pairs, verify the
    actual harness context excludes operator instructions and machine state, with
    contamination canaries and working positive controls. Keep baseline failures,
    skipped lanes, unsupported platforms, and artifact-budget limits explicit.

@@ -99,6 +99,20 @@ other registries. Host image acquisition and guest network access are distinct.
 Colima is an image-building option and an execution alternative to evaluate;
 there is no automatic fallback adapter.
 
+The VM protects the host; a separate guest boundary protects controller context
+from the solver. The trusted launcher gives native Codex a private filesystem,
+PID and hostname view, drops its identity and capabilities, and keeps the
+controller, staging archive and relay outside that view. Native Codex becomes
+PID 1; its exit tears down detached descendants before trusted file collection.
+Native stdio uses pipes without controller file descriptors. See [TASK-PRESENTATION.md](TASK-PRESENTATION.md)
+for the allowed filesystem, controls and remaining presentation limits.
+
+Keep smolvm while its measured capabilities support this profile. Switching VM
+brands alone would not separate a controller from a solver. A Colima alternative
+would need a controller outside the solver container, explicit socket forwarding,
+no host mounts, and independently qualified freshness and recovery. Revisit it
+if the allowlisted runtime/tool view becomes fragile for representative tasks.
+
 Each VM uses fresh identity and isolated runtime directories, an allowlisted
 host process environment, bounded operations, and stop/delete cleanup receipts.
 The offline route requests no guest network, host mounts, or secrets. The native

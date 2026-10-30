@@ -12,6 +12,7 @@ import io
 import json
 import os
 import resource
+import selectors
 import signal
 import stat
 import subprocess
@@ -23,9 +24,20 @@ from pathlib import Path
 from typing import Any
 
 if __package__:
-    from skilleval import context_guard
+    from skilleval import context_guard, solver_boundary
 else:
     import context_guard  # type: ignore[no-redef,import-not-found]
+    import solver_boundary  # type: ignore[no-redef,import-not-found]
+
+
+# Preserve the vendored file verbatim; presentation is owned by this launcher.
+RELAY_PROGRAM = """import runpy, sys
+gateway = runpy.run_path('/opt/skilleval/openbench_gateway.py')
+gateway['_Handler'].server_version = 'LocalGateway'
+raise SystemExit(gateway['main'](sys.argv[1:]))
+"""
+# The inherited cwd is the untrusted task. Exclude it from privileged imports.
+RELAY_PREFIX = ("python3", "-I", "-c", RELAY_PROGRAM)
 
 
 def _stop(process: subprocess.Popen[bytes]) -> None:
@@ -47,34 +59,88 @@ def _execute_native(
     work: Path,
     evidence: Path,
     timeout: int,
+    *,
+    stream_limit_bytes: int | None = None,
 ) -> dict[str, Any]:
-    """Stream both pipes to files; terminate the process group on every exit."""
+    """Keep controller file descriptors outside the child; stream bounded pipes.
+
+    Namespace-wide teardown is the boundary launcher's responsibility. The
+    process-group fallback here also serves the trusted relay and host tests.
+    """
     with (
         (evidence / "events.jsonl").open("wb") as stdout,
         (evidence / "stderr.log").open("wb") as stderr,
-        prompt.open("rb") as stdin,
+        selectors.DefaultSelector() as selector,
     ):
+        pending = memoryview(prompt.read_bytes())
         started = time.monotonic()
         process = subprocess.Popen(
             argv,
-            stdin=stdin,
-            stdout=stdout,
-            stderr=stderr,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             cwd=work,
             env=environment,
             start_new_session=True,
+            close_fds=True,
         )
+        assert process.stdin and process.stdout and process.stderr
+        for stream in (process.stdin, process.stdout, process.stderr):
+            os.set_blocking(stream.fileno(), False)
+        selector.register(process.stdin, selectors.EVENT_WRITE, None)
+        selector.register(process.stdout, selectors.EVENT_READ, stdout)
+        selector.register(process.stderr, selectors.EVENT_READ, stderr)
         timed_out = False
+        truncated = False
+        drain_incomplete = False
+        stopped_at = None
         try:
-            process.wait(timeout=timeout)
-        except subprocess.TimeoutExpired:
-            timed_out = True
+            while selector.get_map():
+                now = time.monotonic()
+                if stopped_at is None and (process.poll() is not None or now - started >= timeout):
+                    timed_out = process.poll() is None
+                    _stop(process)
+                    stopped_at = time.monotonic()
+                if stopped_at is not None and now - stopped_at > 1:
+                    drain_incomplete = True
+                    break
+                for key, _ in selector.select(timeout=0.05):
+                    if key.data is None:
+                        if pending:
+                            try:
+                                pending = pending[os.write(key.fd, pending[:4096]) :]
+                            except BrokenPipeError:
+                                pending = memoryview(b"")
+                        if not pending:
+                            selector.unregister(key.fileobj)
+                            process.stdin.close()
+                        continue
+                    block = os.read(key.fd, 65536)
+                    if not block:
+                        selector.unregister(key.fileobj)
+                        continue
+                    output = key.data
+                    if stream_limit_bytes is not None:
+                        available = max(0, stream_limit_bytes - output.tell())
+                        truncated |= len(block) > available
+                        block = block[:available]
+                    output.write(block)
+            # A process can close all streams before it exits.
+            if stopped_at is None:
+                try:
+                    process.wait(timeout=max(0.001, timeout - (time.monotonic() - started)))
+                except subprocess.TimeoutExpired:
+                    timed_out = True
         finally:
             _stop(process)
+            for stream in (process.stdin, process.stdout, process.stderr):
+                stream.close()
     return {
         "returncode": process.returncode,
         "timed_out": timed_out,
         "agent_elapsed_seconds": time.monotonic() - started,
+        "output_limit_reached": truncated,
+        "pipe_drain_incomplete": drain_incomplete,
     }
 
 
@@ -83,13 +149,21 @@ def _archive(root: Path, work: Path, maximum: int, count: int) -> dict[str, Any]
     entries: list[tuple[str, Path]] = []
     links: list[dict[str, str]] = []
     total = 0
+
+    def traversal_error(error: OSError) -> None:
+        raise error
+
     for prefix, directory in (
         ("evidence", root / "evidence"),
         ("task", work),
         ("home", root / "home"),
         ("codex-home", root / "codex-home"),
     ):
-        for current, directories, files in os.walk(directory, followlinks=False):
+        if directory.is_symlink():
+            raise ValueError("unsafe collection root")
+        for current, directories, files in os.walk(
+            directory, followlinks=False, onerror=traversal_error
+        ):
             for name in sorted([*directories, *files]):
                 path = Path(current) / name
                 relative = prefix + "/" + path.relative_to(directory).as_posix()
@@ -160,10 +234,12 @@ def run(root: Path, work: Path) -> int:
         "--color",
         "never",
         "--output-last-message",
-        str(evidence / "final.txt"),
+        str(home / "final.txt"),
         "-",
     ]
     relay: subprocess.Popen[bytes] | None = None
+    boundary_started = False
+    safe_to_collect = True
     result: dict[str, Any] = {"returncode": None, "timed_out": False, "argv": argv}
     result["environment"] = environment
     result["cwd"] = str(work)
@@ -197,8 +273,7 @@ def run(root: Path, work: Path) -> int:
         ):
             relay = subprocess.Popen(
                 [
-                    "python3",
-                    "/opt/skilleval/openbench_gateway.py",
+                    *RELAY_PREFIX,
                     "relay",
                     "--socket",
                     "/run/inference.sock",
@@ -234,9 +309,11 @@ def run(root: Path, work: Path) -> int:
         # Apply to the child and descendants; logs are streamed, not buffered in RAM.
         maximum = settings["max_artifact_bytes"]
         resource.setrlimit(resource.RLIMIT_FSIZE, (maximum, maximum))
+        boundary_started = True
+        safe_to_collect = False
         result.update(
             _execute_native(
-                argv,
+                ["python3", str(root / "solver_boundary.py"), str(root), str(work), "--", *argv],
                 environment,
                 root / "prompt.txt",
                 work,
@@ -244,6 +321,23 @@ def run(root: Path, work: Path) -> int:
                 settings["native_timeout_seconds"],
             )
         )
+        boundary = json.loads((root / "boundary.json").read_bytes())
+        result["boundary"] = boundary
+        safe_to_collect = boundary.get("namespace_reaped") is True
+        if not solver_boundary.valid_receipt(boundary):
+            raise ValueError("solver boundary failed")
+        result["launcher_elapsed_seconds"] = result["agent_elapsed_seconds"]
+        result["agent_elapsed_seconds"] = boundary["native_elapsed_seconds"]
+        # The solver never holds a controller evidence FD. Read its final result
+        # only after the kernel has terminated every member of its PID namespace.
+        final_path = home / "final.txt"
+        if final_path.exists() or final_path.is_symlink():
+            descriptor = os.open(final_path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+            with os.fdopen(descriptor, "rb") as source:
+                info = os.fstat(source.fileno())
+                if not stat.S_ISREG(info.st_mode) or info.st_size > maximum:
+                    raise ValueError("invalid native final output")
+                (evidence / "final.txt").write_bytes(source.read(maximum + 1))
         result["context_skills_after"] = context_guard.inventory(codex_home / "skills")
     except (OSError, ValueError, subprocess.SubprocessError) as error:
         result["error"] = type(error).__name__
@@ -253,6 +347,8 @@ def run(root: Path, work: Path) -> int:
             _stop(relay)
         (evidence / "process.json").write_text(json.dumps(result, sort_keys=True))
         try:
+            if boundary_started and not safe_to_collect:
+                raise ValueError("solver namespace termination unconfirmed")
             collection = _archive(
                 root, work, settings["max_artifact_bytes"], settings["max_artifact_files"]
             )

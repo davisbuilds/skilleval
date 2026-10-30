@@ -21,7 +21,7 @@ interfaces. Do not load every reference for a small change.
 - [ENVIRONMENT.md](docs/system/ENVIRONMENT.md), [GATEWAY.md](docs/system/GATEWAY.md),
   [NATIVE.md](docs/system/NATIVE.md): qualification, recovery, inference, and native runs.
 - [TASK-PRESENTATION.md](docs/system/TASK-PRESENTATION.md): solver-visible context,
-  evaluation disclosures, and the remaining controller access boundary.
+  evaluation disclosures, the solver boundary, and its qualification limits.
 - [CALIBRATION.md](docs/system/CALIBRATION.md), [RELIABILITY.md](docs/system/RELIABILITY.md):
   judge contracts, authored controls, stability checks, and independent audit limits.
 - [PILOT-CANDIDATES.md](docs/project/PILOT-CANDIDATES.md),
@@ -51,6 +51,8 @@ belong in an explicit external directory or ignored `.local/`.
 - Give solvers ordinary work briefs without evaluation announcements. Keep
   evaluation-only context inaccessible; operator-state isolation alone does not
   establish that boundary. Preserve faithful upstream skill bytes and old evidence.
+  Native commands use the unprivileged solver boundary; do not bypass it to make
+  a task pass. Qualify required tools and image contents through that same route.
 - Grade outcomes independently of the skill's instructions. Preserve alternative
   valid solutions, novel findings, failures, disagreements, and unresolved verdicts.
   Scored correctness requires independent grader audit and applicable admission.
