@@ -78,7 +78,9 @@ build preparation.
 
 Every broker request records bounded message, top-level instruction and tool
 definition identities, native instruction-source headers and advertised skill
-names/paths. Unsupported observations and unexpected instruction/skill roots are
+names/paths. Inline message images have separate position/content identities;
+they are not parsed as instruction prose, and gateway image validation still applies.
+Unsupported observations and unexpected instruction/skill roots are
 refused. Codex's auto-installed built-in skills remain declared harness defaults:
 the runner retains their post-start file inventory and rejects a selected skill
 name that collides with an advertised builtin. Installed bytes, advertised

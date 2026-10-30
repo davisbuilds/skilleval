@@ -16,6 +16,7 @@ from typing import Any
 
 MAX_FILES = 10_000
 MAX_BYTES = 32 * 1024 * 1024
+MAX_REQUEST_BYTES = 8 * 1024 * 1024  # GatewayLimits' largest accepted request budget.
 INSTRUCTIONS = {"AGENTS.md", "AGENTS.override.md"}
 
 
@@ -105,7 +106,7 @@ def preflight(
 
 def request_context(raw: bytes) -> dict[str, Any]:
     """Observe actual native message/tool content without retaining its prose."""
-    if len(raw) > 4 * 1024 * 1024:
+    if len(raw) > MAX_REQUEST_BYTES:
         raise ValueError("context request exceeds limit")
     body = json.loads(raw)
     if not isinstance(body, dict) or not isinstance(body.get("input"), list):
@@ -137,15 +138,31 @@ def request_context(raw: bytes) -> dict[str, Any]:
         if item.get("type", "message") != "message":
             continue
         content = item.get("content")
-        if not isinstance(content, list) or not all(
-            isinstance(part, dict)
-            and part.get("type") in {"input_text", "output_text"}
-            and isinstance(part.get("text"), str)
-            for part in content
-        ):
+        if isinstance(content, str):
+            content = [{"type": "input_text", "text": content}]
+        if not isinstance(content, list):
             raise ValueError("unsupported context message content")
-        text = "\n".join(part["text"] for part in content)
+        prose, images = [], []
+        for position, part in enumerate(content):
+            if not isinstance(part, dict):
+                raise ValueError("unsupported context message content")
+            if part.get("type") in {"input_text", "output_text"} and isinstance(
+                part.get("text"), str
+            ):
+                prose.append(part["text"])
+            elif part.get("type") == "input_image" and isinstance(part.get("image_url"), str):
+                # Observe identity and position, never interpret image data as
+                # instruction prose. The gateway still validates inline URLs,
+                # signatures, sizes and detail before dispatching the request.
+                images.append(
+                    {"index": position, **identity(json.dumps(part, sort_keys=True).encode())}
+                )
+            else:
+                raise ValueError("unsupported context message content")
+        text = "\n".join(prose)
         row = {"index": index, "role": item.get("role"), **identity(text.encode())}
+        if images:
+            row["images"] = images
         if item.get("role") == "user" and text.startswith("# AGENTS.md instructions for "):
             row["instruction_sources"] = re.findall(
                 r"^# AGENTS.md instructions for (.+)$", text, re.M

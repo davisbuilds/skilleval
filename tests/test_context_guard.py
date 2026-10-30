@@ -118,6 +118,50 @@ def test_top_level_tools_are_observed_and_changes_are_visible() -> None:
     assert guard.request_context(json.dumps(original).encode())["tools"] != observed["tools"]
 
 
+def test_message_image_identity_is_separate_from_instruction_prose() -> None:
+    image = {"type": "input_image", "image_url": "data:image/png;base64,iVBORw0KGgo="}
+    prose = "# AGENTS.md instructions for /workspace/task\nShared task context."
+    content = [{"type": "input_text", "text": prose}, image]
+
+    def observe() -> dict:
+        return guard.request_context(
+            json.dumps({"input": [{"role": "user", "content": content}]}).encode()
+        )
+
+    first = observe()
+    assert first["messages"][0]["instruction_sources"] == ["/workspace/task"]
+    assert first["messages"][0]["sha256"] == guard.identity(prose.encode())["sha256"]
+    assert first["messages"][0]["images"][0]["index"] == 1
+    image["detail"] = "high"
+    assert observe()["messages"][0]["images"] != first["messages"][0]["images"]
+    content.pop(0)
+    only_image = observe()["messages"][0]
+    assert only_image["bytes"] == 0
+    assert "instruction_sources" not in only_image
+    assert "data:image" not in json.dumps(only_image)
+
+
+def test_plain_string_message_still_observes_instruction_sources() -> None:
+    prose = "# AGENTS.md instructions for /host/home\nUnintended context."
+    observed = guard.request_context(
+        json.dumps({"input": [{"role": "user", "content": prose}]}).encode()
+    )
+    with pytest.raises(ValueError, match="instruction source"):
+        guard.check_request_context(observed, "/workspace/task", "/native/codex-home", None)
+
+
+def test_context_observation_covers_the_gateway_request_budget() -> None:
+    from skilleval.gateway import GatewayLimits
+
+    text = "x" * (4 * 1024 * 1024)
+    raw = json.dumps({"input": [message(text)]}).encode()
+    budget = GatewayLimits(max_body_bytes=8 * 1024 * 1024).max_body_bytes
+    assert 4 * 1024 * 1024 < len(raw) < budget
+    assert guard.request_context(raw)["messages"][0]["bytes"] == len(text)
+    with pytest.raises(ValueError, match="context request exceeds limit"):
+        guard.request_context(b" " * (budget + 1))
+
+
 def test_tool_record_ids_do_not_change_capabilities_but_definitions_do() -> None:
     item = {
         "type": "additional_tools",

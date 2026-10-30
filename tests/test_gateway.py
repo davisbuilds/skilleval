@@ -18,7 +18,7 @@ from typing import cast
 
 import pytest
 
-from skilleval import gateway
+from skilleval import context_guard, gateway
 from skilleval.errors import SkillEvalError
 from skilleval.gateway import (
     ADAPTED_SHA256,
@@ -171,6 +171,54 @@ def test_request_observer_failure_refuses_provider_call(short_root: Path) -> Non
         assert status == 503
         assert b"PRIVATE_FAILURE" not in body
     assert not sent
+
+
+def test_context_observer_preserves_inline_images_and_gateway_refusals(short_root: Path) -> None:
+    auth = load_chatgpt_auth(write_auth(short_root, time.time() + 600))
+    image = {
+        "type": "input_image",
+        "image_url": "data:image/png;base64,iVBORw0KGgo=",
+        "detail": "high",
+    }
+    body = {
+        **BODY,
+        "input": [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "input_text", "text": "Inspect this screenshot."},
+                    image,
+                ],
+            }
+        ],
+    }
+    observations = []
+    sent = []
+
+    def observe(raw: bytes) -> None:
+        value = context_guard.request_context(raw)
+        context_guard.check_request_context(value, "/workspace/task", "/native/codex-home", None)
+        observations.append(value)
+
+    def transport(raw: bytes, *_: object) -> Stream:
+        sent.append(raw)
+        return Stream()
+
+    with broker_scope(
+        auth,
+        short_root / "images",
+        limits=LIMITS,
+        test_transport=transport,
+        request_observer=observe,
+    ) as broker:
+        assert request(broker.socket_path, body)[0] == 200
+        image["image_url"] = "https://example.invalid/screenshot.png"
+        assert request(broker.socket_path, body)[0] == 400
+    assert len(sent) == 1
+    observed = observations[0]["messages"][0]
+    assert observed["sha256"] == hashlib.sha256(b"Inspect this screenshot.").hexdigest()
+    assert len(observed["images"]) == 1
+    assert "iVBORw0KGgo" not in json.dumps(observations)
 
 
 @pytest.mark.parametrize("expiration", [None, True, "private-value", 0, float("nan"), 10**400])
