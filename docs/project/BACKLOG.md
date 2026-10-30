@@ -117,18 +117,10 @@ shipped history. Private provenance stays outside public entries and issues.
   public/private packaging boundaries for the selected task population. Extend
   repair filename support beyond its initial portable ASCII subset when selected
   repositories require it, preserving path/alias and exact-byte patch guarantees.
-- **Portability checks:** run filesystem/process tests on Linux in addition to the
-  initial macOS validation. Synthetic subprocess tests cannot establish real VM
-  compatibility on either platform.
-- **Public GitHub launch:** set up hosted CI calling
-  `scripts/check`, pin actions/toolchains, add workflow audit and secret scanning,
-  and align dependency updates with the existing quarantine. Configure the
-  intended merge/rebase policy and required checks against live hosting capabilities.
-  Refresh the initial tree/history and artifact review for the exact publication
-  commit, then create/push the public repository when authorized. The selected
-  Apache-2.0 license and retained upstream MIT notice do not license external task
-  or skill inputs. No private runners, credentials, or datasets in
-  public/fork-triggered workflows. No package-registry release is implied.
+- **Native runtime portability:** hosted Linux and macOS checks cover the
+  deterministic filesystem/process suite. Synthetic subprocess tests cannot
+  establish real VM compatibility on either platform; qualify additional runtime
+  platforms only when a selected task requires them.
 - **Selective adoption:** use [SOURCES.md](SOURCES.md) to choose a component when
   its phase needs it. Pin and inspect that revision's license/NOTICE and tests
   before copying, adapting, or declaring it as a dependency. A research influence

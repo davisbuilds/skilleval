@@ -7,14 +7,18 @@ private dataset is needed.
 ## Workflow audit
 
 `pyproject.toml` and `uv.lock` pin zizmor and its distribution hashes. Use the
-Python and uv versions in `../workflows/workflow-audit.yml`:
+Python and uv versions in `../../.github/workflows/workflow-audit.yml`:
 
 ```sh
-uv sync --project .github/ci-tools --locked
-uv run --project .github/ci-tools --locked zizmor --offline .github/workflows/
+uv sync --project tools/ci --locked
+uv run --project tools/ci --locked zizmor --offline .github/workflows/
 ```
 
 Dependabot proposes weekly uv and action updates after an eight-day cooldown.
+The uv tool project lives outside `.github`: the hosted updater rejected a
+resolved tool update there during PR creation. Related upstream reports are
+[dependabot-core #15237](https://github.com/dependabot/dependabot-core/issues/15237)
+and [#15721](https://github.com/dependabot/dependabot-core/issues/15721).
 Installation keeps the seven-day release quarantine. Review SHA/version comments
 together; Dependabot does not update workflow tool-version inputs. Security
 updates bypass its cooldown and still need review and an explicit, narrow
@@ -46,7 +50,7 @@ From the repository root, with the pinned Go compiler:
 
 ```sh
 mkdir -p .local/ci-tools
-.github/ci-tools/build-gitleaks.sh "$PWD/.local/ci-tools/gitleaks"
+tools/ci/build-gitleaks.sh "$PWD/.local/ci-tools/gitleaks"
 .local/ci-tools/gitleaks git --redact --no-banner --log-opts=--all .
 ```
 
