@@ -26,7 +26,7 @@ interfaces. Do not load every reference for a small change.
   [SOURCES.md](docs/project/SOURCES.md): task selection and external provenance.
 - [CONTRIBUTING.md](CONTRIBUTING.md): contribution scope and review expectations.
 - [GIT_HISTORY_POLICY.md](docs/project/GIT_HISTORY_POLICY.md): hosting, required
-  checks, review, and merge policy; [CI tools](.github/ci-tools/README.md): tool renewal.
+  checks, review, and merge policy; [CI tools](tools/ci/README.md): tool renewal.
 
 ## Command quickstart
 

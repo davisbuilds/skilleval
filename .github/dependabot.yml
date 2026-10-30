@@ -1,7 +1,7 @@
 version: 2
 updates:
   - package-ecosystem: uv
-    directories: ["/", "/.github/ci-tools"]
+    directories: ["/", "/tools/ci"]
     schedule:
       interval: weekly
     # Eight days avoids the boundary of the seven-day installation quarantine.
