@@ -166,7 +166,9 @@ def test_runtime_drift_refuses_recovery_and_retains_original_state(tmp_path: Pat
     assert recover(session.output)["cleanup_complete"]
 
 
-def test_native_controller_timeout_kills_real_process_group_descendant(tmp_path: Path) -> None:
+def test_native_controller_timeout_kills_real_process_group_descendant(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     beat = tmp_path / "heartbeat"
     child = (
         "import pathlib,time\n"
@@ -176,13 +178,22 @@ def test_native_controller_timeout_kills_real_process_group_descendant(tmp_path:
     parent = (
         "import subprocess,sys,time\n"
         f"subprocess.Popen([sys.executable,'-c',{child!r}])\n"
-        "time.sleep(30)\n"
+        "time.sleep(120)\n"
     )
-    # Allow both interpreters to start while native VM controls share the host.
-    # The positive heartbeat is still required before asserting group shutdown.
-    result = _invoke([sys.executable, "-c", parent], tmp_path, {"PATH": "/usr/bin:/bin"}, 5)
+
+    class ReadyProcess(subprocess.Popen[bytes]):
+        def wait(self, timeout: float | None = None) -> int:
+            # Establish the real descendant before starting the timed wait. Hosted
+            # interpreter startup can exceed the timeout we are trying to test.
+            # Popen, timed wait, and process-group termination remain real.
+            if timeout is not None:
+                wait_for(beat, timeout=30)
+            return super().wait(timeout=timeout)
+
+    monkeypatch.setattr(subprocess, "Popen", ReadyProcess)
+    result = _invoke([sys.executable, "-c", parent], tmp_path, {"PATH": "/usr/bin:/bin"}, 1)
     assert result["timed_out"] and result["returncode"] < 0
-    wait_for(beat)
+    assert beat.exists()
     known_positive = beat.read_text()
     time.sleep(0.2)
     assert beat.read_text() == known_positive
