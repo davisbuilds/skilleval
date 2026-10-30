@@ -486,6 +486,10 @@ output_token_replay = false
 concurrent_reasoning_summaries = false
 enable_request_compression = false
 apps = false
+hooks = false
+plugins = false
+memories = false
+shell_snapshot = false
 
 [model_providers.qualification-broker]
 name = "skilleval qualification"

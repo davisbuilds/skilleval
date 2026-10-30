@@ -36,3 +36,10 @@ versions, and build output with the private qualification receipt. Different
 tasks generally need different dependency images. The immutable archive is the
 runtime input; a mutable local tag is only a build handle. Stop a disposable
 builder when export is complete.
+
+The recipe runs the Codex version check with a disposable HOME/CODEX_HOME and
+removes that state in the same layer. A normal `codex --version` invocation can
+leave launcher files under `/root/.codex`; the native context guard refuses that
+ambient directory. Images built with earlier recipes need a new, explicitly
+identified clean image and fresh qualification. Preserve the original archive and
+any derivation evidence; do not silently clean unexpected state during a task run.

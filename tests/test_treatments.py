@@ -105,7 +105,15 @@ def test_matched_pair_preserves_instructions_git_inputs_and_exact_prompt(tmp_pat
 
 @pytest.mark.parametrize(
     "embedded",
-    [".agents/skills/existing/SKILL.md", ".codex/skills/x/SKILL.md", ".codex/config.toml"],
+    [
+        ".agents/skills/existing/SKILL.md",
+        ".codex/skills/x/SKILL.md",
+        ".codex/config.toml",
+        ".codex/hooks.json",
+        "nested/.codex/managed_config.toml",
+        ".codex/memories/MEMORY.md",
+        ".codex/plugins/plugin.json",
+    ],
 )
 def test_contaminated_baseline_is_refused_without_deleting_instructions(
     tmp_path: Path, embedded: str

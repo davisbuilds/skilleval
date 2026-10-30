@@ -56,22 +56,59 @@ semantic authenticity or independent correctness.
 
 ### Operator state and effective context
 
-The runner creates fresh guest `HOME` and `CODEX_HOME` directories, writes its own
-provider configuration, and launches Codex with an explicit process environment.
-VM creation declares no host directory mounts; task, tooling and the selected
-skill are explicit copied inputs. The host runtime also gets separate HOME/XDG
-state. The intended boundary excludes the operator's parent-directory and global
-`AGENTS.md`, personal skill installations and prior Codex sessions through those
-host paths. Task-repository instructions remain frozen, shared task context.
+The production runner creates fresh guest `HOME` and `CODEX_HOME` directories,
+writes its own provider configuration, and launches Codex with an explicit process
+environment. VM creation declares no host directory mounts; task, tooling and the
+selected skill are explicit copied inputs. The host runtime also gets separate
+HOME/XDG state. Task-repository instructions remain frozen, shared task context.
 
-This is not yet a complete audit of what the harness loads. Image/system defaults,
-built-in skills and task-local instruction/configuration surfaces require effective
-context observation at the actual harness version. Any retained harness defaults
-must be declared and identical between arms. Existing request telemetry
-checks the selected skill; it does not enumerate all possible instruction sources.
-The [ambient isolation backlog](../project/BACKLOG.md) owns the remaining inventory
-and synthetic contamination controls. Preserve this limit when interpreting
-earlier runs; ordinary filesystem tests cannot establish native context isolation.
+Before native execution, the copied context guard checks the exact initial Codex
+home and empty user home, rejects ambient instructions/configuration in the known
+ancestor, user and system discovery roots, and inventories task instructions.
+All review, repair and judge inputs reject embedded skills and `.codex` state,
+including hooks and managed configuration; they retain ordinary `AGENTS.md` and
+`AGENTS.override.md`. Hooks, plugins, memories and shell snapshots are disabled in
+the generated profile. Version probes use disposable homes too: even
+`codex --version` can create launcher state, which must not remain in the image's
+default home. The [image recipe](../../environments/python-review/README.md) owns
+build preparation.
+
+Every broker request records bounded message, top-level instruction and tool
+definition identities, native instruction-source headers and advertised skill
+names/paths. Unsupported observations and unexpected instruction/skill roots are
+refused. Codex's auto-installed built-in skills remain declared harness defaults:
+the runner retains their post-start file inventory and rejects a selected skill
+name that collides with an advertised builtin. Installed bytes, advertised
+metadata, successful full-body reads and semantic use remain different evidence.
+
+Run the opt-in production-route controls without credentials or real inference:
+
+```sh
+uv run python scripts/qualify-context.py \
+  --runtime NATIVE_RUNTIME --image-archive IMAGE_ARCHIVE \
+  --image-sha256 IMAGE_SHA256 --catalog MODEL_CATALOG --output FRESH_OUTPUT
+```
+
+The control creates synthetic operator instructions, configuration, skills,
+memories, hooks, shell initialization and prior sessions outside the copied task.
+It runs OFF, ON, fresh OFF, a deliberately exposed instruction marker, and a
+system-context refusal through `run_native` and the production guest runner.
+It verifies intended task instructions, selected metadata/full-body exposure,
+successful reads, shared base instructions and tool definitions, identical
+advertised/on-disk builtins, the explicit invocation difference, fresh sessions,
+and cleanup. Per-run tool-record IDs are retained in original requests but excluded
+from capability comparisons. Synthetic receipts have the distinct kind
+`skilleval-native-context-control`; task/judge recorders and studies reject them.
+
+Retain the summary, original synthetic requests, native audits/artifacts and
+recovery tickets. Evidence binds the actual source, runtime, image and harness
+identities. The 2026-10-30 control passed all 56 assertions across five fresh VMs
+on Codex 0.164.0 and smolvm 1.32.3, after removing image-build launcher residue.
+Earlier failed generations remain retained. This establishes the tested context
+boundary and comparison, not model behavior, general resistance to malicious
+guest code, every future discovery path, or skill effectiveness. It does not
+retroactively qualify earlier attempts or grant a scored-study seal; full-workload
+admission still needs treatment-specific evidence and independent grader audit.
 
 ## Prepare, freeze, run and record a calibration judge
 

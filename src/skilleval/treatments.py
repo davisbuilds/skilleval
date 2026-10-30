@@ -207,13 +207,13 @@ def check_task_baseline(workspace: Path) -> dict[str, Any]:
     for name, _, _ in files:
         parts = PurePosixPath(name).parts
         lowered = tuple(part.casefold() for part in parts)
-        if any(
-            lowered[index : index + 2]
-            in {(".agents", "skills"), (".codex", "skills"), (".claude", "skills")}
-            for index in range(len(lowered) - 1)
-        ) or any(
-            lowered[index : index + 2] in {(".codex", "config.toml"), (".codex", "auth.json")}
-            for index in range(len(lowered) - 1)
+        if (
+            any(
+                lowered[index : index + 2]
+                in {(".agents", "skills"), (".codex", "skills"), (".claude", "skills")}
+                for index in range(len(lowered) - 1)
+            )
+            or ".codex" in lowered
         ):
             raise SkillEvalError("task contains unsupported embedded skills or Codex configuration")
     inventory = _inventory(files)

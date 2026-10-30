@@ -21,7 +21,10 @@ usage comparisons. [Task packages](../system/TASKS.md) and
 
 Runtime controls cover bounded filesystem/network behavior, task fidelity,
 termination, recovery, and cleanup on the tested smolvm route. Admission is tied
-to exact execution identities. Judge controls cover authored labels and selected
+to exact execution identities. Native context controls now exercise production
+OFF/ON/fresh OFF, declared defaults, contamination detection and preflight refusal;
+their [scope](../system/NATIVE.md#operator-state-and-effective-context) remains
+separate from scored admission. Judge controls cover authored labels and selected
 repeat/order/perturbation cases. **Independent semantic audit and scored-study
 admission remain pending.** Development workflows can progress while those gates
 are open; they cannot become scored trials by relabeling their results.
