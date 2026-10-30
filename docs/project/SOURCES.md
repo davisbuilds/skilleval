@@ -27,6 +27,18 @@ later evaluated material uses BenchFlow. This is historical context, not a
 separate selection of Harbor as skilleval's runtime. Keep paper versions, current
 task repositories, and leaderboard snapshots distinct.
 
+The shared [task-package workflow](../system/TASKS.md) now implements selected
+ideas independently: explicit environments and baseline/reference controls
+(SkillsBench/Harbor), inspectable fixtures and treatment variants (Tessl),
+artifact-centered semantic assessment and human review (Anthropic/Engram), and
+separate execution, correctness and comparison records (gstack). This records
+design adoption, not copied implementation or equivalent upstream behavior.
+Harbor's [task environment](https://docs.harborframework.com/tasks/environment),
+[reference solution](https://docs.harborframework.com/tasks/solution), and
+[separate verifier](https://docs.harborframework.com/tasks/separate-verifier)
+contracts were rechecked on 2026-10-29. Skilleval retains its own smolvm lifecycle
+and observation/verdict boundary.
+
 ## Runtime and harness contracts
 
 | Source | Current decision / possible reuse | Qualification still needed |
@@ -83,6 +95,22 @@ repository and does not copy private review content.
 The tiny repair-assessment controls in `examples/repair/assessment-v1` are newly
 authored here. They contain no imported implementation or private task content;
 they exercise grader behavior rather than representative task performance.
+
+The [product-page example](../../examples/document/product-page/README.md) adds
+an authored writing commission, mechanical observer and distinct control drafts.
+Its external product input is the complete [AgentMonitor README and license at
+fe6f461](https://github.com/davisbuilds/agentmonitor/tree/fe6f46138cad1191606ad0df5985f8fd3b5eb42d).
+The skill treatment is the complete [Corey Haines copywriting 2.3.1 subtree at
+e85f3cb](https://github.com/coreyhaines31/marketingskills/tree/e85f3cbc2e4a79bf33b2a12e9bdd9087d414735b/skills/copywriting),
+with its root MIT license and embedded attribution. A separate
+[Profound MIT notice](https://github.com/retieedra-profound/skills-marketing-library/blob/80293f156c27d3f90aedebfb3c27309769b2eec6/LICENSE)
+is retained for the upstream-attributed adaptation; its notice revision does not
+establish the original adaptation's historical revision. Embedded Manchester
+Academic Phrasebank/Plain English attribution remains intact. No broader rights
+clearance is inferred. These public repositories and exact source bytes were
+verified on 2026-10-29; captures and live outputs remain external. No product or
+skill implementation is copied into the tracked example, and the example is
+neither a customer-research finding nor evidence of conversion improvement.
 
 ## How adoption is recorded
 

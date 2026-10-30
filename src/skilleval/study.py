@@ -38,6 +38,24 @@ class StudyTask(Record):
     input_bundle: str = Field(min_length=1)
     input_sha256: Digest
     prompt: str = Field(min_length=1, max_length=262144)
+    package: str | None = None
+    package_sha256: Digest | None = None
+    environment_validation: str | None = None
+    environment_validation_sha256: Digest | None = None
+
+    @model_validator(mode="after")
+    def package_bindings(self) -> StudyTask:
+        refs = (
+            self.package,
+            self.package_sha256,
+            self.environment_validation,
+            self.environment_validation_sha256,
+        )
+        if any(x is not None for x in refs) and not all(x is not None for x in refs):
+            raise ValueError(
+                "task package requires its selected environment validation and digests"
+            )
+        return self
 
 
 class StudySpec(Record):
@@ -151,6 +169,29 @@ def _check_inputs(spec: StudySpec) -> dict[str, Any]:
         if manifest["kind"] != "snapshot":
             raise SkillEvalError("study tasks require frozen native input snapshots")
         check_task_baseline(Path(task.input_bundle))
+        if task.package is not None:
+            from skilleval.repair import load_task
+            from skilleval.task_package import checked_validation
+
+            assert task.package_sha256 and task.environment_validation
+            assert task.environment_validation_sha256
+            package, validation = checked_validation(
+                Path(task.package),
+                task.package_sha256,
+                Path(task.environment_validation),
+                task.environment_validation_sha256,
+            )
+            artifact = load_task(Path(package.task), package.task_sha256)
+            if (
+                task.mode != "repair"
+                or artifact.input_sha256 != task.input_sha256
+                or artifact.prompt != task.prompt
+                or package.environment.image_sha256 != spec.image_sha256
+                or any(
+                    c["identity"] != snapshot_identity(spec.runtime) for c in validation["cases"]
+                )
+            ):
+                raise SkillEvalError("study differs from validated task package or execution route")
     _verified_skill(Path(spec.skill_bundle), spec.skill_sha256)
     if file_digest(Path(spec.catalog)) != runner.CATALOG_SHA256:
         raise SkillEvalError("study model catalog differs from pinned native route")
@@ -165,6 +206,9 @@ def prepare_study(spec: StudySpec, destination: Path) -> dict[str, Any]:
             data[key] = os.path.abspath(data[key])
     for task in data["tasks"]:
         task["input_bundle"] = os.path.abspath(task["input_bundle"])
+        for key in ("package", "environment_validation"):
+            if task[key] is not None:
+                task[key] = os.path.abspath(task[key])
     spec = StudySpec.model_validate_json(json.dumps(data))
     image = _check_inputs(spec)
     identity = snapshot_identity(spec.runtime)

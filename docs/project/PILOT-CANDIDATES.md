@@ -2,7 +2,8 @@
 
 Shortlist dated **2026-10-28**, not a frozen task suite or launch authorization.
 Candidate A now has a captured development snapshot, repair adapter and live
-polarity controls. B and C remain uncaptured proposals; none is an admitted
+polarity controls. C has a captured source packet and document adapter; B remains
+an uncaptured proposal. None is an admitted
 evaluation task or established representative sample.
 Each comparison uses one complete pinned skill package explicitly ON versus OFF;
 there is no upstream-versus-adaptation comparison. Public repository visibility
@@ -38,11 +39,13 @@ the original failure. These are hypotheses, not grading requirements.
 tests without later Git history. Derive a symptom-led brief from the public
 contract: edited saved verdicts must not admit failing controls; valid evidence
 must remain usable. Do not reveal the historical patch or prescribe its algorithm.
-Retain the fix and later tests outside the agent workspace. The captured
-development snapshot preserves 2,196 source files plus synthetic baseline Git
-metadata. It omits unrelated imported benchmark datasets, result data, experiment
-trees and gateway-probe logs; ordinary source, guidance, unit tests, contracts and
-local task fixtures remain. It contains no later source history.
+Retain the fix and later tests outside the agent workspace. The original reduced
+capture remains retained. The current dependency-restored generation preserves
+ordinary data, experiment trees, gateway fixtures and required historical Git
+object closures. Imported benchmark working-tree payloads remain outside the
+declared validation scope. The reference repair and its changed blobs remain
+outside the baseline capture. See the
+[environment record](../../examples/repair/receipt-admission/environment.md).
 
 **Outcome checks.** Independently author hidden acceptance checks for forged
 verdicts, changed control declarations, legitimate receipts, fresh returned
@@ -52,8 +55,9 @@ controlled replay. Demonstrate that checks reject the parent defect, accept the
 historical repair and reject an always-fail/always-pass shortcut. Preserve ordinary
 regression results. An arm-blind semantic assessment checks scope, contract
 preservation and whether the claimed verification matches the evidence; patch
-similarity and following the skill's steps earn no credit. That repair-specific
-semantic assessment remains pending. The newly authored
+similarity and following the skill's steps earn no credit. Semantic recording and
+outcome selection are implemented; original solver/judge evidence retains its
+earlier capture identity and independent audit remains pending. The newly authored
 [observation adapter](../../examples/repair/receipt-admission/README.md) passed
 live polarity controls: the historical repair passed all ten checks, the parent
 failed six, always-accept failed all ten and always-reject failed the valid-receipt
@@ -68,11 +72,11 @@ production grading boundary would require additional runtime capabilities and
 controls. Writable repair collection and separate offline checks are now
 implemented. Live worker controls covered allowed reads/scratch writes and denied
 source writes, checker reads through direct/link/subprocess routes, and a tested
-external connection. A development solver's broader suite reported failures and
-missing assets/configuration in this snapshot; full-suite baseline equivalence
-has not been established. Preserve and qualify the required assets before using
-this lineage in an evaluation. General semantic grading and full-workload admission remain
-open; the bounded environment seal does not grant them.
+external connection. The restored capture reproduces the same two root-sensitive
+failures and eight skips in baseline/reference unit runs. These are explicit
+exceptions, not a clean CI result. Required tool-dependent lanes, full-workload
+admission and representative grader reliability remain open; the bounded
+environment seal does not grant them.
 
 ## B. Browser implementation: preserve user settings across failure states
 
@@ -111,7 +115,7 @@ still unqualified. Do not run a full film/render workflow merely to grade this f
 
 ## C. Source-grounded marketing writing
 
-**Real product source; proposed task, not a historical case.** AgentMonitor's
+**Real product source; authored commission, not a historical case.** AgentMonitor's
 [README at
 fe6f461](https://github.com/davisbuilds/agentmonitor/blob/fe6f46138cad1191606ad0df5985f8fd3b5eb42d/README.md)
 describes a local, single-user dashboard for coding-agent sessions, usage and
@@ -136,9 +140,11 @@ an unresolved option and human adjudication. Do not treat keyword/style complian
 an author's preferred draft, or a judge's taste as conversion evidence.
 
 **Environment and limits.** Text/files only: Linux can support this task without
-browser, credentials, customer access or external requests. The document-output
-adapter and calibrated writing rubric remain unimplemented/unqualified. This
-proposal tests artifact quality, not observed conversion or commercial impact.
+browser, credentials, customer access or external requests. The
+[document adapter and authored controls](../../examples/document/product-page/README.md)
+are implemented using the shared task/environment package. Independent writing
+rubric calibration remains pending. The task tests artifact quality, not observed
+conversion or commercial impact.
 
 ## Selection, headroom and independent evidence
 

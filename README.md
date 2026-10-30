@@ -6,7 +6,7 @@ direction is explicit-use skill ON/OFF comparisons for independently supplied
 skills from any source. Preserve what happened and grade outcomes using
 executable checks, semantic assessment, and human review.
 
-The foundation supports **evidence capture, native reviews and repairs, pinned
+The foundation supports **evidence capture, native reviews, repairs and documents, pinned
 skill inputs, and static or investigative judging**. Native Codex runs
 in fresh smolvm guests through a host-only inference gateway. Live controls cover repository tests, Git
 fidelity, filesystem/network boundaries, lifecycle recovery and cleanup;
@@ -34,6 +34,14 @@ regressions and verification claims with cited evidence. Explicit outcome select
 links them to attempts while preserving task-agent accounting and separate judge
 consumption. Representativeness and independent grader audit remain open.
 
+The shared [task-package workflow](docs/system/TASKS.md) binds captured context,
+environment requirements, baseline/reference validation and artifact checks.
+Packaged studies recheck that evidence before dispatch. The
+[product-page example](examples/document/product-page/README.md) adds writing
+artifacts and a separate factual/usefulness rubric. A Markdown comparison links
+actual outputs and judgment evidence alongside task and selected-judge usage.
+Expected failures, skipped coverage and incomplete observations stay visible.
+
 Earlier development pairs and native calibration sessions completed. Fresh judges
 also traced contracts and ran reproductions for the real reports, retaining
 original citations and investigation artifacts. These are development workflows:
@@ -44,8 +52,9 @@ Python owns the core and CLI. A TypeScript review UI and a pi adapter are later
 work. See the [roadmap](docs/project/ROADMAP.md),
 [vision](docs/project/VISION.md), and [architecture](docs/system/ARCHITECTURE.md).
 The [pilot shortlist](docs/project/PILOT-CANDIDATES.md) grounds the next task
-adapters in repair, browser implementation and writing; these are candidates,
-not captured evaluation cases or admitted trials.
+adapters in repair, browser implementation and writing. Repair and writing have
+exposed development captures; the browser candidate remains proposed. None is an
+admitted scored trial or an established representative population.
 
 ## Start locally
 

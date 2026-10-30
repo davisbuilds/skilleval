@@ -20,7 +20,9 @@ shipped history. Private provenance stays outside public entries and issues.
   adapter, source capture and polarity controls are implemented; one seed's
   related probes are not independent tasks or representative capability evidence.
   Retain selection decisions; do not retain only vanilla failures or skill wins.
-  Browser and writing candidates need their own environments/graders when selected.
+  A second, source-grounded writing task now exercises a complete upstream skill
+  and document grader. Both seeds remain exposed development work. The browser
+  candidate still needs its own environment and rendered-outcome validation.
 - **Task environment profile and coverage:** the restored receipt-repair capture
   now has matching baseline/reference unit failures and skips, with required
   assets/history retained. The [environment record](../../examples/repair/receipt-admission/environment.md)
@@ -40,6 +42,11 @@ shipped history. Private provenance stays outside public entries and issues.
   controls cannot establish reliability. Treatment metadata masking is not proven
   blinding. Observation workers share candidate imports; test adversarial output
   and independent perturbation sessions before claiming resistance to manipulation.
+- **Representative writing grader validation:** the document rubric and artifact
+  path are implemented, with different valid drafts and a format-valid false-claim
+  control. Independently audit judgments on varied real writing tasks and preserve
+  disagreements; model agreement on authored drafts does not establish reliability,
+  conversion performance or a representative writing population.
 - **Joint quality and efficiency analysis:** connect independently assessed task
   outcomes to consumption and report quality/cost/time tradeoffs with uncertainty.
   Preserve failures, retries and missing observations; keep judge/evaluation spend
@@ -94,8 +101,10 @@ shipped history. Private provenance stays outside public entries and issues.
   currently require the source checkout and share private package helpers.
   Stabilize those interfaces when supporting installed-wheel qualification,
   preserving independent outcome checks and producer/admission agreement tests.
-  Generalize case-specific dependency capture and baseline comparison after the
-  next selected task families clarify their interface.
+  The shared task-package/environment contract now covers repair and document
+  captures. Extend supported validation formats and environment profiles only
+  when selected task families require them; preserve current source/history and
+  expected-exception evidence when doing so.
 - **OCI portability:** attest media types/effective image policy before permitting
   registries other than explicit Docker Hub references in the pinned adapter.
 - **General task packages:** protected holdouts, exposure tracking, and

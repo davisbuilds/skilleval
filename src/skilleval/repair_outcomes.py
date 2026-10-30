@@ -112,14 +112,23 @@ def attach_outcomes(
             semantic = record["assessment"] | {
                 "result_id": record["result_id"],
                 "record_sha256": entry.assessment.sha256,
+                "record_path": entry.assessment.path,
             }
             from skilleval.study import _document
 
             judge_native = _document(Path(entry.assessment.path) / "native-run.json")
+            semantic["judgments"] = _document(Path(entry.assessment.path) / "result.json")[
+                "judgments"
+            ]
             judge_usage = {
                 k: judge_native.get(k) for k in ("usage_accounting", "timings", "request_count")
             }
         rows[(entry.cell_id, entry.attempt)] = {
+            "artifact_path": entry.checks[0].result,
+            "artifact_files": [
+                str(Path(entry.checks[0].result) / "candidate" / name)
+                for name in result["changed_paths"]
+            ],
             "checks": checks,
             "semantic": semantic,
             "judge_consumption": judge_usage,
@@ -150,3 +159,103 @@ def attach_outcomes(
         "neither grants audited correctness or skill benefit."
     )
     return report
+
+
+def render_review(report: dict[str, Any]) -> str:
+    """Readable evidence index; keeps failed attempts and unknown consumption visible."""
+    import html
+    from urllib.parse import quote
+
+    def safe(value: Any) -> str:
+        return html.escape(str(value)).replace("\n", " ").replace("|", "\\|")
+
+    def known(value: Any) -> str:
+        return "unknown" if value is None else safe(value)
+
+    def link(label: str, path: str) -> str:
+        return f"[{label}]({quote(str(Path(path).absolute()), safe='/')})"
+
+    lines = [
+        "# Development comparison",
+        "",
+        "Human audit pending. These observations do not establish skill effectiveness.",
+        "",
+        "Input tokens include cached input; do not add the cached subset again. "
+        "API-equivalent estimates are scenarios, not observed charges.",
+        "",
+    ]
+    for cell in report["cells"]:
+        arm = "OFF" if cell["arm"] == "absent" else "ON"
+        lines += [f"## {safe(cell['task_id'])} — {arm}", ""]
+        if not cell["attempts"]:
+            lines += ["No retained attempt.", ""]
+        for number, attempt in enumerate(cell["attempts"], 1):
+            usage = attempt.get("usage_accounting") or {}
+            timing = attempt.get("timings") or {}
+            cost = attempt.get("cost") or {}
+            lines += [
+                f"Attempt {number}: {safe(attempt.get('status', 'unknown'))}. "
+                + link("Native evidence", attempt["path"]),
+                "",
+                "| Input tokens | Cached subset | Output tokens | Agent seconds | "
+                "API-equivalent USD |",
+                "| ---: | ---: | ---: | ---: | ---: |",
+                "| "
+                + " | ".join(
+                    known(x)
+                    for x in (
+                        usage.get("input_tokens"),
+                        usage.get("cached_input_tokens"),
+                        usage.get("output_tokens"),
+                        timing.get("agent_seconds"),
+                        cost.get("estimated_api_equivalent_usd"),
+                    )
+                )
+                + " |",
+                "",
+            ]
+            outcome = attempt.get("repair_outcome")
+            if outcome is None:
+                lines += ["Task outcome unassessed; no selected artifact/check evidence.", ""]
+                continue
+            lines += [link("Collected artifact and exact patch", outcome["artifact_path"]), ""]
+            lines += [
+                link("Open " + Path(path).name, path) for path in outcome.get("artifact_files", [])
+            ]
+            lines += [""]
+            for check in outcome["checks"]:
+                accepted = check["accepted_by_checks"]
+                verdict = (
+                    "unknown" if accepted is None else ("accepted" if accepted else "rejected")
+                )
+                lines += [
+                    f"Executable checks: {verdict}; {check['probe_count']} related probes.",
+                    "",
+                ]
+            semantic = outcome["semantic"]
+            lines += ["Semantic assessment: " + safe(semantic["status"]) + ".", ""]
+            if "record_path" in semantic:
+                lines += [
+                    link("Judgment, citations and source packet", semantic["record_path"]),
+                    "",
+                ]
+            for judgment in semantic.get("judgments", []):
+                lines += [
+                    f"- **{safe(judgment['criterion'])}: {safe(judgment['verdict'])}.** "
+                    + safe(judgment["reasoning"])
+                ]
+            lines += ["", "Selected judge consumption (separate from task usage):", ""]
+            judge_usage = (outcome.get("judge_consumption") or {}).get("usage_accounting") or {}
+            lines += [
+                f"Input {known(judge_usage.get('input_tokens'))}; "
+                f"output {known(judge_usage.get('output_tokens'))} tokens.",
+                "",
+            ]
+    lines += [
+        "Only explicitly selected judge consumption appears here; failed or unselected "
+        "judge invocations need the separate operational ledger.",
+        "",
+        "No uncertainty or conversion estimate is inferred from this development comparison.",
+        "",
+    ]
+    return "\n".join(lines)

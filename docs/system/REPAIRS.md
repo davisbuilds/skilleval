@@ -111,6 +111,11 @@ Recovery and automatic staging retention use the existing
 [lifecycle contract](ENVIRONMENT.md). No native model calls occur in these executable checks;
 its costs are separate from task-agent accounting.
 
+The shared [task package workflow](TASKS.md) adds baseline/reference environment
+validation around this artifact contract. `artifact` is a compatible CLI alias;
+document tasks reuse the same byte collection and offline check boundary with a
+separate semantic rubric.
+
 ## Assess the repair independently
 
 `schema repair-assessment-spec` describes an explicit selection of a frozen repair

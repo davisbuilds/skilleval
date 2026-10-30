@@ -19,9 +19,16 @@ from skilleval.errors import SkillEvalError
 from skilleval.judge import AgenticCalibrationResult, AgenticReviewResult
 from skilleval.reliability import ReliabilityObservations, ReliabilitySuite
 from skilleval.repair import RepairSpec
-from skilleval.repair_assessment import RepairAssessment, RepairAssessmentSpec
+from skilleval.repair_assessment import (
+    DocumentAssessment,
+    DocumentAssessmentSpec,
+    RepairAssessment,
+    RepairAssessmentSpec,
+    parse_spec,
+)
 from skilleval.repair_outcomes import RepairOutcomeSelection
 from skilleval.study import StudySpec
+from skilleval.task_package import TaskPackageSpec
 
 RECORDS: dict[str, type[Record]] = {
     "task": Task,
@@ -39,6 +46,10 @@ RECORDS: dict[str, type[Record]] = {
     "repair-assessment-spec": RepairAssessmentSpec,
     "repair-assessment": RepairAssessment,
     "repair-outcomes": RepairOutcomeSelection,
+    "artifact-spec": RepairSpec,
+    "document-assessment-spec": DocumentAssessmentSpec,
+    "document-assessment": DocumentAssessment,
+    "task-package-spec": TaskPackageSpec,
 }
 
 
@@ -110,6 +121,9 @@ def parser() -> argparse.ArgumentParser:
         operation.add_argument("--sha256", required=True, help="Externally retained plan digest")
         operation.add_argument("--output", type=Path, required=True, help="Study output directory")
         if name == "report":
+            operation.add_argument(
+                "--review-output", type=Path, help="Write a fresh Markdown evidence index"
+            )
             operation.add_argument(
                 "--outcomes", type=Path, help="Explicit repair outcome selection"
             )
@@ -227,7 +241,21 @@ def parser() -> argparse.ArgumentParser:
     skill.add_argument("--source-url", required=True)
     skill.add_argument("--source-revision", required=True)
     skill.add_argument("--output", type=Path, required=True)
-    repair = commands.add_parser("repair", help="Collect repair artifacts and run offline checks")
+    package = commands.add_parser(
+        "task-package", help="Freeze task requirements and validate in VMs"
+    )
+    package_commands = package.add_subparsers(dest="operation", required=True)
+    package_prepare = package_commands.add_parser("prepare")
+    package_prepare.add_argument("spec", type=Path)
+    package_prepare.add_argument("--output", type=Path, required=True)
+    package_validate = package_commands.add_parser("validate-environment")
+    package_validate.add_argument("package", type=Path)
+    package_validate.add_argument("--sha256", required=True)
+    package_validate.add_argument("--runtime", type=Path, required=True)
+    package_validate.add_argument("--output", type=Path, required=True)
+    repair = commands.add_parser(
+        "repair", aliases=["artifact"], help="Collect file artifacts and run offline checks"
+    )
     repair_commands = repair.add_subparsers(dest="operation", required=True)
     prepare_repair = repair_commands.add_parser("prepare", help="Freeze source, scope and checks")
     prepare_repair.add_argument("spec", type=Path)
@@ -304,7 +332,15 @@ def write_new_json(path: Path, value: object) -> None:
 
 
 def dispatch(args: argparse.Namespace) -> dict[str, Any]:
-    if args.command == "repair":
+    if args.command == "task-package":
+        from skilleval.task_package import prepare_package, validate_environment
+
+        if args.operation == "prepare":
+            return prepare_package(
+                TaskPackageSpec.model_validate_json(json.dumps(read_json(args.spec))), args.output
+            )
+        return validate_environment(args.package, args.sha256, args.output, runtime=args.runtime)
+    if args.command in {"repair", "artifact"}:
         from skilleval.repair import collect_control, collect_repair, prepare_repair
         from skilleval.repair_check import check_repair
 
@@ -316,9 +352,7 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
                 record_assessment as record_repair_assessment,
             )
 
-            assessment_spec = RepairAssessmentSpec.model_validate_json(
-                json.dumps(read_json(args.spec))
-            )
+            assessment_spec = parse_spec(json.dumps(read_json(args.spec)))
             if args.operation == "prepare-assessment":
                 return prepare_assessment(assessment_spec, args.output)
             return record_repair_assessment(assessment_spec, args.packet, args.run, args.output)
@@ -371,7 +405,14 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
         if args.outcomes is not None:
             from skilleval.repair_outcomes import attach_outcomes
 
-            return attach_outcomes(study_report, args.sha256, args.outcomes, args.outcomes_sha256)
+            study_report = attach_outcomes(
+                study_report, args.sha256, args.outcomes, args.outcomes_sha256
+            )
+        if args.review_output is not None:
+            from skilleval.repair_outcomes import render_review
+            from skilleval.runner import _exclusive
+
+            _exclusive(args.review_output, render_review(study_report).encode())
         return study_report
     if args.command == "native":
         from skilleval.gateway import GatewayLimits

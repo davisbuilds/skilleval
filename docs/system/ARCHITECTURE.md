@@ -44,6 +44,14 @@ limitations, and optional superseded record. Structural validation does not
 establish the truth of any of these claims or enforce relationships across a full
 campaign; orchestration must add those checks.
 
+The shared [task package](TASKS.md) binds a writable artifact task to its captured
+environment, baseline/reference lanes and expected observations. Packaged study
+dispatch checks those receipts against current execution identity. Repair and
+document families share collection and independent offline checks; documents use
+a separate outcome rubric. Readable comparisons link delivered files and semantic
+evidence while keeping task consumption, selected judge consumption and audit
+status separate.
+
 ## Evidence
 
 Capture produces a fresh directory containing payload and `manifest.json`. Each

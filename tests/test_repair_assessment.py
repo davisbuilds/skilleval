@@ -68,6 +68,59 @@ def test_packet_preserves_evidence_but_withholds_host_grades_and_provenance(asse
     assert prepared["independent_blind"] is False
 
 
+def test_document_packet_and_record_use_document_criteria_without_changing_repair(
+    assessment, tmp_path
+):
+    from skilleval.repair_assessment import (
+        DOCUMENT_CRITERIA,
+        DocumentAssessmentSpec,
+        read_assessment,
+        record_assessment,
+    )
+
+    spec = DocumentAssessmentSpec.model_validate_json(assessment.model_dump_json())
+    prepared = prepare_assessment(spec, tmp_path / "document-packet")
+    assert prepared["rubric_version"] == "document-agentic-v1"
+    prompt = (tmp_path / "document-packet/ASSESS.md").read_text()
+    assert "conversion improvement" in prompt
+    assert "factual-support" in prompt
+    value = judgment(prepared)
+    value["judgments"] = [
+        dict(value["judgments"][0], criterion=criterion) for criterion in DOCUMENT_CRITERIA
+    ]
+    run = run_directory(tmp_path, prepared, value)
+    saved = record_assessment(spec, tmp_path / "document-packet", run, tmp_path / "documents")
+    record, restored = read_assessment(Path(saved["path"]), saved["sha256"])
+    assert isinstance(restored, DocumentAssessmentSpec)
+    assert set(record["assessment"]["criteria"]) == set(DOCUMENT_CRITERIA)
+    repair_prepared = prepare_assessment(assessment, tmp_path / "repair-packet")
+    assert repair_prepared["rubric_version"] == "repair-agentic-v1"
+
+
+def test_document_artifact_citations_can_reference_the_exact_delivered_document(
+    assessment, tmp_path
+):
+    from skilleval.repair_assessment import DocumentAssessmentSpec, record_assessment
+
+    spec = DocumentAssessmentSpec.model_validate_json(assessment.model_dump_json())
+    prepared = prepare_assessment(spec, tmp_path / "document-packet")
+    value = judgment(prepared)
+    value["judgments"] = [
+        {
+            "criterion": "factual-support",
+            "verdict": "satisfied",
+            "reasoning": "Bound document evidence.",
+            "citations": [],
+            "artifact_citations": [
+                {"path": "case/candidate/code.py", "line_start": 1, "line_end": 1}
+            ],
+        }
+    ]
+    run = run_directory(tmp_path, prepared, value)
+    result = record_assessment(spec, tmp_path / "document-packet", run, tmp_path / "documents")
+    assert result["assessment"]["status"] == "unresolved"
+
+
 def test_foreign_check_cannot_supply_observations_for_selected_candidate(assessment, tmp_path):
     ref = assessment.checks[0]
     path = Path(ref.report)
@@ -79,6 +132,40 @@ def test_foreign_check_cannot_supply_observations_for_selected_candidate(assessm
     with pytest.raises(SkillEvalError, match="binding"):
         prepare_assessment(spec, tmp_path / "packet")
     assert not (tmp_path / "packet").exists()
+
+
+@pytest.mark.parametrize("variant", ["valid", "static", "missing", "bad-span", "no-original"])
+def test_document_citations_follow_retained_paths_not_list_names(assessment, tmp_path, variant):
+    from skilleval.repair_assessment import DocumentAssessmentSpec, record_assessment
+
+    spec = DocumentAssessmentSpec.model_validate_json(assessment.model_dump_json())
+    if variant == "static":
+        spec = spec.model_copy(update={"investigation": False})
+    prepared = prepare_assessment(spec, tmp_path / "document-packet")
+    value = judgment(prepared)
+    probe = "task/investigation/repair/probe.txt"
+    value["judgments"] = [
+        {
+            "criterion": "factual-support",
+            "verdict": "satisfied",
+            "reasoning": "Original evidence plus a retained investigation.",
+            "citations": [
+                {"path": probe, "line_start": 1, "line_end": 2 if variant == "bad-span" else 1}
+            ],
+            "artifact_citations": []
+            if variant == "no-original"
+            else [{"path": "case/source/code.py", "line_start": 1, "line_end": 1}],
+        }
+    ]
+    artifacts = {probe if variant != "missing" else probe + ".other": b"Observed result\n"}
+    run = run_directory(tmp_path, prepared, value, artifacts=artifacts)
+    if variant != "valid":
+        with pytest.raises((SkillEvalError, ValueError)):
+            record_assessment(spec, tmp_path / "document-packet", run, tmp_path / "documents")
+        assert not (tmp_path / "documents").exists()
+    else:
+        saved = record_assessment(spec, tmp_path / "document-packet", run, tmp_path / "documents")
+        assert saved["assessment"]["criteria"]["factual-support"] == "satisfied"
 
 
 def judgment(prepared, **updates):

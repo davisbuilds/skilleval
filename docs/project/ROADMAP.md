@@ -16,7 +16,7 @@ Public GitHub hosting is the intended destination. The
 | 0 — Foundation | Python package, provisional records, copied evidence, CLI, project boundaries | Offline workflow passes; a historical case can be imported without changing its source | Implemented |
 | 1A — Environment | Prepared task image, fresh VM lifecycle, Codex adapter, explicit admission | Live controls on the exact host/runtime/image/tool route prove fidelity, isolation, bounded failure, cleanup, and a native model/tool loop | Bounded controls, admission, native runner and development dispatch implemented; scored scope pending |
 | 1B — Grader | Evidence packets, executable outcomes, semantic rubric, revision history, calibration | Frozen positive/negative/ambiguous examples distinguish accurate findings from plausible mistakes; human audit measures judge errors | Native judges, authored controls and separate reliability workflow implemented; independent audit and representative reliability evidence pending |
-| 2 — First paired pilot | Relevant real tasks with explicit skill ON/OFF, joint quality and efficiency reporting | Reproducible paired artifacts; invocation fidelity; validated usage/cost/time accounting; qualified environment and grader | Explicit-use accounting and repair adapter implemented; functional polarity controls passed; semantic repair judgments and outcome linking implemented; representative population, independent audit and uncertainty pending; scored pilot gated on 1A and 1B |
+| 2 — First paired pilot | Relevant real tasks with explicit skill ON/OFF, joint quality and efficiency reporting | Reproducible paired artifacts; invocation fidelity; validated usage/cost/time accounting; qualified environment and grader | Shared task packages, repair/document adapters, explicit-use accounting and readable outcome comparisons implemented; representative population, independent audit and uncertainty pending; scored pilot gated on 1A and 1B |
 | 3 — Representative study | Declared task population, protected holdouts, repeated matched trials, uncertainty analysis | Enough independent task evidence for the prespecified decision; cost and failure effects reported | Pending pilot |
 | 4 — Expand usefully | More task families, natural discovery, pi adapter, TypeScript review UI | Each addition meets the same contracts and addresses a demonstrated workflow need | Deferred beyond adapters needed for the first selected skills |
 
@@ -28,6 +28,42 @@ Task relevance and independent success criteria determine the next task adapters
 the existing review examples do not define the benchmark population.
 
 ## Current environment and grader slice
+
+The shared [task package](../system/TASKS.md) now binds captured context, environment
+requirements and baseline/reference observations. Packaged development dispatch
+rechecks the frozen validation against current runtime/source identity. The repair
+package reproduces the declared 2,006/2,010-test baseline/reference results with
+two known failures and eight skips each. A separate writing package validates
+source access and the tools needed for text artifacts. Neither match erases its
+declared coverage gaps or grants scored admission.
+
+The writing adapter adds a distinct document rubric and a readable report linking
+delivered files, mechanical observations, semantic reasons and task/judge usage.
+Two different supported drafts and a format-valid false-cost claim exercised the
+grader: all ten prespecified authored labels matched. This is a development
+control result with independent audit pending. A live control also exposed citation
+field ambiguity; recording now checks document citations by retained path while
+preserving raw responses and requiring original evidence for resolved judgments.
+Original repair packet/schema identities remain unchanged.
+
+One writing development pair then completed on Codex 0.164.0 with
+GPT-6.1 Sol/high. Both drafts passed five related mechanical checks and received
+satisfied verdicts on all four document criteria from their native judges. ON
+read the captured skill and used 98,644 total tokens and 49.10 agent seconds;
+OFF used 58,335 tokens and 38.04 seconds. Core totals matched broker receipts.
+These are one-pair observations with unaudited semantic judgments: no quality
+advantage was recorded, and no dependable skill or efficiency effect follows.
+The readable comparison retains both drafts; a separate operational ledger
+includes all five control/pair judge invocations. The deterministic gate passed
+628 tests, final local-review follow-up was clean, and all 21 VM runs cleaned up
+and pruned disposable image copies. Prior audit/evidence remained unchanged.
+
+Next, broaden skill-relevant cases and audit representative judgments before
+repeated scored comparisons. Keep headroom, task selection and exclusions visible;
+do not select only vanilla failures or skill wins. Browser validation, additional
+profiles/harnesses and a review UI remain later work unless the selected tasks need
+them. The [source register](SOURCES.md) maps the implemented packaging, fixture,
+grader and reporting lessons to the evaluated projects.
 
 Evidence capture, historical imports, review packets, append-only assessments,
 Codex event parsing, and candidate offline smolvm controls are implemented.
@@ -180,8 +216,9 @@ partition can remain native-only, estimates are conditional API equivalents,
 and actual charges remain unknown.
 
 Reports now expose descriptive ON-minus-OFF efficiency differences for eligible
-first attempts and operational ledgers including failures/retries. Quality remains
-unassessed and uncertainty is not estimated. Live verification on 2026-10-28
+first attempts and operational ledgers including failures/retries. In the initial
+accounting-only validation, quality was unassessed and uncertainty was not estimated.
+Live verification on 2026-10-28
 completed an explicit-use pair on Codex 0.164.0: core token totals matched the
 broker in both arms, the ON skill body appeared in all eleven observed requests,
 and agent/stage timers and conditional prices reached the report. No separate
@@ -190,8 +227,8 @@ Offline, authenticated and lifecycle controls renewed bounded admission on this
 source revision. All eight VM runs cleaned up and pruned disposable image copies;
 the pending audit remained unchanged. This verifies treatment delivery and
 accounting integration, not a representative pilot or an efficiency effect.
-Independent quality assessment, broader accounting qualification and joint
-quality/efficiency analysis remain next work. The
+Representative independent quality assessment, broader accounting qualification
+and joint quality/efficiency uncertainty analysis remain open. The
 [vision](VISION.md) owns comparison principles; [Backlog](BACKLOG.md#open) owns
 the unresolved implementation and evidence gaps.
 

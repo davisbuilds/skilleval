@@ -39,6 +39,12 @@ They do not claim installed-wheel or cross-host runtime qualification.
 
 ## Task capture and baseline fidelity
 
+The [task-package contract](TASKS.md) makes these requirements explicit for repair
+and document tasks. Its validation command runs declared checks in fresh offline
+VMs and records expected exceptions, incomplete observations and coverage gaps.
+Packaged development dispatch rechecks the selected validation and execution
+identity. This is task-specific evidence, separate from scored runtime admission.
+
 Qualify the task's ordinary commands separately from runtime isolation and checker
 polarity. A source tree that imports successfully or passes one focused test can
 still omit ordinary assets, historical objects or tool-dependent coverage. The
