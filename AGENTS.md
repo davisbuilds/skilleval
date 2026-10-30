@@ -1,84 +1,95 @@
 # skilleval
 
-Local-first experiments comparing skills with ordinary agent behavior. Python owns
-the CLI, evidence, qualification, and grading; a TypeScript review UI comes later.
-Native repository tools remain the authority for task-specific executable checks.
+Local-first evaluation of explicit skill ON/OFF on relevant agent tasks. Measure
+quality and outcomes alongside tokens, cost, and time. Python owns the CLI,
+execution, evidence, and grading; native task tools own executable observations.
+A TypeScript review UI and pi adapter are later work.
 
 ## Documentation map
 
-- `README.md`: supported workflows and current limits.
-- `docs/project/VISION.md`: audience, outcomes, and task population.
-- `docs/project/ROADMAP.md`: selected phases and evidence of completion.
-- `docs/system/ARCHITECTURE.md`: evidence, runtime, harness, and grader boundaries.
-- `docs/system/CALIBRATION.md`: public authored controls, judge records, and limits.
-- `docs/system/RELIABILITY.md`: separately versioned judge stress controls and comparisons.
-- `docs/system/STUDIES.md`: frozen development matrices, attempts, recovery, and reporting.
-- `docs/system/REPAIRS.md`: repair collection, offline observations, semantic records and outcome selection.
-- `docs/system/TASKS.md`: shared task/environment packages, document artifacts and readable comparisons.
-- `docs/system/ACCOUNTING.md`: native usage semantics, conditional pricing, timing, and efficiency limits.
-- `docs/system/GATEWAY.md`: explicit host inference capability and vendor provenance.
-- `docs/system/ENVIRONMENT.md`: evidence-bound admission, invalidation, and recovery.
-- `docs/system/NATIVE.md`: native reviews, static/investigative judges, and skill inputs.
-- `docs/project/BACKLOG.md`: concrete deferred work.
-- `docs/project/SOURCES.md`: evaluated sources, reuse candidates, and attribution.
-- `docs/project/PILOT-CANDIDATES.md`: grounded task/skill shortlist and unqualified pilot boundaries.
-- `CONTRIBUTING.md`: scope, agent-assisted contributions, and review expectations.
+Read the owner for the decision at hand; CLI help, schemas, and source own exact
+interfaces. Do not load every reference for a small change.
 
-## Command Quickstart
+- [README.md](README.md): public introduction, setup, and workflow entry points.
+- [VISION.md](docs/project/VISION.md), [ROADMAP.md](docs/project/ROADMAP.md),
+  [BACKLOG.md](docs/project/BACKLOG.md): principles, selected priorities, and future work.
+- [ARCHITECTURE.md](docs/system/ARCHITECTURE.md): data flow and trust boundaries.
+- [TASKS.md](docs/system/TASKS.md), [REPAIRS.md](docs/system/REPAIRS.md): task packages,
+  environment validation, file artifacts, executable checks, and outcome selection.
+- [STUDIES.md](docs/system/STUDIES.md), [ACCOUNTING.md](docs/system/ACCOUNTING.md):
+  paired plans, attempts, reporting, and usage/cost/time semantics.
+- [ENVIRONMENT.md](docs/system/ENVIRONMENT.md), [GATEWAY.md](docs/system/GATEWAY.md),
+  [NATIVE.md](docs/system/NATIVE.md): qualification, recovery, inference, and native runs.
+- [CALIBRATION.md](docs/system/CALIBRATION.md), [RELIABILITY.md](docs/system/RELIABILITY.md):
+  judge contracts, authored controls, stability checks, and independent audit limits.
+- [PILOT-CANDIDATES.md](docs/project/PILOT-CANDIDATES.md),
+  [SOURCES.md](docs/project/SOURCES.md): task selection and external provenance.
+- [CONTRIBUTING.md](CONTRIBUTING.md): contribution scope and review expectations.
 
-Use `uv sync --locked` and `uv run skilleval --help`. `scripts/check` is the
-deterministic gate. It never launches VMs, calls models, or reads credentials.
+## Command quickstart
 
-Pre-push: `scripts/check`. Use uv >= 0.9.17; preserve the locked dependency graph
-and seven-day release quarantine. CLI help and schemas own exhaustive interfaces.
+Use `uv sync --locked` and `uv run skilleval --help` from the source checkout.
+**Pre-push: `scripts/check`.** Use uv >= 0.9.17, preserve the lockfile and seven-day
+release quarantine. The gate never launches VMs, calls models, or reads credentials.
 
-## Implementation boundaries
+`src/skilleval/` owns implementation; `tests/` owns deterministic checks;
+`examples/` contains authored fixtures and templates; `environments/` contains
+opt-in image recipes. Private captures, traces, runtime state, and audit packets
+belong in an explicit external directory or ignored `.local/`.
 
-- Preserve original evidence. Assessments are separately versioned; importing a
-  record does not establish independent correctness or current runtime admission.
-- Keep execution validity, task quality, skill consultation, and usage separate.
-  Missing telemetry is unknown, never zero. Development fixtures are not holdouts.
-- A valid manifest or generated command is not proof of effective isolation.
-  Qualify the actual execution route before scored use, with positive controls.
-- Runtime qualification and model-backed work must be explicit commands. No
-  model calls, host configuration changes, or installations in ordinary checks.
-- Preserve the gateway's pinned upstream identity and adjacent MIT notice.
-  Keep deliberate compatibility patches reviewable; avoid unrelated formatting.
-  The typed wrapper owns local policy. Renew qualification when the route changes.
-- Do not execute imported code on the host. Private cases and raw traces live in
-  an explicit external data directory or ignored `.local/`, never committed.
-- This repository has no runtime dependency on sibling checkouts. Import through
-  explicit files; retain provenance and required notices when adapting code.
-- Public-facing artifacts must work without private sibling paths, datasets,
-  operational identifiers, or unpublished references. Keep original private
-  provenance outside tracked source; use synthetic fixtures in ordinary tests.
-- Record an upstream source and revision before copying or adapting implementation;
-  preserve required notices with copied material. README acknowledges influences;
-  SOURCES records candidates and adoption status. Do not imply endorsement.
+## Implementation guardrails
+
+- Preserve original evidence. Changed inputs, rubrics, workers, or judgments create
+  new generations; never rewrite an earlier result or retroactively qualify it.
+- Keep execution validity, task quality, skill exposure/consultation, and usage
+  separate. Missing telemetry is unknown. A read is not semantic application;
+  authored controls are not holdouts; one pair is not a skill-effect estimate.
+- Grade outcomes independently of the skill's instructions. Preserve alternative
+  valid solutions, novel findings, failures, disagreements, and unresolved verdicts.
+  Scored correctness requires independent grader audit and applicable admission.
+- Validate actual task environments, including ordinary context, tests, required
+  history, tools, identity, failures, and skips. Matching declared exceptions is
+  not a clean suite. Isolation needs effective controls with known-positive cases.
+- Run imported code only inside the VM. Runtime/model work is explicitly opt-in;
+  never hide it in ordinary imports, tests, or setup. Keep credentials on the host.
+- Keep runtime, image, catalog, and execution source stable while a VM is active;
+  cleanup/recovery checks those identities too. Preserve the original route until
+  recovery finishes, then prepare new receipts for changed execution code.
+- Preserve legacy evidence schemas and packet bytes when adding task families.
+  The shared writable-file mode remains `repair`; packages identify document tasks.
+- Maintain the vendored gateway's exact provenance and MIT notice. Record external
+  source revisions and applicable notices before copying or adapting material.
+- Keep the project standalone and public-readable. No sibling checkout dependency,
+  private paths, raw captures, or unpublished references in tracked artifacts.
+  Original work uses Apache-2.0; imported material retains its own terms.
 
 ## Testing
 
-Use red/green for substantial behavior changes. The red step must fail on the
-behavior being changed, not missing imports or symbols. Code with no behavior to
-assert can be checked after. Prefer real filesystem/process dependencies and
-observable outcomes. Run relevant existing checks for smaller changes.
-Subprocess fixtures do not establish real VM isolation or semantic judge quality.
-VM/model/service tests remain explicit opt-in operations outside `scripts/check`.
+Use behavioral red/green tests for substantial features and refactors. The red
+step must fail on the behavior being changed, not a missing symbol. Prefer real
+filesystem/process dependencies; run relevant existing checks for smaller edits.
+Subprocess fixtures cannot establish real VM isolation or semantic judge quality.
 
-## Working Agreement
+After changing a field or contract, inspect every producer and consumer: schemas,
+CLI parsing, recording/replay, report selection, docs, and parallel task families.
+Retain failures when fixing live workflows, and replay unchanged evidence when
+possible instead of calling the model again. Avoid unrelated requalification.
 
-- Clarify materially vague or contradictory requests before implementing them.
-- Stage explicit paths. Commit coherent changes; push only when asked. Intended
-  GitHub history policy is merge + rebase, defaulting to a merge commit. There is
-  currently no remote; inspect actual hosting/settings before relying on them.
-- Update owning docs when behavior, contracts, boundaries, or direction changes.
-  Re-ground in source, guidance, and recent changes after compaction.
-- Log durable gaps in `docs/project/BACKLOG.md`, with what, why/evidence, and a
-  useful next action or revisit trigger. Fix small blocking issues inline. Keep
-  the backlog future-only and reconcile affected entries when work lands. Agents
-  may execute clear entries directly; issues are useful for discussion or
-  coordination, not a mandatory intermediate step. Roadmap owns selected direction.
-- Keep changes local to this project. No sibling mutation is implied by reuse.
-- Future public CI must use hosted runners and synthetic data, with pinned
-  actions/toolchains, least permissions, and the same deterministic gate. Do not
-  attach personal runners, credentials, or private evidence to fork-triggered jobs.
+## Working agreement
+
+- Clarify material ambiguity; proceed with authorized, bounded work.
+- Stage explicit paths, inspect the staged set, and commit coherent changes. Push
+  or publish only when requested. Never include private `.local/` evidence.
+- Intended GitHub policy is merge + rebase, defaulting to merge commits, with
+  merged branches deleted. Verify live hosting/settings before relying on them.
+  Request Codex review on PRs when available; resolve actionable review threads.
+- Update the owning reference when a contract, boundary, procedure, or direction
+  changes. Keep roadmap priorities current and backlog entries future-only.
+  Detailed delivery history belongs in Git; do not grow a session diary in docs.
+- Re-ground in current source, docs, and commits after a handoff. A summary or
+  earlier proposal is not user approval. Keep work scoped to this project.
+- Use a persistent terminal session for long-running or multi-process work and
+  retain logs outside tracked source. Clean up owned sessions when finished.
+- Public CI uses hosted runners and synthetic inputs, pinned actions/toolchains,
+  least permissions, and the deterministic gate. No personal runners, credentials,
+  private datasets, or model calls in fork-triggered workflows.

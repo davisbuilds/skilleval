@@ -9,6 +9,8 @@ the [gateway reference](GATEWAY.md) owns authentication and provider limits.
 The [repair reference](REPAIRS.md) owns editable scope, patch collection and offline
 checks. Repair mode receives a normal implementation brief and leaves file edits;
 review findings schemas and semantic review recording do not apply to it.
+Document tasks use this writable-file mode with a separate document package and
+rubric; [TASKS.md](TASKS.md) owns their preparation, grading, and readable reports.
 
 ## Inputs and boundaries
 

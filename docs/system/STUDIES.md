@@ -1,6 +1,6 @@
 # Development study orchestration
 
-The study controller runs explicit native review and repair comparisons while
+The study controller runs explicit native review, repair, and document comparisons while
 independent grader audit remains pending. It never grants scored admission or
 converts an execution status into a correctness score. Judge reliability controls and native
 assessment recording remain separate workflows.
@@ -52,6 +52,12 @@ remain natural-availability comparisons and cannot acquire invocation or pricing
 policies by reinterpretation; retain their original bytes and digests.
 Schema-2 plans keep their existing invocation and pricing policies. Neither older
 plan version can acquire a repair task by reinterpretation.
+
+Document tasks use the same writable-file mode (`repair`) with a separate family
+in the [task package](TASKS.md). Optional package references bind the task to its
+baseline/reference environment-validation receipt; preparation and each dispatch
+check that receipt against current execution identity. Existing unpackaged plans
+remain readable and do not acquire validation retroactively.
 
 Task/repetition blocks are shuffled with the declared seed; each adjacent pair
 has randomly ordered absent and available arms. Execution is sequential.
@@ -121,8 +127,10 @@ an incomplete subtotal is not a total. Different schedules remain separate, and
 unstarted cells are not zero-cost observations. See [accounting](ACCOUNTING.md)
 for native/provider reconciliation, cache limitations, pricing and timing scopes.
 
-Repair checks and explicitly selected semantic assessments can be attached with
-`--outcomes SELECTION --outcomes-sha256 DIGEST`; see [repair reporting](REPAIRS.md).
+Artifact checks and explicitly selected repair/document assessments can be attached
+with `--outcomes SELECTION --outcomes-sha256 DIGEST`; see [repair reporting](REPAIRS.md).
+Add `--review-output comparison.md` to write a fresh Markdown index of delivered
+files, judgments, and consumption; see [readable comparisons](TASKS.md#inspect-quality-and-consumption).
 Audit-backed task quality, scalar quality differences and uncertainty are not
 estimated. Native completion, a skill read, a parseable judgment or a stable judge
 is not correctness or skill benefit.

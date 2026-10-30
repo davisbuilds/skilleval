@@ -114,6 +114,11 @@ neither a customer-research finding nor evidence of conversion improvement.
 
 ## How adoption is recorded
 
+Original skilleval work uses [Apache-2.0](../../LICENSE). The incorporated gateway
+and adapted gateway tests retain their [MIT notice](../../src/skilleval/_vendor/OPENBENCH_LICENSE).
+[NOTICE](../../NOTICE) records that distribution boundary. External task and skill
+inputs keep their own terms; the project license does not relicense captures.
+
 The 2026-10-28 receipt-admission development seed uses OpenBench's public
 [parent source](https://github.com/davisbuilds/openbench/tree/2afa7b355a48f8aa6f81eb071db9114ffdbca02b)
 and [historical repair](https://github.com/davisbuilds/openbench/commit/47e49af284218f3cb9c116ca2aa20bbbe30f7afa)

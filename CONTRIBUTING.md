@@ -8,8 +8,8 @@ integrations, and public-interface changes before major implementation. Public
 availability does not promise a response time or acceptance of every proposal.
 
 The [vision](docs/project/VISION.md) and [roadmap](docs/project/ROADMAP.md) explain
-the current scope. This is a foundation under development, not a published stable
-benchmark or a claim that skills improve outcomes.
+the current scope. The interfaces and evaluation workflows are experimental;
+development results do not establish that skills improve outcomes.
 
 ## Understanding and agent use
 
@@ -47,5 +47,12 @@ The [PR template](.github/pull_request_template.md) provides the review shape;
 omit empty sections and scale detail to the change.
 
 The intended history policy is merge + rebase, recorded in [AGENTS.md](AGENTS.md).
-Hosting and release automation are not configured yet; do not infer a release or
-public settings from local conventions. License selection precedes publication.
+Verify actual hosting settings before relying on that policy. Release automation
+and hosted CI activation remain tracked in the backlog; a local check is not an
+observed GitHub check.
+
+Original project work uses [Apache-2.0](LICENSE). Contributions are supplied under
+that license unless explicitly stated otherwise. Preserve the distinct MIT notice
+for the adapted OpenBench gateway/tests and document other imported material in
+[SOURCES.md](docs/project/SOURCES.md). Task captures and skill inputs retain their
+own licenses. Never attach private raw runs to a public issue or PR.

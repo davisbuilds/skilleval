@@ -1,0 +1,14 @@
+skilleval
+Copyright 2026 davisbuilds
+
+Original project work is licensed under the Apache License, Version 2.0.
+
+This distribution includes an adapted OpenBench inference gateway and selected
+adapted gateway tests from OpenBench, Copyright (c) 2026 Matthew Lam, licensed
+under the MIT License. The original permission and copyright notice is retained
+in src/skilleval/_vendor/OPENBENCH_LICENSE. Provenance and local modifications
+are documented in docs/project/SOURCES.md and docs/system/GATEWAY.md.
+
+Captured third-party tasks and skill packages are separate experimental inputs.
+Their original licenses and notices remain applicable; the skilleval project
+license does not relicense those inputs.

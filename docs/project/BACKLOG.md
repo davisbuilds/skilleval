@@ -50,7 +50,8 @@ shipped history. Private provenance stays outside public entries and issues.
 - **Joint quality and efficiency analysis:** connect independently assessed task
   outcomes to consumption and report quality/cost/time tradeoffs with uncertainty.
   Preserve failures, retries and missing observations; keep judge/evaluation spend
-  separate. Add an operational judge ledger including failed/unselected invocations;
+  separate. Generalize the development run's manually retained operational judge
+  ledger into a supported report including failed/unselected invocations;
   selected-record consumption alone is not total grading cost. Current efficiency
   differences are descriptive, semantic judgments remain unaudited, and no
   uncertainty estimate is implemented. Add independently supported cache
@@ -114,13 +115,15 @@ shipped history. Private provenance stays outside public entries and issues.
 - **Portability checks:** run filesystem/process tests on Linux in addition to the
   initial macOS validation. Synthetic subprocess tests cannot establish real VM
   compatibility on either platform.
-- **Public GitHub launch:** public hosting is intended. Before publication, choose
-  a license, review the complete initial tree/history and fixture provenance, and
-  verify upstream notices for any actual code adoption. Set up hosted CI calling
+- **Public GitHub launch:** set up hosted CI calling
   `scripts/check`, pin actions/toolchains, add workflow audit and secret scanning,
   and align dependency updates with the existing quarantine. Configure the
-  intended merge/rebase policy and checks against live hosting capabilities. No
-  private runners, credentials, or datasets in public/fork-triggered workflows.
+  intended merge/rebase policy and required checks against live hosting capabilities.
+  Refresh the initial tree/history and artifact review for the exact publication
+  commit, then create/push the public repository when authorized. The selected
+  Apache-2.0 license and retained upstream MIT notice do not license external task
+  or skill inputs. No private runners, credentials, or datasets in
+  public/fork-triggered workflows. No package-registry release is implied.
 - **Selective adoption:** use [SOURCES.md](SOURCES.md) to choose a component when
   its phase needs it. Pin and inspect that revision's license/NOTICE and tests
   before copying, adapting, or declaring it as a dependency. A research influence
