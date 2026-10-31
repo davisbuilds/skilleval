@@ -38,7 +38,7 @@ its contents or of relationships to other records.
 | Review workspace reconstruction | `workspace.py` | Native review reconstruction below |
 | Task and environment packages | `task_package.py`, `task_validation_guest.py` | [TASKS.md](TASKS.md) |
 | Runtime identity, lifecycle and admission | `identity.py`, `qualification.py`, `lifecycle.py`, `admission.py` | [ENVIRONMENT.md](ENVIRONMENT.md) |
-| Inference and native execution | `gateway.py`, `runner.py`, `harnesses/codex.py` | [GATEWAY.md](GATEWAY.md), [NATIVE.md](NATIVE.md) |
+| Inference and native execution | `gateway.py`, `runner.py`, `app_server.py`, `harnesses/codex.py` | [GATEWAY.md](GATEWAY.md), [NATIVE.md](NATIVE.md) |
 | Skill treatments and paired attempts | `treatments.py`, `study.py` | [STUDIES.md](STUDIES.md) |
 | File collection, observations and selection | `repair.py`, `repair_check.py`, `repair_outcomes.py` | [REPAIRS.md](REPAIRS.md), [TASKS.md](TASKS.md) |
 | Semantic assessment and judge controls | `grading.py`, `judge.py`, `repair_assessment.py`, `calibration.py`, `reliability.py` | [CALIBRATION.md](CALIBRATION.md), [RELIABILITY.md](RELIABILITY.md) |

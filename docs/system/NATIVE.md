@@ -5,7 +5,7 @@ runs use a fresh VM, the bounded host inference gateway, and retained evidence. 
 remain development-only: `native qualify` never grants scored admission, and a
 completed native turn does not establish a correct review or calibrated judge.
 The [task-presentation reference](TASK-PRESENTATION.md) owns the enforced solver
-boundary, tested access paths and remaining native permission-message mismatch.
+boundary, tested access paths and limits of native permission wording.
 Task/skill/history content and new image capabilities still require inspection;
 the controls do not establish absence of every possible evaluation cue.
 The [environment reference](ENVIRONMENT.md) owns runtime admission and recovery;
@@ -17,6 +17,34 @@ Document tasks use this writable-file mode with a separate document package and
 rubric; [TASKS.md](TASKS.md) owns their preparation, grading, and readable reports.
 
 ## Inputs and boundaries
+
+The production adapter runs `codex app-server` over stdio inside the solver
+boundary. A controller outside that boundary initializes a fresh ephemeral thread,
+then starts one turn with approvals disabled and
+`externalSandbox` / `networkAccess: restricted`. The controller requires Codex's
+effective-settings notification to confirm that policy. The VM and solver
+boundary enforce it; the RPC declaration is not an additional sandbox.
+
+The ordinary task brief is unchanged. ON still adds the selected skill's native
+text invocation and installed files. App-server uses Codex's native tools and
+skill discovery, but its transport and session source differ from `codex exec`;
+qualification compares actual requests and tool behavior rather than assuming
+byte equivalence. Model and reasoning effort still come from the pinned profile.
+
+`app-server-rpc.jsonl` retains bytes read from native stdout, and
+`app-server-input.jsonl` retains bytes successfully written to native stdin.
+Either can end with a partial line after failure. `events.jsonl` contains derived
+canonical events under adapter `app-server-v2-to-canonical-v1`; its harness is
+`codex-app-server-jsonrpc-v2`. Legacy exec captures remain readable unchanged.
+Final text comes from a successful, matched terminal exchange. Missing replies,
+malformed records, unexpected approval requests, output limits and incomplete
+drains prevent completion. The process deadline terminates the namespace;
+turn-interrupt acknowledgments are not used as proof of termination.
+
+Usage uses the latest matched cumulative snapshot, never the sum of snapshots;
+missing telemetry stays unknown. [ACCOUNTING.md](ACCOUNTING.md) owns provenance
+and reconciliation. Closing stdin after the matched terminal lets app-server
+exit; collection still requires confirmed namespace teardown.
 
 Use a prepared, hash-pinned image containing native Codex and the task's existing
 tools/dependencies. Keep its selected runtime, catalog, image, runner source and

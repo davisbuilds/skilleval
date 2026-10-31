@@ -23,7 +23,7 @@ from dataclasses import asdict
 from pathlib import Path, PurePosixPath
 from typing import Any, Literal
 
-from skilleval import context_guard, evidence, guest_runner, solver_boundary
+from skilleval import app_server, context_guard, evidence, guest_runner, solver_boundary
 from skilleval._vendor import openbench_gateway as vendor
 from skilleval.accounting import normalize_codex_usage
 from skilleval.errors import SkillEvalError
@@ -257,6 +257,7 @@ def _execution_metadata(parsed: dict[str, Any]) -> dict[str, Any]:
         for key in (
             "schema_version",
             "harness",
+            "adapter",
             "execution_status",
             "task_quality",
             "skill_consultation",
@@ -799,6 +800,7 @@ def run_native(
             ("native/config.toml", config.encode(), False),
             ("native/prompt.txt", prompt.encode(), False),
             ("native/runner.py", Path(guest_runner.__file__).read_bytes(), False),
+            ("native/app_server.py", Path(app_server.__file__).read_bytes(), False),
             ("native/context_guard.py", Path(context_guard.__file__).read_bytes(), False),
             ("native/solver_boundary.py", Path(solver_boundary.__file__).read_bytes(), False),
         ]
@@ -926,6 +928,22 @@ def run_native(
             _exclusive(output / "final.txt", final)
             report.update({"process": process, "final_text": "final.txt", "events": "events.jsonl"})
             parsed = parse_codex_jsonl(raw.decode("utf-8"))
+            parsed["harness"] = "codex-app-server-jsonrpc-v2"
+            parsed["adapter"] = "app-server-v2-to-canonical-v1"
+            protocol = process.get("protocol", {})
+            if (
+                protocol.get("complete") is not True
+                or process.get("pipe_drain_incomplete")
+                or process.get("output_limit_reached")
+            ):
+                parsed["parse_errors"].append(
+                    {"line": None, "error": "app-server capture or protocol incomplete"}
+                )
+                parsed["execution_status"] = "unknown"
+            for name in ("app-server-rpc.jsonl", "app-server-input.jsonl"):
+                _exclusive(output / name, _member(archive, "evidence/" + name, max_artifact_bytes))
+            report["native_rpc"] = "app-server-rpc.jsonl"
+            report["native_rpc_input"] = "app-server-input.jsonl"
             report["execution"] = _execution_metadata(parsed)
             report["usage"] = _usage(parsed["usage"])
             if (
@@ -970,6 +988,9 @@ def run_native(
                 and process.get("returncode") == 0
                 and process.get("timed_out") is False
                 and process.get("pipe_drain_incomplete") is False
+                and process.get("output_limit_reached") is False
+                and process.get("protocol", {}).get("complete") is True
+                and process.get("protocol", {}).get("permissions_confirmed") is True
                 and solver_boundary.valid_receipt(process.get("boundary"))
                 and process["boundary"]["native_returncode"] == 0
                 and parsed["execution_status"] == "completed"
@@ -1020,6 +1041,7 @@ def run_native(
                 row for row in report.get("broker_receipts", []) if row.get("event") == "request"
             ],
             parse_errors=parsed["parse_errors"],
+            surface="codex-app-server-jsonrpc-v2",
         )
         for key in (
             "cleanup_complete",

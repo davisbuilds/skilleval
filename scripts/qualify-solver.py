@@ -34,6 +34,7 @@ SKILL_PATH = runner.GUEST_ROOT + "/codex-home/skills/" + SKILL_NAME + "/SKILL.md
 RESOURCE_PATH = str(Path(SKILL_PATH).parent / "references/example.txt")
 DENIED = (
     "/var/tmp/native/runner.py",
+    "/var/tmp/native/app_server.py",
     "/var/tmp/native/context_guard.py",
     "/var/tmp/native/settings.json",
     "/var/tmp/native/prompt.txt",

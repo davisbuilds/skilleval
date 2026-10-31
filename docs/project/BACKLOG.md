@@ -14,12 +14,11 @@ shipped history. Private provenance stays outside public entries and issues.
 
 ## Open
 
-- **Native capability description and task presentation:** the CLI's permission
-  message still says networking is enabled despite VM-disabled general egress.
-  Codex 0.164.0's external-sandbox policy is programmatic-only; its legacy
-  restricted-network route also denies ordinary local sockets. Qualify a native
-  adapter that can accurately declare external enforcement while preserving task
-  capabilities, tool calls and accounting. The [solver boundary](../system/TASK-PRESENTATION.md)
+- **Native capability description and task presentation:** the app-server adapter
+  declares restricted networking with external enforcement. Codex 0.164.0 still
+  renders generic full-filesystem-access prose for that policy; track upstream
+  support for describing external boundaries without overriding native prompts.
+  Qualify each changed harness identity. The [solver boundary](../system/TASK-PRESENTATION.md)
   now separates controller files/processes and denies management transport;
   this does not sanitize task, skill or Git-history content. Review those inputs
   before new comparisons. The historical review exporter needs a neutral

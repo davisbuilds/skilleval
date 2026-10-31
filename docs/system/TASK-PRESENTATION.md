@@ -33,8 +33,9 @@ storage; read-only standard runtime/tool trees and the model catalog; minimal
 devices, private PTYs and shared memory; and the loopback inference endpoint.
 Selected skill bytes and resources retain their native paths. Controller files,
 staging archives, `/opt`, management sockets and the original guest root are not
-mounted into this view. Stdin/stdout/stderr are pipes. The native final answer is
-written into solver home and copied to controller evidence only after teardown.
+mounted into this view. Stdin/stdout/stderr are pipes. The controller receives
+native app-server messages over those pipes and retains the final answer only
+after a complete successful exchange; collection still follows namespace teardown.
 The relay's HTTP header uses a neutral service name without modifying the
 vendored implementation.
 
@@ -71,7 +72,8 @@ failures and cleanup.
 `boundary_passed` is separate from `permissions_consistent`; a mismatch yields
 `partial`, not full qualification. Neither field measures skill benefit.
 
-On **2026-10-30**, the aarch64 smolvm 1.32.3 / Codex 0.164.0 route passed
+Before the app-server change, on **2026-10-30**, the aarch64 smolvm 1.32.3 /
+Codex 0.164.0 exec route passed
 78 of 80 checks across fresh OFF/ON guests: access boundaries, ordinary tools,
 matched context and inspected system metadata passed. The two failed checks
 were the network-permission message, one per arm. The same-run root controls
@@ -88,18 +90,35 @@ up with unchanged execution identity. No credential or model inference was used.
 These are bounded controls, not representative task coverage or an x86_64 runtime
 qualification. Exact source/image/runtime receipts remain required for reuse.
 
-## Native permission-message limitation
+The subsequent app-server route passed **80/80** solver controls and **56/56**
+operator-context controls on the same runtime/image. Both OFF/ON requests actually
+contained restricted-network wording, and both reported cumulative token totals
+matched the synthetic provider receipts. An eight-second deadline control again
+stopped a known-running detached heartbeat before collection. An initial RPC enum
+mismatch stopped before task execution; those failed receipts remain retained.
+These runs used synthetic Responses without credentials or model inference.
+Public task validation also matched inspection and ordinary-test lanes. All nine
+final guests cleaned up with one unchanged execution identity.
 
-The current Codex CLI profile announces network access as enabled while the
-enclosing VM disables general egress. Local TCP/Unix sockets remain useful for
-normal task tools. Codex 0.164.0's
+## Native permission declarations
+
+The app-server adapter declares `externalSandbox` with restricted networking and
+requires an effective-settings confirmation. Local TCP/Unix sockets remain
+available to normal task tools. Codex 0.164.0's
 [external-sandbox policy is programmatic-only](https://github.com/openai/codex/blob/6aaac694803004a63c6f393d153c96d22521a6b9/codex-rs/config/src/config_requirements.rs#L1474).
 Its managed sandbox requires additional namespaces; its deprecated legacy network
-seccomp route also denies local connections. Do not change those task capabilities
-just to alter wording, or cover a conflicting permission message with prompt prose.
-A native adapter that can declare external enforcement needs separate protocol,
-tool and accounting qualification. This mismatch remains visible in the control
-report; it is not itself an evaluation announcement.
+seccomp route also denies local connections. The adapter preserves the VM's
+external enforcement and ordinary local sockets. It does not replace native
+permission instructions with corrective prompt prose.
+
+The pinned [permission renderer](https://github.com/openai/codex/blob/6aaac694803004a63c6f393d153c96d22521a6b9/codex-rs/prompts/src/permissions_instructions.rs#L229)
+still describes full filesystem access for this external profile. That wording
+does not describe the enclosing namespaces, read-only mounts or management
+transport denials. `permissions_consistent` in the solver control report checks
+the network message only; it is not proof of complete capability-description
+fidelity. The structural RPC policy, actual request text and effective controls
+remain separate evidence. Neither this limitation nor VM detection is itself an
+evaluation announcement.
 
 ## Earlier audit
 
@@ -116,7 +135,7 @@ requests, tool output, native audit and cleanup evidence were retained privately
 | Skill notice packaging | New captures place the supplied root notice at `.source-notices/ROOT_LICENSE`. Old `.skilleval-notices/ROOT_LICENSE` captures remain loadable without mutation; neutral presentation requires a new capture. Upstream skill files and license text remain unchanged. |
 | First native request | Inspected the native instructions, tool catalog, skill catalog, task instructions and a normal brief on the patched route. No evaluation announcement was found in that request. Matches for “evaluates” in the JavaScript tool description described executing code. This is one inspected input, not a general absence detector. |
 | Guest files and processes | The earlier root route exposed the controller, context guard, settings, tooling archive and `/opt/skilleval/openbench_gateway.py`, plus the controller command line through `/proc`. The new profile enforces a separate view; old attempts keep their original exposure. |
-| Declared versus effective capabilities | The network permission-message mismatch remains as described above. |
+| Declared versus effective capabilities | The earlier exec route announced enabled networking. The app-server route corrects that declaration; generic filesystem wording remains as described above. |
 | Historical review exporter | **Still exposes preparation context.** It preserves `.openbench-review.json` and constructs Git commits authored by `Captured review`. This is a development importer, not a neutral presentation route. Do not rewrite its pinned history or silently remove files. |
 | Task snapshots and skill trees | The host capture manifest is excluded from native task transfer. Payload files, ordinary guidance, Git objects and the selected skill tree are copied as supplied; there is no general semantic filter for evaluation cues. A source-only snapshot is not automatically a suitable solver view. |
 | Qualification and judge fixtures | Synthetic context controls and the legacy calibration demo intentionally disclose their control purpose. Judge packets intentionally contain rubrics. Neither is a representative solver task. |

@@ -248,7 +248,7 @@ def validate_environment(
     runtime: Path,
 ) -> dict[str, Any]:
     """Run declared baseline/reference commands only in disposable offline VMs."""
-    from skilleval import context_guard, guest_runner, task_validation_guest
+    from skilleval import app_server, context_guard, guest_runner, task_validation_guest
     from skilleval.lifecycle import Lifecycle, LifecycleInterruptedError, interrupt_scope
 
     spec = load_package(package, digest)
@@ -289,6 +289,7 @@ def validate_environment(
                 if spec.environment.profile == "solver-isolated-v1":
                     for name, module in (
                         ("guest_runner.py", guest_runner),
+                        ("app_server.py", app_server),
                         ("context_guard.py", context_guard),
                         ("solver_boundary.py", solver_boundary),
                     ):
