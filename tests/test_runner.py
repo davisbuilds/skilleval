@@ -80,6 +80,12 @@ elif args[:2]==['machine','exec']:
   (state/'scenario.json').write_text(json.dumps(scenario))
   fault=scenario.get('fault')
   process={'returncode':0,'timed_out':False,'codex_version':'codex-cli 0.164.0',
+   'pipe_drain_incomplete':False,
+   'boundary':{'schema_version':1,'profile':'solver-isolated-v1','status':'ready',
+    'uid':61000,'gid':61000,'groups':[],'no_new_privs':True,'capabilities_cleared':True,
+    'transport_filter':'vsock-deny-v1','seccomp':True,
+    'namespace_reaped':True,'native_returncode':0,
+    'native_elapsed_seconds':0.01,'launcher_elapsed_seconds':0.02},
    'context_preflight':{'status':'passed','initial_codex_home':settings['expected_codex_home']},
    'context_skills_after':[]}
   if scenario.get('complete_usage'):process['agent_elapsed_seconds']=0.01
@@ -91,6 +97,10 @@ elif args[:2]==['machine','exec']:
   if scenario.get('complete_usage'):events.insert(1,{'type':'turn.started'})
   if fault=='events-error':events.append({'type':'error','message':'synthetic failure'})
   if fault=='timed-out':process.update(returncode=-15,timed_out=True)
+  if fault=='boundary-missing':process.pop('boundary')
+  if fault=='boundary-not-reaped':process['boundary']['namespace_reaped']=False
+  if fault=='boundary-privileged':process['boundary']['uid']=0
+  if fault=='pipe-drain-incomplete':process['pipe_drain_incomplete']=True
   if fault!='timed-out':events.append({'type':'turn.completed','usage':{'input_tokens':3}})
   if scenario.get('complete_usage') and fault!='timed-out':
    events[-1]['usage']={'input_tokens':3,'cached_input_tokens':1,'output_tokens':2}
@@ -254,6 +264,7 @@ def test_resource_heavy_skill_process_record_is_read_with_bounded_limits(
     assert len(raw) > 128 * 1024
     output = root / "evidence"
     output.mkdir()
+    (root / "home").mkdir()
     (output / "process.json").write_bytes(raw)
     events, final = b'{"type":"turn.completed"}\n', b"Completed task."
     (output / "events.jsonl").write_bytes(events)
@@ -334,6 +345,10 @@ def test_audit_overflow_retains_private_bytes_and_usable_partial_record(
     "fault,status",
     [
         ("events-error", "failed"),
+        ("boundary-missing", "failed"),
+        ("boundary-not-reaped", "failed"),
+        ("boundary-privileged", "failed"),
+        ("pipe-drain-incomplete", "failed"),
         ("timed-out", "timed-out"),
         ("drift", "partial"),
         ("large-copy", "partial"),
@@ -491,6 +506,62 @@ def test_actual_native_child_deadline_retains_streamed_output_and_kills_group(
     assert "descendant-ready" in (tmp_path / "stderr.log").read_text()
     time.sleep(0.7)
     assert not (tmp_path / "escaped").exists()
+
+
+def test_native_streams_use_pipes_instead_of_controller_file_descriptors(tmp_path: Path) -> None:
+    prompt = tmp_path / "private-prompt.txt"
+    prompt.write_text("ordinary task request")
+    result = guest_runner._execute_native(
+        [
+            sys.executable,
+            "-c",
+            "import os,stat,sys; "
+            "assert all(stat.S_ISFIFO(os.fstat(fd).st_mode) for fd in (0,1,2)); "
+            "print(sys.stdin.read()); print('diagnostic',file=sys.stderr)",
+        ],
+        {"PATH": os.defpath},
+        prompt,
+        tmp_path,
+        tmp_path,
+        5,
+    )
+    assert result["returncode"] == 0
+    assert (tmp_path / "events.jsonl").read_text() == "ordinary task request\n"
+    assert (tmp_path / "stderr.log").read_text() == "diagnostic\n"
+
+
+def test_trusted_relay_does_not_import_modules_from_task_working_directory(tmp_path: Path) -> None:
+    # This is authored hostile fixture code, never an imported repository.
+    (tmp_path / "runpy.py").write_text("raise RuntimeError('task module ran with relay authority')")
+    (tmp_path / "json.py").write_text("raise RuntimeError('task module ran with relay authority')")
+    command = list(guest_runner.RELAY_PREFIX)
+    command[0] = sys.executable
+    vendor = Path(runner.__file__).parent / "_vendor/openbench_gateway.py"
+    command[-1] = command[-1].replace("/opt/skilleval/openbench_gateway.py", str(vendor))
+    result = subprocess.run(
+        [*command, "--help"],
+        cwd=tmp_path,
+        env={"PATH": os.defpath},
+        capture_output=True,
+        text=True,
+        timeout=5,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "{broker,relay}" in result.stdout
+
+
+def test_guest_archive_refuses_symlink_collection_root(tmp_path: Path) -> None:
+    root, task = tmp_path / "native", tmp_path / "task"
+    root.mkdir()
+    task.mkdir()
+    for name in ("evidence", "home"):
+        (root / name).mkdir()
+    private = tmp_path / "private"
+    private.mkdir()
+    (private / "secret").write_text("private")
+    (root / "codex-home").symlink_to(private, target_is_directory=True)
+    with pytest.raises(ValueError, match="collection root"):
+        guest_runner._archive(root, task, 1024 * 1024, 100)
 
 
 def test_provider_failure_never_completes(

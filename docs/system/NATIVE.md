@@ -4,9 +4,10 @@ This reference owns the explicit native review, repair and judge procedure. Thes
 runs use a fresh VM, the bounded host inference gateway, and retained evidence. They
 remain development-only: `native qualify` never grants scored admission, and a
 completed native turn does not establish a correct review or calibrated judge.
-The [task-presentation audit](TASK-PRESENTATION.md) identifies evaluation disclosures
-and the remaining solver access to controller files. This route is not yet
-qualified to conceal evaluation infrastructure from the task agent.
+The [task-presentation reference](TASK-PRESENTATION.md) owns the enforced solver
+boundary, tested access paths and remaining native permission-message mismatch.
+Task/skill/history content and new image capabilities still require inspection;
+the controls do not establish absence of every possible evaluation cue.
 The [environment reference](ENVIRONMENT.md) owns runtime admission and recovery;
 the [gateway reference](GATEWAY.md) owns authentication and provider limits.
 The [repair reference](REPAIRS.md) owns editable scope, patch collection and offline
@@ -64,6 +65,9 @@ writes its own provider configuration, and launches Codex with an explicit proce
 environment. VM creation declares no host directory mounts; task, tooling and the
 selected skill are explicit copied inputs. The host runtime also gets separate
 HOME/XDG state. Task-repository instructions remain frozen, shared task context.
+Codex runs through the [solver boundary](TASK-PRESENTATION.md#solver-boundary).
+The controller and relay remain outside its filesystem and process view; only
+the local inference endpoint is shared. A fresh home alone is not this boundary.
 
 Before native execution, the copied context guard checks the exact initial Codex
 home and empty user home, rejects ambient instructions/configuration in the known
@@ -288,7 +292,11 @@ up to the smaller of the run's artifact budget and the 32 MiB full-audit ceiling
 Overall audit and compact-receipt limits still apply; overflow remains partial
 evidence, not successful recording. Complete command outputs stay in the raw events/archive; compact
 metadata exposes hashes, counts and explicit sample omissions. Completion requires the observed process, native
-turn, provider requests and cleanup to agree; it leaves task quality unassessed.
+turn, provider requests, solver setup/namespace teardown and cleanup to agree;
+it leaves task quality unassessed. The trusted boundary receipt records identity,
+privilege removal and timings. Agent time starts after namespace setup and ends
+when native PID 1 is reaped; launcher time is retained separately. Collection
+does not proceed when namespace termination is unconfirmed.
 A timeout, partial collection or failed execution is not an empty clean report.
 Missing/invalid final JSON is refused by judge recording rather than filled in.
 

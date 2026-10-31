@@ -181,6 +181,8 @@ def _check_inputs(spec: StudySpec) -> dict[str, Any]:
                 Path(task.environment_validation),
                 task.environment_validation_sha256,
             )
+            if package.environment.profile != "solver-isolated-v1":
+                raise SkillEvalError("native study requires solver-isolated-v1 task validation")
             artifact = load_task(Path(package.task), package.task_sha256)
             if (
                 task.mode != "repair"

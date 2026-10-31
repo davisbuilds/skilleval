@@ -10,7 +10,7 @@ from typing import Any, Literal
 
 from pydantic import Field, model_validator
 
-from skilleval import evidence, repair, runner
+from skilleval import evidence, repair, runner, solver_boundary
 from skilleval.contracts import Citation, Digest, Identifier, Record
 from skilleval.errors import SkillEvalError
 from skilleval.grading import _read_regular
@@ -21,6 +21,7 @@ from skilleval.qualification import _image_archive
 # has at most eight lanes; envelope and expected-observation space is additional.
 MAX_LANE_BYTES = 16 * 1024 * 1024
 MAX_VALIDATION_BYTES = 160 * 1024 * 1024
+ExecutionProfile = Literal["native-root-v1", "solver-isolated-v1"]
 
 
 def read_lane(path: Path) -> dict[str, Any]:
@@ -57,7 +58,7 @@ class ValidationCase(Record):
 class TaskEnvironment(Record):
     image_archive: str = Field(min_length=1)
     image_sha256: Digest
-    profile: Literal["native-root-v1"] = "native-root-v1"
+    profile: ExecutionProfile = "native-root-v1"
     setup: tuple[str, ...] = Field(min_length=1, max_length=32)
     required_paths: tuple[str, ...] = Field(min_length=1, max_length=100)
     coverage_gaps: tuple[str, ...] = Field(default=(), max_length=32)
@@ -183,7 +184,31 @@ def observations(lane: ValidationLane, process: dict[str, Any]) -> dict[str, Any
     return observed
 
 
-def compare_lane(lane: ValidationLane, process: dict[str, Any]) -> dict[str, Any]:
+def _profile_matches(process: dict[str, Any], profile: ExecutionProfile) -> bool:
+    uid = 61000 if profile == "solver-isolated-v1" else 0
+    if process.get("profile") != {
+        "uid": uid,
+        "gid": uid,
+        "groups": [],
+        "cwd": runner.GUEST_WORK,
+    }:
+        return False
+    if profile == "native-root-v1":
+        return True
+    boundary = process.get("boundary")
+    return (
+        process.get("pipe_drain_incomplete") is False
+        and isinstance(boundary, dict)
+        and solver_boundary.valid_receipt(boundary)
+        and boundary["native_returncode"] == process.get("returncode")
+    )
+
+
+def compare_lane(
+    lane: ValidationLane,
+    process: dict[str, Any],
+    profile: ExecutionProfile = "native-root-v1",
+) -> dict[str, Any]:
     result: dict[str, Any] = {
         "lane_id": lane.lane_id,
         "status": "incomplete",
@@ -197,13 +222,7 @@ def compare_lane(lane: ValidationLane, process: dict[str, Any]) -> dict[str, Any
         or process.get("output_limit_reached") is not False
         or type(process.get("returncode")) is not int
         or process.get("argv") != list(lane.argv)
-        or process.get("profile")
-        != {
-            "uid": 0,
-            "gid": 0,
-            "groups": [],
-            "cwd": runner.GUEST_WORK,
-        }
+        or not _profile_matches(process, profile)
         or not isinstance(process.get("source_changes"), list)
     ):
         return result
@@ -229,7 +248,7 @@ def validate_environment(
     runtime: Path,
 ) -> dict[str, Any]:
     """Run declared baseline/reference commands only in disposable offline VMs."""
-    from skilleval import task_validation_guest
+    from skilleval import context_guard, guest_runner, task_validation_guest
     from skilleval.lifecycle import Lifecycle, LifecycleInterruptedError, interrupt_scope
 
     spec = load_package(package, digest)
@@ -260,16 +279,26 @@ def validate_environment(
             try:
                 _, files = runner._snapshot_files(Path(case.input_bundle), case.input_sha256)
                 archive = Path(session.ticket["runtime_state"]) / "validation-input.tar"
+                tooling = [
+                    (
+                        "native/validation.py",
+                        Path(task_validation_guest.__file__).read_bytes(),
+                        False,
+                    ),
+                ]
+                if spec.environment.profile == "solver-isolated-v1":
+                    for name, module in (
+                        ("guest_runner.py", guest_runner),
+                        ("context_guard.py", context_guard),
+                        ("solver_boundary.py", solver_boundary),
+                    ):
+                        source = module.__file__
+                        if source is None:
+                            raise SkillEvalError("validation controller source unavailable")
+                        tooling.append(("native/" + name, Path(source).read_bytes(), False))
                 runner._tar(
                     archive,
-                    [("task/" + n, b, x) for n, b, x in files]
-                    + [
-                        (
-                            "native/validation.py",
-                            Path(task_validation_guest.__file__).read_bytes(),
-                            False,
-                        ),
-                    ],
+                    [("task/" + n, b, x) for n, b, x in files] + tooling,
                 )
                 session.create()
                 runner._required(
@@ -308,6 +337,7 @@ def validate_environment(
                                     "argv": lane.argv,
                                     "timeout_seconds": lane.timeout_seconds,
                                     "report_path": guest_report,
+                                    "profile": spec.environment.profile,
                                 }
                             ),
                         ],
@@ -328,14 +358,9 @@ def validate_environment(
                         "collect full validation observation",
                     )
                     process = read_lane(local_report)
-                    if not isinstance(process, dict) or process.get("profile") != {
-                        "uid": 0,
-                        "gid": 0,
-                        "groups": [],
-                        "cwd": runner.GUEST_WORK,
-                    }:
+                    if not _profile_matches(process, spec.environment.profile):
                         raise SkillEvalError("unexpected validation execution profile")
-                    row["lanes"].append(compare_lane(lane, process))
+                    row["lanes"].append(compare_lane(lane, process, spec.environment.profile))
                 row["status"] = (
                     "matched"
                     if all(r["status"] == "matched" for r in row["lanes"])
@@ -427,7 +452,7 @@ def checked_validation(
         ):
             raise SkillEvalError("task validation case or cleanup binding differs")
         for lane, observed in zip(case.lanes, row["lanes"], strict=True):
-            compared = compare_lane(lane, observed["process"])
+            compared = compare_lane(lane, observed["process"], spec.environment.profile)
             if compared != observed or compared["status"] != "matched":
                 raise SkillEvalError("task validation observations differ")
     return spec, value

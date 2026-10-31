@@ -5,7 +5,7 @@ import pytest
 from test_repair import task as task
 from test_runner import route as route
 
-from skilleval import evidence
+from skilleval import evidence, repair
 from skilleval.errors import SkillEvalError
 from skilleval.task_package import (
     TaskPackageSpec,
@@ -105,6 +105,73 @@ def test_wrong_execution_route_or_mutated_source_cannot_match(changed):
     assert compare_lane(lane(), process(**{changed: mutations[changed]}))["status"] != "matched"
 
 
+def solver_process(**updates):
+    return (
+        process(
+            profile={"uid": 61000, "gid": 61000, "groups": [], "cwd": "/workspace/task"},
+            pipe_drain_incomplete=False,
+            boundary={
+                "schema_version": 1,
+                "profile": "solver-isolated-v1",
+                "status": "ready",
+                "uid": 61000,
+                "gid": 61000,
+                "groups": [],
+                "no_new_privs": True,
+                "capabilities_cleared": True,
+                "transport_filter": "vsock-deny-v1",
+                "seccomp": True,
+                "namespace_reaped": True,
+                "native_returncode": 0,
+                "native_elapsed_seconds": 0.01,
+                "launcher_elapsed_seconds": 0.02,
+            },
+        )
+        | updates
+    )
+
+
+def test_solver_validation_requires_its_effective_boundary_and_retains_legacy_root():
+    assert compare_lane(lane(), process())["status"] == "matched"
+    assert compare_lane(lane(), solver_process(), "solver-isolated-v1")["status"] == "matched"
+    assert compare_lane(lane(), process(), "solver-isolated-v1")["status"] == "incomplete"
+    assert compare_lane(lane(), solver_process())["status"] == "incomplete"
+
+
+@pytest.mark.parametrize(
+    ("key", "value"),
+    [
+        ("schema_version", 2),
+        ("profile", "native-root-v1"),
+        ("status", "failed"),
+        ("uid", 0),
+        ("gid", 0),
+        ("groups", [0]),
+        ("no_new_privs", False),
+        ("capabilities_cleared", False),
+        ("transport_filter", "unknown"),
+        ("seccomp", False),
+        ("namespace_reaped", False),
+        ("native_returncode", True),
+        ("native_returncode", 1),
+    ],
+)
+def test_incomplete_or_different_solver_boundary_cannot_validate_a_lane(key, value):
+    observed = solver_process()
+    observed["boundary"][key] = value
+    assert compare_lane(lane(), observed, "solver-isolated-v1")["status"] == "incomplete"
+
+
+def test_solver_validation_requires_complete_pipe_collection():
+    for value in (True, None):
+        assert (
+            compare_lane(lane(), solver_process(pipe_drain_incomplete=value), "solver-isolated-v1")[
+                "status"
+            ]
+            == "incomplete"
+        )
+
+
 def package_spec(task, route):
     return TaskPackageSpec.model_validate_json(
         json.dumps(
@@ -144,6 +211,32 @@ def test_package_preparation_preserves_code_as_data_and_rejects_input_drift(task
     target.write_text("changed ordinary context")
     with pytest.raises(SkillEvalError):
         load_package(Path(saved["path"]), saved["sha256"])
+
+
+def test_explicit_solver_profile_and_missing_legacy_profile_load_without_rewriting(
+    task, route, tmp_path
+):
+    spec = package_spec(task, route)
+    isolated = spec.model_copy(
+        update={
+            "environment": spec.environment.model_copy(update={"profile": "solver-isolated-v1"})
+        }
+    )
+    saved = prepare_package(isolated, tmp_path / "solver-package.json")
+    assert load_package(Path(saved["path"]), saved["sha256"]).environment.profile == (
+        "solver-isolated-v1"
+    )
+    legacy = {
+        "schema_version": 1,
+        "kind": "skilleval-task-package",
+        "spec": spec.model_dump(mode="json"),
+    }
+    del legacy["spec"]["environment"]["profile"]
+    destination = tmp_path / "legacy-package.json"
+    digest = repair._publish(destination, legacy)
+    original = destination.read_bytes()
+    assert load_package(destination, digest).environment.profile == "native-root-v1"
+    assert destination.read_bytes() == original
 
 
 def test_missing_dependency_and_wrong_baseline_are_rejected_before_execution(task, route, tmp_path):

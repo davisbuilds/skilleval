@@ -36,8 +36,12 @@ Preparation verifies captured context, task/image identities, unique lanes and
 baseline agreement. It launches no VM and executes no imported code. The explicit
 validation command starts a fresh offline VM per capture and retains full bounded
 command observations, source changes, invocation profile and cleanup evidence.
-It currently supports the existing root Linux profile only; this does not qualify
-an unprivileged solver. No inference socket or credentials enter validation VMs.
+Select `solver-isolated-v1` to run commands through the native solver's
+unprivileged filesystem/process boundary, using fresh homes per lane. The legacy
+`native-root-v1` remains available for historical diagnostics; its receipts cannot
+qualify the current native solver. No inference socket or credentials enter
+validation VMs. Boundary setup and namespace teardown must both succeed before
+observations can match; failed setup retains bounded diagnostic output.
 
 JSON lanes compare a native command's observed object with its frozen expectation.
 Unittest lanes require a nonempty completed suite and reconcile failure/error/skip
@@ -63,6 +67,8 @@ For a packaged study task, supply `package`, `package_sha256`,
 and every dispatch recheck captured inputs, commands/observations, cleanup, image,
 runtime/source identity, and the shared prompt. Missing or mismatched validation
 prevents dispatch. Existing unpackaged development plans remain readable. The
+packaged native route requires `solver-isolated-v1` validation; historical root
+packages need a new explicit profile and validation generation. The
 native writable-file mode is still named `repair` in study records for wire
 compatibility; logical task family lives in the package. No package grants scored
 admission.

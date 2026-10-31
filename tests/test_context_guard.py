@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from skilleval import context_guard as guard
-from skilleval import guest_runner, judge, study
+from skilleval import guest_runner, judge, solver_boundary, study
 from skilleval.errors import SkillEvalError
 
 
@@ -195,6 +195,7 @@ def test_standalone_guest_uses_copied_guard_not_installed_package(tmp_path: Path
     copied.mkdir()
     (copied / "runner.py").write_bytes(Path(guest_runner.__file__).read_bytes())
     (copied / "context_guard.py").write_bytes(Path(guard.__file__).read_bytes())
+    (copied / "solver_boundary.py").write_bytes(Path(solver_boundary.__file__).read_bytes())
     installed = tmp_path / "installed/skilleval"
     installed.mkdir(parents=True)
     (installed / "__init__.py").write_text("raise RuntimeError('wrong installed package loaded')")

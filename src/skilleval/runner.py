@@ -23,7 +23,7 @@ from dataclasses import asdict
 from pathlib import Path, PurePosixPath
 from typing import Any, Literal
 
-from skilleval import context_guard, evidence, guest_runner
+from skilleval import context_guard, evidence, guest_runner, solver_boundary
 from skilleval._vendor import openbench_gateway as vendor
 from skilleval.accounting import normalize_codex_usage
 from skilleval.errors import SkillEvalError
@@ -800,6 +800,7 @@ def run_native(
             ("native/prompt.txt", prompt.encode(), False),
             ("native/runner.py", Path(guest_runner.__file__).read_bytes(), False),
             ("native/context_guard.py", Path(context_guard.__file__).read_bytes(), False),
+            ("native/solver_boundary.py", Path(solver_boundary.__file__).read_bytes(), False),
         ]
         if skill_bundle is not None and skill_digest is not None:
             from skilleval.treatments import install_skill, request_observer
@@ -968,6 +969,9 @@ def run_native(
                 successful(native)
                 and process.get("returncode") == 0
                 and process.get("timed_out") is False
+                and process.get("pipe_drain_incomplete") is False
+                and solver_boundary.valid_receipt(process.get("boundary"))
+                and process["boundary"]["native_returncode"] == 0
                 and parsed["execution_status"] == "completed"
                 and not parsed["errors"]
                 and not parsed["parse_errors"]
