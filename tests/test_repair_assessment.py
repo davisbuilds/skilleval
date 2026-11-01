@@ -273,7 +273,9 @@ def test_revision_must_match_same_candidate_and_retains_original(assessment, tmp
 
 
 @pytest.mark.parametrize("mutation", ["verdict", "recovery"])
-def test_report_cannot_override_frozen_comparison_or_cleanup(assessment, tmp_path, mutation):
+def test_report_cannot_override_frozen_comparison_or_cleanup(
+    assessment, tmp_path, mutation, request
+):
     ref = assessment.checks[0]
     path = Path(ref.report)
     value = json.loads(path.read_text())
@@ -283,7 +285,10 @@ def test_report_cannot_override_frozen_comparison_or_cleanup(assessment, tmp_pat
         path.write_text(json.dumps(value))
     else:
         ticket = json.loads((path.parent / "recovery.json").read_text())
-        Path(ticket["runtime_home"]).mkdir()
+        # The recorded runtime home lives outside tmp_path; remove it afterwards.
+        retained = Path(ticket["runtime_home"])
+        retained.mkdir()
+        request.addfinalizer(retained.rmdir)
     spec = assessment.model_copy(
         update={"checks": (ref.model_copy(update={"report_sha256": file_digest(path)}),)}
     )
