@@ -48,10 +48,18 @@ jobs:
         shell: bash
         run: |
           nproc 2>/dev/null || sysctl -n hw.ncpu
-          for workers in 3 4 6 8 12; do
+          status=0
+          for workers in 12 4 6 12 4 6; do
             start=$(date +%s)
-            uv run --locked pytest -q -p no:cacheprovider -n "$workers" | tail -1
+            uv run --locked pytest -q -p no:cacheprovider -rfE -n "$workers" \
+              > "$RUNNER_TEMP/bench.log" 2>&1 || status=1
+            if ! grep -q "= FAILURES =" "$RUNNER_TEMP/bench.log"; then
+              tail -1 "$RUNNER_TEMP/bench.log"
+            else
+              sed -n '/= FAILURES =/,$p' "$RUNNER_TEMP/bench.log" | head -200
+            fi
             echo "workers=$workers wall=$(( $(date +%s) - start ))s"
           done
+          exit "$status"
       - name: Build distribution
         run: uv build --out-dir dist
