@@ -22,13 +22,14 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-24.04, macos-15]
-        # pytest-xdist workers for scripts/check. The suite mostly waits on
-        # subprocesses, so these exceed the hosted runners' vCPU counts.
+        # pytest-xdist workers for scripts/check, measured on these images. The
+        # suite mostly waits on subprocesses: Linux (4 vCPU) gains up to about 6-8
+        # workers; macOS (3 vCPU) plateaus at 4-6 and slows at 12.
         include:
           - os: ubuntu-24.04
             pytest-workers: "8"
           - os: macos-15
-            pytest-workers: "6"
+            pytest-workers: "4"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -44,22 +45,5 @@ jobs:
         env:
           PYTEST_WORKERS: ${{ matrix.pytest-workers }}
         run: scripts/check
-      - name: Benchmark pytest worker counts (temporary)
-        shell: bash
-        run: |
-          nproc 2>/dev/null || sysctl -n hw.ncpu
-          status=0
-          for workers in 12 4 6 12 4 6; do
-            start=$(date +%s)
-            uv run --locked pytest -q -p no:cacheprovider -rfE -n "$workers" \
-              > "$RUNNER_TEMP/bench.log" 2>&1 || status=1
-            if ! grep -q "= FAILURES =" "$RUNNER_TEMP/bench.log"; then
-              tail -1 "$RUNNER_TEMP/bench.log"
-            else
-              sed -n '/= FAILURES =/,$p' "$RUNNER_TEMP/bench.log" | head -200
-            fi
-            echo "workers=$workers wall=$(( $(date +%s) - start ))s"
-          done
-          exit "$status"
       - name: Build distribution
         run: uv build --out-dir dist
