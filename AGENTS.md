@@ -78,6 +78,9 @@ Use behavioral red/green tests for substantial features and refactors. The red
 step must fail on the behavior being changed, not a missing symbol. Prefer real
 filesystem/process dependencies; run relevant existing checks for smaller edits.
 Subprocess fixtures cannot establish real VM isolation or semantic judge quality.
+The gate runs tests in parallel processes (`PYTEST_WORKERS=0` runs serially), so
+tests must not share fixed host state: use `tmp_path` or unique temporary names,
+ephemeral ports, and test-scoped environment changes.
 
 After changing a field or contract, inspect every producer and consumer: schemas,
 CLI parsing, recording/replay, report selection, docs, and parallel task families.

@@ -1,6 +1,7 @@
 import hashlib
 import io
 import json
+import shutil
 import tarfile
 from pathlib import Path
 
@@ -173,9 +174,13 @@ def test_subprocess_contract_failure_never_admits_and_attempts_cleanup(
         tmp_path / "result",
         str(fake_runtime(tmp_path, failure)),
     )
-    assert report["status"] == "partial"
-    assert report["admitted"] is False
-    assert [step["action"] for step in report["cleanup"]] == ["stop", "delete"]
+    try:
+        assert report["status"] == "partial"
+        assert report["admitted"] is False
+        assert [step["action"] for step in report["cleanup"]] == ["stop", "delete"]
+    finally:
+        # Failed cleanup retains the runtime home outside tmp_path for recovery.
+        shutil.rmtree(report["runtime_home"], ignore_errors=True)
 
 
 def test_modified_plan_or_bundle_refused_before_launch(tmp_path: Path) -> None:

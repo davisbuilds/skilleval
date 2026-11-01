@@ -280,7 +280,11 @@ def test_sigterm_unwinds_client_and_real_child_group(tmp_path: Path) -> None:
     try:
         wait_for(beat)
         before = beat.read_text()
-        time.sleep(0.1)
+        # Wait for the heartbeat to advance rather than for a fixed interval: on a
+        # contended runner the child may not be scheduled within any short sleep.
+        deadline = time.monotonic() + 10
+        while beat.read_text() == before and time.monotonic() < deadline:
+            time.sleep(0.02)
         assert beat.read_text() != before
         process.send_signal(signal.SIGTERM)
         process.wait(timeout=5)

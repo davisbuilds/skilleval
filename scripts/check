@@ -19,6 +19,8 @@ check() {
 check "Ruff lint" uv run --locked ruff check .
 check "Ruff format" uv run --locked ruff format --check .
 check "Type checking" uv run --locked mypy
-check "Tests" uv run --locked pytest -q
+# pytest-xdist spreads tests over PYTEST_WORKERS processes: `auto` (one per CPU)
+# by default; CI sets a per-OS count. PYTEST_WORKERS=0 runs serially in one process.
+check "Tests" uv run --locked pytest -q -n "${PYTEST_WORKERS:-auto}"
 check "Working-tree whitespace" git diff --check
 check "Staged whitespace" git diff --cached --check
