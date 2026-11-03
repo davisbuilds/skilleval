@@ -61,14 +61,13 @@ shipped history. Private provenance stays outside public entries and issues.
   controls cannot establish reliability. Treatment metadata masking is not proven
   blinding. Observation workers share candidate imports; test adversarial output
   and independent perturbation sessions before claiming resistance to manipulation.
-- **Versioned tool-evidence masking:** the legacy keyword filter withholds any
-  command/output mentioning `CODEX_HOME`, including ordinary application commands
-  in the completed-session task. It removed a successful qualified full-suite
-  rerun from the judge packet while the original trace retained it. Introduce an
-  explicit policy version that distinguishes application evidence from harness
-  and treatment access; preserve existing packet bytes and judgments. Replay
-  retained repairs with the corrected evidence before interpreting verification
-  disagreements. Missing packet evidence does not establish a false solver claim.
+- **Tool-evidence coverage:** the explicit `application-context-v2` policy retains
+  ordinary application `CODEX_HOME` commands while preserving legacy packets.
+  Its text filters can still omit legitimate mixed commands or miss indirect
+  treatment disclosure. Audit evidence sufficiency across representative tasks;
+  preserve missing observations as unknown. Use fresh policy-bound packets and
+  explicit outcome selection when replaying retained repairs, then independently
+  assess verification disagreements before treating them as solver failures.
 - **Representative writing grader validation (deferred):** the document rubric and artifact
   path are implemented, with different valid drafts and a format-valid false-claim
   control. Independently audit judgments on varied real writing tasks and preserve

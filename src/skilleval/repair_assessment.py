@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from pathlib import Path
 from typing import Any, Literal
 
@@ -22,6 +23,22 @@ from skilleval.study import _clean_native
 
 Criterion = Literal["task-contract", "scope-and-regressions", "verification-claims"]
 CRITERIA = ("task-contract", "scope-and-regressions", "verification-claims")
+ToolEvidencePolicy = Literal["legacy-v1", "application-context-v2"]
+_HARNESS_HOME_LOOKUP = re.compile(
+    r"\$CODEX_HOME\b|\$\{CODEX_HOME\b|\bprintenv\s+CODEX_HOME\b|"
+    r"\b(?:os\s*\.\s*)?(?:environ(?:\s*\.\s*get)?|getenv)\s*[\[(]\s*['\"]CODEX_HOME['\"]|"
+    r"\bprocess\s*\.\s*env\s*(?:\.\s*CODEX_HOME\b|\[\s*['\"]CODEX_HOME['\"])"
+)
+_APPLICATION_EVIDENCE_NOTE = """
+Tool evidence uses application-context-v2: application settings and mentions of
+CODEX_HOME are retained. Recognized harness-control paths, skill-access markers
+and direct harness-home lookups are withheld. This is a bounded text filter,
+not shell/program analysis or proof of independent blinding. Commands may be
+omitted or truncated, and evidence may precede later edits. Missing supporting
+observations do not establish that a solver's claim is false; keep such claims
+unresolved unless other evidence settles them. Read the retained statement's
+qualifications, including any substituted test dependencies.
+"""
 
 
 class RepairSource(Record):
@@ -41,6 +58,9 @@ class RepairAssessmentSpec(RepairSource):
     investigation: bool = True
     authored_statement: str | None = Field(default=None, max_length=65536)
     limitations: tuple[str, ...] = Field(default=(), max_length=32)
+    tool_evidence_policy: ToolEvidencePolicy = Field(
+        default="legacy-v1", exclude_if=lambda value: value == "legacy-v1"
+    )
 
     @model_validator(mode="after")
     def unique_checks(self) -> RepairAssessmentSpec:
@@ -309,9 +329,12 @@ def _native_evidence(
 ) -> tuple[bytes, bytes, dict[str, Any]]:
     origin = result["provenance"]
     if origin["kind"] == "authored-control":
+        tools: dict[str, Any] = {"items": [], "origin": "authored-control"}
+        if spec.tool_evidence_policy != "legacy-v1":
+            tools["tool_evidence_policy"] = spec.tool_evidence_policy
         return (
             (spec.authored_statement or "").encode(),
-            evidence._json_bytes({"items": [], "origin": "authored-control"}),
+            evidence._json_bytes(tools),
             {"execution_status": "not-a-model-attempt"},
         )
     if origin["kind"] != "native-repair" or spec.authored_statement is not None:
@@ -320,8 +343,19 @@ def _native_evidence(
     if file_digest(run / "native-run.json") != origin["native_receipt_sha256"]:
         raise SkillEvalError("repair native provenance differs")
     receipt, retained, _ = judge._run_files(run, mode="repair")
+    tools = _tool_evidence(retained.get("events.jsonl", b""), spec.tool_evidence_policy)
+    return (
+        retained["final.txt"],
+        evidence._json_bytes(tools),
+        {"execution_status": receipt["status"]},
+    )
+
+
+def _tool_evidence(raw: bytes, policy: ToolEvidencePolicy = "legacy-v1") -> dict[str, Any]:
+    if policy not in ("legacy-v1", "application-context-v2"):
+        raise SkillEvalError("unsupported tool evidence policy")
     items = []
-    for line in retained.get("events.jsonl", b"").splitlines():
+    for line in raw.splitlines():
         event = evidence._parse_json(line)
         if not isinstance(event, dict) or event.get("type") != "item.completed":
             continue
@@ -332,11 +366,15 @@ def _native_evidence(
         output = item.get("aggregated_output", "")
         if not isinstance(command, str) or not isinstance(output, str):
             continue
-        # Apply one policy to both arms; never expose selected skill contents or
-        # installed harness paths. This is metadata masking, not proven blinding.
-        if any(
-            token in command + output
-            for token in ("/var/tmp/native", "/run/native", "CODEX_HOME", "/skills/", "SKILL.md")
+        # Scan full strings before display truncation. Keep v1 bytes reconstructible;
+        # v2 removes the bare application-setting keyword, not known harness access.
+        tokens: tuple[str, ...] = ("/var/tmp/native", "/run/native", "/skills/", "SKILL.md")
+        if policy == "legacy-v1":
+            tokens += ("CODEX_HOME",)
+        combined = command + output
+        if any(token in combined for token in tokens) or (
+            policy != "legacy-v1"
+            and any(_HARNESS_HOME_LOOKUP.search(value) for value in (command, output))
         ):
             continue
         items.append(
@@ -348,7 +386,7 @@ def _native_evidence(
                 "truncated": len(command) > 8192 or len(output) > 65536,
             }
         )
-    tools = {
+    tools: dict[str, Any] = {
         "items": items[:256],
         "items_truncated": len(items) > 256,
         "limits": [
@@ -357,11 +395,16 @@ def _native_evidence(
             "Tool evidence may precede further edits; it is not an immutable candidate check.",
         ],
     }
-    return (
-        retained["final.txt"],
-        evidence._json_bytes(tools),
-        {"execution_status": receipt["status"]},
-    )
+    if policy != "legacy-v1":
+        tools["tool_evidence_policy"] = policy
+        tools["limits"] = [
+            "Recognized harness paths, skill-access markers and direct home lookups are withheld.",
+            "Application CODEX_HOME settings and mentions are retained; "
+            "filtering is not program analysis.",
+            "Missing observations do not establish a false claim; masking is not proven blinding.",
+            *tools["limits"][1:],
+        ]
+    return tools
 
 
 def packet(spec: RepairAssessmentSpec) -> tuple[dict[str, bytes], str, dict[str, Any]]:
@@ -442,6 +485,11 @@ def packet(spec: RepairAssessmentSpec) -> tuple[dict[str, bytes], str, dict[str,
             "population": "development",
             "treatment_metadata": "withheld",
             "independent_blind": False,
+            **(
+                {"tool_evidence_policy": spec.tool_evidence_policy}
+                if spec.tool_evidence_policy != "legacy-v1"
+                else {}
+            ),
         }
     )
     permission = (
@@ -452,6 +500,8 @@ def packet(spec: RepairAssessmentSpec) -> tuple[dict[str, bytes], str, dict[str,
         else judge._STATIC.replace("calibration-static-v1", version)
     )
     payloads["ASSESS.md"] = ((DOCUMENT_RUBRIC if document else RUBRIC) + permission).encode()
+    if spec.tool_evidence_policy != "legacy-v1":
+        payloads["ASSESS.md"] += _APPLICATION_EVIDENCE_NOTE.encode()
     payloads["source-modes.json"] = evidence._json_bytes(
         {"schema_version": 1, "permissions": "bytes-and-executable-flag", "files": modes}
     )
