@@ -61,6 +61,14 @@ shipped history. Private provenance stays outside public entries and issues.
   controls cannot establish reliability. Treatment metadata masking is not proven
   blinding. Observation workers share candidate imports; test adversarial output
   and independent perturbation sessions before claiming resistance to manipulation.
+- **Versioned tool-evidence masking:** the legacy keyword filter withholds any
+  command/output mentioning `CODEX_HOME`, including ordinary application commands
+  in the completed-session task. It removed a successful qualified full-suite
+  rerun from the judge packet while the original trace retained it. Introduce an
+  explicit policy version that distinguishes application evidence from harness
+  and treatment access; preserve existing packet bytes and judgments. Replay
+  retained repairs with the corrected evidence before interpreting verification
+  disagreements. Missing packet evidence does not establish a false solver claim.
 - **Representative writing grader validation (deferred):** the document rubric and artifact
   path are implemented, with different valid drafts and a format-valid false-claim
   control. Independently audit judgments on varied real writing tasks and preserve
@@ -76,6 +84,10 @@ shipped history. Private provenance stays outside public entries and issues.
   uncertainty estimate is implemented. Add independently supported cache
   partition evidence and actual tier/context/charge contracts before broadening
   the conditional API-equivalent scenario; never infer observed charges from it.
+  Expose completed-request provider subtotals when native accounting is interrupted;
+  currently raw receipts retain them while the normalized report stays unknown.
+  Distinguish incomplete provider observations from absent observations, and keep
+  the unobserved remainder and missing cache partition unknown.
   Prespecify estimands, missing-data policy and repeated-run analysis, with
   uncertainty that respects task/repository clustering.
 - **Longer task budgets:** the native runner caps each attempt at 780 seconds

@@ -162,6 +162,13 @@ Original raw traces stay retained outside the packet. Free-form prose or source
 can still reveal treatment cues: this is metadata masking, not proven independent
 blinding. The judge can question check fixtures rather than inherit their grades.
 
+The current keyword filter can also hide legitimate application evidence: for
+example, `CODEX_HOME` settings in the completed-session task removed a qualified
+test rerun from its packet. Missing command evidence remains unknown; inspect the
+retained raw trace before attributing a verification discrepancy to the solver.
+A replacement needs an explicit policy version so old packets and judgments remain
+reconstructible; do not silently regenerate them with changed filtering.
+
 The rubric separates `task-contract`, `scope-and-regressions` and
 `verification-claims`. Each permits `satisfied`, `violated` or `unresolved`, with
 missing criteria kept missing. Regression attribution must distinguish baseline
