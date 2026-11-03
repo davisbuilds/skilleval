@@ -77,6 +77,16 @@ source changes, regression risk, verification claims and limitations independent
 
 ## Corrections retained in earlier generations
 
+- The first solver brief pointed application `CODEX_HOME` at the supplied
+  source-tree fixture while requiring scratch and databases outside source.
+  Ordinary quota polling could create Codex support databases in that home even
+  with the main application database in temporary storage. Retained observations
+  show transient support files followed by cleanup and unchanged final fixture
+  bytes. This is a task-context confound, not independent evidence of personal-store
+  access or poor repair quality. New briefs require a disposable copy of the
+  supplied home outside source. Existing task contracts, runs and judgments retain
+  the original brief; the historical development pair does not qualify the revised
+  context. Revalidate the new context before another solver comparison.
 - pnpm's automatic dependency check attempted installation in the offline guest.
   The image now explicitly disables implicit installation for preinstalled frozen
   dependencies, including nested scripts; ordinary commands remain unchanged.

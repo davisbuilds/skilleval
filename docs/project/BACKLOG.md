@@ -42,6 +42,10 @@ shipped history. Private provenance stays outside public entries and issues.
 - **Task environment profile and coverage:** the selected completed-session task
   now has [Node environment and outcome controls](../../examples/repair/completed-sessions/environment.md).
   Preserve its shared quota/shutdown failure, platform skips and unsupported lanes.
+  Before the next solver comparison, revalidate the revised disposable-copy
+  application home: the earlier source-tree home allowed ordinary quota polling
+  to create support databases where the brief prohibited scratch. Preserve the
+  older runs and that task-context limitation.
   The restored receipt-repair capture
   now has matching baseline/reference unit failures and skips, with required
   assets/history retained. The [environment record](../../examples/repair/receipt-admission/environment.md)
@@ -68,6 +72,12 @@ shipped history. Private provenance stays outside public entries and issues.
   preserve missing observations as unknown. Use fresh policy-bound packets and
   explicit outcome selection when replaying retained repairs, then independently
   assess verification disagreements before treating them as solver failures.
+- **Judge citation finalization:** a native judge can complete with valid JSON
+  yet cite lines beyond a retained file. Recording correctly rejects that result;
+  do not clamp ranges or silently rewrite the judgment. Add bounded validation
+  feedback with a declared correction budget before final recording, preserving
+  original outputs, extra consumption and any still-invalid result. Distinguish
+  judgment-format failure from task quality and evidence sufficiency.
 - **Representative writing grader validation (deferred):** the document rubric and artifact
   path are implemented, with different valid drafts and a format-valid false-claim
   control. Independently audit judgments on varied real writing tasks and preserve

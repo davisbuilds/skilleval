@@ -86,6 +86,14 @@ checkout. Both arms need the same disposable application home, database,
 session roots and empty application skill catalog, separate from solver harness
 configuration. Keep failures, skips and unsupported lanes explicit.
 
+The ordinary solver brief requires copying the supplied synthetic application
+home outside the source tree before application commands. Codex quota polling can
+create support databases in `CODEX_HOME`, even when the application's main database
+is elsewhere. Use the copy as writable application context and preserve the source
+fixtures. Earlier frozen briefs pointed directly at the source fixture; preserve
+those generations and their context limitation rather than applying the new brief
+retroactively. The [validation record](environment.md) distinguishes them.
+
 ## Observation adapter
 
 After inspecting and retaining the capture's provenance, freeze the artifact task:
