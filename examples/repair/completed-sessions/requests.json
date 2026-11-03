@@ -1,0 +1,979 @@
+[
+  {
+    "probe_id": "first-compressed",
+    "request": {
+      "scenario": "first-compressed",
+      "session_id": "019effff-1111-7000-8000-000000000001",
+      "stem": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000001",
+      "initial": [
+        {
+          "type": "session_meta",
+          "timestamp": "2026-09-18T14:00:00Z",
+          "payload": {
+            "id": "019effff-1111-7000-8000-000000000001",
+            "cwd": "$CWD",
+            "timestamp": "2026-09-18T14:00:00Z",
+            "source": "cli",
+            "originator": "codex_cli_rs"
+          }
+        },
+        {
+          "type": "turn_context",
+          "timestamp": "2026-09-18T14:00:01Z",
+          "payload": {
+            "model": "gpt-5.6-terra"
+          }
+        },
+        {
+          "type": "response_item",
+          "timestamp": "2026-09-18T14:00:02Z",
+          "payload": {
+            "type": "message",
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Check the ledger; preserve café and Ω."
+              }
+            ]
+          }
+        },
+        {
+          "type": "response_item",
+          "timestamp": "2026-09-18T14:00:03Z",
+          "payload": {
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "First pass complete.\nOne entry remains."
+              }
+            ]
+          }
+        },
+        {
+          "type": "token_usage_record",
+          "timestamp": "2026-09-18T14:00:04Z",
+          "payload": {
+            "thread_id": "019effff-1111-7000-8000-000000000001",
+            "response_id": "request-alpha",
+            "usage": {
+              "input_tokens": 1200,
+              "cached_input_tokens": 450,
+              "output_tokens": 80
+            },
+            "thread_token_usage": {
+              "input_tokens": 1200,
+              "cached_input_tokens": 450,
+              "output_tokens": 80
+            }
+          }
+        },
+        {
+          "type": "event_msg",
+          "timestamp": "2026-09-18T14:00:04Z",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 1200,
+                "cached_input_tokens": 450,
+                "output_tokens": 80
+              }
+            }
+          }
+        }
+      ],
+      "final": [
+        {
+          "type": "session_meta",
+          "timestamp": "2026-09-18T14:00:00Z",
+          "payload": {
+            "id": "019effff-1111-7000-8000-000000000001",
+            "cwd": "$CWD",
+            "timestamp": "2026-09-18T14:00:00Z",
+            "source": "cli",
+            "originator": "codex_cli_rs"
+          }
+        },
+        {
+          "type": "turn_context",
+          "timestamp": "2026-09-18T14:00:01Z",
+          "payload": {
+            "model": "gpt-5.6-terra"
+          }
+        },
+        {
+          "type": "response_item",
+          "timestamp": "2026-09-18T14:00:02Z",
+          "payload": {
+            "type": "message",
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Check the ledger; preserve café and Ω."
+              }
+            ]
+          }
+        },
+        {
+          "type": "response_item",
+          "timestamp": "2026-09-18T14:00:03Z",
+          "payload": {
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "First pass complete.\nOne entry remains."
+              }
+            ]
+          }
+        },
+        {
+          "type": "token_usage_record",
+          "timestamp": "2026-09-18T14:00:04Z",
+          "payload": {
+            "thread_id": "019effff-1111-7000-8000-000000000001",
+            "response_id": "request-alpha",
+            "usage": {
+              "input_tokens": 1200,
+              "cached_input_tokens": 450,
+              "output_tokens": 80
+            },
+            "thread_token_usage": {
+              "input_tokens": 1200,
+              "cached_input_tokens": 450,
+              "output_tokens": 80
+            }
+          }
+        },
+        {
+          "type": "event_msg",
+          "timestamp": "2026-09-18T14:00:04Z",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 1200,
+                "cached_input_tokens": 450,
+                "output_tokens": 80
+              }
+            }
+          }
+        },
+        {
+          "type": "response_item",
+          "timestamp": "2026-09-18T14:00:05Z",
+          "payload": {
+            "type": "message",
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Now close the remaining entry."
+              }
+            ]
+          }
+        },
+        {
+          "type": "response_item",
+          "timestamp": "2026-09-18T14:00:06Z",
+          "payload": {
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "Closed. No entries lost."
+              }
+            ]
+          }
+        },
+        {
+          "type": "token_usage_record",
+          "timestamp": "2026-09-18T14:00:07Z",
+          "payload": {
+            "thread_id": "019effff-1111-7000-8000-000000000001",
+            "response_id": "request-beta",
+            "usage": {
+              "input_tokens": 500,
+              "cached_input_tokens": 120,
+              "output_tokens": 65
+            },
+            "thread_token_usage": {
+              "input_tokens": 1700,
+              "cached_input_tokens": 570,
+              "output_tokens": 145
+            }
+          }
+        },
+        {
+          "type": "event_msg",
+          "timestamp": "2026-09-18T14:00:07Z",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 1700,
+                "cached_input_tokens": 570,
+                "output_tokens": 145
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "probe_id": "transition",
+    "request": {
+      "scenario": "transition",
+      "session_id": "019effff-1111-7000-8000-000000000002",
+      "stem": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002",
+      "initial": [
+        {
+          "type": "session_meta",
+          "timestamp": "2026-09-18T14:00:00Z",
+          "payload": {
+            "id": "019effff-1111-7000-8000-000000000002",
+            "cwd": "$CWD",
+            "timestamp": "2026-09-18T14:00:00Z",
+            "source": "cli",
+            "originator": "codex_cli_rs"
+          }
+        },
+        {
+          "type": "turn_context",
+          "timestamp": "2026-09-18T14:00:01Z",
+          "payload": {
+            "model": "gpt-5.6-terra"
+          }
+        },
+        {
+          "type": "response_item",
+          "timestamp": "2026-09-18T14:00:02Z",
+          "payload": {
+            "type": "message",
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Check the ledger; preserve café and Ω."
+              }
+            ]
+          }
+        },
+        {
+          "type": "response_item",
+          "timestamp": "2026-09-18T14:00:03Z",
+          "payload": {
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "First pass complete.\nOne entry remains."
+              }
+            ]
+          }
+        },
+        {
+          "type": "token_usage_record",
+          "timestamp": "2026-09-18T14:00:04Z",
+          "payload": {
+            "thread_id": "019effff-1111-7000-8000-000000000002",
+            "response_id": "request-alpha",
+            "usage": {
+              "input_tokens": 1200,
+              "cached_input_tokens": 450,
+              "output_tokens": 80
+            },
+            "thread_token_usage": {
+              "input_tokens": 1200,
+              "cached_input_tokens": 450,
+              "output_tokens": 80
+            }
+          }
+        },
+        {
+          "type": "event_msg",
+          "timestamp": "2026-09-18T14:00:04Z",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 1200,
+                "cached_input_tokens": 450,
+                "output_tokens": 80
+              }
+            }
+          }
+        }
+      ],
+      "final": [
+        {
+          "type": "session_meta",
+          "timestamp": "2026-09-18T14:00:00Z",
+          "payload": {
+            "id": "019effff-1111-7000-8000-000000000002",
+            "cwd": "$CWD",
+            "timestamp": "2026-09-18T14:00:00Z",
+            "source": "cli",
+            "originator": "codex_cli_rs"
+          }
+        },
+        {
+          "type": "turn_context",
+          "timestamp": "2026-09-18T14:00:01Z",
+          "payload": {
+            "model": "gpt-5.6-terra"
+          }
+        },
+        {
+          "type": "response_item",
+          "timestamp": "2026-09-18T14:00:02Z",
+          "payload": {
+            "type": "message",
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Check the ledger; preserve café and Ω."
+              }
+            ]
+          }
+        },
+        {
+          "type": "response_item",
+          "timestamp": "2026-09-18T14:00:03Z",
+          "payload": {
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "First pass complete.\nOne entry remains."
+              }
+            ]
+          }
+        },
+        {
+          "type": "token_usage_record",
+          "timestamp": "2026-09-18T14:00:04Z",
+          "payload": {
+            "thread_id": "019effff-1111-7000-8000-000000000002",
+            "response_id": "request-alpha",
+            "usage": {
+              "input_tokens": 1200,
+              "cached_input_tokens": 450,
+              "output_tokens": 80
+            },
+            "thread_token_usage": {
+              "input_tokens": 1200,
+              "cached_input_tokens": 450,
+              "output_tokens": 80
+            }
+          }
+        },
+        {
+          "type": "event_msg",
+          "timestamp": "2026-09-18T14:00:04Z",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 1200,
+                "cached_input_tokens": 450,
+                "output_tokens": 80
+              }
+            }
+          }
+        },
+        {
+          "type": "response_item",
+          "timestamp": "2026-09-18T14:00:05Z",
+          "payload": {
+            "type": "message",
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Now close the remaining entry."
+              }
+            ]
+          }
+        },
+        {
+          "type": "response_item",
+          "timestamp": "2026-09-18T14:00:06Z",
+          "payload": {
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "Closed. No entries lost."
+              }
+            ]
+          }
+        },
+        {
+          "type": "token_usage_record",
+          "timestamp": "2026-09-18T14:00:07Z",
+          "payload": {
+            "thread_id": "019effff-1111-7000-8000-000000000002",
+            "response_id": "request-beta",
+            "usage": {
+              "input_tokens": 500,
+              "cached_input_tokens": 120,
+              "output_tokens": 65
+            },
+            "thread_token_usage": {
+              "input_tokens": 1700,
+              "cached_input_tokens": 570,
+              "output_tokens": 145
+            }
+          }
+        },
+        {
+          "type": "event_msg",
+          "timestamp": "2026-09-18T14:00:07Z",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 1700,
+                "cached_input_tokens": 570,
+                "output_tokens": 145
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "probe_id": "both-forms",
+    "request": {
+      "scenario": "both-forms",
+      "session_id": "019effff-1111-7000-8000-000000000003",
+      "stem": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003",
+      "initial": [
+        {
+          "type": "session_meta",
+          "timestamp": "2026-09-18T14:00:00Z",
+          "payload": {
+            "id": "019effff-1111-7000-8000-000000000003",
+            "cwd": "$CWD",
+            "timestamp": "2026-09-18T14:00:00Z",
+            "source": "cli",
+            "originator": "codex_cli_rs"
+          }
+        },
+        {
+          "type": "turn_context",
+          "timestamp": "2026-09-18T14:00:01Z",
+          "payload": {
+            "model": "gpt-5.6-terra"
+          }
+        },
+        {
+          "type": "response_item",
+          "timestamp": "2026-09-18T14:00:02Z",
+          "payload": {
+            "type": "message",
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Check the ledger; preserve café and Ω."
+              }
+            ]
+          }
+        },
+        {
+          "type": "response_item",
+          "timestamp": "2026-09-18T14:00:03Z",
+          "payload": {
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "First pass complete.\nOne entry remains."
+              }
+            ]
+          }
+        },
+        {
+          "type": "token_usage_record",
+          "timestamp": "2026-09-18T14:00:04Z",
+          "payload": {
+            "thread_id": "019effff-1111-7000-8000-000000000003",
+            "response_id": "request-alpha",
+            "usage": {
+              "input_tokens": 1200,
+              "cached_input_tokens": 450,
+              "output_tokens": 80
+            },
+            "thread_token_usage": {
+              "input_tokens": 1200,
+              "cached_input_tokens": 450,
+              "output_tokens": 80
+            }
+          }
+        },
+        {
+          "type": "event_msg",
+          "timestamp": "2026-09-18T14:00:04Z",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 1200,
+                "cached_input_tokens": 450,
+                "output_tokens": 80
+              }
+            }
+          }
+        }
+      ],
+      "final": [
+        {
+          "type": "session_meta",
+          "timestamp": "2026-09-18T14:00:00Z",
+          "payload": {
+            "id": "019effff-1111-7000-8000-000000000003",
+            "cwd": "$CWD",
+            "timestamp": "2026-09-18T14:00:00Z",
+            "source": "cli",
+            "originator": "codex_cli_rs"
+          }
+        },
+        {
+          "type": "turn_context",
+          "timestamp": "2026-09-18T14:00:01Z",
+          "payload": {
+            "model": "gpt-5.6-terra"
+          }
+        },
+        {
+          "type": "response_item",
+          "timestamp": "2026-09-18T14:00:02Z",
+          "payload": {
+            "type": "message",
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Check the ledger; preserve café and Ω."
+              }
+            ]
+          }
+        },
+        {
+          "type": "response_item",
+          "timestamp": "2026-09-18T14:00:03Z",
+          "payload": {
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "First pass complete.\nOne entry remains."
+              }
+            ]
+          }
+        },
+        {
+          "type": "token_usage_record",
+          "timestamp": "2026-09-18T14:00:04Z",
+          "payload": {
+            "thread_id": "019effff-1111-7000-8000-000000000003",
+            "response_id": "request-alpha",
+            "usage": {
+              "input_tokens": 1200,
+              "cached_input_tokens": 450,
+              "output_tokens": 80
+            },
+            "thread_token_usage": {
+              "input_tokens": 1200,
+              "cached_input_tokens": 450,
+              "output_tokens": 80
+            }
+          }
+        },
+        {
+          "type": "event_msg",
+          "timestamp": "2026-09-18T14:00:04Z",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 1200,
+                "cached_input_tokens": 450,
+                "output_tokens": 80
+              }
+            }
+          }
+        },
+        {
+          "type": "response_item",
+          "timestamp": "2026-09-18T14:00:05Z",
+          "payload": {
+            "type": "message",
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Now close the remaining entry."
+              }
+            ]
+          }
+        },
+        {
+          "type": "response_item",
+          "timestamp": "2026-09-18T14:00:06Z",
+          "payload": {
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "Closed. No entries lost."
+              }
+            ]
+          }
+        },
+        {
+          "type": "token_usage_record",
+          "timestamp": "2026-09-18T14:00:07Z",
+          "payload": {
+            "thread_id": "019effff-1111-7000-8000-000000000003",
+            "response_id": "request-beta",
+            "usage": {
+              "input_tokens": 500,
+              "cached_input_tokens": 120,
+              "output_tokens": 65
+            },
+            "thread_token_usage": {
+              "input_tokens": 1700,
+              "cached_input_tokens": 570,
+              "output_tokens": 145
+            }
+          }
+        },
+        {
+          "type": "event_msg",
+          "timestamp": "2026-09-18T14:00:07Z",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 1700,
+                "cached_input_tokens": 570,
+                "output_tokens": 145
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "probe_id": "plain-append",
+    "request": {
+      "scenario": "plain-append",
+      "session_id": "019effff-1111-7000-8000-000000000004",
+      "stem": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004",
+      "initial": [
+        {
+          "type": "session_meta",
+          "timestamp": "2026-09-18T14:00:00Z",
+          "payload": {
+            "id": "019effff-1111-7000-8000-000000000004",
+            "cwd": "$CWD",
+            "timestamp": "2026-09-18T14:00:00Z",
+            "source": "cli",
+            "originator": "codex_cli_rs"
+          }
+        },
+        {
+          "type": "turn_context",
+          "timestamp": "2026-09-18T14:00:01Z",
+          "payload": {
+            "model": "gpt-5.6-terra"
+          }
+        },
+        {
+          "type": "response_item",
+          "timestamp": "2026-09-18T14:00:02Z",
+          "payload": {
+            "type": "message",
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Check the ledger; preserve café and Ω."
+              }
+            ]
+          }
+        },
+        {
+          "type": "response_item",
+          "timestamp": "2026-09-18T14:00:03Z",
+          "payload": {
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "First pass complete.\nOne entry remains."
+              }
+            ]
+          }
+        },
+        {
+          "type": "token_usage_record",
+          "timestamp": "2026-09-18T14:00:04Z",
+          "payload": {
+            "thread_id": "019effff-1111-7000-8000-000000000004",
+            "response_id": "request-alpha",
+            "usage": {
+              "input_tokens": 1200,
+              "cached_input_tokens": 450,
+              "output_tokens": 80
+            },
+            "thread_token_usage": {
+              "input_tokens": 1200,
+              "cached_input_tokens": 450,
+              "output_tokens": 80
+            }
+          }
+        },
+        {
+          "type": "event_msg",
+          "timestamp": "2026-09-18T14:00:04Z",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 1200,
+                "cached_input_tokens": 450,
+                "output_tokens": 80
+              }
+            }
+          }
+        }
+      ],
+      "final": [
+        {
+          "type": "session_meta",
+          "timestamp": "2026-09-18T14:00:00Z",
+          "payload": {
+            "id": "019effff-1111-7000-8000-000000000004",
+            "cwd": "$CWD",
+            "timestamp": "2026-09-18T14:00:00Z",
+            "source": "cli",
+            "originator": "codex_cli_rs"
+          }
+        },
+        {
+          "type": "turn_context",
+          "timestamp": "2026-09-18T14:00:01Z",
+          "payload": {
+            "model": "gpt-5.6-terra"
+          }
+        },
+        {
+          "type": "response_item",
+          "timestamp": "2026-09-18T14:00:02Z",
+          "payload": {
+            "type": "message",
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Check the ledger; preserve café and Ω."
+              }
+            ]
+          }
+        },
+        {
+          "type": "response_item",
+          "timestamp": "2026-09-18T14:00:03Z",
+          "payload": {
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "First pass complete.\nOne entry remains."
+              }
+            ]
+          }
+        },
+        {
+          "type": "token_usage_record",
+          "timestamp": "2026-09-18T14:00:04Z",
+          "payload": {
+            "thread_id": "019effff-1111-7000-8000-000000000004",
+            "response_id": "request-alpha",
+            "usage": {
+              "input_tokens": 1200,
+              "cached_input_tokens": 450,
+              "output_tokens": 80
+            },
+            "thread_token_usage": {
+              "input_tokens": 1200,
+              "cached_input_tokens": 450,
+              "output_tokens": 80
+            }
+          }
+        },
+        {
+          "type": "event_msg",
+          "timestamp": "2026-09-18T14:00:04Z",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 1200,
+                "cached_input_tokens": 450,
+                "output_tokens": 80
+              }
+            }
+          }
+        },
+        {
+          "type": "response_item",
+          "timestamp": "2026-09-18T14:00:05Z",
+          "payload": {
+            "type": "message",
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Now close the remaining entry."
+              }
+            ]
+          }
+        },
+        {
+          "type": "response_item",
+          "timestamp": "2026-09-18T14:00:06Z",
+          "payload": {
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "Closed. No entries lost."
+              }
+            ]
+          }
+        },
+        {
+          "type": "token_usage_record",
+          "timestamp": "2026-09-18T14:00:07Z",
+          "payload": {
+            "thread_id": "019effff-1111-7000-8000-000000000004",
+            "response_id": "request-beta",
+            "usage": {
+              "input_tokens": 500,
+              "cached_input_tokens": 120,
+              "output_tokens": 65
+            },
+            "thread_token_usage": {
+              "input_tokens": 1700,
+              "cached_input_tokens": 570,
+              "output_tokens": 145
+            }
+          }
+        },
+        {
+          "type": "event_msg",
+          "timestamp": "2026-09-18T14:00:07Z",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 1700,
+                "cached_input_tokens": 570,
+                "output_tokens": 145
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "probe_id": "fallback-name",
+    "request": {
+      "scenario": "fallback-name",
+      "stem": "retained-session-without-id",
+      "final": [
+        {
+          "type": "turn_context",
+          "timestamp": "2026-09-18T14:00:01Z",
+          "payload": {
+            "model": "gpt-5.6-terra"
+          }
+        },
+        {
+          "type": "response_item",
+          "timestamp": "2026-09-18T14:00:02Z",
+          "payload": {
+            "type": "message",
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Recover this named session."
+              }
+            ]
+          }
+        },
+        {
+          "type": "response_item",
+          "timestamp": "2026-09-18T14:00:03Z",
+          "payload": {
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "Recovered."
+              }
+            ]
+          }
+        },
+        {
+          "type": "event_msg",
+          "timestamp": "2026-09-18T14:00:04Z",
+          "payload": {
+            "type": "token_count",
+            "info": {
+              "total_token_usage": {
+                "input_tokens": 100,
+                "cached_input_tokens": 20,
+                "output_tokens": 5
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "probe_id": "corrupt-compressed",
+    "request": {
+      "scenario": "corrupt-compressed",
+      "stem": "damaged-rollout"
+    }
+  }
+]

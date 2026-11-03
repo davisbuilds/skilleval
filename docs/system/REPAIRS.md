@@ -9,13 +9,20 @@ task-agent consumption. Repair checks are a separate, credential-free operation.
 ## Freeze the task and checks
 
 `schema repair-spec` owns the input contract. A task binds its source snapshot and
-digest, shared prompt, exact editable paths, a Python observation worker and its
+digest, shared prompt, editable paths, a Python observation worker and its
 digest, named requests/expected observations, deadline and source provenance.
 `repair prepare SPEC --output TASK` verifies those inputs, resolves paths and
 publishes a task identity without launching anything. Retain its digest separately.
 The initial patch adapter accepts portable ASCII paths containing letters, digits
 and `_./@+-`; spaces and other encodings are unsupported. Preparation checks all
 retained source paths, including unchanged context, before a native attempt.
+
+Optional `editable_directories` permits additions, edits and deletions below
+declared directories without prescribing helper or test filenames. Both collection
+and readback enforce the same path-ancestor rule: `src` includes `src/new.ts`,
+not `src-other/new.ts` or replacement of `src` itself with a file. Directory grants
+exclude Git/cache metadata and capture manifests. Omitting the field preserves
+legacy contract bytes. Exact `editable_paths` remain supported.
 
 Keep the worker, expected observations, reference solutions, earlier attempts and
 task contract outside solver input. Only the frozen source and task prompt go to
@@ -94,6 +101,20 @@ The worker's Python process shares candidate imports, so its observations remain
 untrusted. Candidate code can inspect its process; this is not a claim that
 arbitrary hostile code cannot infer or game finite probes.
 
+`observer_resource_profile` selects a fixed offline observation budget. Omit it
+for the legacy `python-v1` profile: 512 MiB address space, 128 KiB maximum file
+size, 64 open files, 32 processes and no core dumps. The explicit `node-v1`
+profile allows 2 GiB address space, 8 MiB maximum file size and 256 open files;
+the process and core limits stay the same. These are child resource limits,
+including per-process address space and per-file size, not a total disk budget.
+Both profiles retain at most 128 KiB of stdout and 128 KiB of stderr. The
+supervisor reads each stream file with a bounded 128 KiB + 1 byte read; reaching
+the output cap makes execution incomplete and acceptance unknown. The larger
+file allowance supports temporary databases without expanding retained output.
+Nondefault settings and their exact limits are bound into the task, supervisor
+envelope and check report, and validated again when a report is selected for
+assessment. Omitted defaults preserve legacy task bytes and report compatibility.
+
 The worker reads `{"requests": [...]}` on stdin and receives the source root as
 its first argument. It returns exactly `{"observations": [...]}` in request order.
 It must not emit grading verdicts. The host rejects missing, extra, duplicate-key
@@ -140,6 +161,13 @@ individual commands/outputs and the list have explicit truncation indicators.
 Original raw traces stay retained outside the packet. Free-form prose or source
 can still reveal treatment cues: this is metadata masking, not proven independent
 blinding. The judge can question check fixtures rather than inherit their grades.
+
+The current keyword filter can also hide legitimate application evidence: for
+example, `CODEX_HOME` settings in the completed-session task removed a qualified
+test rerun from its packet. Missing command evidence remains unknown; inspect the
+retained raw trace before attributing a verification discrepancy to the solver.
+A replacement needs an explicit policy version so old packets and judgments remain
+reconstructible; do not silently regenerate them with changed filtering.
 
 The rubric separates `task-contract`, `scope-and-regressions` and
 `verification-claims`. Each permits `satisfied`, `violated` or `unresolved`, with

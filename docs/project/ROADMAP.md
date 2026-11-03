@@ -1,6 +1,6 @@
 ---
 status: in-progress
-updated: 2026-10-30
+updated: 2026-11-02
 ---
 
 # Roadmap
@@ -52,13 +52,18 @@ and the adapted OpenBench gateway. External skills remain experimental inputs.
    deliverables and independent outcome checks before capturing the next cases.
    Start with one independently usable skill and its required resources; defer
    packages that require a larger multi-skill or orchestration workflow.
-   Repair and writing have exposed development captures; new engineering cases
-   remain unselected. Preserve selection reasons and exclusions. Do not retain
+   The first selected engineering slice pairs the completed-session repair with
+   Matt Pocock's diagnosing-bugs skill. Its source and full skill closure are
+   captured with [environment and checker controls](../../examples/repair/completed-sessions/environment.md).
+   Preserve ordinary test exceptions and task-specific audit limits in comparisons.
+   Preserve selection reasons and exclusions. Do not retain
    only vanilla failures or wins for the skill.
 3. **Audit representative judgments.** Review actual artifacts, source support,
    novel findings, alternative solutions, checker defects, and disagreements.
    Tiny authored label controls test the grader machinery; their difficulty does
-   not define the task population. Preserve the pending audit generation.
+   not define the task population. The earlier tiny-control human audit is no
+   longer an active request or prerequisite after the task realignment; preserve
+   its historical records and build new audits around the selected real tasks.
 4. **Close task-specific environment gaps.** Revalidate the selected tasks under
    the unprivileged solver profile and required tools. Before interpreting new
    ON/OFF pairs, verify the

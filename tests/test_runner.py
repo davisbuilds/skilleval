@@ -63,12 +63,19 @@ elif args[:2]==['machine','exec']:
   (state/'scenario.json').write_text('{}')
   with tarfile.open(state/'tooling-copy.tar') as source:
    payload=json.loads(source.extractfile('native/requests.json').read())
-   assert set(payload)=={'timeout_seconds','requests'}
+   assert set(payload) in ({'timeout_seconds','requests'},
+    {'timeout_seconds','requests','observer_resource_profile'})
    assert all('expected' not in r for r in payload['requests'])
    observed=[r.get('value') for r in payload['requests']]
-  print(json.dumps({'schema_version':1,'returncode':0,'timed_out':False,
+  envelope={'schema_version':1,'returncode':0,'timed_out':False,
    'output_limit_reached':False,'stdout':json.dumps({'observations':observed}),
-   'stderr':'','worker_uid':65534,'expected_answers_supplied':False}));raise SystemExit
+   'stderr':'','worker_uid':65534,'expected_answers_supplied':False}
+  if 'observer_resource_profile' in payload:
+   assert payload['observer_resource_profile']=='node-v1'
+   envelope['observer_resources']={'profile':'node-v1','address_space_bytes':2147483648,
+    'file_size_bytes':8388608,'open_files':256,'processes':32,'core_bytes':0,
+    'output_bytes_per_stream':131072}
+  print(json.dumps(envelope));raise SystemExit
  if len(command)>1 and command[1]=='/var/tmp/native/runner.py':
   entries={}
   with tarfile.open(state/'tooling-copy.tar') as source:

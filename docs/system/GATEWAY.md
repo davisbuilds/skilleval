@@ -72,12 +72,25 @@ requires enough remaining validity for its request timeout plus 30 seconds at
 startup and checks again before each request. It never refreshes or writes the
 login cache. Authentication expiry and upstream 401 fail closed.
 
-`GatewayLimits` bounds admitted requests (maximum 32), concurrency (maximum 2),
+`GatewayLimits` bounds admitted requests (maximum 128), concurrency (maximum 2),
 body bytes (maximum 8 MiB), request deadline (maximum 300 seconds), and total
 service lifetime (maximum 900 seconds). Defaults are smaller. These are request
 and time bounds, not a token or monetary quota. The upstream implementation also
 caps response bytes at 64 MiB. Original task/trial timeouts and external cleanup
 supervision remain necessary.
+
+The native CLI and study default remain 32 admitted requests; the gateway's
+standalone default remains four. Raising a declared budget creates a new frozen
+plan rather than changing an earlier attempt. Native request observation has a
+separate ceiling of 252 bodies because it also sees policy and budget refusals.
+All observations within that bound are retained. The 256-record receipt sink
+reserves capacity for ready/stopped, an observer-cap diagnostic and its HTTP
+refusal; other rejection traffic can still exhaust it and fail closed.
+A request after the admitted allowance receives the vendor's `429 request_limit`.
+Actual observer-cap exhaustion returns `503 request_observation_limit`; other
+observer failures retain their existing refusal and prevent completion. Native
+and attempt reports retain admitted counts, limit-rejection counts and the
+observation bound separately. These counts do not establish task quality.
 
 ## Guest setup
 

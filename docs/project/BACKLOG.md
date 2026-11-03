@@ -39,7 +39,10 @@ shipped history. Private provenance stays outside public entries and issues.
   exposed development work. Selected browser tasks will need environment and
   rendered-outcome validation; the narrow proposed game repair is a weak design
   skill comparison.
-- **Task environment profile and coverage:** the restored receipt-repair capture
+- **Task environment profile and coverage:** the selected completed-session task
+  now has [Node environment and outcome controls](../../examples/repair/completed-sessions/environment.md).
+  Preserve its shared quota/shutdown failure, platform skips and unsupported lanes.
+  The restored receipt-repair capture
   now has matching baseline/reference unit failures and skips, with required
   assets/history retained. The [environment record](../../examples/repair/receipt-admission/environment.md)
   identifies two root-sensitive failures, eight unit skips and zero local tasks
@@ -58,6 +61,14 @@ shipped history. Private provenance stays outside public entries and issues.
   controls cannot establish reliability. Treatment metadata masking is not proven
   blinding. Observation workers share candidate imports; test adversarial output
   and independent perturbation sessions before claiming resistance to manipulation.
+- **Versioned tool-evidence masking:** the legacy keyword filter withholds any
+  command/output mentioning `CODEX_HOME`, including ordinary application commands
+  in the completed-session task. It removed a successful qualified full-suite
+  rerun from the judge packet while the original trace retained it. Introduce an
+  explicit policy version that distinguishes application evidence from harness
+  and treatment access; preserve existing packet bytes and judgments. Replay
+  retained repairs with the corrected evidence before interpreting verification
+  disagreements. Missing packet evidence does not establish a false solver claim.
 - **Representative writing grader validation (deferred):** the document rubric and artifact
   path are implemented, with different valid drafts and a format-valid false-claim
   control. Independently audit judgments on varied real writing tasks and preserve
@@ -73,10 +84,24 @@ shipped history. Private provenance stays outside public entries and issues.
   uncertainty estimate is implemented. Add independently supported cache
   partition evidence and actual tier/context/charge contracts before broadening
   the conditional API-equivalent scenario; never infer observed charges from it.
+  Expose completed-request provider subtotals when native accounting is interrupted;
+  currently raw receipts retain them while the normalized report stays unknown.
+  Distinguish incomplete provider observations from absent observations, and keep
+  the unobserved remainder and missing cache partition unknown.
   Prespecify estimands, missing-data policy and repeated-run analysis, with
   uncertainty that respects task/repository clustering.
+- **Longer task budgets:** the native runner caps each attempt at 780 seconds
+  and the gateway lifetime at 900 seconds. The debugging pilot reached that
+  deadline with requests remaining. Freeze task-appropriate budgets before
+  comparisons; a deadline is an execution outcome, not a correctness verdict.
+  If selected workloads need longer sessions, extend supervision, authentication
+  lifetime checks, accounting and recovery together. Preserve prior timed-out
+  attempts and validate termination before using the expanded route.
 - **Judge reliability and label audit:** independently audit authored labels,
-  native verdicts and disagreements. The human audit remains pending; agreement
+  native verdicts and disagreements. The earlier tiny-control audit was retired
+  from active work on 2026-11-02 after task realignment. Its records remain
+  unchanged and it does not gate the engineering slice. New audits must address
+  the selected real tasks. Agreement
   with authored labels does not establish general reliability. The separate
   reliability suite now checks repeat/probe-order stability and within-packet
   paraphrase, anchor, injection and treatment-cue invariance. Expand to isolated
