@@ -203,6 +203,17 @@ def _execute_native(
     return result
 
 
+NATIVE_PAX_PATH_BYTES = 4096
+
+
+def _pax_path_size(name: str) -> int:
+    payload = len(("path=" + name + "\n").encode("utf-8"))
+    length = payload + 2
+    while (actual := payload + len(str(length)) + 1) != length:
+        length = actual
+    return length
+
+
 def _archive(root: Path, work: Path, maximum: int, count: int) -> dict[str, Any]:
     """Keep regular bytes and link metadata; never follow task-created links."""
     entries: list[tuple[str, Path]] = []
@@ -230,6 +241,8 @@ def _archive(root: Path, work: Path, maximum: int, count: int) -> dict[str, Any]
                 if stat.S_ISLNK(observed_info.st_mode):
                     links.append({"path": relative, "kind": "symlink", "target": os.readlink(path)})
                 elif stat.S_ISREG(observed_info.st_mode):
+                    if _pax_path_size(relative) > NATIVE_PAX_PATH_BYTES:
+                        raise ValueError("artifact path exceeds native PAX metadata limit")
                     entries.append((relative, path))
                     total += observed_info.st_size
                 elif not stat.S_ISDIR(observed_info.st_mode):
@@ -237,11 +250,16 @@ def _archive(root: Path, work: Path, maximum: int, count: int) -> dict[str, Any]
                 if len(entries) + len(links) >= count or total > maximum:
                     return {"status": "limit-exceeded", "bytes": total, "files": len(entries)}
     metadata = json.dumps(links, sort_keys=True).encode()
-    # Conservative PAX/name allowance plus tar block padding before opening output.
-    if total + len(metadata) + (len(entries) + 1) * 4096 + 10240 > maximum:
+    # Preserve the existing short-name allowance; larger bounded PAX headers
+    # also need their actual header bytes plus worst-case file block padding.
+    headers = sum(
+        max(4096, len(tarfile.TarInfo(name).tobuf(format=tarfile.PAX_FORMAT)) + 511)
+        for name, _path in entries
+    )
+    if total + len(metadata) + headers + 4096 + 10240 > maximum:
         return {"status": "limit-exceeded", "bytes": total, "files": len(entries)}
     archive = root / "artifacts.tar"
-    with tarfile.open(archive, "w", format=tarfile.USTAR_FORMAT) as target:
+    with tarfile.open(archive, "w", format=tarfile.PAX_FORMAT) as target:
         for name, path in entries:
             descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
             with os.fdopen(descriptor, "rb") as source:
@@ -393,8 +411,12 @@ def run(root: Path, work: Path) -> int:
             collection = _archive(
                 root, work, settings["max_artifact_bytes"], settings["max_artifact_files"]
             )
-        except (OSError, ValueError, tarfile.TarError):
-            collection = {"status": "failed"}
+        except (OSError, ValueError, tarfile.TarError) as error:
+            collection = {
+                "status": "failed",
+                "error_type": type(error).__name__,
+                "error": str(error)[:1024],
+            }
         (root / "collection.json").write_text(json.dumps(collection, sort_keys=True))
     return 0 if collection["status"] == "complete" else 24
 

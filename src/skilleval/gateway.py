@@ -29,6 +29,10 @@ CODEX_VERSION = CODEX_BASELINE_VERSION
 MODEL = "gpt-6.1-sol"
 EFFORT = "high"
 MAX_RECEIPTS = 256
+MAX_REQUESTS = 128
+# Reserve ready/stopped plus one observer-cap diagnostic and HTTP refusal. The
+# receipt sink independently fails closed if other rejection traffic fills it.
+MAX_REQUEST_OBSERVATIONS = MAX_RECEIPTS - 4
 UPSTREAM_COMMIT = "39fec903f1e73bd3e8e3b15cacefbcce051bd1a6"
 UPSTREAM_SHA256 = "ed02f42cc52a22cfd16d49e3d639a27ce66de0b3bc3a9f41758c646bb26aed48"
 ADAPTED_SHA256 = "5159253383750db2583a51ea6789ff9e7cb897dfb7c73e2629293c84bd5ef5a0"
@@ -198,7 +202,7 @@ class GatewayLimits:
 
     def __post_init__(self) -> None:
         for value, ceiling in (
-            (self.max_requests, 32),
+            (self.max_requests, MAX_REQUESTS),
             (self.max_body_bytes, 8 * 1024 * 1024),
             (self.max_concurrent_requests, 2),
         ):
@@ -215,6 +219,10 @@ class GatewayLimits:
 
 
 DEFAULT_LIMITS = GatewayLimits()
+
+
+class RequestObservationLimitError(SkillEvalError):
+    """The observer cannot retain another request; forwarding must stop."""
 
 
 class _Receipts:
@@ -402,10 +410,12 @@ def broker_scope(
         raise SkillEvalError("gateway startup failed") from None
     original_forward = server.forward
     observation_failed = threading.Event()
+    observation_failure_code = "request_observation_failed"
 
     def forward(handler: _Handler, body: bytes) -> None:
+        nonlocal observation_failure_code
         if observation_failed.is_set():
-            handler._error(503, "request_observation_failed")
+            handler._error(503, observation_failure_code)
             return
         if auth.expires_at <= time.time() + limits.timeout_seconds + 5:
             handler._error(503, "authentication_expired")
@@ -415,10 +425,15 @@ def broker_scope(
                 # Body bytes contain guest-supplied task/history, never the host
                 # authorization headers constructed by the forwarding transport.
                 request_observer(body)
-            except Exception:
+            except Exception as error:
+                observation_failure_code = (
+                    "request_observation_limit"
+                    if isinstance(error, RequestObservationLimitError)
+                    else "request_observation_failed"
+                )
                 observation_failed.set()
-                records.record({"event": "request_observation_failed", "outcome": "refused"})
-                handler._error(503, "request_observation_failed")
+                records.record({"event": observation_failure_code, "outcome": "refused"})
+                handler._error(503, observation_failure_code)
                 return
         original_forward(handler, body)
 

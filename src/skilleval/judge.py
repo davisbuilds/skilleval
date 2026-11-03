@@ -18,7 +18,7 @@ from skilleval import calibration, evidence, grading
 from skilleval.contracts import Citation, Digest, Identifier, Record
 from skilleval.errors import SkillEvalError
 from skilleval.gateway import EFFORT, MODEL
-from skilleval.qualification import _plain_tar_headers
+from skilleval.runner import _native_tar_headers
 
 AGENTIC_VERSION = "calibration-agentic-v1"
 STATIC_VERSION = "calibration-static-v1"
@@ -545,7 +545,7 @@ def _run_files(
     total = 0
     try:
         source = io.BytesIO(archive_raw)
-        _plain_tar_headers(source)
+        _native_tar_headers(source, evidence.MAX_TOTAL_BYTES, evidence.MAX_FILES)
         with tarfile.open(fileobj=source, mode="r:") as archive:
             for member in archive:
                 if not member.isfile() or member.name not in entries or member.name in seen:

@@ -65,6 +65,14 @@ outside the guest and available through recording.
 Native Codex and imported source execute only in the VM. The host validates and
 retains outputs without extracting or executing guest archives. The runner
 enforces overall time, inference and artifact bounds and records cleanup. The
+native collector and task/tooling transfer preserve long filenames with local
+PAX `path` records capped at 4 KiB. Native readers permit one such record directly
+before a regular file; they reject global, chained, malformed or duplicate
+records, other metadata keys, links, sparse files, unsafe paths and aliases.
+Header counts, archive bytes and the retained manifest remain bounded. Short-name
+archives retain their previous bytes; Docker-save image parsing still refuses
+PAX extensions. These rules preserve ordinary long cache and independently named
+source files without extracting guest content on the host. The
 native staging area uses `/var/tmp/native` on the guest disk, outside the task
 tree. The qualified image's `/run` filesystem has only 64 MiB; retaining input
 archives, transcripts and output there exhausted capacity on the repair workload.
@@ -326,6 +334,11 @@ privilege removal and timings. Agent time starts after namespace setup and ends
 when native PID 1 is reaped; launcher time is retained separately. Collection
 does not proceed when namespace termination is unconfirmed.
 A timeout, partial collection or failed execution is not an empty clean report.
+New collection failures retain the collector's bounded error type and message.
+Any copied failed archive remains unvalidated private diagnostic evidence; the
+runner does not treat it as a complete artifact or replace the primary error
+with a later archive-parser failure. Earlier receipts retain their original
+diagnostics unchanged.
 Missing/invalid final JSON is refused by judge recording rather than filled in.
 
 Recording verifies the original frozen input, packet bytes/digests, exact prompt,

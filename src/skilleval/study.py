@@ -24,7 +24,7 @@ from skilleval.admission import check_admission
 from skilleval.contracts import Digest, Identifier, Record
 from skilleval.efficiency import efficiency_ledger, pair_efficiency
 from skilleval.errors import SkillEvalError
-from skilleval.gateway import EFFORT, MODEL, GatewayLimits
+from skilleval.gateway import EFFORT, MAX_REQUESTS, MODEL, GatewayLimits
 from skilleval.grading import _read_regular
 from skilleval.identity import file_digest, object_digest, snapshot_identity
 from skilleval.lifecycle import LifecycleInterruptedError, interrupt_scope
@@ -74,7 +74,7 @@ class StudySpec(Record):
     price_schedule: PriceSchedule | None = None
     max_attempts_per_cell: int = Field(default=1, ge=1, le=5)
     native_timeout_seconds: int = Field(default=600, ge=1, le=780)
-    max_requests_per_attempt: int = Field(default=32, ge=1, le=32)
+    max_requests_per_attempt: int = Field(default=32, ge=1, le=MAX_REQUESTS)
     assessment_policy: Literal["unassessed"] = "unassessed"
     primary_attempt_policy: Literal["first-attempt"] = "first-attempt"
     admission: str | None = None
@@ -405,7 +405,11 @@ def _summary_fields(report: dict[str, Any]) -> dict[str, Any]:
         "request_count": report.get("request_count"),
         "skill_consultation": report.get("skill_consultation"),
         "harness_identity": report.get("codex_identity"),
-        **{key: report[key] for key in ("usage_accounting", "timings") if key in report},
+        **{
+            key: report[key]
+            for key in ("usage_accounting", "timings", "request_budget")
+            if key in report
+        },
     }
 
 

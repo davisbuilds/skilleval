@@ -82,6 +82,13 @@ teardown have their existing individual limits; this does not impose a separate
 whole-study wall-clock deadline or infer a token/currency budget from missing
 provider telemetry. Output parent directories must already exist.
 
+`max_requests_per_attempt` defaults to 32 and accepts an explicit value up to
+128. Existing plans retain their frozen values. Native request-budget diagnostics
+flow into the attempt summary: admitted provider calls, `request_limit`
+refusals, retained observation count and any observer-cap failure are separate.
+A configured quota stop does not become evidence of task correctness or skill
+benefit. Missing diagnostics in older receipts remain missing.
+
 ## Attempts, interruption and recovery
 
 One local controller holds a nonblocking process lock on a study output. Different
@@ -134,7 +141,8 @@ files, judgments, and consumption; see [readable comparisons](TASKS.md#inspect-q
 Audit-backed task quality, scalar quality differences and uncertainty are not
 estimated. Native completion, a skill read, a parseable judgment or a stable judge
 is not correctness or skill benefit.
-The human audit packet remains frozen. Before scored studies, extend admission to
+Historical audit packets remain frozen; the earlier tiny-control audit is no
+longer an active prerequisite after task realignment. Before scored studies, extend admission to
 the actual task/treatment/dispatch route, resolve independent grader validation,
 and freeze duplicate/severity/coverage and assessment-selection policies. Known
 defect probes do not measure exhaustive review recall.
@@ -144,5 +152,6 @@ source bytes, scopes edits, and checks a candidate in a separate offline VM.
 Checking remains an explicit operation outside the study's task-agent loop; its
 results and optional native judgments are linked without overwriting native
 outcomes. Judge consumption stays separate; pending audit remains explicit.
-The [pilot shortlist](../project/PILOT-CANDIDATES.md) separates the first exposed
-repair seed from a still-unselected representative evaluation population.
+The [candidate register](../project/PILOT-CANDIDATES.md) records the selected
+completed-session debugging task and proposed expansion. One exposed engineering
+task does not establish a representative evaluation population.
