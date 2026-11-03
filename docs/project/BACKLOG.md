@@ -39,7 +39,10 @@ shipped history. Private provenance stays outside public entries and issues.
   exposed development work. Selected browser tasks will need environment and
   rendered-outcome validation; the narrow proposed game repair is a weak design
   skill comparison.
-- **Task environment profile and coverage:** the restored receipt-repair capture
+- **Task environment profile and coverage:** the selected completed-session task
+  now has [Node environment and outcome controls](../../examples/repair/completed-sessions/environment.md).
+  Preserve its shared quota/shutdown failure, platform skips and unsupported lanes.
+  The restored receipt-repair capture
   now has matching baseline/reference unit failures and skips, with required
   assets/history retained. The [environment record](../../examples/repair/receipt-admission/environment.md)
   identifies two root-sensitive failures, eight unit skips and zero local tasks
@@ -76,7 +79,9 @@ shipped history. Private provenance stays outside public entries and issues.
   Prespecify estimands, missing-data policy and repeated-run analysis, with
   uncertainty that respects task/repository clustering.
 - **Judge reliability and label audit:** independently audit authored labels,
-  native verdicts and disagreements. The human audit remains pending; agreement
+  native verdicts and disagreements. The earlier tiny-control audit was retired
+  from active work on 2026-11-02 after task realignment. Its records remain
+  unchanged and it does not gate the engineering slice. New audits must address the selected real tasks. Agreement
   with authored labels does not establish general reliability. The separate
   reliability suite now checks repeat/probe-order stability and within-packet
   paraphrase, anchor, injection and treatment-cue invariance. Expand to isolated

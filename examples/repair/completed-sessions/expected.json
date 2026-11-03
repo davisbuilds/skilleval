@@ -1,0 +1,2045 @@
+[
+  {
+    "probe_id": "first-compressed",
+    "expected": {
+      "stages": [
+        {
+          "discovery": {
+            "import": [
+              "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000001.jsonl.zst"
+            ],
+            "browser": [
+              "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000001.jsonl.zst"
+            ]
+          },
+          "sync": {
+            "total": 1,
+            "errors": 0
+          },
+          "import_files": 1,
+          "state": {
+            "browser": [
+              {
+                "id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000001",
+                "project": "aurora",
+                "cwd": "$CWD",
+                "message_count": 4,
+                "user_message_count": 2
+              }
+            ],
+            "messages": [
+              {
+                "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000001",
+                "ordinal": 0,
+                "role": "user",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Check the ledger; preserve café and Ω."
+                  }
+                ],
+                "timestamp": "2026-09-18T14:00:02Z"
+              },
+              {
+                "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000001",
+                "ordinal": 1,
+                "role": "assistant",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "First pass complete.\nOne entry remains."
+                  }
+                ],
+                "timestamp": "2026-09-18T14:00:03Z"
+              },
+              {
+                "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000001",
+                "ordinal": 2,
+                "role": "user",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Now close the remaining entry."
+                  }
+                ],
+                "timestamp": "2026-09-18T14:00:05Z"
+              },
+              {
+                "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000001",
+                "ordinal": 3,
+                "role": "assistant",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Closed. No entries lost."
+                  }
+                ],
+                "timestamp": "2026-09-18T14:00:06Z"
+              }
+            ],
+            "usage": [
+              {
+                "session_id": "019effff-1111-7000-8000-000000000001",
+                "tokens_in": 750,
+                "cache_read_tokens": 450,
+                "tokens_out": 80,
+                "model": "gpt-5.6-terra",
+                "client_timestamp": "2026-09-18T14:00:04Z",
+                "response_id": "request-alpha"
+              },
+              {
+                "session_id": "019effff-1111-7000-8000-000000000001",
+                "tokens_in": 380,
+                "cache_read_tokens": 120,
+                "tokens_out": 65,
+                "model": "gpt-5.6-terra",
+                "client_timestamp": "2026-09-18T14:00:07Z",
+                "response_id": "request-beta"
+              }
+            ],
+            "totals": [
+              {
+                "source": "codex",
+                "session_id": "019effff-1111-7000-8000-000000000001",
+                "status": "checked",
+                "harness": 1845,
+                "amon": 1845,
+                "ratio": 1
+              }
+            ]
+          }
+        }
+      ],
+      "direct": {
+        "content_matches_fixture": true,
+        "hash_matches_content": true,
+        "parser_session_ids": [
+          "019effff-1111-7000-8000-000000000001"
+        ],
+        "parser_usage": [
+          {
+            "response_id": "request-alpha",
+            "tokens_in": 750,
+            "cache_read_tokens": 450,
+            "tokens_out": 80,
+            "model": "gpt-5.6-terra"
+          },
+          {
+            "response_id": "request-beta",
+            "tokens_in": 380,
+            "cache_read_tokens": 120,
+            "tokens_out": 65,
+            "model": "gpt-5.6-terra"
+          }
+        ]
+      },
+      "repeat": {
+        "discovery": {
+          "import": [
+            "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000001.jsonl.zst"
+          ],
+          "browser": [
+            "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000001.jsonl.zst"
+          ]
+        },
+        "sync": {
+          "total": 1,
+          "errors": 0
+        },
+        "import_files": 1,
+        "state": {
+          "browser": [
+            {
+              "id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000001",
+              "project": "aurora",
+              "cwd": "$CWD",
+              "message_count": 4,
+              "user_message_count": 2
+            }
+          ],
+          "messages": [
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000001",
+              "ordinal": 0,
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Check the ledger; preserve café and Ω."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:02Z"
+            },
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000001",
+              "ordinal": 1,
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "First pass complete.\nOne entry remains."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:03Z"
+            },
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000001",
+              "ordinal": 2,
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Now close the remaining entry."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:05Z"
+            },
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000001",
+              "ordinal": 3,
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Closed. No entries lost."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:06Z"
+            }
+          ],
+          "usage": [
+            {
+              "session_id": "019effff-1111-7000-8000-000000000001",
+              "tokens_in": 750,
+              "cache_read_tokens": 450,
+              "tokens_out": 80,
+              "model": "gpt-5.6-terra",
+              "client_timestamp": "2026-09-18T14:00:04Z",
+              "response_id": "request-alpha"
+            },
+            {
+              "session_id": "019effff-1111-7000-8000-000000000001",
+              "tokens_in": 380,
+              "cache_read_tokens": 120,
+              "tokens_out": 65,
+              "model": "gpt-5.6-terra",
+              "client_timestamp": "2026-09-18T14:00:07Z",
+              "response_id": "request-beta"
+            }
+          ],
+          "totals": [
+            {
+              "source": "codex",
+              "session_id": "019effff-1111-7000-8000-000000000001",
+              "status": "checked",
+              "harness": 1845,
+              "amon": 1845,
+              "ratio": 1
+            }
+          ]
+        }
+      },
+      "forced": {
+        "discovery": {
+          "import": [
+            "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000001.jsonl.zst"
+          ],
+          "browser": [
+            "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000001.jsonl.zst"
+          ]
+        },
+        "sync": {
+          "total": 1,
+          "errors": 0
+        },
+        "import_files": 1,
+        "state": {
+          "browser": [
+            {
+              "id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000001",
+              "project": "aurora",
+              "cwd": "$CWD",
+              "message_count": 4,
+              "user_message_count": 2
+            }
+          ],
+          "messages": [
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000001",
+              "ordinal": 0,
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Check the ledger; preserve café and Ω."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:02Z"
+            },
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000001",
+              "ordinal": 1,
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "First pass complete.\nOne entry remains."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:03Z"
+            },
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000001",
+              "ordinal": 2,
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Now close the remaining entry."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:05Z"
+            },
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000001",
+              "ordinal": 3,
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Closed. No entries lost."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:06Z"
+            }
+          ],
+          "usage": [
+            {
+              "session_id": "019effff-1111-7000-8000-000000000001",
+              "tokens_in": 750,
+              "cache_read_tokens": 450,
+              "tokens_out": 80,
+              "model": "gpt-5.6-terra",
+              "client_timestamp": "2026-09-18T14:00:04Z",
+              "response_id": "request-alpha"
+            },
+            {
+              "session_id": "019effff-1111-7000-8000-000000000001",
+              "tokens_in": 380,
+              "cache_read_tokens": 120,
+              "tokens_out": 65,
+              "model": "gpt-5.6-terra",
+              "client_timestamp": "2026-09-18T14:00:07Z",
+              "response_id": "request-beta"
+            }
+          ],
+          "totals": [
+            {
+              "source": "codex",
+              "session_id": "019effff-1111-7000-8000-000000000001",
+              "status": "checked",
+              "harness": 1845,
+              "amon": 1845,
+              "ratio": 1
+            }
+          ]
+        }
+      },
+      "repeat_identity": {
+        "messages": {
+          "before_count": 4,
+          "retained_count": 4
+        },
+        "events": {
+          "before_count": 4,
+          "retained_count": 4
+        }
+      },
+      "forced_identity": {
+        "messages": {
+          "before_count": 4,
+          "retained_count": 4
+        },
+        "events": {
+          "before_count": 4,
+          "retained_count": 4
+        }
+      },
+      "project_repair": {
+        "preview": {
+          "events": 4,
+          "sessions": 1,
+          "browsing_sessions": 2
+        },
+        "preview_state": {
+          "events": [
+            "aurora-task"
+          ],
+          "sessions": [
+            {
+              "id": "019effff-1111-7000-8000-000000000001",
+              "project": "aurora-task"
+            }
+          ],
+          "browser": [
+            {
+              "id": "019effff-1111-7000-8000-000000000001",
+              "project": "aurora-task"
+            },
+            {
+              "id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000001",
+              "project": "aurora-task"
+            }
+          ]
+        },
+        "applied": {
+          "events": 4,
+          "sessions": 1,
+          "browsing_sessions": 2
+        },
+        "applied_state": {
+          "events": [
+            "aurora"
+          ],
+          "sessions": [
+            {
+              "id": "019effff-1111-7000-8000-000000000001",
+              "project": "aurora"
+            }
+          ],
+          "browser": [
+            {
+              "id": "019effff-1111-7000-8000-000000000001",
+              "project": "aurora"
+            },
+            {
+              "id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000001",
+              "project": "aurora"
+            }
+          ]
+        },
+        "again": {
+          "events": 0,
+          "sessions": 0,
+          "browsing_sessions": 0
+        }
+      }
+    }
+  },
+  {
+    "probe_id": "transition",
+    "expected": {
+      "stages": [
+        {
+          "discovery": {
+            "import": [
+              "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002.jsonl"
+            ],
+            "browser": [
+              "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002.jsonl"
+            ]
+          },
+          "sync": {
+            "total": 1,
+            "errors": 0
+          },
+          "import_files": 1,
+          "state": {
+            "browser": [
+              {
+                "id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002",
+                "project": "aurora",
+                "cwd": "$CWD",
+                "message_count": 2,
+                "user_message_count": 1
+              }
+            ],
+            "messages": [
+              {
+                "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002",
+                "ordinal": 0,
+                "role": "user",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Check the ledger; preserve café and Ω."
+                  }
+                ],
+                "timestamp": "2026-09-18T14:00:02Z"
+              },
+              {
+                "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002",
+                "ordinal": 1,
+                "role": "assistant",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "First pass complete.\nOne entry remains."
+                  }
+                ],
+                "timestamp": "2026-09-18T14:00:03Z"
+              }
+            ],
+            "usage": [
+              {
+                "session_id": "019effff-1111-7000-8000-000000000002",
+                "tokens_in": 750,
+                "cache_read_tokens": 450,
+                "tokens_out": 80,
+                "model": "gpt-5.6-terra",
+                "client_timestamp": "2026-09-18T14:00:04Z",
+                "response_id": "request-alpha"
+              }
+            ],
+            "totals": [
+              {
+                "source": "codex",
+                "session_id": "019effff-1111-7000-8000-000000000002",
+                "status": "checked",
+                "harness": 1280,
+                "amon": 1280,
+                "ratio": 1
+              }
+            ]
+          }
+        },
+        {
+          "discovery": {
+            "import": [
+              "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002.jsonl.zst"
+            ],
+            "browser": [
+              "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002.jsonl.zst"
+            ]
+          },
+          "sync": {
+            "total": 1,
+            "errors": 0
+          },
+          "import_files": 1,
+          "state": {
+            "browser": [
+              {
+                "id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002",
+                "project": "aurora",
+                "cwd": "$CWD",
+                "message_count": 4,
+                "user_message_count": 2
+              }
+            ],
+            "messages": [
+              {
+                "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002",
+                "ordinal": 0,
+                "role": "user",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Check the ledger; preserve café and Ω."
+                  }
+                ],
+                "timestamp": "2026-09-18T14:00:02Z"
+              },
+              {
+                "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002",
+                "ordinal": 1,
+                "role": "assistant",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "First pass complete.\nOne entry remains."
+                  }
+                ],
+                "timestamp": "2026-09-18T14:00:03Z"
+              },
+              {
+                "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002",
+                "ordinal": 2,
+                "role": "user",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Now close the remaining entry."
+                  }
+                ],
+                "timestamp": "2026-09-18T14:00:05Z"
+              },
+              {
+                "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002",
+                "ordinal": 3,
+                "role": "assistant",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Closed. No entries lost."
+                  }
+                ],
+                "timestamp": "2026-09-18T14:00:06Z"
+              }
+            ],
+            "usage": [
+              {
+                "session_id": "019effff-1111-7000-8000-000000000002",
+                "tokens_in": 750,
+                "cache_read_tokens": 450,
+                "tokens_out": 80,
+                "model": "gpt-5.6-terra",
+                "client_timestamp": "2026-09-18T14:00:04Z",
+                "response_id": "request-alpha"
+              },
+              {
+                "session_id": "019effff-1111-7000-8000-000000000002",
+                "tokens_in": 380,
+                "cache_read_tokens": 120,
+                "tokens_out": 65,
+                "model": "gpt-5.6-terra",
+                "client_timestamp": "2026-09-18T14:00:07Z",
+                "response_id": "request-beta"
+              }
+            ],
+            "totals": [
+              {
+                "source": "codex",
+                "session_id": "019effff-1111-7000-8000-000000000002",
+                "status": "checked",
+                "harness": 1845,
+                "amon": 1845,
+                "ratio": 1
+              }
+            ]
+          }
+        }
+      ],
+      "direct": {
+        "content_matches_fixture": true,
+        "hash_matches_content": true,
+        "parser_session_ids": [
+          "019effff-1111-7000-8000-000000000002"
+        ],
+        "parser_usage": [
+          {
+            "response_id": "request-alpha",
+            "tokens_in": 750,
+            "cache_read_tokens": 450,
+            "tokens_out": 80,
+            "model": "gpt-5.6-terra"
+          },
+          {
+            "response_id": "request-beta",
+            "tokens_in": 380,
+            "cache_read_tokens": 120,
+            "tokens_out": 65,
+            "model": "gpt-5.6-terra"
+          }
+        ]
+      },
+      "repeat": {
+        "discovery": {
+          "import": [
+            "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002.jsonl.zst"
+          ],
+          "browser": [
+            "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002.jsonl.zst"
+          ]
+        },
+        "sync": {
+          "total": 1,
+          "errors": 0
+        },
+        "import_files": 1,
+        "state": {
+          "browser": [
+            {
+              "id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002",
+              "project": "aurora",
+              "cwd": "$CWD",
+              "message_count": 4,
+              "user_message_count": 2
+            }
+          ],
+          "messages": [
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002",
+              "ordinal": 0,
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Check the ledger; preserve café and Ω."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:02Z"
+            },
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002",
+              "ordinal": 1,
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "First pass complete.\nOne entry remains."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:03Z"
+            },
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002",
+              "ordinal": 2,
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Now close the remaining entry."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:05Z"
+            },
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002",
+              "ordinal": 3,
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Closed. No entries lost."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:06Z"
+            }
+          ],
+          "usage": [
+            {
+              "session_id": "019effff-1111-7000-8000-000000000002",
+              "tokens_in": 750,
+              "cache_read_tokens": 450,
+              "tokens_out": 80,
+              "model": "gpt-5.6-terra",
+              "client_timestamp": "2026-09-18T14:00:04Z",
+              "response_id": "request-alpha"
+            },
+            {
+              "session_id": "019effff-1111-7000-8000-000000000002",
+              "tokens_in": 380,
+              "cache_read_tokens": 120,
+              "tokens_out": 65,
+              "model": "gpt-5.6-terra",
+              "client_timestamp": "2026-09-18T14:00:07Z",
+              "response_id": "request-beta"
+            }
+          ],
+          "totals": [
+            {
+              "source": "codex",
+              "session_id": "019effff-1111-7000-8000-000000000002",
+              "status": "checked",
+              "harness": 1845,
+              "amon": 1845,
+              "ratio": 1
+            }
+          ]
+        }
+      },
+      "forced": {
+        "discovery": {
+          "import": [
+            "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002.jsonl.zst"
+          ],
+          "browser": [
+            "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002.jsonl.zst"
+          ]
+        },
+        "sync": {
+          "total": 1,
+          "errors": 0
+        },
+        "import_files": 1,
+        "state": {
+          "browser": [
+            {
+              "id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002",
+              "project": "aurora",
+              "cwd": "$CWD",
+              "message_count": 4,
+              "user_message_count": 2
+            }
+          ],
+          "messages": [
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002",
+              "ordinal": 0,
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Check the ledger; preserve café and Ω."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:02Z"
+            },
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002",
+              "ordinal": 1,
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "First pass complete.\nOne entry remains."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:03Z"
+            },
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002",
+              "ordinal": 2,
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Now close the remaining entry."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:05Z"
+            },
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002",
+              "ordinal": 3,
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Closed. No entries lost."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:06Z"
+            }
+          ],
+          "usage": [
+            {
+              "session_id": "019effff-1111-7000-8000-000000000002",
+              "tokens_in": 750,
+              "cache_read_tokens": 450,
+              "tokens_out": 80,
+              "model": "gpt-5.6-terra",
+              "client_timestamp": "2026-09-18T14:00:04Z",
+              "response_id": "request-alpha"
+            },
+            {
+              "session_id": "019effff-1111-7000-8000-000000000002",
+              "tokens_in": 380,
+              "cache_read_tokens": 120,
+              "tokens_out": 65,
+              "model": "gpt-5.6-terra",
+              "client_timestamp": "2026-09-18T14:00:07Z",
+              "response_id": "request-beta"
+            }
+          ],
+          "totals": [
+            {
+              "source": "codex",
+              "session_id": "019effff-1111-7000-8000-000000000002",
+              "status": "checked",
+              "harness": 1845,
+              "amon": 1845,
+              "ratio": 1
+            }
+          ]
+        }
+      },
+      "repeat_identity": {
+        "messages": {
+          "before_count": 4,
+          "retained_count": 4
+        },
+        "events": {
+          "before_count": 4,
+          "retained_count": 4
+        }
+      },
+      "forced_identity": {
+        "messages": {
+          "before_count": 4,
+          "retained_count": 4
+        },
+        "events": {
+          "before_count": 4,
+          "retained_count": 4
+        }
+      },
+      "project_repair": {
+        "preview": {
+          "events": 4,
+          "sessions": 1,
+          "browsing_sessions": 2
+        },
+        "preview_state": {
+          "events": [
+            "aurora-task"
+          ],
+          "sessions": [
+            {
+              "id": "019effff-1111-7000-8000-000000000002",
+              "project": "aurora-task"
+            }
+          ],
+          "browser": [
+            {
+              "id": "019effff-1111-7000-8000-000000000002",
+              "project": "aurora-task"
+            },
+            {
+              "id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002",
+              "project": "aurora-task"
+            }
+          ]
+        },
+        "applied": {
+          "events": 4,
+          "sessions": 1,
+          "browsing_sessions": 2
+        },
+        "applied_state": {
+          "events": [
+            "aurora"
+          ],
+          "sessions": [
+            {
+              "id": "019effff-1111-7000-8000-000000000002",
+              "project": "aurora"
+            }
+          ],
+          "browser": [
+            {
+              "id": "019effff-1111-7000-8000-000000000002",
+              "project": "aurora"
+            },
+            {
+              "id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000002",
+              "project": "aurora"
+            }
+          ]
+        },
+        "again": {
+          "events": 0,
+          "sessions": 0,
+          "browsing_sessions": 0
+        }
+      },
+      "transition_identity": {
+        "messages": {
+          "before_count": 2,
+          "retained_count": 2
+        },
+        "events": {
+          "before_count": 3,
+          "retained_count": 3
+        }
+      }
+    }
+  },
+  {
+    "probe_id": "both-forms",
+    "expected": {
+      "stages": [
+        {
+          "discovery": {
+            "import": [
+              "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003.jsonl"
+            ],
+            "browser": [
+              "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003.jsonl"
+            ]
+          },
+          "sync": {
+            "total": 1,
+            "errors": 0
+          },
+          "import_files": 1,
+          "state": {
+            "browser": [
+              {
+                "id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003",
+                "project": "aurora",
+                "cwd": "$CWD",
+                "message_count": 4,
+                "user_message_count": 2
+              }
+            ],
+            "messages": [
+              {
+                "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003",
+                "ordinal": 0,
+                "role": "user",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Check the ledger; preserve café and Ω."
+                  }
+                ],
+                "timestamp": "2026-09-18T14:00:02Z"
+              },
+              {
+                "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003",
+                "ordinal": 1,
+                "role": "assistant",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "First pass complete.\nOne entry remains."
+                  }
+                ],
+                "timestamp": "2026-09-18T14:00:03Z"
+              },
+              {
+                "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003",
+                "ordinal": 2,
+                "role": "user",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Now close the remaining entry."
+                  }
+                ],
+                "timestamp": "2026-09-18T14:00:05Z"
+              },
+              {
+                "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003",
+                "ordinal": 3,
+                "role": "assistant",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Closed. No entries lost."
+                  }
+                ],
+                "timestamp": "2026-09-18T14:00:06Z"
+              }
+            ],
+            "usage": [
+              {
+                "session_id": "019effff-1111-7000-8000-000000000003",
+                "tokens_in": 750,
+                "cache_read_tokens": 450,
+                "tokens_out": 80,
+                "model": "gpt-5.6-terra",
+                "client_timestamp": "2026-09-18T14:00:04Z",
+                "response_id": "request-alpha"
+              },
+              {
+                "session_id": "019effff-1111-7000-8000-000000000003",
+                "tokens_in": 380,
+                "cache_read_tokens": 120,
+                "tokens_out": 65,
+                "model": "gpt-5.6-terra",
+                "client_timestamp": "2026-09-18T14:00:07Z",
+                "response_id": "request-beta"
+              }
+            ],
+            "totals": [
+              {
+                "source": "codex",
+                "session_id": "019effff-1111-7000-8000-000000000003",
+                "status": "checked",
+                "harness": 1845,
+                "amon": 1845,
+                "ratio": 1
+              }
+            ]
+          }
+        }
+      ],
+      "direct": {
+        "content_matches_fixture": true,
+        "hash_matches_content": true,
+        "parser_session_ids": [
+          "019effff-1111-7000-8000-000000000003"
+        ],
+        "parser_usage": [
+          {
+            "response_id": "request-alpha",
+            "tokens_in": 750,
+            "cache_read_tokens": 450,
+            "tokens_out": 80,
+            "model": "gpt-5.6-terra"
+          },
+          {
+            "response_id": "request-beta",
+            "tokens_in": 380,
+            "cache_read_tokens": 120,
+            "tokens_out": 65,
+            "model": "gpt-5.6-terra"
+          }
+        ]
+      },
+      "repeat": {
+        "discovery": {
+          "import": [
+            "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003.jsonl"
+          ],
+          "browser": [
+            "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003.jsonl"
+          ]
+        },
+        "sync": {
+          "total": 1,
+          "errors": 0
+        },
+        "import_files": 1,
+        "state": {
+          "browser": [
+            {
+              "id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003",
+              "project": "aurora",
+              "cwd": "$CWD",
+              "message_count": 4,
+              "user_message_count": 2
+            }
+          ],
+          "messages": [
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003",
+              "ordinal": 0,
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Check the ledger; preserve café and Ω."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:02Z"
+            },
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003",
+              "ordinal": 1,
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "First pass complete.\nOne entry remains."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:03Z"
+            },
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003",
+              "ordinal": 2,
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Now close the remaining entry."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:05Z"
+            },
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003",
+              "ordinal": 3,
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Closed. No entries lost."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:06Z"
+            }
+          ],
+          "usage": [
+            {
+              "session_id": "019effff-1111-7000-8000-000000000003",
+              "tokens_in": 750,
+              "cache_read_tokens": 450,
+              "tokens_out": 80,
+              "model": "gpt-5.6-terra",
+              "client_timestamp": "2026-09-18T14:00:04Z",
+              "response_id": "request-alpha"
+            },
+            {
+              "session_id": "019effff-1111-7000-8000-000000000003",
+              "tokens_in": 380,
+              "cache_read_tokens": 120,
+              "tokens_out": 65,
+              "model": "gpt-5.6-terra",
+              "client_timestamp": "2026-09-18T14:00:07Z",
+              "response_id": "request-beta"
+            }
+          ],
+          "totals": [
+            {
+              "source": "codex",
+              "session_id": "019effff-1111-7000-8000-000000000003",
+              "status": "checked",
+              "harness": 1845,
+              "amon": 1845,
+              "ratio": 1
+            }
+          ]
+        }
+      },
+      "forced": {
+        "discovery": {
+          "import": [
+            "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003.jsonl"
+          ],
+          "browser": [
+            "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003.jsonl"
+          ]
+        },
+        "sync": {
+          "total": 1,
+          "errors": 0
+        },
+        "import_files": 1,
+        "state": {
+          "browser": [
+            {
+              "id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003",
+              "project": "aurora",
+              "cwd": "$CWD",
+              "message_count": 4,
+              "user_message_count": 2
+            }
+          ],
+          "messages": [
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003",
+              "ordinal": 0,
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Check the ledger; preserve café and Ω."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:02Z"
+            },
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003",
+              "ordinal": 1,
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "First pass complete.\nOne entry remains."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:03Z"
+            },
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003",
+              "ordinal": 2,
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Now close the remaining entry."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:05Z"
+            },
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003",
+              "ordinal": 3,
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Closed. No entries lost."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:06Z"
+            }
+          ],
+          "usage": [
+            {
+              "session_id": "019effff-1111-7000-8000-000000000003",
+              "tokens_in": 750,
+              "cache_read_tokens": 450,
+              "tokens_out": 80,
+              "model": "gpt-5.6-terra",
+              "client_timestamp": "2026-09-18T14:00:04Z",
+              "response_id": "request-alpha"
+            },
+            {
+              "session_id": "019effff-1111-7000-8000-000000000003",
+              "tokens_in": 380,
+              "cache_read_tokens": 120,
+              "tokens_out": 65,
+              "model": "gpt-5.6-terra",
+              "client_timestamp": "2026-09-18T14:00:07Z",
+              "response_id": "request-beta"
+            }
+          ],
+          "totals": [
+            {
+              "source": "codex",
+              "session_id": "019effff-1111-7000-8000-000000000003",
+              "status": "checked",
+              "harness": 1845,
+              "amon": 1845,
+              "ratio": 1
+            }
+          ]
+        }
+      },
+      "repeat_identity": {
+        "messages": {
+          "before_count": 4,
+          "retained_count": 4
+        },
+        "events": {
+          "before_count": 4,
+          "retained_count": 4
+        }
+      },
+      "forced_identity": {
+        "messages": {
+          "before_count": 4,
+          "retained_count": 4
+        },
+        "events": {
+          "before_count": 4,
+          "retained_count": 4
+        }
+      },
+      "project_repair": {
+        "preview": {
+          "events": 4,
+          "sessions": 1,
+          "browsing_sessions": 2
+        },
+        "preview_state": {
+          "events": [
+            "aurora-task"
+          ],
+          "sessions": [
+            {
+              "id": "019effff-1111-7000-8000-000000000003",
+              "project": "aurora-task"
+            }
+          ],
+          "browser": [
+            {
+              "id": "019effff-1111-7000-8000-000000000003",
+              "project": "aurora-task"
+            },
+            {
+              "id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003",
+              "project": "aurora-task"
+            }
+          ]
+        },
+        "applied": {
+          "events": 4,
+          "sessions": 1,
+          "browsing_sessions": 2
+        },
+        "applied_state": {
+          "events": [
+            "aurora"
+          ],
+          "sessions": [
+            {
+              "id": "019effff-1111-7000-8000-000000000003",
+              "project": "aurora"
+            }
+          ],
+          "browser": [
+            {
+              "id": "019effff-1111-7000-8000-000000000003",
+              "project": "aurora"
+            },
+            {
+              "id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003",
+              "project": "aurora"
+            }
+          ]
+        },
+        "again": {
+          "events": 0,
+          "sessions": 0,
+          "browsing_sessions": 0
+        }
+      },
+      "compressed_only": {
+        "discovery": {
+          "import": [
+            "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003.jsonl.zst"
+          ],
+          "browser": [
+            "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003.jsonl.zst"
+          ]
+        },
+        "sync": {
+          "total": 1,
+          "errors": 0
+        },
+        "import_files": 1,
+        "state": {
+          "browser": [
+            {
+              "id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003",
+              "project": "aurora",
+              "cwd": "$CWD",
+              "message_count": 4,
+              "user_message_count": 2
+            }
+          ],
+          "messages": [
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003",
+              "ordinal": 0,
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Check the ledger; preserve café and Ω."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:02Z"
+            },
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003",
+              "ordinal": 1,
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "First pass complete.\nOne entry remains."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:03Z"
+            },
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003",
+              "ordinal": 2,
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Now close the remaining entry."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:05Z"
+            },
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000003",
+              "ordinal": 3,
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Closed. No entries lost."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:06Z"
+            }
+          ],
+          "usage": [
+            {
+              "session_id": "019effff-1111-7000-8000-000000000003",
+              "tokens_in": 750,
+              "cache_read_tokens": 450,
+              "tokens_out": 80,
+              "model": "gpt-5.6-terra",
+              "client_timestamp": "2026-09-18T14:00:04Z",
+              "response_id": "request-alpha"
+            },
+            {
+              "session_id": "019effff-1111-7000-8000-000000000003",
+              "tokens_in": 380,
+              "cache_read_tokens": 120,
+              "tokens_out": 65,
+              "model": "gpt-5.6-terra",
+              "client_timestamp": "2026-09-18T14:00:07Z",
+              "response_id": "request-beta"
+            }
+          ],
+          "totals": [
+            {
+              "source": "codex",
+              "session_id": "019effff-1111-7000-8000-000000000003",
+              "status": "checked",
+              "harness": 1845,
+              "amon": 1845,
+              "ratio": 1
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "probe_id": "plain-append",
+    "expected": {
+      "stages": [
+        {
+          "discovery": {
+            "import": [
+              "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004.jsonl"
+            ],
+            "browser": [
+              "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004.jsonl"
+            ]
+          },
+          "sync": {
+            "total": 1,
+            "errors": 0
+          },
+          "import_files": 1,
+          "state": {
+            "browser": [
+              {
+                "id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004",
+                "project": "aurora",
+                "cwd": "$CWD",
+                "message_count": 2,
+                "user_message_count": 1
+              }
+            ],
+            "messages": [
+              {
+                "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004",
+                "ordinal": 0,
+                "role": "user",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Check the ledger; preserve café and Ω."
+                  }
+                ],
+                "timestamp": "2026-09-18T14:00:02Z"
+              },
+              {
+                "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004",
+                "ordinal": 1,
+                "role": "assistant",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "First pass complete.\nOne entry remains."
+                  }
+                ],
+                "timestamp": "2026-09-18T14:00:03Z"
+              }
+            ],
+            "usage": [
+              {
+                "session_id": "019effff-1111-7000-8000-000000000004",
+                "tokens_in": 750,
+                "cache_read_tokens": 450,
+                "tokens_out": 80,
+                "model": "gpt-5.6-terra",
+                "client_timestamp": "2026-09-18T14:00:04Z",
+                "response_id": "request-alpha"
+              }
+            ],
+            "totals": [
+              {
+                "source": "codex",
+                "session_id": "019effff-1111-7000-8000-000000000004",
+                "status": "checked",
+                "harness": 1280,
+                "amon": 1280,
+                "ratio": 1
+              }
+            ]
+          }
+        },
+        {
+          "discovery": {
+            "import": [
+              "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004.jsonl"
+            ],
+            "browser": [
+              "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004.jsonl"
+            ]
+          },
+          "sync": {
+            "total": 1,
+            "errors": 0
+          },
+          "import_files": 1,
+          "state": {
+            "browser": [
+              {
+                "id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004",
+                "project": "aurora",
+                "cwd": "$CWD",
+                "message_count": 4,
+                "user_message_count": 2
+              }
+            ],
+            "messages": [
+              {
+                "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004",
+                "ordinal": 0,
+                "role": "user",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Check the ledger; preserve café and Ω."
+                  }
+                ],
+                "timestamp": "2026-09-18T14:00:02Z"
+              },
+              {
+                "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004",
+                "ordinal": 1,
+                "role": "assistant",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "First pass complete.\nOne entry remains."
+                  }
+                ],
+                "timestamp": "2026-09-18T14:00:03Z"
+              },
+              {
+                "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004",
+                "ordinal": 2,
+                "role": "user",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Now close the remaining entry."
+                  }
+                ],
+                "timestamp": "2026-09-18T14:00:05Z"
+              },
+              {
+                "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004",
+                "ordinal": 3,
+                "role": "assistant",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Closed. No entries lost."
+                  }
+                ],
+                "timestamp": "2026-09-18T14:00:06Z"
+              }
+            ],
+            "usage": [
+              {
+                "session_id": "019effff-1111-7000-8000-000000000004",
+                "tokens_in": 750,
+                "cache_read_tokens": 450,
+                "tokens_out": 80,
+                "model": "gpt-5.6-terra",
+                "client_timestamp": "2026-09-18T14:00:04Z",
+                "response_id": "request-alpha"
+              },
+              {
+                "session_id": "019effff-1111-7000-8000-000000000004",
+                "tokens_in": 380,
+                "cache_read_tokens": 120,
+                "tokens_out": 65,
+                "model": "gpt-5.6-terra",
+                "client_timestamp": "2026-09-18T14:00:07Z",
+                "response_id": "request-beta"
+              }
+            ],
+            "totals": [
+              {
+                "source": "codex",
+                "session_id": "019effff-1111-7000-8000-000000000004",
+                "status": "checked",
+                "harness": 1845,
+                "amon": 1845,
+                "ratio": 1
+              }
+            ]
+          }
+        }
+      ],
+      "direct": {
+        "content_matches_fixture": true,
+        "hash_matches_content": true,
+        "parser_session_ids": [
+          "019effff-1111-7000-8000-000000000004"
+        ],
+        "parser_usage": [
+          {
+            "response_id": "request-alpha",
+            "tokens_in": 750,
+            "cache_read_tokens": 450,
+            "tokens_out": 80,
+            "model": "gpt-5.6-terra"
+          },
+          {
+            "response_id": "request-beta",
+            "tokens_in": 380,
+            "cache_read_tokens": 120,
+            "tokens_out": 65,
+            "model": "gpt-5.6-terra"
+          }
+        ]
+      },
+      "repeat": {
+        "discovery": {
+          "import": [
+            "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004.jsonl"
+          ],
+          "browser": [
+            "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004.jsonl"
+          ]
+        },
+        "sync": {
+          "total": 1,
+          "errors": 0
+        },
+        "import_files": 1,
+        "state": {
+          "browser": [
+            {
+              "id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004",
+              "project": "aurora",
+              "cwd": "$CWD",
+              "message_count": 4,
+              "user_message_count": 2
+            }
+          ],
+          "messages": [
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004",
+              "ordinal": 0,
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Check the ledger; preserve café and Ω."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:02Z"
+            },
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004",
+              "ordinal": 1,
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "First pass complete.\nOne entry remains."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:03Z"
+            },
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004",
+              "ordinal": 2,
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Now close the remaining entry."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:05Z"
+            },
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004",
+              "ordinal": 3,
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Closed. No entries lost."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:06Z"
+            }
+          ],
+          "usage": [
+            {
+              "session_id": "019effff-1111-7000-8000-000000000004",
+              "tokens_in": 750,
+              "cache_read_tokens": 450,
+              "tokens_out": 80,
+              "model": "gpt-5.6-terra",
+              "client_timestamp": "2026-09-18T14:00:04Z",
+              "response_id": "request-alpha"
+            },
+            {
+              "session_id": "019effff-1111-7000-8000-000000000004",
+              "tokens_in": 380,
+              "cache_read_tokens": 120,
+              "tokens_out": 65,
+              "model": "gpt-5.6-terra",
+              "client_timestamp": "2026-09-18T14:00:07Z",
+              "response_id": "request-beta"
+            }
+          ],
+          "totals": [
+            {
+              "source": "codex",
+              "session_id": "019effff-1111-7000-8000-000000000004",
+              "status": "checked",
+              "harness": 1845,
+              "amon": 1845,
+              "ratio": 1
+            }
+          ]
+        }
+      },
+      "forced": {
+        "discovery": {
+          "import": [
+            "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004.jsonl"
+          ],
+          "browser": [
+            "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004.jsonl"
+          ]
+        },
+        "sync": {
+          "total": 1,
+          "errors": 0
+        },
+        "import_files": 1,
+        "state": {
+          "browser": [
+            {
+              "id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004",
+              "project": "aurora",
+              "cwd": "$CWD",
+              "message_count": 4,
+              "user_message_count": 2
+            }
+          ],
+          "messages": [
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004",
+              "ordinal": 0,
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Check the ledger; preserve café and Ω."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:02Z"
+            },
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004",
+              "ordinal": 1,
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "First pass complete.\nOne entry remains."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:03Z"
+            },
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004",
+              "ordinal": 2,
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Now close the remaining entry."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:05Z"
+            },
+            {
+              "session_id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004",
+              "ordinal": 3,
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Closed. No entries lost."
+                }
+              ],
+              "timestamp": "2026-09-18T14:00:06Z"
+            }
+          ],
+          "usage": [
+            {
+              "session_id": "019effff-1111-7000-8000-000000000004",
+              "tokens_in": 750,
+              "cache_read_tokens": 450,
+              "tokens_out": 80,
+              "model": "gpt-5.6-terra",
+              "client_timestamp": "2026-09-18T14:00:04Z",
+              "response_id": "request-alpha"
+            },
+            {
+              "session_id": "019effff-1111-7000-8000-000000000004",
+              "tokens_in": 380,
+              "cache_read_tokens": 120,
+              "tokens_out": 65,
+              "model": "gpt-5.6-terra",
+              "client_timestamp": "2026-09-18T14:00:07Z",
+              "response_id": "request-beta"
+            }
+          ],
+          "totals": [
+            {
+              "source": "codex",
+              "session_id": "019effff-1111-7000-8000-000000000004",
+              "status": "checked",
+              "harness": 1845,
+              "amon": 1845,
+              "ratio": 1
+            }
+          ]
+        }
+      },
+      "repeat_identity": {
+        "messages": {
+          "before_count": 4,
+          "retained_count": 4
+        },
+        "events": {
+          "before_count": 4,
+          "retained_count": 4
+        }
+      },
+      "forced_identity": {
+        "messages": {
+          "before_count": 4,
+          "retained_count": 4
+        },
+        "events": {
+          "before_count": 4,
+          "retained_count": 4
+        }
+      },
+      "project_repair": {
+        "preview": {
+          "events": 4,
+          "sessions": 1,
+          "browsing_sessions": 2
+        },
+        "preview_state": {
+          "events": [
+            "aurora-task"
+          ],
+          "sessions": [
+            {
+              "id": "019effff-1111-7000-8000-000000000004",
+              "project": "aurora-task"
+            }
+          ],
+          "browser": [
+            {
+              "id": "019effff-1111-7000-8000-000000000004",
+              "project": "aurora-task"
+            },
+            {
+              "id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004",
+              "project": "aurora-task"
+            }
+          ]
+        },
+        "applied": {
+          "events": 4,
+          "sessions": 1,
+          "browsing_sessions": 2
+        },
+        "applied_state": {
+          "events": [
+            "aurora"
+          ],
+          "sessions": [
+            {
+              "id": "019effff-1111-7000-8000-000000000004",
+              "project": "aurora"
+            }
+          ],
+          "browser": [
+            {
+              "id": "019effff-1111-7000-8000-000000000004",
+              "project": "aurora"
+            },
+            {
+              "id": "rollout-2026-09-18T14-00-00-019effff-1111-7000-8000-000000000004",
+              "project": "aurora"
+            }
+          ]
+        },
+        "again": {
+          "events": 0,
+          "sessions": 0,
+          "browsing_sessions": 0
+        }
+      },
+      "transition_identity": {
+        "messages": {
+          "before_count": 2,
+          "retained_count": 2
+        },
+        "events": {
+          "before_count": 3,
+          "retained_count": 3
+        }
+      }
+    }
+  },
+  {
+    "probe_id": "fallback-name",
+    "expected": {
+      "discovery": {
+        "import": [
+          "retained-session-without-id.jsonl.zst"
+        ],
+        "browser": [
+          "retained-session-without-id.jsonl.zst"
+        ]
+      },
+      "sync_result": "parsed",
+      "event_session_ids": [
+        "retained-session-without-id"
+      ],
+      "browser_ids": [
+        "retained-session-without-id"
+      ],
+      "messages": [
+        {
+          "session_id": "retained-session-without-id",
+          "ordinal": 0,
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Recover this named session."
+            }
+          ],
+          "timestamp": "2026-09-18T14:00:02Z"
+        },
+        {
+          "session_id": "retained-session-without-id",
+          "ordinal": 1,
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Recovered."
+            }
+          ],
+          "timestamp": "2026-09-18T14:00:03Z"
+        }
+      ]
+    }
+  },
+  {
+    "probe_id": "corrupt-compressed",
+    "expected": {
+      "discovery": {
+        "import": [
+          "damaged-rollout.jsonl.zst"
+        ],
+        "browser": [
+          "damaged-rollout.jsonl.zst"
+        ]
+      },
+      "read_raised": true,
+      "sync_result": "error",
+      "browser_rows": 0,
+      "usage_rows": 0
+    }
+  }
+]

@@ -1,0 +1,5 @@
+Some completed Codex sessions are missing from AgentMonitor's session browser and usage history, even after a forced sync, while active sessions still appear. Diagnose and repair this using the supplied synthetic session directory at sample-history/codex-home/sessions.
+
+Preserve existing session identity, messages and usage when files change after a session finishes. Repeated imports and syncs must not duplicate them. Keep ordinary plain-file behavior working. Follow the repository's normal guidance and provide a patch with verification evidence.
+
+Use only the supplied synthetic history and disposable databases. For application commands, set CODEX_HOME to the supplied sample-history/codex-home directory in that command's environment and point AGENTMONITOR_DB_PATH at a temporary database before importing application modules. Keep databases, session data and scratch files outside the source tree. Ordinary build output in dist/ and frontend/dist/ may remain. Do not connect to an installed service or a real session store.
