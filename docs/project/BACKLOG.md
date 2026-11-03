@@ -78,10 +78,18 @@ shipped history. Private provenance stays outside public entries and issues.
   the conditional API-equivalent scenario; never infer observed charges from it.
   Prespecify estimands, missing-data policy and repeated-run analysis, with
   uncertainty that respects task/repository clustering.
+- **Longer task budgets:** the native runner caps each attempt at 780 seconds
+  and the gateway lifetime at 900 seconds. The debugging pilot reached that
+  deadline with requests remaining. Freeze task-appropriate budgets before
+  comparisons; a deadline is an execution outcome, not a correctness verdict.
+  If selected workloads need longer sessions, extend supervision, authentication
+  lifetime checks, accounting and recovery together. Preserve prior timed-out
+  attempts and validate termination before using the expanded route.
 - **Judge reliability and label audit:** independently audit authored labels,
   native verdicts and disagreements. The earlier tiny-control audit was retired
   from active work on 2026-11-02 after task realignment. Its records remain
-  unchanged and it does not gate the engineering slice. New audits must address the selected real tasks. Agreement
+  unchanged and it does not gate the engineering slice. New audits must address
+  the selected real tasks. Agreement
   with authored labels does not establish general reliability. The separate
   reliability suite now checks repeat/probe-order stability and within-packet
   paraphrase, anchor, injection and treatment-cue invariance. Expand to isolated

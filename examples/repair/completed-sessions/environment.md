@@ -88,6 +88,18 @@ source changes, regression risk, verification claims and limitations independent
   and the reference. The current worker compares decoded bytes with the fixture
   actually written from that request, while retaining independent database checks.
   Original worker bytes, expectations and failed receipts remain retained.
+- The first development pair exposed an archive-format limit for long filenames.
+  npm cache names reproduce the failure; the original failing filename was not
+  retained. Bounded path metadata now preserves these files through collection,
+  readback and checker transfer. A fresh synthetic native build/pack control
+  retained exact long cache/source bytes and reached the offline checker. Failed
+  original archives remain unusable evidence, without rewritten end markers.
+- The initial 32-request allowance stopped one agent before its final response;
+  the other reached the 780-second deadline. Both attempts also failed collection,
+  so neither supports a completed quality comparison. Explicit budgets may now
+  select up to 128 requests, with defaults unchanged and separate observation
+  limits. A new pair selects 64 requests and the same deadline; it cannot replace
+  the first pair or establish a skill effect by itself.
 
 New task preparation freezes an adjacent worker copy. Later template edits cannot
 silently change it. Changed inputs, workers or contracts require new generations.
