@@ -31,6 +31,10 @@ remains necessary after a controller interruption.
 The solver receives writable task files, fresh home/Codex state and temporary
 storage; read-only standard runtime/tool trees and the model catalog; minimal
 devices, private PTYs and shared memory; and the loopback inference endpoint.
+An optional image dependency tree at `/usr/local/share/task-dependencies/node_modules`
+is also mounted read-only at `/workspace/node_modules`, allowing ordinary Node
+resolution from the task without adding dependencies to collected artifacts.
+The dependency source must be a real directory with no symlink ancestors.
 Selected skill bytes and resources retain their native paths. Controller files,
 staging archives, `/opt`, management sockets and the original guest root are not
 mounted into this view. Stdin/stdout/stderr are pipes. The controller receives

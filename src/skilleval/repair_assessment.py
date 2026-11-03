@@ -17,7 +17,7 @@ from skilleval.contracts import Citation, Digest, Identifier, Record
 from skilleval.errors import SkillEvalError
 from skilleval.gateway import EFFORT, MODEL
 from skilleval.identity import file_digest, object_digest
-from skilleval.repair_check import compare_observations
+from skilleval.repair_check import compare_observations, validate_observer_resources
 from skilleval.study import _clean_native
 
 Criterion = Literal["task-contract", "scope-and-regressions", "verification-claims"]
@@ -262,6 +262,7 @@ def checked_report(ref: RepairCheckSource) -> dict[str, Any]:
         object_digest(value.get(key)) != object_digest(wanted) for key, wanted in expected.items()
     ):
         raise SkillEvalError("repair check binding differs from selected source")
+    validate_observer_resources(task, value)
     directory = Path(ref.report).absolute().parent
     recovery = evidence._parse_json(
         grading._read_regular(directory / "recovery.json", 4 * 1024 * 1024)
@@ -276,6 +277,7 @@ def checked_report(ref: RepairCheckSource) -> dict[str, Any]:
         process = value.get("process", {})
         if not isinstance(process, dict) or not isinstance(process.get("stdout"), str):
             raise SkillEvalError("invalid repair check process evidence")
+        validate_observer_resources(task, process)
         if (
             value.get("cleanup_complete") is not True
             or process.get("worker_uid") != 65534
@@ -417,6 +419,11 @@ def packet(spec: RepairAssessmentSpec) -> tuple[dict[str, bytes], str, dict[str,
                 },
                 "limits": observed.get("limits", []),
                 "error": observed.get("error"),
+                **(
+                    {"observer_resources": observed["observer_resources"]}
+                    if "observer_resources" in observed
+                    else {}
+                ),
             }
         )
     digest = object_digest(

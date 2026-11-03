@@ -18,6 +18,7 @@ from skilleval.solver_boundary import (
     _receive,
     _tree_entries,
     main,
+    node_dependencies,
     run,
     transport_program,
     valid_receipt,
@@ -42,6 +43,36 @@ def test_layout_accepts_distinct_real_roots_and_rejects_a_symlink(tmp_path: Path
     alias.symlink_to(root, target_is_directory=True)
     with pytest.raises(ValueError, match="symlink"):
         validate_layout(alias, work)
+
+
+def test_optional_image_dependencies_require_a_real_directory(tmp_path: Path) -> None:
+    source = tmp_path / "image-dependencies"
+    assert node_dependencies(source) is None
+    source.mkdir()
+    (source / "package.json").write_text('{"name":"ordinary-dependency"}')
+    assert node_dependencies(source) == source
+    alias = tmp_path / "alias"
+    alias.symlink_to(source, target_is_directory=True)
+    with pytest.raises(ValueError, match="symlink"):
+        node_dependencies(alias)
+    broken = tmp_path / "broken"
+    broken.symlink_to(tmp_path / "missing")
+    with pytest.raises(ValueError, match="symlink"):
+        node_dependencies(broken)
+    with pytest.raises(ValueError, match="directories"):
+        node_dependencies(source / "package.json")
+
+
+def test_dependency_projection_cannot_overlay_task_or_controller(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from skilleval import solver_boundary
+
+    root, work = layout(tmp_path)
+    for destination in (root / "node_modules", work / "node_modules", work):
+        monkeypatch.setattr(solver_boundary, "NODE_DEPENDENCIES_TARGET", destination)
+        with pytest.raises(ValueError, match="image dependencies"):
+            validate_layout(root, work)
 
 
 def test_layout_rejects_task_ancestor_of_controller(tmp_path: Path) -> None:
@@ -285,3 +316,22 @@ print(json.dumps(receipt))
     assert receipt["transport_filter"] == TRANSPORT_FILTER
     assert receipt["transport_filter_probe"]["socket_vsock_high_word"] == 1
     assert receipt["transport_filter_probe"]["unix_socketpair"] is True
+
+
+def test_node_workspace_keeps_writable_local_directory_without_shadowing_dependencies(tmp_path):
+    from skilleval.solver_boundary import prepare_node_workdir
+
+    work = tmp_path / "task"
+    work.mkdir()
+    prepare_node_workdir(work)
+    assert (work / "node_modules").is_dir()
+    assert list((work / "node_modules").iterdir()) == []
+    own_file = work / "node_modules" / "local-cache"
+    own_file.write_text("ordinary temporary file")
+    prepare_node_workdir(work)
+    assert own_file.read_text() == "ordinary temporary file"
+    own_file.unlink()
+    (work / "node_modules").rmdir()
+    (work / "node_modules").symlink_to(tmp_path / "missing", target_is_directory=True)
+    with pytest.raises(ValueError):
+        prepare_node_workdir(work)

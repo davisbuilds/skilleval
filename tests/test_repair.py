@@ -115,6 +115,283 @@ def test_out_of_scope_control_is_retained_but_cannot_be_checked(task, tmp_path):
         repair.result_files(task["spec"], task["digest"], output, result["sha256"])
 
 
+def test_editable_directories_allow_existing_new_and_removed_descendants(task, tmp_path):
+    source = task["source"]
+    (source / "src").mkdir()
+    (source / "src/existing.py").write_text("old existing source\n")
+    (source / "src/removed.py").write_text("source to remove\n")
+    baseline = tmp_path / "directory-input"
+    captured = evidence.snapshot(source, baseline)
+    spec = repair.RepairSpec.model_validate_json(
+        json.dumps(
+            {
+                **task["spec"].model_dump(mode="json"),
+                "input_bundle": str(baseline),
+                "input_sha256": captured["manifest_sha256"],
+                "editable_directories": ["src", "new-package"],
+            }
+        )
+    )
+    contract = tmp_path / "directory-task.json"
+    prepared = repair.prepare_repair(spec, contract)
+    loaded = repair.load_task(contract, prepared["sha256"])
+    assert loaded.editable_directories == ("src", "new-package")
+    (source / "src/existing.py").write_text("revised existing source\n")
+    (source / "src/removed.py").unlink()
+    (source / "src/nested").mkdir()
+    (source / "src/nested/helper.py").write_text("independently named helper\n")
+    (source / "new-package").mkdir()
+    (source / "new-package/code.py").write_text("new package\n")
+    (source / "code.py").write_text("exact-path edit remains allowed\n")
+    candidate = tmp_path / "directory-candidate"
+    snapshot = evidence.snapshot(source, candidate)
+    output = tmp_path / "directory-result"
+    result = repair.collect_control(
+        contract, prepared["sha256"], candidate, snapshot["manifest_sha256"], output
+    )
+    assert result["status"] == "collected"
+    record, files = repair.result_files(loaded, prepared["sha256"], output, result["sha256"])
+    assert record["changed_paths"] == [
+        "code.py",
+        "new-package/code.py",
+        "src/existing.py",
+        "src/nested/helper.py",
+        "src/removed.py",
+    ]
+    assert "src/removed.py" not in {name for name, _, _ in files}
+    # A retained result cannot borrow a broader scope during readback.
+    narrow = loaded.model_copy(update={"editable_directories": ()})
+    with pytest.raises(SkillEvalError, match="retained evidence"):
+        repair.result_files(narrow, prepared["sha256"], output, result["sha256"])
+
+
+@pytest.mark.parametrize("changed_name", ["src-other/code.py", "src", "src/nested/manifest.json"])
+def test_editable_directory_rejects_siblings_replacements_and_metadata(
+    task, tmp_path, changed_name
+):
+    spec = task["spec"].model_copy(update={"editable_directories": ("src",)})
+    contract = tmp_path / "prefix-task.json"
+    prepared = repair.prepare_repair(spec, contract)
+    changed = task["source"] / changed_name
+    changed.parent.mkdir(parents=True, exist_ok=True)
+    changed.write_text("outside the directory grant\n")
+    candidate = tmp_path / "prefix-candidate"
+    captured = evidence.snapshot(task["source"], candidate)
+    output = tmp_path / "prefix-result"
+    result = repair.collect_control(
+        contract, prepared["sha256"], candidate, captured["manifest_sha256"], output
+    )
+    assert result["status"] == "invalid-scope"
+    retained = json.loads((output / "repair-result.json").read_text())
+    assert retained["out_of_scope"] == [changed_name]
+
+
+@pytest.mark.parametrize(
+    "directories",
+    [
+        ["."],
+        ["/src"],
+        ["src/"],
+        ["src//nested"],
+        ["src/../tests"],
+        ["src", "SRC"],
+        [".git"],
+        ["src/.git/objects"],
+        ["__pycache__"],
+        ["src/__pycache__/nested"],
+        ["src/__PYCACHE__"],
+        [".pytest_cache"],
+        ["src/.pytest_cache"],
+        ["manifest.json"],
+        ["src/manifest.json/nested"],
+        ["path with spaces"],
+    ],
+)
+def test_editable_directory_declarations_reject_unsafe_or_metadata_paths(task, directories):
+    from pydantic import ValidationError
+
+    data = {**task["spec"].model_dump(mode="json"), "editable_directories": directories}
+    with pytest.raises((ValidationError, SkillEvalError)):
+        repair.RepairSpec.model_validate_json(json.dumps(data))
+
+
+def test_empty_directory_scope_preserves_legacy_task_bytes_and_round_trip(task):
+    legacy = {
+        "schema_version": 1,
+        "task_id": "authored",
+        "input_bundle": str(task["base"]),
+        "input_sha256": task["spec"].input_sha256,
+        "prompt": "Repair the defect.",
+        "editable_paths": ["code.py", "new.py"],
+        "worker": task["spec"].worker,
+        "worker_sha256": task["spec"].worker_sha256,
+        "probes": [
+            {
+                "schema_version": 1,
+                "probe_id": "result",
+                "request": {"value": False},
+                "expected": True,
+            }
+        ],
+        "timeout_seconds": 60,
+        "source_url": "https://example.invalid/authored",
+        "source_revision": "v1",
+    }
+    assert task["spec"].model_dump(mode="json") == legacy
+    assert json.loads(task["spec"].model_dump_json()) == legacy
+    expected = {"schema_version": 1, "kind": "skilleval-repair-task", "spec": legacy}
+    assert task["task"].read_bytes() == evidence._json_bytes(expected)
+    loaded = repair.load_task(task["task"], task["digest"])
+    assert loaded.editable_directories == ()
+    assert loaded.model_dump(mode="json") == legacy
+    explicit = repair.RepairSpec.model_validate_json(
+        json.dumps({**legacy, "editable_directories": []})
+    )
+    assert explicit.model_dump(mode="json") == legacy
+
+
+def test_directory_scope_keeps_nonempty_exact_paths_and_bounded_declarations(task):
+    from pydantic import ValidationError
+
+    data = task["spec"].model_dump(mode="json")
+    with pytest.raises(ValidationError):
+        repair.RepairSpec.model_validate_json(
+            json.dumps({**data, "editable_paths": [], "editable_directories": ["src"]})
+        )
+    with pytest.raises(ValidationError):
+        repair.RepairSpec.model_validate_json(
+            json.dumps({**data, "editable_directories": [f"src-{n}" for n in range(101)]})
+        )
+
+
+@pytest.mark.parametrize("profile", ["node", "unbounded", "", None, 1, {}, []])
+def test_observer_profile_is_an_explicit_fixed_choice(task, profile):
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError):
+        repair.RepairSpec.model_validate_json(
+            json.dumps(
+                {**task["spec"].model_dump(mode="json"), "observer_resource_profile": profile}
+            )
+        )
+    default = repair.RepairSpec.model_validate_json(
+        json.dumps(
+            {**task["spec"].model_dump(mode="json"), "observer_resource_profile": "python-v1"}
+        )
+    )
+    assert default.model_dump(mode="json") == task["spec"].model_dump(mode="json")
+
+
+def test_node_observer_profile_reaches_guest_report_and_readback(
+    task, route, tmp_path, monkeypatch
+):
+    import tarfile
+
+    from skilleval.repair_assessment import (
+        RepairAssessmentSpec,
+        RepairCheckSource,
+        checked_report,
+        packet,
+    )
+
+    spec = task["spec"].model_copy(update={"observer_resource_profile": "node-v1"})
+    contract = tmp_path / "node-task.json"
+    prepared = repair.prepare_repair(spec, contract)
+    assert repair.load_task(contract, prepared["sha256"]).observer_resource_profile == "node-v1"
+    candidate = tmp_path / "node-control"
+    result = repair.collect_control(
+        contract, prepared["sha256"], task["base"], spec.input_sha256, candidate
+    )
+    output = tmp_path / "node-check"
+    report = check_repair(
+        contract,
+        prepared["sha256"],
+        candidate,
+        result["sha256"],
+        output,
+        runtime=route["runtime"],
+        image=route["image"],
+        image_sha256=route["image_sha256"],
+    )
+    assert report["status"] == "completed"
+    resources = {
+        "profile": "node-v1",
+        "address_space_bytes": 2147483648,
+        "file_size_bytes": 8388608,
+        "open_files": 256,
+        "processes": 32,
+        "core_bytes": 0,
+        "output_bytes_per_stream": 131072,
+    }
+    assert report["observer_resources"] == report["process"]["observer_resources"] == resources
+    with tarfile.open(output / "runtime-state/checker-input.tar") as archive:
+        settings = json.loads(archive.extractfile("native/requests.json").read())
+    assert settings == {
+        "timeout_seconds": 60,
+        "requests": [{"value": False}],
+        "observer_resource_profile": "node-v1",
+    }
+    source = {
+        "task": str(contract),
+        "task_sha256": prepared["sha256"],
+        "result": str(candidate),
+        "result_sha256": result["sha256"],
+    }
+    report_path = output / "repair-check.json"
+    reference = RepairCheckSource(
+        **source, report=str(report_path), report_sha256=file_digest(report_path)
+    )
+    assert checked_report(reference) == report
+    assessment = RepairAssessmentSpec(
+        **source, checks=(reference,), authored_statement="Authored control."
+    )
+    payloads, _, _ = packet(assessment)
+    observed = json.loads(payloads["case/checks/check-001/observations.json"])
+    assert observed["observer_resources"] == resources
+    from skilleval.lifecycle import Lifecycle
+
+    original_guest = Lifecycle.guest
+
+    def missing_profile(session, label, *args, **kwargs):
+        response = original_guest(session, label, *args, **kwargs)
+        if label == "observe_candidate":
+            envelope = json.loads(response["stdout"])
+            del envelope["observer_resources"]
+            response["stdout"] = json.dumps(envelope)
+        return response
+
+    monkeypatch.setattr(Lifecycle, "guest", missing_profile)
+    incomplete = check_repair(
+        contract,
+        prepared["sha256"],
+        candidate,
+        result["sha256"],
+        tmp_path / "missing-profile-check",
+        runtime=route["runtime"],
+        image=route["image"],
+        image_sha256=route["image_sha256"],
+    )
+    assert incomplete["status"] == "incomplete"
+    assert incomplete["accepted_by_checks"] is None
+    assert incomplete["checks"] == []
+    assert "resource profile" in incomplete["error"]
+    for target, fault in (
+        ("report", "missing"),
+        ("process", "missing"),
+        ("process", "wrong-file-limit"),
+    ):
+        changed = json.loads(json.dumps(report))
+        location = changed if target == "report" else changed["process"]
+        if fault == "missing":
+            del location["observer_resources"]
+        else:
+            location["observer_resources"]["file_size_bytes"] = 131072
+        report_path.write_text(json.dumps(changed))
+        altered = reference.model_copy(update={"report_sha256": file_digest(report_path)})
+        with pytest.raises(SkillEvalError, match="resource profile"):
+            checked_report(altered)
+
+
 def test_control_and_offline_checker_keep_expected_answers_on_host(task, route, tmp_path):
     result_dir = tmp_path / "control"
     receipt = repair.collect_control(
@@ -131,6 +408,8 @@ def test_control_and_offline_checker_keep_expected_answers_on_host(task, route, 
         image_sha256=route["image_sha256"],
     )
     assert report["status"] == "completed" and report["cleanup_complete"]
+    assert "observer_resources" not in report
+    assert "observer_resources" not in report["process"]
     assert report["accepted_by_checks"] is False
     assert report["checks"] == [
         {"probe_id": "result", "observed": False, "expected": True, "pass": False}

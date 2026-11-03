@@ -6,8 +6,8 @@ import hashlib
 import json
 import os
 import tempfile
-from pathlib import Path
-from typing import Any
+from pathlib import Path, PurePosixPath
+from typing import Any, Literal
 
 from pydantic import Field, model_validator
 
@@ -33,6 +33,12 @@ class RepairSpec(Record):
     input_sha256: Digest
     prompt: str = Field(min_length=1, max_length=262144)
     editable_paths: tuple[str, ...] = Field(min_length=1, max_length=100)
+    editable_directories: tuple[str, ...] = Field(
+        default=(), max_length=100, exclude_if=lambda value: not value
+    )
+    observer_resource_profile: Literal["python-v1", "node-v1"] = Field(
+        default="python-v1", exclude_if=lambda value: value == "python-v1"
+    )
     worker: str = Field(min_length=1)
     worker_sha256: Digest
     probes: tuple[RepairProbe, ...] = Field(min_length=1, max_length=100)
@@ -48,6 +54,13 @@ class RepairSpec(Record):
                 raise ValueError("invalid editable repair path")
         if len({name.casefold() for name in names}) != len(names):
             raise ValueError("duplicate or case-aliased repair paths")
+        for name in self.editable_directories:
+            if _safe_path(name) != name or _directory_metadata(name):
+                raise ValueError("invalid editable repair directory")
+        if len({name.casefold() for name in self.editable_directories}) != len(
+            self.editable_directories
+        ):
+            raise ValueError("duplicate or case-aliased repair directories")
         if len({probe.probe_id for probe in self.probes}) != len(self.probes):
             raise ValueError("duplicate repair probe IDs")
         if (
@@ -62,6 +75,23 @@ def ignored(name: str) -> bool:
     """Only explicit disposable metadata; normal source/config/test bytes count."""
     parts = Path(name).parts
     return parts[0] == ".git" or any(p in {"__pycache__", ".pytest_cache"} for p in parts)
+
+
+def _directory_metadata(name: str) -> bool:
+    """Directory grants never cover Git/cache metadata or snapshot manifests."""
+    return any(
+        part.casefold() in {".git", "__pycache__", ".pytest_cache", "manifest.json"}
+        for part in PurePosixPath(name).parts
+    )
+
+
+def _in_editable_scope(spec: RepairSpec, name: str) -> bool:
+    if name in spec.editable_paths:
+        return True
+    if _directory_metadata(name):
+        return False
+    parents = PurePosixPath(name).parents
+    return any(PurePosixPath(directory) in parents for directory in spec.editable_directories)
 
 
 def _publish(path: Path, value: dict[str, Any]) -> str:
@@ -188,7 +218,7 @@ def _record(
     old = {row["path"]: row for row in _inventory(before)}
     new = {row["path"]: row for row in _inventory(files)}
     changed = sorted(name for name in old.keys() | new.keys() if old.get(name) != new.get(name))
-    out_of_scope = sorted(set(changed) - set(spec.editable_paths))
+    out_of_scope = [name for name in changed if not _in_editable_scope(spec, name)]
     destination = destination.absolute()
     if destination.resolve().is_relative_to(Path(spec.input_bundle).resolve()):
         raise SkillEvalError("repair result must be outside original input")
@@ -315,7 +345,7 @@ def result_files(
     )
     if (
         changed != result.get("changed_paths")
-        or set(changed) - set(spec.editable_paths)
+        or any(not _in_editable_scope(spec, name) for name in changed)
         or file_digest(result_dir / "changes.patch") != result.get("patch_sha256")
     ):
         raise SkillEvalError("repair changes differ from retained evidence")

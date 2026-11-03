@@ -206,11 +206,23 @@ def test_package_preparation_preserves_code_as_data_and_rejects_input_drift(task
     saved = prepare_package(spec, tmp_path / "package.json")
     assert load_package(Path(saved["path"]), saved["sha256"]) == spec
     assert saved["scored_admitted"] is False
+    assert "output_directories" not in saved
     target = task["base"] / "README.md"
     target.chmod(0o600)
     target.write_text("changed ordinary context")
     with pytest.raises(SkillEvalError):
         load_package(Path(saved["path"]), saved["sha256"])
+
+
+def test_package_summary_preserves_directory_scope(task, route, tmp_path):
+    expanded = task["spec"].model_copy(update={"editable_directories": ("src", "tests")})
+    contract = repair.prepare_repair(expanded, tmp_path / "expanded-task.json")
+    spec = package_spec(task, route).model_copy(
+        update={"task": contract["path"], "task_sha256": contract["sha256"]}
+    )
+    saved = prepare_package(spec, tmp_path / "package.json")
+    assert saved["output_paths"] == list(expanded.editable_paths)
+    assert saved["output_directories"] == ["src", "tests"]
 
 
 def test_explicit_solver_profile_and_missing_legacy_profile_load_without_rewriting(
