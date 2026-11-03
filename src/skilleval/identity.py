@@ -34,6 +34,7 @@ SOURCES = (
     "src/skilleval/calibration.py",
     "src/skilleval/qualification.py",
     "src/skilleval/gateway.py",
+    "src/skilleval/budgets.py",
     "src/skilleval/harnesses/codex.py",
     "src/skilleval/evidence.py",
     "src/skilleval/workspace.py",

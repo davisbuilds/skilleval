@@ -209,7 +209,11 @@ def parser() -> argparse.ArgumentParser:
     native_run.add_argument("--catalog", type=Path, required=True)
     native_run.add_argument("--auth-file", type=Path, required=True)
     native_run.add_argument("--output", type=Path, required=True)
-    native_run.add_argument("--timeout-seconds", type=int, default=600)
+    native_run.add_argument(
+        "--timeout-seconds",
+        type=int,
+        help="Native deadline (default/maximum: tasks 1800s, judges 900s)",
+    )
     native_run.add_argument("--max-requests", type=int, default=32)
     native_run.add_argument("--max-artifact-bytes", type=int, default=64 * 1024 * 1024)
     native_run.add_argument("--max-artifact-files", type=int, default=10_000)
@@ -415,12 +419,14 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
             _exclusive(args.review_output, render_review(study_report).encode())
         return study_report
     if args.command == "native":
-        from skilleval.gateway import GatewayLimits
+        from skilleval.budgets import native_deadline
+        from skilleval.gateway import native_limits
         from skilleval.grading import _read_regular
         from skilleval.runner import run_native
 
         if (args.mode == "judge") != (args.judge_policy is not None):
             raise SkillEvalError("judge mode requires --judge-policy; task modes omit it")
+        deadline = native_deadline(args.mode, args.timeout_seconds)
         return run_native(
             args.bundle,
             args.sha256,
@@ -432,12 +438,10 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
             catalog=args.catalog.absolute(),
             auth_file=args.auth_file.absolute(),
             mode=args.mode,
-            native_timeout_seconds=args.timeout_seconds,
+            native_timeout_seconds=deadline,
             max_artifact_bytes=args.max_artifact_bytes,
             max_artifact_files=args.max_artifact_files,
-            limits=GatewayLimits(
-                max_requests=args.max_requests, timeout_seconds=90, lifetime_seconds=900
-            ),
+            limits=native_limits(deadline, max_requests=args.max_requests),
             skill_bundle=args.skill_bundle,
             skill_digest=args.skill_sha256,
             investigation=None if args.mode != "judge" else args.judge_policy == "investigative",

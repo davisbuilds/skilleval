@@ -99,13 +99,13 @@ shipped history. Private provenance stays outside public entries and issues.
   the unobserved remainder and missing cache partition unknown.
   Prespecify estimands, missing-data policy and repeated-run analysis, with
   uncertainty that respects task/repository clustering.
-- **Longer task budgets:** the native runner caps each attempt at 780 seconds
-  and the gateway lifetime at 900 seconds. The debugging pilot reached that
-  deadline with requests remaining. Freeze task-appropriate budgets before
-  comparisons; a deadline is an execution outcome, not a correctness verdict.
-  If selected workloads need longer sessions, extend supervision, authentication
-  lifetime checks, accounting and recovery together. Preserve prior timed-out
-  attempts and validate termination before using the expanded route.
+- **Representative runs with revised budgets:** native tasks now default to
+  30 minutes and judges to 15 minutes, with gateway and credential headroom.
+  Revalidate selected task context and execution identity before new comparisons,
+  freeze the same budget for both arms, and retain the earlier 780-second
+  debugging timeout. Short synthetic controls establish deadline wiring and
+  termination behavior, not sustained provider behavior or task performance at
+  the longer defaults. Interrupted usage reporting remains a separate gap above.
 - **Judge reliability and label audit:** independently audit authored labels,
   native verdicts and disagreements. The earlier tiny-control audit was retired
   from active work on 2026-11-02 after task realignment. Its records remain

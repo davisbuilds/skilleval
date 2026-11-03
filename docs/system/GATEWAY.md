@@ -74,10 +74,23 @@ login cache. Authentication expiry and upstream 401 fail closed.
 
 `GatewayLimits` bounds admitted requests (maximum 128), concurrency (maximum 2),
 body bytes (maximum 8 MiB), request deadline (maximum 300 seconds), and total
-service lifetime (maximum 900 seconds). Defaults are smaller. These are request
+service lifetime (maximum 2,820 seconds). Defaults are smaller. These are request
 and time bounds, not a token or monetary quota. The upstream implementation also
 caps response bytes at 64 MiB. Original task/trial timeouts and external cleanup
 supervision remain necessary.
+
+The native runner derives gateway lifetime from its selected task/judge deadline
+plus a 900-second setup allowance and 120 seconds of headroom. The timer starts
+before VM setup. A monotonic remaining-lifetime check immediately before native
+dispatch requires the entire native deadline plus 60 seconds; an overrun refuses
+dispatch and enters cleanup instead of shortening the agent's time. Explicit
+gateway limits must pass the same check. Credentials must cover the gateway
+lifetime plus 30 seconds both at initial loading and after host preparation;
+before native dispatch, their remaining validity must cover the native deadline
+plus 60 seconds of headroom and a 30-second expiry margin. The standalone broker
+retains its smaller defaults and request-level expiry checks. Native tasks default
+to 1,800 seconds and judges to 900 seconds; their process deadlines, host
+supervision and cleanup remain separate from the gateway timer.
 
 The native CLI and study default remain 32 admitted requests; the gateway's
 standalone default remains four. Raising a declared budget creates a new frozen

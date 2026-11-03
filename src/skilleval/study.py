@@ -21,10 +21,11 @@ from pydantic import Field, model_validator
 from skilleval import evidence, runner
 from skilleval.accounting import PriceSchedule, estimate_api_equivalent_cost
 from skilleval.admission import check_admission
+from skilleval.budgets import LEGACY_STUDY_TIMEOUT_SECONDS, TASK_TIMEOUT_SECONDS
 from skilleval.contracts import Digest, Identifier, Record
 from skilleval.efficiency import efficiency_ledger, pair_efficiency
 from skilleval.errors import SkillEvalError
-from skilleval.gateway import EFFORT, MAX_REQUESTS, MODEL, GatewayLimits
+from skilleval.gateway import EFFORT, MAX_REQUESTS, MODEL, native_limits
 from skilleval.grading import _read_regular
 from skilleval.identity import file_digest, object_digest, snapshot_identity
 from skilleval.lifecycle import LifecycleInterruptedError, interrupt_scope
@@ -73,7 +74,7 @@ class StudySpec(Record):
     invocation_policy: Literal["explicit-use", "natural-availability"] = "explicit-use"
     price_schedule: PriceSchedule | None = None
     max_attempts_per_cell: int = Field(default=1, ge=1, le=5)
-    native_timeout_seconds: int = Field(default=600, ge=1, le=780)
+    native_timeout_seconds: int = Field(default=TASK_TIMEOUT_SECONDS, ge=1, le=TASK_TIMEOUT_SECONDS)
     max_requests_per_attempt: int = Field(default=32, ge=1, le=MAX_REQUESTS)
     assessment_policy: Literal["unassessed"] = "unassessed"
     primary_attempt_policy: Literal["first-attempt"] = "first-attempt"
@@ -265,6 +266,9 @@ def _plan(path: Path, expected: str) -> tuple[dict[str, Any], StudySpec]:
     if value.get("kind") != "skilleval-study-plan" or value.get("schema_version") not in {1, 2, 3}:
         raise SkillEvalError("unsupported study plan")
     data = dict(value["spec"])
+    # Frozen schemas 1-3 predate mode-specific defaults. Preserve their historic
+    # missing-field interpretation without altering the retained plan bytes.
+    data.setdefault("native_timeout_seconds", LEGACY_STUDY_TIMEOUT_SECONDS)
     if value["schema_version"] == 1:
         if "invocation_policy" in data or "price_schedule" in data:
             raise SkillEvalError("legacy plans cannot declare new treatment or pricing policies")
@@ -597,10 +601,9 @@ def run_study(
                         auth_file=auth_file,
                         mode=task.mode,
                         native_timeout_seconds=spec.native_timeout_seconds,
-                        limits=GatewayLimits(
+                        limits=native_limits(
+                            spec.native_timeout_seconds,
                             max_requests=spec.max_requests_per_attempt,
-                            timeout_seconds=90,
-                            lifetime_seconds=900,
                         ),
                         skill_bundle=Path(spec.skill_bundle)
                         if cell["arm"] == "available"

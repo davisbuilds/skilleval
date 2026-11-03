@@ -22,6 +22,11 @@ from pathlib import Path
 from typing import Protocol, cast
 
 from skilleval._vendor import openbench_gateway as _vendor
+from skilleval.budgets import (
+    GATEWAY_HEADROOM_SECONDS,
+    GATEWAY_SETUP_ALLOWANCE_SECONDS,
+    MAX_GATEWAY_LIFETIME_SECONDS,
+)
 from skilleval.errors import SkillEvalError
 from skilleval.harnesses.codex import CODEX_BASELINE_VERSION
 
@@ -208,7 +213,10 @@ class GatewayLimits:
         ):
             if type(value) is not int or not 1 <= value <= ceiling:
                 raise SkillEvalError("invalid gateway limit")
-        for duration, maximum in ((self.timeout_seconds, 300), (self.lifetime_seconds, 900)):
+        for duration, maximum in (
+            (self.timeout_seconds, 300),
+            (self.lifetime_seconds, MAX_GATEWAY_LIFETIME_SECONDS),
+        ):
             if (
                 isinstance(duration, bool)
                 or not isinstance(duration, (int, float))
@@ -216,6 +224,17 @@ class GatewayLimits:
                 or not 0 < duration <= maximum
             ):
                 raise SkillEvalError("invalid gateway deadline")
+
+
+def native_limits(deadline_seconds: int, *, max_requests: int = 32) -> GatewayLimits:
+    """Cover bounded VM setup, the selected native deadline, and execution headroom."""
+    return GatewayLimits(
+        max_requests=max_requests,
+        timeout_seconds=90,
+        lifetime_seconds=GATEWAY_SETUP_ALLOWANCE_SECONDS
+        + deadline_seconds
+        + GATEWAY_HEADROOM_SECONDS,
+    )
 
 
 DEFAULT_LIMITS = GatewayLimits()
