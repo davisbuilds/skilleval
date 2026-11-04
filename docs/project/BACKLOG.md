@@ -72,12 +72,12 @@ shipped history. Private provenance stays outside public entries and issues.
   preserve missing observations as unknown. Use fresh policy-bound packets and
   explicit outcome selection when replaying retained repairs, then independently
   assess verification disagreements before treating them as solver failures.
-- **Judge citation finalization:** a native judge can complete with valid JSON
-  yet cite lines beyond a retained file. Recording correctly rejects that result;
-  do not clamp ranges or silently rewrite the judgment. Add bounded validation
-  feedback with a declared correction budget before final recording, preserving
-  original outputs, extra consumption and any still-invalid result. Distinguish
-  judgment-format failure from task quality and evidence sufficiency.
+- **Broader judge finalization:** repair/document assessments support one explicit
+  line-range correction with original evidence and both linked invocation costs
+  retained. Missing citation paths, malformed results and calibration/review
+  judgments remain ineligible. Expand only when retained failures justify it;
+  preserve mechanical correction separately from semantic reassessment and keep
+  all unselected attempts visible in the operational ledger.
 - **Representative writing grader validation (deferred):** the document rubric and artifact
   path are implemented, with different valid drafts and a format-valid false-claim
   control. Independently audit judgments on varied real writing tasks and preserve

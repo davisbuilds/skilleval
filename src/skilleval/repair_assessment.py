@@ -534,6 +534,22 @@ def prepare_assessment(spec: RepairAssessmentSpec, output: Path) -> dict[str, An
     }
 
 
+def prepare_citation_correction(
+    spec: RepairAssessmentSpec,
+    prepared: Path,
+    run: Path,
+    output: Path,
+    *,
+    timeout_seconds: int = 180,
+    max_requests: int = 4,
+) -> dict[str, Any]:
+    from skilleval.citation_correction import prepare_correction
+
+    return prepare_correction(
+        spec, prepared, run, output, timeout_seconds=timeout_seconds, max_requests=max_requests
+    )
+
+
 def _validated_assessment(
     spec: RepairAssessmentSpec, prepared: Path, run: Path
 ) -> tuple[
@@ -543,10 +559,22 @@ def _validated_assessment(
     judge._check_packet(prepared, payloads)
     receipt, retained, artifacts = judge._run_files(run)
     judge._native_policy(receipt, retained, payloads, digest, spec.investigation)
+    result = _assessment_result(spec, retained["final.txt"], receipt, payloads, digest, artifacts)
+    return result, receipt, retained, payloads, digest
+
+
+def _assessment_result(
+    spec: RepairAssessmentSpec,
+    raw: bytes,
+    receipt: dict[str, Any],
+    payloads: dict[str, bytes],
+    digest: str,
+    artifacts: dict[str, bytes],
+) -> RepairAssessment | DocumentAssessment:
     result_model = (
         DocumentAssessment if isinstance(spec, DocumentAssessmentSpec) else RepairAssessment
     )
-    result = result_model.model_validate_json(retained["final.txt"])
+    result = result_model.model_validate_json(raw)
     if result.model != receipt.get("model"):
         raise SkillEvalError("repair judge model differs from native invocation")
     meta = evidence._parse_json(payloads["packet.json"])
@@ -584,7 +612,7 @@ def _validated_assessment(
             for path in paths
         ):
             raise SkillEvalError("resolved repair judgments require substantive original evidence")
-    return result, receipt, retained, payloads, digest
+    return result
 
 
 def summary(result: RepairAssessment | DocumentAssessment, execution: str) -> dict[str, Any]:
@@ -628,13 +656,32 @@ def _outside_sources(spec: RepairAssessmentSpec, output: Path) -> None:
 
 
 def record_assessment(
-    spec: RepairAssessmentSpec, prepared: Path, run: Path, output: Path
+    spec: RepairAssessmentSpec,
+    prepared: Path,
+    run: Path,
+    output: Path,
+    *,
+    correction_packet: Path | None = None,
+    correction_run: Path | None = None,
 ) -> dict[str, Any]:
     spec = _normalize(spec)
     _outside_sources(spec, output)
     for root in (prepared, run):
         grading._outside(root, output)
-    result, receipt, retained, payloads, digest = _validated_assessment(spec, prepared, run)
+    if (correction_packet is None) != (correction_run is None):
+        raise SkillEvalError("citation correction requires both packet and run")
+    correction_files: dict[str, bytes] = {}
+    correction_meta: dict[str, Any] | None = None
+    if correction_packet is not None and correction_run is not None:
+        from skilleval.citation_correction import validated_correction
+
+        for root in (correction_packet, correction_run):
+            grading._outside(root, output)
+        result, receipt, retained, payloads, digest, correction_files, correction_meta = (
+            validated_correction(spec, prepared, run, correction_packet, correction_run)
+        )
+    else:
+        result, receipt, retained, payloads, digest = _validated_assessment(spec, prepared, run)
     _, repair_result, _ = source(spec)
     if result.supersedes:
         previous = output / result.supersedes
@@ -652,6 +699,7 @@ def record_assessment(
     audit = summary(result, receipt["status"])
     files = {
         **retained,
+        **correction_files,
         **{"packet/" + name: raw for name, raw in payloads.items()},
         "source-spec.json": evidence._json_bytes(spec.model_dump(mode="json")),
         "result.json": (result.model_dump_json(indent=2) + "\n").encode(),
@@ -674,6 +722,8 @@ def record_assessment(
         "task_quality": "independent-audit-pending",
         "scored_admitted": False,
     }
+    if correction_meta is not None:
+        record["citation_correction"] = correction_meta
     files["record.json"] = evidence._json_bytes(record)
     destination = output / result.result_id
     judge._write_tree(
@@ -710,11 +760,29 @@ def read_assessment(directory: Path, digest: str) -> tuple[dict[str, Any], Repai
         ):
             raise SkillEvalError("retained repair assessment evidence differs")
     spec = parse_spec(grading._read_regular(directory / "source-spec.json", 4 * 1024 * 1024))
-    result, receipt, retained, payloads, packet_digest = _validated_assessment(
-        spec, directory / "packet", directory
-    )
+    correction_files: dict[str, bytes] = {}
+    correction_meta: dict[str, Any] | None = None
+    if "citation_correction" in record:
+        from skilleval.citation_correction import validated_correction
+
+        result, receipt, retained, payloads, packet_digest, correction_files, correction_meta = (
+            validated_correction(
+                spec,
+                directory / "packet",
+                directory,
+                directory / "correction/packet",
+                directory / "correction/run",
+            )
+        )
+        if object_digest(record["citation_correction"]) != object_digest(correction_meta):
+            raise SkillEvalError("citation correction lineage differs")
+    else:
+        result, receipt, retained, payloads, packet_digest = _validated_assessment(
+            spec, directory / "packet", directory
+        )
     expected_files = {
         **retained,
+        **correction_files,
         **{"packet/" + name: raw for name, raw in payloads.items()},
         "source-spec.json": evidence._json_bytes(spec.model_dump(mode="json")),
         "result.json": (result.model_dump_json(indent=2) + "\n").encode(),

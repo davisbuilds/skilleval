@@ -226,6 +226,65 @@ exercise valid, defective and unsupported-claim judgments. Labels stay outside
 judge packets. These tiny examples test the grader path, not frontier-agent
 ability or representative task difficulty.
 
+## Correct citation line ranges
+
+Repair and document assessments support one explicitly linked correction when a
+completed judge returns a structurally valid result with citations extending past
+an existing UTF-8 file. Preparation verifies the original invocation, packet,
+result identities and every non-range constraint before creating a fresh static
+packet. Missing files, changed evidence, invalid schemas, failed execution and
+already valid results are ineligible. Calibration and review judgments do not yet
+use this path.
+
+```sh
+uv run skilleval repair prepare-citation-correction SPEC \
+  --packet ORIGINAL_PACKET --run ORIGINAL_RUN \
+  --timeout-seconds 180 --max-requests 4 --output CORRECTION_PACKET
+```
+
+Preparation makes no model call. Its JSON response supplies the exact `prompt`,
+`input_digest` and declared `budget`. Save the prompt to a file, capture the
+correction packet with `skilleval capture`, and check the capture digest against
+`input_digest`. Run `native qualify` in `--mode judge --judge-policy static`, with
+the saved prompt, captured packet and explicit `--timeout-seconds 180
+--max-requests 4` matching this example. Use fresh output directories and the
+usual pinned runtime, image, catalog and explicitly selected host login.
+
+The packet contains the original raw result, exact cited file bytes and structural
+diagnostics naming JSON pointers and observed line counts. It supplies no suggested
+replacement range or correctness label. The correction may change only citation
+line starts and ends; paths, list membership/order, result ID, reasoning, verdicts,
+and original evidence/rubric identities remain unchanged. The correction invocation
+has its own packet identity and static policy, while the assessment retains its
+original investigation policy and artifact authority. New correction artifacts
+cannot substitute for original investigation evidence.
+
+```sh
+uv run skilleval repair record-assessment SPEC \
+  --packet ORIGINAL_PACKET --run ORIGINAL_RUN \
+  --correction-packet CORRECTION_PACKET --correction-run CORRECTION_RUN \
+  --output RECORDS
+```
+
+Both correction flags are required together. Recording validates the exact new
+input/prompt/model, configured time/request ceilings, admitted request counts,
+unchanged non-bound content and every corrected citation. An invalid or incomplete
+correction remains retained in its run directory and produces no accepted record.
+There is no automatic retry, range clamping or semantic reassessment.
+
+Accepted records preserve the original root `final.txt`, native receipt and
+artifacts, add `correction/packet/` and `correction/run/`, and bind them through
+`citation_correction` metadata. `result.json` contains the corrected judgment;
+read-back revalidates both invocations and the permitted difference. Legacy records
+retain their original bytes and behavior. This is a correction of a previously
+unrecordable result, not a `supersedes` revision of an accepted assessment.
+
+The default correction budget is 180 seconds and four requests, with one linked
+attempt. Preparing or running duplicates elsewhere is still possible; the record
+does not claim to enumerate those external attempts. Selected judge consumption
+includes both linked invocations as described in [ACCOUNTING.md](ACCOUNTING.md).
+Structural acceptance still requires independent semantic audit.
+
 ## Select outcomes for a study report
 
 `schema repair-outcomes` freezes a study plan digest and explicit cell/attempt
