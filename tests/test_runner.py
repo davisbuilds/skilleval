@@ -37,6 +37,7 @@ name=args[args.index('--name')+1] if '--name' in args else None
 if args[:2]==['machine','create']:
  ticket=json.loads((state.parent/'recovery.json').read_text())
  assert ticket['create_attempted']
+ (state/'scenario.json').write_text('{}')
  names.append(name);machines.write_text(json.dumps(names))
 elif args[:2]==['machine','ls']:
  print(json.dumps([{'name':n} for n in names]));raise SystemExit

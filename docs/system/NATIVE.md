@@ -46,6 +46,24 @@ missing telemetry stays unknown. [ACCOUNTING.md](ACCOUNTING.md) owns provenance
 and reconciliation. Closing stdin after the matched terminal lets app-server
 exit; collection still requires confirmed namespace teardown.
 
+Review and repair runs default to a 1,800-second (30-minute) native deadline;
+judge runs default to 900 seconds (15 minutes). These are also the respective
+ceilings. `--timeout-seconds` can select a shorter positive deadline. The native
+API selects the same mode-dependent default when its timeout is omitted.
+Default gateway lifetime includes 900 seconds for setup, the selected native
+deadline, and 120 seconds of headroom. The gateway starts before VM setup so its
+socket can be mounted. Immediately before native dispatch, the runner requires
+enough remaining gateway lifetime for the whole native deadline plus at least
+60 seconds; an overrun refuses dispatch and cleans up the VM. This check also
+applies to explicitly supplied gateway limits. Credential preflight requires
+validity for the gateway lifetime plus 30 seconds, rechecked after host preparation.
+Before dispatch, retained credentials must still cover the native deadline,
+60 seconds of headroom and a 30-second expiry margin. Expiry is also checked
+before each provider request. VM setup, collection and cleanup retain their
+individual bounds, so the native deadline is not total wall-clock time.
+Request budgets are independent: a run can exhaust its request allowance before
+its time budget. Longer deadlines do not imply complete usage after interruption.
+
 Use a prepared, hash-pinned image containing native Codex and the task's existing
 tools/dependencies. Keep its selected runtime, catalog, image, runner source and
 frozen task input stable for the run. Explicitly select an existing host login;

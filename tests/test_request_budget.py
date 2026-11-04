@@ -129,7 +129,7 @@ def test_native_request_budget_provenance_distinguishes_provider_and_observer_st
 
     monkeypatch.setattr(runner, "broker_scope", broker)
     route["limits"] = gateway.GatewayLimits(
-        max_requests=128, timeout_seconds=90, lifetime_seconds=900
+        max_requests=128, timeout_seconds=90, lifetime_seconds=2820
     )
     report = invoke(tmp_path, route)
     assert report["request_count"] == 128

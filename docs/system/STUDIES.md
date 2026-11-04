@@ -82,6 +82,17 @@ teardown have their existing individual limits; this does not impose a separate
 whole-study wall-clock deadline or infer a token/currency budget from missing
 provider telemetry. Output parent directories must already exist.
 
+New study specifications default `native_timeout_seconds` to 1,800 seconds
+(30 minutes), also the task ceiling. Preparation freezes the explicit deadline;
+both arms use it and derive gateway lifetime with the native runner's separate
+setup allowance and headroom. Setup cannot silently reduce the native budget:
+insufficient remaining gateway lifetime refuses dispatch.
+Older frozen plans keep their recorded value. Schema-1, -2 or -3 plans that omitted
+the field retain the historical 600-second interpretation on readback; changing
+the default does not upgrade their budget. Judge runs are separate and default
+to a 900-second deadline. Changed budgets require fresh plans and applicable
+environment evidence before another comparison.
+
 `max_requests_per_attempt` defaults to 32 and accepts an explicit value up to
 128. Existing plans retain their frozen values. Native request-budget diagnostics
 flow into the attempt summary: admitted provider calls, `request_limit`

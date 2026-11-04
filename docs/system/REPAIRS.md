@@ -156,18 +156,38 @@ The prepared packet contains original and candidate source, the generated patch,
 the shared task instruction, the solver's retained final statement, bounded command
 observations and separately collected worker observations. It withholds structured
 arm/skill identity, host provenance, consumption, expected answers and check pass
-labels. The same filter withholds harness/skill-access commands in both arms;
+labels. The selected filter applies to both arms;
 individual commands/outputs and the list have explicit truncation indicators.
 Original raw traces stay retained outside the packet. Free-form prose or source
 can still reveal treatment cues: this is metadata masking, not proven independent
 blinding. The judge can question check fixtures rather than inherit their grades.
 
-The current keyword filter can also hide legitimate application evidence: for
-example, `CODEX_HOME` settings in the completed-session task removed a qualified
-test rerun from its packet. Missing command evidence remains unknown; inspect the
-retained raw trace before attributing a verification discrepancy to the solver.
-A replacement needs an explicit policy version so old packets and judgments remain
-reconstructible; do not silently regenerate them with changed filtering.
+Set `"tool_evidence_policy": "application-context-v2"` in new repair or document
+assessment specifications. This policy retains application settings and mentions
+of `CODEX_HOME`, including Python environment construction and shell assignments.
+It withholds commands or outputs with recognized harness-control paths, skill-access
+markers, or direct harness-home lookups such as `$CODEX_HOME` and
+`os.environ["CODEX_HOME"]`. Filtering scans complete strings before display
+truncation. It does not parse arbitrary programs: indirect access and free-form
+content can still reveal treatment cues, and legitimate commands mentioning a
+blocked marker can still be omitted. Missing evidence remains unknown, not proof
+of a false claim. The v2 instructions ask the judge to retain that distinction and
+read qualifications such as substituted test dependencies.
+
+An omitted policy, or explicit `legacy-v1`, preserves the original keyword filter
+and exact packet, rubric, schema and source-spec serialization. It can hide
+legitimate application commands containing `CODEX_HOME`; this affected a qualified
+test rerun in the completed-session task. The default stays legacy for readback
+compatibility, so opt into v2 explicitly. Unknown policies are rejected. The v2
+policy is bound in the source specification, packet metadata and tool evidence;
+repair and document preparation, recording and readback use the same selection.
+
+To correct an earlier assessment, prepare a fresh v2 packet from the same retained
+repair and checks, run a new judgment, and select its record explicitly in a new
+outcome report. Keep the old packet and judgment unchanged. Changing evidence
+policy changes evidence identity, so this is a new evidence generation, not a
+same-evidence `supersedes` revision. No new task-agent run is needed. Review the
+retained raw trace when diagnosing a verification discrepancy.
 
 The rubric separates `task-contract`, `scope-and-regressions` and
 `verification-claims`. Each permits `satisfied`, `violated` or `unresolved`, with

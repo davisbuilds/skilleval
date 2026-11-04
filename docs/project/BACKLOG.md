@@ -42,6 +42,10 @@ shipped history. Private provenance stays outside public entries and issues.
 - **Task environment profile and coverage:** the selected completed-session task
   now has [Node environment and outcome controls](../../examples/repair/completed-sessions/environment.md).
   Preserve its shared quota/shutdown failure, platform skips and unsupported lanes.
+  Before the next solver comparison, revalidate the revised disposable-copy
+  application home: the earlier source-tree home allowed ordinary quota polling
+  to create support databases where the brief prohibited scratch. Preserve the
+  older runs and that task-context limitation.
   The restored receipt-repair capture
   now has matching baseline/reference unit failures and skips, with required
   assets/history retained. The [environment record](../../examples/repair/receipt-admission/environment.md)
@@ -61,14 +65,19 @@ shipped history. Private provenance stays outside public entries and issues.
   controls cannot establish reliability. Treatment metadata masking is not proven
   blinding. Observation workers share candidate imports; test adversarial output
   and independent perturbation sessions before claiming resistance to manipulation.
-- **Versioned tool-evidence masking:** the legacy keyword filter withholds any
-  command/output mentioning `CODEX_HOME`, including ordinary application commands
-  in the completed-session task. It removed a successful qualified full-suite
-  rerun from the judge packet while the original trace retained it. Introduce an
-  explicit policy version that distinguishes application evidence from harness
-  and treatment access; preserve existing packet bytes and judgments. Replay
-  retained repairs with the corrected evidence before interpreting verification
-  disagreements. Missing packet evidence does not establish a false solver claim.
+- **Tool-evidence coverage:** the explicit `application-context-v2` policy retains
+  ordinary application `CODEX_HOME` commands while preserving legacy packets.
+  Its text filters can still omit legitimate mixed commands or miss indirect
+  treatment disclosure. Audit evidence sufficiency across representative tasks;
+  preserve missing observations as unknown. Use fresh policy-bound packets and
+  explicit outcome selection when replaying retained repairs, then independently
+  assess verification disagreements before treating them as solver failures.
+- **Judge citation finalization:** a native judge can complete with valid JSON
+  yet cite lines beyond a retained file. Recording correctly rejects that result;
+  do not clamp ranges or silently rewrite the judgment. Add bounded validation
+  feedback with a declared correction budget before final recording, preserving
+  original outputs, extra consumption and any still-invalid result. Distinguish
+  judgment-format failure from task quality and evidence sufficiency.
 - **Representative writing grader validation (deferred):** the document rubric and artifact
   path are implemented, with different valid drafts and a format-valid false-claim
   control. Independently audit judgments on varied real writing tasks and preserve
@@ -90,13 +99,13 @@ shipped history. Private provenance stays outside public entries and issues.
   the unobserved remainder and missing cache partition unknown.
   Prespecify estimands, missing-data policy and repeated-run analysis, with
   uncertainty that respects task/repository clustering.
-- **Longer task budgets:** the native runner caps each attempt at 780 seconds
-  and the gateway lifetime at 900 seconds. The debugging pilot reached that
-  deadline with requests remaining. Freeze task-appropriate budgets before
-  comparisons; a deadline is an execution outcome, not a correctness verdict.
-  If selected workloads need longer sessions, extend supervision, authentication
-  lifetime checks, accounting and recovery together. Preserve prior timed-out
-  attempts and validate termination before using the expanded route.
+- **Representative runs with revised budgets:** native tasks now default to
+  30 minutes and judges to 15 minutes, with gateway and credential headroom.
+  Revalidate selected task context and execution identity before new comparisons,
+  freeze the same budget for both arms, and retain the earlier 780-second
+  debugging timeout. Short synthetic controls establish deadline wiring and
+  termination behavior, not sustained provider behavior or task performance at
+  the longer defaults. Interrupted usage reporting remains a separate gap above.
 - **Judge reliability and label audit:** independently audit authored labels,
   native verdicts and disagreements. The earlier tiny-control audit was retired
   from active work on 2026-11-02 after task realignment. Its records remain

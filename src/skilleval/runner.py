@@ -27,6 +27,7 @@ from typing import Any, Literal
 from skilleval import app_server, context_guard, evidence, guest_runner, solver_boundary
 from skilleval._vendor import openbench_gateway as vendor
 from skilleval.accounting import normalize_codex_usage
+from skilleval.budgets import MIN_GATEWAY_HEADROOM_SECONDS, TASK_TIMEOUT_SECONDS, native_deadline
 from skilleval.errors import SkillEvalError
 from skilleval.gateway import (
     EFFORT,
@@ -39,6 +40,7 @@ from skilleval.gateway import (
     broker_scope,
     codex_provider_config,
     load_chatgpt_auth,
+    native_limits,
 )
 from skilleval.harnesses.codex import codex_version_identity, parse_codex_jsonl
 from skilleval.identity import file_digest
@@ -51,7 +53,7 @@ from skilleval.lifecycle import (
 from skilleval.qualification import _invoke
 
 CATALOG_SHA256 = "943ca7fe1d19ed019054158303f0dbbd80b3bef43b3aa425a71aa7cb3fb52c2b"
-DEFAULT_LIMITS = GatewayLimits(max_requests=32, timeout_seconds=90, lifetime_seconds=900)
+DEFAULT_LIMITS = native_limits(TASK_TIMEOUT_SECONDS)
 # /run is a 64 MiB tmpfs in the qualified guest. Repository archives, native
 # logs and output collection need guest disk capacity, outside the task tree.
 GUEST_ROOT = "/var/tmp/native"
@@ -714,8 +716,8 @@ def run_native(
     catalog: Path,
     auth_file: Path | None,
     mode: Literal["review", "repair", "judge"] = "review",
-    limits: GatewayLimits = DEFAULT_LIMITS,
-    native_timeout_seconds: int = 600,
+    limits: GatewayLimits | None = None,
+    native_timeout_seconds: int | None = None,
     max_artifact_bytes: int = 64 * 1024 * 1024,
     max_artifact_files: int = 10_000,
     skill_bundle: Path | None = None,
@@ -733,15 +735,16 @@ def run_native(
     context-control receipt, which task/judgment consumers must reject.
     """
     started = time.monotonic()
+    native_timeout_seconds = native_deadline(mode, native_timeout_seconds)
+    if limits is None:
+        limits = native_limits(native_timeout_seconds)
     if (
         mode not in {"review", "repair", "judge"}
         or not isinstance(prompt, str)
         or not prompt.strip()
         or len(prompt.encode()) > 1024 * 1024
         or not re.fullmatch(r"[0-9a-f]{64}", expected_digest)
-        or type(native_timeout_seconds) is not int
-        or not 1 <= native_timeout_seconds <= 780
-        or native_timeout_seconds + 60 > limits.lifetime_seconds
+        or native_timeout_seconds + MIN_GATEWAY_HEADROOM_SECONDS > limits.lifetime_seconds
         or type(max_artifact_bytes) is not int
         or not 1024 * 1024 <= max_artifact_bytes <= MAX_ARTIFACT_BYTES
         or type(max_artifact_files) is not int
@@ -791,6 +794,12 @@ def run_native(
         "effort": EFFORT,
         "gateway_limits": asdict(limits),
         "native_timeout_seconds": native_timeout_seconds,
+        "gateway_budget": {
+            "status": "not-started",
+            "setup_seconds": None,
+            "remaining_seconds": None,
+            "required_native_seconds": native_timeout_seconds + MIN_GATEWAY_HEADROOM_SECONDS,
+        },
         "artifact_limits": {"bytes": max_artifact_bytes, "files": max_artifact_files},
         "image": session.ticket["image"],
         "machine_name": session.machine,
@@ -879,6 +888,15 @@ def run_native(
                 observation_failure = "request_observation_failed"
                 raise
 
+    def require_auth_horizon(required_seconds: float) -> None:
+        # Recheck retained credentials after host preparation and VM setup. Never
+        # refresh credentials or disclose their expiration in retained evidence.
+        if (
+            not math.isfinite(auth.expires_at)
+            or auth.expires_at <= time.time() + required_seconds + 30
+        ):
+            raise SkillEvalError("ChatGPT authentication unavailable or expired")
+
     try:
         config = codex_provider_config(8765, Path(GUEST_ROOT) / "models.json")
         settings: dict[str, Any] = {
@@ -936,6 +954,10 @@ def run_native(
         _exclusive(output / "prompt.txt", prompt.encode())
         # Recheck both authority-bearing copied inputs before the first VM mutation.
         evidence.verify(input_bundle, expected_digest)
+        require_auth_horizon(limits.lifetime_seconds)
+        # Start conservatively before broker startup. Its actual expiry is no
+        # earlier; VM setup must not consume the reserved native execution time.
+        broker_started = time.monotonic()
         with broker_scope(
             auth,
             Path(session.ticket["runtime_home"]) / "b",
@@ -978,6 +1000,21 @@ def run_native(
                 ),
                 "prepare_task",
             )
+            ready_at = time.monotonic()
+            setup_seconds = ready_at - broker_started
+            remaining_seconds = max(0.0, limits.lifetime_seconds - setup_seconds)
+            required_seconds = native_timeout_seconds + MIN_GATEWAY_HEADROOM_SECONDS
+            enough_time = remaining_seconds >= required_seconds
+            report["gateway_budget"].update(
+                {
+                    "status": "ready" if enough_time else "insufficient-time",
+                    "setup_seconds": setup_seconds,
+                    "remaining_seconds": remaining_seconds,
+                }
+            )
+            if not enough_time:
+                raise SkillEvalError("native gateway lifetime exhausted during setup")
+            require_auth_horizon(required_seconds)
             native_started = time.monotonic()
             timings["setup_seconds"] = native_started - started
             native = session.guest(
