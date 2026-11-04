@@ -264,13 +264,29 @@ def parser() -> argparse.ArgumentParser:
     prepare_repair = repair_commands.add_parser("prepare", help="Freeze source, scope and checks")
     prepare_repair.add_argument("spec", type=Path)
     prepare_repair.add_argument("--output", type=Path, required=True)
-    for action in ("prepare-assessment", "record-assessment"):
+    for action in ("prepare-assessment", "record-assessment", "prepare-citation-correction"):
         command = repair_commands.add_parser(action)
         command.add_argument("spec", type=Path)
         command.add_argument("--output", type=Path, required=True)
-        if action == "record-assessment":
+        if action in ("record-assessment", "prepare-citation-correction"):
             command.add_argument("--packet", type=Path, required=True)
             command.add_argument("--run", type=Path, required=True)
+        if action == "record-assessment":
+            command.add_argument("--correction-packet", type=Path)
+            command.add_argument("--correction-run", type=Path)
+        if action == "prepare-citation-correction":
+            command.add_argument(
+                "--timeout-seconds",
+                type=int,
+                default=180,
+                help="Declared correction deadline (default: 180s; maximum: 900s)",
+            )
+            command.add_argument(
+                "--max-requests",
+                type=int,
+                default=4,
+                help="Declared correction request ceiling (default: 4)",
+            )
     for repair_operation in ("collect", "control", "check"):
         command = repair_commands.add_parser(repair_operation)
         command.add_argument("task", type=Path)
@@ -348,18 +364,45 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
         from skilleval.repair import collect_control, collect_repair, prepare_repair
         from skilleval.repair_check import check_repair
 
-        if args.operation in ("prepare-assessment", "record-assessment"):
+        if args.operation in (
+            "prepare-assessment",
+            "record-assessment",
+            "prepare-citation-correction",
+        ):
             from skilleval.repair_assessment import (
                 prepare_assessment,
+                prepare_citation_correction,
             )
             from skilleval.repair_assessment import (
                 record_assessment as record_repair_assessment,
             )
 
+            if args.operation == "record-assessment" and (
+                (args.correction_packet is None) != (args.correction_run is None)
+            ):
+                raise SkillEvalError(
+                    "citation correction requires both --correction-packet and --correction-run"
+                )
             assessment_spec = parse_spec(json.dumps(read_json(args.spec)))
             if args.operation == "prepare-assessment":
                 return prepare_assessment(assessment_spec, args.output)
-            return record_repair_assessment(assessment_spec, args.packet, args.run, args.output)
+            if args.operation == "prepare-citation-correction":
+                return prepare_citation_correction(
+                    assessment_spec,
+                    args.packet,
+                    args.run,
+                    args.output,
+                    timeout_seconds=args.timeout_seconds,
+                    max_requests=args.max_requests,
+                )
+            return record_repair_assessment(
+                assessment_spec,
+                args.packet,
+                args.run,
+                args.output,
+                correction_packet=args.correction_packet,
+                correction_run=args.correction_run,
+            )
 
         if args.operation == "prepare":
             repair_spec = RepairSpec.model_validate_json(json.dumps(read_json(args.spec)))

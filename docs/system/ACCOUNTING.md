@@ -104,6 +104,22 @@ publication. The native step includes more than the agent timer; do not add
 Missing/crash-interrupted stages stay unknown. Judge runs have their own receipts;
 their consumption is not folded into task-agent usage.
 
+## Linked citation-correction consumption
+
+For a selected repair/document assessment with a citation correction,
+`judge_consumption` includes the original judge and its one linked correction.
+`attempts` retains each receipt identity, execution status and observed usage,
+timings and request count. Aggregate fields keep the existing usage/timing names;
+`summary` adds per-field known subtotals and known/unknown attempt counts. A total
+is null if either invocation lacks the corresponding observation. Uncorrected
+records preserve their earlier consumption shape.
+
+The readable comparison shows both invocations and their totals separately from
+task-agent consumption. Its scope is `linked-selected-judge-invocations`: unrelated,
+repeated or rejected unlinked judgments remain outside this selection. Keep those
+runs and their receipts in the operational ledger; this feature does not establish
+total grading spend or infer monetary charges from token counts.
+
 ## Paired differences and operational spend
 
 Paired descriptive differences are ON minus OFF. Only first attempts with clean
