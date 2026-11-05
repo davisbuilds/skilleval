@@ -18,7 +18,8 @@ shipped history. Private provenance stays outside public entries and issues.
   declared source rationale, probe-field and semantic routes, controls, exposure
   and gaps. They do not establish that those requirements are correct or complete.
   Independently review the completed-session map's scope against ordinary work
-  records, then close consequential lifecycle and packet gaps below. Use baseline,
+  records and the corrected packets/lifecycle controls; retain the remaining gaps
+  below. Use baseline,
   plausible partial fixes and legitimate alternatives to challenge the grader;
   include independent implementation from the brief where useful. Preserve the
   map's retrospective status and original outcomes. [Measurement design](MEASUREMENT.md)
@@ -78,32 +79,26 @@ shipped history. Private provenance stays outside public entries and issues.
   identity and original citations rather than silently dropping evidence.
 - **Representative repair grader validation:** semantic packets, native recording
   and explicit outcome linking are implemented. Audit representative verdicts,
-  fixture suitability and alternative solutions. Add controlled archive/plain
-  sibling handover coverage after both fresh debugging repairs left restored
-  history shortened; keep supplemental diagnostics separate from frozen checks
+  fixture suitability and alternative solutions. Use the separate
+  [lifecycle controls](../../examples/repair/completed-sessions/lifecycle-v2/README.md)
+  for cached archive/plain handover and reader limits; independently review their
+  requirement relevance and extend coverage to corrupt replacement and full watcher
+  event ordering. Keep supplemental controls separate from the original six checks
   and related lifecycle probes separate from independent tasks. Tiny authored
   controls cannot establish reliability. Treatment metadata masking is not proven
   blinding. Observation workers share candidate imports; test adversarial output
   and independent perturbation sessions before claiming resistance to manipulation.
-- **Tool-evidence coverage:** the explicit `application-context-v2` policy retains
-  ordinary application `CODEX_HOME` commands while preserving legacy packets.
-  Its text filters can still omit legitimate mixed commands or miss indirect
-  treatment disclosure. A retained debugging audit identified two concrete losses:
-  completed commands with null output lose their exit/status evidence, and a
-  verification summary is withheld when its ordinary source diff mentions an
-  application home lookup. Preserve meaningful outputless completions and narrow
-  whole-command filtering in a new policy; prove the correction against retained
-  raw events and harness-disclosure controls, then replay judgments without new
-  solver attempts. Audit evidence sufficiency across representative tasks;
-  preserve missing observations as unknown. Use fresh policy-bound packets and
-  explicit outcome selection when replaying retained repairs, then independently
-  assess verification disagreements before treating them as solver failures.
-  Preserve command start/completion order and intervening source edits in a new
-  evidence policy: completed-command lists cannot establish that a suite exercised
-  the final candidate. A development audit found a broad suite running while
-  source changed, despite later focused/lint/build completions. Qualify meaningful
-  chronology and candidate identity without exposing treatment metadata; keep old
-  packet bytes reconstructible.
+- **Tool-evidence coverage and semantic replay:** `execution-context-v3` retains
+  outputless completions, ordinary application-home source text and observable
+  command/file-edit chronology while preserving older packet policies. Audit the
+  corrected packets against retained raw traces across representative tasks, then
+  reassess judgments with explicit outcome selection before interpreting more pairs.
+  Text filters can still omit legitimate mixed commands or miss indirect treatment
+  disclosure. Native file-change events omit arbitrary shell edits; chronology
+  does not bind a command to final candidate bytes. Keep missing evidence unknown
+  and independently assess verification disagreements before treating them as
+  solver failures. Any stronger candidate-binding or blinding claim needs additional
+  effective controls, not inference from the event list.
 - **Broader judge finalization:** repair/document assessments support one explicit
   line-range correction with original evidence and both linked invocation costs
   retained. Missing citation paths, malformed results and calibration/review

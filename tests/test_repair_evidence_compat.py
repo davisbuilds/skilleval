@@ -31,6 +31,11 @@ LEGACY_PACKETS = {
     "document": "d6f81404f4a91f1c8c44283b60d419ffe4d3c480f39d5a3bfff9435a90e96bfc",
 }
 LEGACY_TOOLS = "462f73dbc00ad6f1ae14d25129a614e5e3e6f47e7aab4cb939ddd8d936ad069f"
+# Captured from the unchanged v2 implementation at e54246c before v3 integration.
+APPLICATION_PACKETS = {
+    "repair": "ca6e3a6d15ec07bfe914089ac6db5da9818f58f48265cc0d14ce73dc0edbffae",
+    "document": "242786a15cab3b90dfce7784a09ff93f511d00d74a93397a2be1e364842ceb9d",
+}
 
 
 @pytest.fixture(params=["repair", "document"])
@@ -76,7 +81,7 @@ def test_unknown_policy_is_rejected_for_each_family(family_spec):
         select_policy(family_spec, "future-policy")
 
 
-@pytest.mark.parametrize("policy", ["legacy-v1", "application-context-v2"])
+@pytest.mark.parametrize("policy", ["legacy-v1", "application-context-v2", "execution-context-v3"])
 def test_policy_round_trip_binds_source_spec_and_preserves_recorded_bytes(
     family_spec, tmp_path, policy
 ):
@@ -91,6 +96,12 @@ def test_policy_round_trip_binds_source_spec_and_preserves_recorded_bytes(
         tools = json.loads((packet_dir / "case/tools.json").read_bytes())
         assert tools["tool_evidence_policy"] == policy
         assert prepared["packet_sha256"] != LEGACY_PACKETS[family(spec)]
+        if policy == "application-context-v2":
+            assert prepared["packet_sha256"] == APPLICATION_PACKETS[family(spec)]
+        else:
+            prompt = (packet_dir / "ASSESS.md").read_text()
+            assert "execution-context-v3" in prompt
+            assert "application-context-v2" not in prompt
     run = run_directory(tmp_path, prepared, family_judgment(spec, prepared))
     saved = record_assessment(spec, packet_dir, run, tmp_path / "records")
     directory = Path(saved["path"])

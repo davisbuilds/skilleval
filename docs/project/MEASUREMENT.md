@@ -152,8 +152,10 @@ Legacy/unmapped workflows remain available for compatibility and are labeled as 
 new repair/document comparisons should use the mapped policy. Raw result selection,
 mechanical acceptance and legacy judge packets retain their existing semantics.
 
-Before the next substantive comparison, repair the known packet omissions and establish
-appropriate controls for the mapped gaps. Methodology metadata and retrospective maps
-do not lift those limits. Independent grader qualification and a defensible held-out
+Before the next substantive comparison, audit the corrected v3 packets and versioned
+lifecycle controls against raw evidence and the task contract, then reassess retained
+repairs with independent review. Remaining mapped gaps stay explicit. Methodology
+metadata and retrospective maps do not lift those limits. Independent grader
+qualification and a defensible held-out
 population remain prerequisites for scored skill-effect claims; engineering work and
 offline contract tests can proceed without restarting model experiments.

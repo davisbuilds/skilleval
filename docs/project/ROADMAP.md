@@ -49,8 +49,8 @@ and the adapted OpenBench gateway. External skills remain experimental inputs.
    define success and freeze an acceptance map under `mapped-acceptance-v1`.
    The retrospective completed-session map exposes uncovered lifecycle cases and
    grader evidence loss; it does not upgrade the original six-probe results.
-   Add discriminating controls and repair packet omissions before further model
-   comparisons. Seek independent domain review of scope and brief sufficiency;
+   Validate corrected packets and the supplementary lifecycle controls before
+   further model comparisons. Seek independent domain review of scope and brief sufficiency;
    include a blind alternative implementation where useful. Preserve the
    qualified external-enforcement route and track its documented native wording
    limits. Use ordinary work briefs; review
@@ -73,13 +73,14 @@ and the adapted OpenBench gateway. External skills remain experimental inputs.
    need capture and executable validation.
    Preserve selection reasons and exclusions. Do not retain
    only vanilla failures or wins for the skill.
-3. **Audit representative judgments and repair evidence loss.** Review actual
+3. **Audit representative judgments with corrected evidence.** Review actual
    artifacts, source support, novel findings, alternative solutions, checker
-   defects, and disagreements. The debugging audit traced missing verification
-   evidence to dropped outputless command completions and overly broad application
-   home filtering. Preserve those observations and source-edit chronology in a new
-   packet policy, then reassess retained repairs before interpreting more pairs.
-   This needs fresh evidence generations, not new solver attempts.
+   defects, and disagreements. `execution-context-v3` now retains outputless command
+   completions, ordinary application-home source output and observable edit chronology.
+   The supplementary lifecycle controls cover cached handover and reader limits
+   under a new task identity. Audit these instruments and reassess retained repairs
+   before interpreting more pairs; independent domain review remains pending.
+   Reuse retained solver artifacts in fresh evidence generations.
    Tiny authored label controls test the grader machinery; their difficulty does
    not define the task population. The earlier tiny-control human audit is no
    longer an active request or prerequisite after the task realignment; preserve

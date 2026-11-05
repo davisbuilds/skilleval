@@ -162,32 +162,49 @@ Original raw traces stay retained outside the packet. Free-form prose or source
 can still reveal treatment cues: this is metadata masking, not proven independent
 blinding. The judge can question check fixtures rather than inherit their grades.
 
-Set `"tool_evidence_policy": "application-context-v2"` in new repair or document
-assessment specifications. This policy retains application settings and mentions
-of `CODEX_HOME`, including Python environment construction and shell assignments.
-It withholds commands or outputs with recognized harness-control paths, skill-access
-markers, or direct harness-home lookups such as `$CODEX_HOME` and
-`os.environ["CODEX_HOME"]`. Filtering scans complete strings before display
-truncation. It does not parse arbitrary programs: indirect access and free-form
-content can still reveal treatment cues, and legitimate commands mentioning a
-blocked marker can still be omitted. Missing evidence remains unknown, not proof
-of a false claim. The v2 instructions ask the judge to retain that distinction and
-read qualifications such as substituted test dependencies.
+Select `"tool_evidence_policy": "execution-context-v3"` for new repair/document
+packets. It retains completed-command status and exit codes when output is null,
+missing or invalid, distinguishing those states from captured empty output. Normal
+application `CODEX_HOME` source/diff output is retained. Recognized harness/skill
+output lines are explicitly redacted; commands containing recognized harness paths,
+skill markers or direct home lookups remain withheld. Scan and masking precede
+display truncation. This is bounded text matching, not program analysis or proven
+blinding; indirect access and free-form text can still expose treatment cues.
+
+V3 adds bounded chronology in original event order: command starts/completions,
+native IDs/scope/cwd when supplied, and file-change paths including rename
+destinations. Masked or oversized destinations carry explicit omission flags.
+File diffs are omitted, and gaps/truncation are visible. A start does not prove
+completion. Event order is not wall time, arbitrary shell writes may be invisible,
+and the absence of an observed edit does not prove the source stayed unchanged.
+Only separately collected checks bind the final candidate; chronology helps
+investigate overlapping work without claiming that a test exercised final bytes.
+
+`application-context-v2` remains available for exact historical reconstruction.
+It retains simple application-home assignments, but can omit whole commands when
+output contains a source-level home lookup, and drops completions with null output.
+The two older policies keep their original packet instructions and bytes.
 
 An omitted policy, or explicit `legacy-v1`, preserves the original keyword filter
 and exact packet, rubric, schema and source-spec serialization. It can hide
 legitimate application commands containing `CODEX_HOME`; this affected a qualified
 test rerun in the completed-session task. The default stays legacy for readback
-compatibility, so opt into v2 explicitly. Unknown policies are rejected. The v2
+compatibility, so opt into v3 explicitly. Unknown policies are rejected. The selected
 policy is bound in the source specification, packet metadata and tool evidence;
 repair and document preparation, recording and readback use the same selection.
 
-To correct an earlier assessment, prepare a fresh v2 packet from the same retained
+To correct an earlier assessment, prepare a fresh v3 packet from the same retained
 repair and checks, run a new judgment, and select its record explicitly in a new
 outcome report. Keep the old packet and judgment unchanged. Changing evidence
 policy changes evidence identity, so this is a new evidence generation, not a
 same-evidence `supersedes` revision. No new task-agent run is needed. Review the
 retained raw trace when diagnosing a verification discrepancy.
+
+The [supplementary lifecycle controls](../../examples/repair/completed-sessions/lifecycle-v2/README.md)
+prepare a separate task identity for ordinary archive/plain cache handover and
+reader-limit behavior. Recollect retained candidates as explicitly labeled control
+artifacts before checking that generation. They do not change the original six
+probes or establish broader correctness from two additional observations.
 
 The rubric separates `task-contract`, `scope-and-regressions` and
 `verification-claims`. Each permits `satisfied`, `violated` or `unresolved`, with

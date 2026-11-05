@@ -63,6 +63,9 @@ belong in an explicit external directory or ignored `.local/`.
 - Grade outcomes independently of the skill's instructions. Preserve alternative
   valid solutions, novel findings, failures, disagreements, and unresolved verdicts.
   Scored correctness requires independent grader audit and applicable admission.
+  New repair/document packets should select `execution-context-v3`; retain older
+  policy bytes. Command chronology is supporting evidence, not a final-candidate
+  check, and missing output does not erase a retained completion.
 - Validate actual task environments, including ordinary context, tests, required
   history, tools, identity, failures, and skips. Matching declared exceptions is
   not a clean suite. Isolation needs effective controls with known-positive cases.

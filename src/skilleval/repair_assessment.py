@@ -23,7 +23,7 @@ from skilleval.study import _clean_native
 
 Criterion = Literal["task-contract", "scope-and-regressions", "verification-claims"]
 CRITERIA = ("task-contract", "scope-and-regressions", "verification-claims")
-ToolEvidencePolicy = Literal["legacy-v1", "application-context-v2"]
+ToolEvidencePolicy = Literal["legacy-v1", "application-context-v2", "execution-context-v3"]
 _HARNESS_HOME_LOOKUP = re.compile(
     r"\$CODEX_HOME\b|\$\{CODEX_HOME\b|\bprintenv\s+CODEX_HOME\b|"
     r"\b(?:os\s*\.\s*)?(?:environ(?:\s*\.\s*get)?|getenv)\s*[\[(]\s*['\"]CODEX_HOME['\"]|"
@@ -38,6 +38,24 @@ omitted or truncated, and evidence may precede later edits. Missing supporting
 observations do not establish that a solver's claim is false; keep such claims
 unresolved unless other evidence settles them. Read the retained statement's
 qualifications, including any substituted test dependencies.
+"""
+_EXECUTION_EVIDENCE_NOTE = """
+Tool evidence uses execution-context-v3. Completed commands retain status and exit
+code even when output is null or missing; captured empty output is distinct.
+Command starts/completions and file-change records retain relative event order,
+native IDs and working directories where supplied. A start is not a completion.
+The chronology is not a clock, a comprehensive edit detector (arbitrary shell
+commands can edit files), or proof that a check ran against the final candidate.
+Missing IDs, scope, working directories or output remain unknown. Native IDs
+are observations, not independently validated pairing or snapshot identities.
+Application CODEX_HOME source/diff lines are retained. Recognized harness access
+commands are withheld and recognized harness/skill output lines are redacted;
+gap counts and truncation flags describe omissions. File-change diffs are omitted;
+reported rename destinations are retained or explicitly marked as omitted.
+This bounded text filter is not shell/program analysis or proven blinding.
+Missing observations do not establish a false claim. Read the retained statement's
+qualifications, including substituted test dependencies; unresolved evidence stays
+unresolved unless other observations settle it.
 """
 
 
@@ -352,6 +370,8 @@ def _native_evidence(
 
 
 def _tool_evidence(raw: bytes, policy: ToolEvidencePolicy = "legacy-v1") -> dict[str, Any]:
+    if policy == "execution-context-v3":
+        return _execution_tool_evidence(raw)
     if policy not in ("legacy-v1", "application-context-v2"):
         raise SkillEvalError("unsupported tool evidence policy")
     items = []
@@ -405,6 +425,187 @@ def _tool_evidence(raw: bytes, policy: ToolEvidencePolicy = "legacy-v1") -> dict
             *tools["limits"][1:],
         ]
     return tools
+
+
+def _execution_tool_evidence(raw: bytes) -> dict[str, Any]:
+    items: list[dict[str, Any]] = []
+    chronology: list[dict[str, Any]] = []
+    item_count = chronology_count = 0
+    gaps = dict.fromkeys(
+        (
+            "command_events_withheld",
+            "output_lines_redacted",
+            "malformed_command_events",
+            "malformed_file_change_events",
+            "file_changes_withheld",
+            "metadata_withheld",
+        ),
+        0,
+    )
+    for index, line in enumerate(raw.splitlines(), 1):
+        event = evidence._parse_json(line)
+        if not isinstance(event, dict) or event.get("type") not in (
+            "item.started",
+            "item.completed",
+        ):
+            continue
+        item = event.get("item")
+        if not isinstance(item, dict) or item.get("type") not in (
+            "command_execution",
+            "file_change",
+        ):
+            continue
+        kind = item["type"]
+        row: dict[str, Any] = {
+            "event_index": index,
+            "event_type": event["type"],
+            "item_type": kind,
+            "item_id": _execution_metadata(item.get("id"), gaps, limit=256),
+            "thread_id": _execution_metadata(event.get("thread_id"), gaps, limit=256),
+            "turn_id": _execution_metadata(event.get("turn_id"), gaps, limit=256),
+            "status": _execution_metadata(item.get("status"), gaps, limit=64),
+        }
+        if kind == "command_execution":
+            command = item.get("command")
+            if not isinstance(command, str):
+                gaps["malformed_command_events"] += 1
+                continue
+            # Interpret lookups only in commands. Ordinary source/diff output can
+            # contain those same expressions without consulting the harness home.
+            if _execution_harness_marker(command) or _HARNESS_HOME_LOOKUP.search(command):
+                gaps["command_events_withheld"] += 1
+                continue
+            row.update(
+                command=command[:8192],
+                command_truncated=len(command) > 8192,
+                cwd=_execution_metadata(item.get("cwd"), gaps),
+                exit_code=(item["exit_code"] if type(item.get("exit_code")) is int else None),
+                item_index=None,
+            )
+            if event["type"] == "item.completed":
+                output, output_state, redacted = _execution_output(item)
+                gaps["output_lines_redacted"] += redacted
+                item_count += 1
+                if item_count <= 256:
+                    row["item_index"] = item_count
+                    items.append(
+                        {
+                            "command": row["command"],
+                            "status": row["status"],
+                            "exit_code": row["exit_code"],
+                            "output": output[:65536] if output is not None else None,
+                            "output_state": output_state,
+                            "output_redacted": bool(redacted),
+                            "truncated": len(command) > 8192
+                            or (output is not None and len(output) > 65536),
+                            "event_index": index,
+                        }
+                    )
+        else:
+            changes = item.get("changes")
+            if not isinstance(changes, list):
+                gaps["malformed_file_change_events"] += 1
+                continue
+            paths = []
+            malformed_changes = False
+            for change in changes:
+                if not isinstance(change, dict) or not isinstance(change.get("path"), str):
+                    malformed_changes = True
+                    continue
+                path = change["path"]
+                if _execution_harness_marker(path):
+                    gaps["file_changes_withheld"] += 1
+                    continue
+                patch = change.get("kind")
+                patch_kind = patch.get("type") if isinstance(patch, dict) else patch
+                path_record: dict[str, Any] = {
+                    "path": path[:4096],
+                    "kind": patch_kind if patch_kind in ("add", "delete", "update") else None,
+                }
+                if isinstance(patch, dict) and "move_path" in patch:
+                    destination = patch["move_path"]
+                    path_record["move_path"] = _execution_metadata(destination, gaps)
+                    if destination is not None and path_record["move_path"] is None:
+                        path_record["move_path_omitted"] = True
+                        if not isinstance(destination, str) or not destination:
+                            malformed_changes = True
+                paths.append(path_record)
+            gaps["malformed_file_change_events"] += int(malformed_changes)
+            row.update(
+                changes=paths[:128],
+                changes_truncated=len(paths) > 128
+                or any(
+                    len(change["path"]) > 4096
+                    for change in changes
+                    if isinstance(change, dict) and isinstance(change.get("path"), str)
+                ),
+            )
+        chronology_count += 1
+        if chronology_count <= 512:
+            chronology.append(row)
+    return {
+        "tool_evidence_policy": "execution-context-v3",
+        "items": items,
+        "items_truncated": item_count > 256,
+        "chronology": chronology,
+        "chronology_truncated": chronology_count > 512,
+        "gaps": gaps,
+        "limits": [
+            "Recognized harness-access commands and file paths are withheld; "
+            "recognized harness/skill output lines are explicitly redacted before truncation.",
+            "Application CODEX_HOME code/diff lines are retained; filtering is bounded text "
+            "matching, not shell/program analysis or proven blinding.",
+            "Output state distinguishes captured (including empty), null, missing and invalid; "
+            "null or missing output does not erase completion status or establish a pass.",
+            "Chronology is relative retained-event order, not wall time; "
+            "starts are not completions. "
+            "Native IDs and scope are supplied observations; absent identity remains unknown.",
+            "File-change records are not comprehensive: arbitrary shell commands may edit files; "
+            "file-change diffs are omitted. Reported rename destinations are retained or "
+            "explicitly marked omitted. No observed overlap does not prove no edits.",
+            "Commands, output, file paths and chronology may be truncated; gap counts cover "
+            "recognized omissions, not every possible disclosure or missing observation.",
+            "Tool evidence may precede further edits; it is not an immutable candidate check. "
+            "Chronology alone does not bind a check to the final candidate.",
+            "Missing observations do not establish a false claim; "
+            "unresolved evidence stays unknown.",
+        ],
+    }
+
+
+def _execution_harness_marker(value: str) -> bool:
+    return any(
+        token in value for token in ("/var/tmp/native", "/run/native", "/skills/", "SKILL.md")
+    )
+
+
+def _execution_metadata(value: Any, gaps: dict[str, int], *, limit: int = 4096) -> str | None:
+    if not isinstance(value, str) or not value:
+        return None
+    # Never truncate identity into a potentially matching ID or working directory.
+    if len(value) > limit or _execution_harness_marker(value):
+        gaps["metadata_withheld"] += 1
+        return None
+    return value
+
+
+def _execution_output(item: dict[str, Any]) -> tuple[str | None, str, int]:
+    if "aggregated_output" not in item:
+        return None, "missing", 0
+    output = item["aggregated_output"]
+    if output is None:
+        return None, "null", 0
+    if not isinstance(output, str):
+        return None, "invalid", 0
+    lines = []
+    redacted = 0
+    for line in output.splitlines(keepends=True):
+        if _execution_harness_marker(line):
+            lines.append("[withheld harness-access output line]\n")
+            redacted += 1
+        else:
+            lines.append(line)
+    return "".join(lines), "captured", redacted
 
 
 def packet(spec: RepairAssessmentSpec) -> tuple[dict[str, bytes], str, dict[str, Any]]:
@@ -500,7 +701,9 @@ def packet(spec: RepairAssessmentSpec) -> tuple[dict[str, bytes], str, dict[str,
         else judge._STATIC.replace("calibration-static-v1", version)
     )
     payloads["ASSESS.md"] = ((DOCUMENT_RUBRIC if document else RUBRIC) + permission).encode()
-    if spec.tool_evidence_policy != "legacy-v1":
+    if spec.tool_evidence_policy == "execution-context-v3":
+        payloads["ASSESS.md"] += _EXECUTION_EVIDENCE_NOTE.encode()
+    elif spec.tool_evidence_policy != "legacy-v1":
         payloads["ASSESS.md"] += _APPLICATION_EVIDENCE_NOTE.encode()
     payloads["source-modes.json"] = evidence._json_bytes(
         {"schema_version": 1, "permissions": "bytes-and-executable-flag", "files": modes}

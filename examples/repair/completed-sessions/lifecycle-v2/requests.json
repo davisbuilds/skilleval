@@ -1,0 +1,404 @@
+[
+  {
+    "probe_id": "cached-sibling-handover",
+    "request": {
+      "scenario": "cached-sibling-handover",
+      "fixture": {
+        "session_id": "019f2000-abcd-7000-8000-000000000021",
+        "stem": "rollout-2026-10-07T09-00-00-019f2000-abcd-7000-8000-000000000021",
+        "full": [
+          {
+            "type": "session_meta",
+            "timestamp": "2026-10-07T09:00:00Z",
+            "payload": {
+              "id": "019f2000-abcd-7000-8000-000000000021",
+              "timestamp": "2026-10-07T09:00:00Z",
+              "cwd": "/workspaces/invoice-tools",
+              "source": "cli",
+              "originator": "codex_cli_rs"
+            }
+          },
+          {
+            "type": "turn_context",
+            "timestamp": "2026-10-07T09:00:01Z",
+            "payload": {
+              "model": "gpt-5.6-terra",
+              "cwd": "/workspaces/invoice-tools"
+            }
+          },
+          {
+            "type": "response_item",
+            "timestamp": "2026-10-07T09:00:02Z",
+            "payload": {
+              "type": "message",
+              "role": "user",
+              "content": [
+                {
+                  "type": "input_text",
+                  "text": "Inspect the invoice export for duplicate line items."
+                }
+              ]
+            }
+          },
+          {
+            "type": "response_item",
+            "timestamp": "2026-10-07T09:00:08Z",
+            "payload": {
+              "type": "message",
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "output_text",
+                  "text": "The draft export has two repeated line items."
+                }
+              ]
+            }
+          },
+          {
+            "type": "token_usage_record",
+            "timestamp": "2026-10-07T09:00:09Z",
+            "payload": {
+              "thread_id": "019f2000-abcd-7000-8000-000000000021",
+              "response_id": "demo-9-a",
+              "usage": {
+                "input_tokens": 800,
+                "cached_input_tokens": 200,
+                "output_tokens": 40
+              },
+              "thread_token_usage": {
+                "input_tokens": 800,
+                "cached_input_tokens": 200,
+                "output_tokens": 40
+              }
+            }
+          },
+          {
+            "type": "event_msg",
+            "timestamp": "2026-10-07T09:00:09Z",
+            "payload": {
+              "type": "token_count",
+              "info": {
+                "total_token_usage": {
+                  "input_tokens": 800,
+                  "cached_input_tokens": 200,
+                  "output_tokens": 40
+                }
+              }
+            }
+          },
+          {
+            "type": "response_item",
+            "timestamp": "2026-10-07T09:00:15Z",
+            "payload": {
+              "type": "message",
+              "role": "user",
+              "content": [
+                {
+                  "type": "input_text",
+                  "text": "Remove the duplicates and report the retained total."
+                }
+              ]
+            }
+          },
+          {
+            "type": "response_item",
+            "timestamp": "2026-10-07T09:00:24Z",
+            "payload": {
+              "type": "message",
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "output_text",
+                  "text": "The export retains twelve unique line items."
+                }
+              ]
+            }
+          },
+          {
+            "type": "token_usage_record",
+            "timestamp": "2026-10-07T09:00:25Z",
+            "payload": {
+              "thread_id": "019f2000-abcd-7000-8000-000000000021",
+              "response_id": "demo-9-b",
+              "usage": {
+                "input_tokens": 350,
+                "cached_input_tokens": 100,
+                "output_tokens": 30
+              },
+              "thread_token_usage": {
+                "input_tokens": 1150,
+                "cached_input_tokens": 300,
+                "output_tokens": 70
+              }
+            }
+          },
+          {
+            "type": "event_msg",
+            "timestamp": "2026-10-07T09:00:25Z",
+            "payload": {
+              "type": "token_count",
+              "info": {
+                "total_token_usage": {
+                  "input_tokens": 1150,
+                  "cached_input_tokens": 300,
+                  "output_tokens": 70
+                }
+              }
+            }
+          },
+          {
+            "type": "event_msg",
+            "timestamp": "2026-10-07T09:00:26Z",
+            "payload": {
+              "type": "task_complete"
+            }
+          }
+        ]
+      },
+      "prefix_lines": 6
+    }
+  },
+  {
+    "probe_id": "reader-limit",
+    "request": {
+      "scenario": "reader-limit",
+      "archive": {
+        "session_id": "019f2000-abcd-7000-8000-000000000021",
+        "stem": "rollout-2026-10-07T09-00-00-019f2000-abcd-7000-8000-000000000021",
+        "full": [
+          {
+            "type": "session_meta",
+            "timestamp": "2026-10-07T09:00:00Z",
+            "payload": {
+              "id": "019f2000-abcd-7000-8000-000000000021",
+              "timestamp": "2026-10-07T09:00:00Z",
+              "cwd": "/workspaces/invoice-tools",
+              "source": "cli",
+              "originator": "codex_cli_rs"
+            }
+          },
+          {
+            "type": "turn_context",
+            "timestamp": "2026-10-07T09:00:01Z",
+            "payload": {
+              "model": "gpt-5.6-terra",
+              "cwd": "/workspaces/invoice-tools"
+            }
+          },
+          {
+            "type": "response_item",
+            "timestamp": "2026-10-07T09:00:02Z",
+            "payload": {
+              "type": "message",
+              "role": "user",
+              "content": [
+                {
+                  "type": "input_text",
+                  "text": "Inspect the invoice export for duplicate line items."
+                }
+              ]
+            }
+          },
+          {
+            "type": "response_item",
+            "timestamp": "2026-10-07T09:00:08Z",
+            "payload": {
+              "type": "message",
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "output_text",
+                  "text": "The draft export has two repeated line items."
+                }
+              ]
+            }
+          },
+          {
+            "type": "token_usage_record",
+            "timestamp": "2026-10-07T09:00:09Z",
+            "payload": {
+              "thread_id": "019f2000-abcd-7000-8000-000000000021",
+              "response_id": "demo-9-a",
+              "usage": {
+                "input_tokens": 800,
+                "cached_input_tokens": 200,
+                "output_tokens": 40
+              },
+              "thread_token_usage": {
+                "input_tokens": 800,
+                "cached_input_tokens": 200,
+                "output_tokens": 40
+              }
+            }
+          },
+          {
+            "type": "event_msg",
+            "timestamp": "2026-10-07T09:00:09Z",
+            "payload": {
+              "type": "token_count",
+              "info": {
+                "total_token_usage": {
+                  "input_tokens": 800,
+                  "cached_input_tokens": 200,
+                  "output_tokens": 40
+                }
+              }
+            }
+          },
+          {
+            "type": "response_item",
+            "timestamp": "2026-10-07T09:00:15Z",
+            "payload": {
+              "type": "message",
+              "role": "user",
+              "content": [
+                {
+                  "type": "input_text",
+                  "text": "Remove the duplicates and report the retained total."
+                }
+              ]
+            }
+          },
+          {
+            "type": "response_item",
+            "timestamp": "2026-10-07T09:00:24Z",
+            "payload": {
+              "type": "message",
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "output_text",
+                  "text": "The export retains twelve unique line items."
+                }
+              ]
+            }
+          },
+          {
+            "type": "token_usage_record",
+            "timestamp": "2026-10-07T09:00:25Z",
+            "payload": {
+              "thread_id": "019f2000-abcd-7000-8000-000000000021",
+              "response_id": "demo-9-b",
+              "usage": {
+                "input_tokens": 350,
+                "cached_input_tokens": 100,
+                "output_tokens": 30
+              },
+              "thread_token_usage": {
+                "input_tokens": 1150,
+                "cached_input_tokens": 300,
+                "output_tokens": 70
+              }
+            }
+          },
+          {
+            "type": "event_msg",
+            "timestamp": "2026-10-07T09:00:25Z",
+            "payload": {
+              "type": "token_count",
+              "info": {
+                "total_token_usage": {
+                  "input_tokens": 1150,
+                  "cached_input_tokens": 300,
+                  "output_tokens": 70
+                }
+              }
+            }
+          },
+          {
+            "type": "event_msg",
+            "timestamp": "2026-10-07T09:00:26Z",
+            "payload": {
+              "type": "task_complete"
+            }
+          }
+        ]
+      },
+      "plain": {
+        "session_id": "019f2000-abcd-7000-8000-000000000022",
+        "stem": "rollout-2026-10-07T11-00-00-019f2000-abcd-7000-8000-000000000022",
+        "full": [
+          {
+            "type": "session_meta",
+            "timestamp": "2026-10-07T11:00:00Z",
+            "payload": {
+              "id": "019f2000-abcd-7000-8000-000000000022",
+              "timestamp": "2026-10-07T11:00:00Z",
+              "cwd": "/workspaces/invoice-tools",
+              "source": "cli",
+              "originator": "codex_cli_rs"
+            }
+          },
+          {
+            "type": "turn_context",
+            "timestamp": "2026-10-07T11:00:01Z",
+            "payload": {
+              "model": "gpt-5.6-terra",
+              "cwd": "/workspaces/invoice-tools"
+            }
+          },
+          {
+            "type": "response_item",
+            "timestamp": "2026-10-07T11:00:02Z",
+            "payload": {
+              "type": "message",
+              "role": "user",
+              "content": [
+                {
+                  "type": "input_text",
+                  "text": "Inspect the invoice export for duplicate line items."
+                }
+              ]
+            }
+          },
+          {
+            "type": "response_item",
+            "timestamp": "2026-10-07T11:00:08Z",
+            "payload": {
+              "type": "message",
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "output_text",
+                  "text": "The draft export has two repeated line items."
+                }
+              ]
+            }
+          },
+          {
+            "type": "token_usage_record",
+            "timestamp": "2026-10-07T11:00:09Z",
+            "payload": {
+              "thread_id": "019f2000-abcd-7000-8000-000000000022",
+              "response_id": "demo-11-a",
+              "usage": {
+                "input_tokens": 800,
+                "cached_input_tokens": 200,
+                "output_tokens": 40
+              },
+              "thread_token_usage": {
+                "input_tokens": 800,
+                "cached_input_tokens": 200,
+                "output_tokens": 40
+              }
+            }
+          },
+          {
+            "type": "event_msg",
+            "timestamp": "2026-10-07T11:00:09Z",
+            "payload": {
+              "type": "token_count",
+              "info": {
+                "total_token_usage": {
+                  "input_tokens": 800,
+                  "cached_input_tokens": 200,
+                  "output_tokens": 40
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+]
