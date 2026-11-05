@@ -185,7 +185,8 @@ class Lifecycle:
             state,
             home,
             env,
-            "skilleval-lifecycle-" + uuid.uuid4().hex,
+            # The guest kernel and overlay metadata expose this identifier.
+            "workspace-" + uuid.uuid4().hex,
             runtime,
             image_identity,
             config,
@@ -256,7 +257,8 @@ class Lifecycle:
                 ticket["kind"] != "skilleval-lifecycle-recovery"
                 or ticket["schema_version"] != 1
                 or not re.fullmatch(
-                    r"skilleval-(?:lifecycle|native|offline)-[a-f0-9]{32}", ticket["machine_name"]
+                    r"(?:workspace|skilleval-(?:lifecycle|native|offline))-[a-f0-9]{32}",
+                    ticket["machine_name"],
                 )
                 or hashlib.sha256(json.dumps(ticket["config"], sort_keys=True).encode()).hexdigest()
                 != ticket["config_sha256"]

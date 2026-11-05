@@ -7,5 +7,8 @@ RUN python3 -m pip install --no-cache-dir --require-hashes \
     -r /opt/skilleval/requirements.txt
 COPY --chmod=0755 codex codex-code-mode-host rg /usr/local/bin/
 COPY openbench_gateway.py OPENBENCH_LICENSE /opt/skilleval/
-RUN git --version && python3 --version && codex --version
+RUN git --version && python3 --version && \
+    mkdir /tmp/skilleval-codex-version && \
+    HOME=/tmp/skilleval-codex-version CODEX_HOME=/tmp/skilleval-codex-version/codex-home codex --version && \
+    rm -rf /tmp/skilleval-codex-version
 WORKDIR /workspace/task

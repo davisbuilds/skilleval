@@ -22,6 +22,14 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-24.04, macos-15]
+        # pytest-xdist workers for scripts/check, measured on these images. The
+        # suite mostly waits on subprocesses: Linux (4 vCPU) gains up to about 6-8
+        # workers; macOS (3 vCPU) plateaus at 4-6 and slows at 12.
+        include:
+          - os: ubuntu-24.04
+            pytest-workers: "8"
+          - os: macos-15
+            pytest-workers: "4"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -34,6 +42,8 @@ jobs:
       - name: Install locked dependencies
         run: uv sync --locked
       - name: Run deterministic gate
+        env:
+          PYTEST_WORKERS: ${{ matrix.pytest-workers }}
         run: scripts/check
       - name: Build distribution
         run: uv build --out-dir dist

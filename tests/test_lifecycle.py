@@ -82,6 +82,19 @@ def test_image_copy_tamper_refused_before_create(tmp_path: Path) -> None:
         session.cleanup()
 
 
+def test_new_machine_names_are_neutral_and_legacy_recovery_remains_readable(tmp_path: Path) -> None:
+    session = session_at(tmp_path)
+    try:
+        assert session.machine.startswith("workspace-")
+        assert "skilleval" not in session.machine
+        ticket = {**session.ticket, "machine_name": "skilleval-lifecycle-" + "a" * 32}
+        (session.output / "recovery.json").write_text(json.dumps(ticket))
+        loaded = Lifecycle.load(session.output)
+        assert loaded.machine == ticket["machine_name"]
+    finally:
+        session.cleanup()
+
+
 def test_durable_ticket_env_positive_inventory_and_idempotent_recovery(tmp_path: Path) -> None:
     session = session_at(tmp_path)
     home = Path(session.ticket["runtime_home"])
@@ -166,7 +179,9 @@ def test_runtime_drift_refuses_recovery_and_retains_original_state(tmp_path: Pat
     assert recover(session.output)["cleanup_complete"]
 
 
-def test_native_controller_timeout_kills_real_process_group_descendant(tmp_path: Path) -> None:
+def test_native_controller_timeout_kills_real_process_group_descendant(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     beat = tmp_path / "heartbeat"
     child = (
         "import pathlib,time\n"
@@ -176,13 +191,22 @@ def test_native_controller_timeout_kills_real_process_group_descendant(tmp_path:
     parent = (
         "import subprocess,sys,time\n"
         f"subprocess.Popen([sys.executable,'-c',{child!r}])\n"
-        "time.sleep(30)\n"
+        "time.sleep(120)\n"
     )
-    # Allow both interpreters to start while native VM controls share the host.
-    # The positive heartbeat is still required before asserting group shutdown.
-    result = _invoke([sys.executable, "-c", parent], tmp_path, {"PATH": "/usr/bin:/bin"}, 5)
+
+    class ReadyProcess(subprocess.Popen[bytes]):
+        def wait(self, timeout: float | None = None) -> int:
+            # Establish the real descendant before starting the timed wait. Hosted
+            # interpreter startup can exceed the timeout we are trying to test.
+            # Popen, timed wait, and process-group termination remain real.
+            if timeout is not None:
+                wait_for(beat, timeout=30)
+            return super().wait(timeout=timeout)
+
+    monkeypatch.setattr(subprocess, "Popen", ReadyProcess)
+    result = _invoke([sys.executable, "-c", parent], tmp_path, {"PATH": "/usr/bin:/bin"}, 1)
     assert result["timed_out"] and result["returncode"] < 0
-    wait_for(beat)
+    assert beat.exists()
     known_positive = beat.read_text()
     time.sleep(0.2)
     assert beat.read_text() == known_positive
@@ -256,7 +280,11 @@ def test_sigterm_unwinds_client_and_real_child_group(tmp_path: Path) -> None:
     try:
         wait_for(beat)
         before = beat.read_text()
-        time.sleep(0.1)
+        # Wait for the heartbeat to advance rather than for a fixed interval: on a
+        # contended runner the child may not be scheduled within any short sleep.
+        deadline = time.monotonic() + 10
+        while beat.read_text() == before and time.monotonic() < deadline:
+            time.sleep(0.02)
         assert beat.read_text() != before
         process.send_signal(signal.SIGTERM)
         process.wait(timeout=5)

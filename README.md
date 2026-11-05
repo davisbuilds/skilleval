@@ -44,7 +44,9 @@ scripts/check
 ```
 
 The deterministic gate runs lint, format checks, type checks, tests, and whitespace
-checks. It does not launch VMs, read credentials, or call models. Native execution
+checks. It does not launch VMs, read credentials, or call models. Tests run in
+parallel through pytest-xdist with one worker per CPU; set `PYTEST_WORKERS` to a
+count, or to `0` to run them serially in one process. Native execution
 has been exercised on Apple Silicon macOS with Linux ARM64 guests; this is not a
 claim of runtime portability. Windows is unsupported. See
 [environment requirements](docs/system/ENVIRONMENT.md).
@@ -85,7 +87,8 @@ harness versions and exact execution identities are retained per run.
 1. [Capture and validate a task package](docs/system/TASKS.md). Preserve the task's
    ordinary context and declare unsupported environment capabilities.
 2. [Prepare the runtime and inference route](docs/system/ENVIRONMENT.md), using
-   the [image recipe](environments/python-review/README.md) and
+   the [Python](environments/python-review/README.md) or
+   [Node debugging](environments/node-debugging/README.md) image recipe and
    [gateway contract](docs/system/GATEWAY.md).
 3. [Freeze and run a development study](docs/system/STUDIES.md). New plans compare
    explicit skill use with the same task without that skill; every attempt is kept.
@@ -107,6 +110,7 @@ qualification, 2 for invalid input or an operational error, and 130 for interrup
 | --- | --- | --- |
 | [Review calibration](examples/calibration/review-v1) | Supported/unsupported findings, duplicates, coverage, and unresolved judgments | Representative review difficulty or independent label truth |
 | [Receipt-admission repair](examples/repair/receipt-admission) | Captured repository context, exact edits, baseline/reference controls, and semantic assessment | Broad environment coverage or a skill effect |
+| [Completed-session debugging](examples/repair/completed-sessions) | A real Node/SQLite repair, complete diagnosing-bugs skill, ordinary environment checks, and incomplete-repair controls | Concealed-cause discovery, exhaustive correctness, or a skill effect |
 | [Product-page writing](examples/document/product-page) | A public product source, complete upstream skill, document checks, and semantic criteria | Conversion gains or a representative writing population |
 | [Judge reliability](docs/system/RELIABILITY.md) | Repeat, order, and within-packet perturbation controls | General judge reliability or prompt-injection resistance |
 

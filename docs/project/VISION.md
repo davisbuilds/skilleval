@@ -12,6 +12,13 @@ its upstream version is outside the initial scope. The initial experiment is
 one pinned skill ON versus OFF. Source popularity can motivate selection; it
 does not establish quality or effectiveness.
 
+Start with a single independently usable skill, preserving its own references,
+scripts, assets and required resources. Prefer packages that can be evaluated
+faithfully without other skills or a larger orchestration workflow. If a package
+requires that broader workflow, defer it rather than removing required behavior
+and calling the result an evaluation of the original skill. Multi-skill and
+workflow comparisons come later as separately declared treatments.
+
 The unit of work is a reproducible task with an explicit environment and evidence
 contract. The unit of comparison is a matched experiment with a vanilla baseline,
 a precisely identified skill treatment, repeated attempts, and separately
@@ -24,6 +31,15 @@ Freeze the minimal invocation difference and complete skill package. If supplied
 helpers change capabilities, declare that package treatment rather than attributing
 its whole effect to prose. Record consultation failures without discarding them.
 Natural discovery and selection are a later, separately identified experiment.
+
+Operator machine state is outside the experimental input. Host parent-directory
+and global instructions, personal skills, memories, plugins, hooks, configuration,
+shell state and prior sessions must not enter either arm. The captured task
+repository's ordinary instructions remain part of the shared input; inspect any
+dependencies on unavailable external guidance before selecting the task. Record
+the effective harness context and validate contamination controls on the actual
+execution route, including a known-positive case. A fresh directory or an
+unmatched text search alone does not establish isolation.
 
 Review tasks supplied the first implementation and exposed historical cases
 developed the instrument. The evaluation population must now follow each selected

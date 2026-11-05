@@ -37,6 +37,7 @@ name=args[args.index('--name')+1] if '--name' in args else None
 if args[:2]==['machine','create']:
  ticket=json.loads((state.parent/'recovery.json').read_text())
  assert ticket['create_attempted']
+ (state/'scenario.json').write_text('{}')
  names.append(name);machines.write_text(json.dumps(names))
 elif args[:2]==['machine','ls']:
  print(json.dumps([{'name':n} for n in names]));raise SystemExit
@@ -55,7 +56,7 @@ elif args[:2]==['machine','cp']:
  else:shutil.copyfile(args[2],state/'tooling-copy.tar')
 elif args[:2]==['machine','exec']:
  command=args[args.index('--')+1:]
- if command==['codex','--version']:
+ if command==['codex','--version'] or command[-1]=='skilleval-version-probe':
   print('codex-cli 0.164.0');raise SystemExit
  if command[0]=='cat':
   print(json.dumps({'status':'complete'}));raise SystemExit
@@ -63,22 +64,39 @@ elif args[:2]==['machine','exec']:
   (state/'scenario.json').write_text('{}')
   with tarfile.open(state/'tooling-copy.tar') as source:
    payload=json.loads(source.extractfile('native/requests.json').read())
-   assert set(payload)=={'timeout_seconds','requests'}
+   assert set(payload) in ({'timeout_seconds','requests'},
+    {'timeout_seconds','requests','observer_resource_profile'})
    assert all('expected' not in r for r in payload['requests'])
    observed=[r.get('value') for r in payload['requests']]
-  print(json.dumps({'schema_version':1,'returncode':0,'timed_out':False,
+  envelope={'schema_version':1,'returncode':0,'timed_out':False,
    'output_limit_reached':False,'stdout':json.dumps({'observations':observed}),
-   'stderr':'','worker_uid':65534,'expected_answers_supplied':False}));raise SystemExit
+   'stderr':'','worker_uid':65534,'expected_answers_supplied':False}
+  if 'observer_resource_profile' in payload:
+   assert payload['observer_resource_profile']=='node-v1'
+   envelope['observer_resources']={'profile':'node-v1','address_space_bytes':2147483648,
+    'file_size_bytes':8388608,'open_files':256,'processes':32,'core_bytes':0,
+    'output_bytes_per_stream':131072}
+  print(json.dumps(envelope));raise SystemExit
  if len(command)>1 and command[1]=='/var/tmp/native/runner.py':
   entries={}
   with tarfile.open(state/'tooling-copy.tar') as source:
+   settings=json.loads(source.extractfile('native/settings.json').read())
    for m in source:
     if m.name.startswith('task/'):
      entries[m.name]=(source.extractfile(m).read(),m.mode)
   scenario=json.loads(entries['task/scenario.json'][0])
   (state/'scenario.json').write_text(json.dumps(scenario))
   fault=scenario.get('fault')
-  process={'returncode':0,'timed_out':False,'codex_version':'codex-cli 0.164.0'}
+  process={'returncode':0,'timed_out':False,'codex_version':'codex-cli 0.164.0',
+   'pipe_drain_incomplete':False,'output_limit_reached':False,
+   'protocol':{'transport':'stdio-jsonrpc','complete':True,'permissions_confirmed':True},
+   'boundary':{'schema_version':1,'profile':'solver-isolated-v1','status':'ready',
+    'uid':61000,'gid':61000,'groups':[],'no_new_privs':True,'capabilities_cleared':True,
+    'transport_filter':'vsock-deny-v1','seccomp':True,
+    'namespace_reaped':True,'native_returncode':0,
+    'native_elapsed_seconds':0.01,'launcher_elapsed_seconds':0.02},
+   'context_preflight':{'status':'passed','initial_codex_home':settings['expected_codex_home']},
+   'context_skills_after':[]}
   if scenario.get('complete_usage'):process['agent_elapsed_seconds']=0.01
   output_size=5*1024*1024 if fault=='large-output' else 90000
   events=[{'type':'thread.started','thread_id':'synthetic'},
@@ -88,11 +106,21 @@ elif args[:2]==['machine','exec']:
   if scenario.get('complete_usage'):events.insert(1,{'type':'turn.started'})
   if fault=='events-error':events.append({'type':'error','message':'synthetic failure'})
   if fault=='timed-out':process.update(returncode=-15,timed_out=True)
+  if fault=='boundary-missing':process.pop('boundary')
+  if fault=='boundary-not-reaped':process['boundary']['namespace_reaped']=False
+  if fault=='boundary-privileged':process['boundary']['uid']=0
+  if fault=='pipe-drain-incomplete':process['pipe_drain_incomplete']=True
+  if fault=='output-limit-reached':process['output_limit_reached']=True
+  if fault=='protocol-missing':process.pop('protocol')
+  if fault=='protocol-incomplete':process['protocol']['complete']=False
+  if fault=='permissions-unconfirmed':process['protocol']['permissions_confirmed']=False
   if fault!='timed-out':events.append({'type':'turn.completed','usage':{'input_tokens':3}})
   if scenario.get('complete_usage') and fault!='timed-out':
    events[-1]['usage']={'input_tokens':3,'cached_input_tokens':1,'output_tokens':2}
   raw='\n'.join(json.dumps(e) for e in events).encode()
   entries['evidence/events.jsonl']=(raw,0o600)
+  entries['evidence/app-server-rpc.jsonl']=(b'{"method":"synthetic/retained"}\n',0o600)
+  entries['evidence/app-server-input.jsonl']=(b'{"method":"initialize","id":1}\n',0o600)
   if fault!='timed-out':entries['evidence/final.txt']=(b'Final synthetic answer',0o600)
   entries['evidence/process.json']=(json.dumps(process).encode(),0o600)
   entries['evidence/filesystem-links.json']=(b'[]',0o600)
@@ -144,6 +172,7 @@ def route(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
             ],
         )
         try:
+            kwargs["request_observer"](b'{"input": []}')
             yield handle
         finally:
             directory.rmdir()
@@ -195,6 +224,12 @@ def test_complete_capture_exceeds_client_stdout_cap_and_preserves_originals(
     assert report["input_changes"]["created"] == ["investigation/probe.txt"]
     assert report["original_input_unchanged"]
     assert (tmp_path / "run/final.txt").read_text() == "Final synthetic answer"
+    assert (tmp_path / "run/app-server-rpc.jsonl").read_bytes() == (
+        b'{"method":"synthetic/retained"}\n'
+    )
+    assert (tmp_path / "run/app-server-input.jsonl").read_bytes() == (
+        b'{"method":"initialize","id":1}\n'
+    )
     assert not (tmp_path / "run/task").exists()  # Archive was never extracted.
     assert (tmp_path / "run/native-run.json").stat().st_mode & 0o077 == 0
     with pytest.raises(SkillEvalError, match="already exists"):
@@ -229,6 +264,41 @@ def test_large_command_output_stays_in_raw_artifacts_with_a_usable_receipt(
     verified, retained, _artifacts = _run_files(tmp_path / "run", mode="review")
     assert verified["status"] == "completed" and retained["events.jsonl"] == raw
     assert retained["native-audit.json"] == (tmp_path / "run/native-audit.json").read_bytes()
+
+
+def test_resource_heavy_skill_process_record_is_read_with_bounded_limits(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, work = tmp_path / "native", tmp_path / "task"
+    work.mkdir()
+    home = root / "codex-home"
+    resources = home / "skills/selected/references"
+    resources.mkdir(parents=True)
+    for index in range(500):
+        (resources / f"reference-{index:04}.md").write_text("Resource content.\n")
+    process = {
+        "returncode": 0,
+        "context_preflight": {"initial_codex_home": runner.context_guard.inventory(home)},
+        "context_skills_after": runner.context_guard.inventory(home / "skills"),
+    }
+    raw = json.dumps(process).encode()
+    assert len(raw) > 128 * 1024
+    output = root / "evidence"
+    output.mkdir()
+    (root / "home").mkdir()
+    (output / "process.json").write_bytes(raw)
+    events, final = b'{"type":"turn.completed"}\n', b"Completed task."
+    (output / "events.jsonl").write_bytes(events)
+    (output / "final.txt").write_bytes(final)
+    maximum = 8 * 1024 * 1024
+    assert guest_runner._archive(root, work, maximum, 1000)["status"] == "complete"
+    archive = root / "artifacts.tar"
+    assert runner._read_native(archive, maximum) == (process, events, final)
+    with pytest.raises(SkillEvalError, match="member size limit exceeded"):
+        runner._read_native(archive, len(raw) - 1)
+    monkeypatch.setattr(runner, "MAX_NATIVE_AUDIT_BYTES", len(raw) - 1)
+    with pytest.raises(SkillEvalError, match="member size limit exceeded"):
+        runner._read_native(archive, maximum)
 
 
 def test_execution_and_inventory_metadata_is_bounded_and_full_audit_retained(
@@ -296,6 +366,14 @@ def test_audit_overflow_retains_private_bytes_and_usable_partial_record(
     "fault,status",
     [
         ("events-error", "failed"),
+        ("boundary-missing", "failed"),
+        ("boundary-not-reaped", "failed"),
+        ("boundary-privileged", "failed"),
+        ("pipe-drain-incomplete", "failed"),
+        ("output-limit-reached", "failed"),
+        ("protocol-missing", "failed"),
+        ("protocol-incomplete", "failed"),
+        ("permissions-unconfirmed", "failed"),
         ("timed-out", "timed-out"),
         ("drift", "partial"),
         ("large-copy", "partial"),
@@ -317,6 +395,25 @@ def test_failures_remain_failures_with_evidence_and_machine_cleanup(
     if fault == "timed-out":
         assert report["process"]["timed_out"]
         assert (tmp_path / "run/events.jsonl").exists()
+
+
+def test_terminal_usage_without_complete_rpc_capture_is_not_complete_accounting(
+    tmp_path: Path, route: dict[str, Any]
+) -> None:
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "scenario.json").write_text(
+        json.dumps({"fault": "protocol-incomplete", "complete_usage": True})
+    )
+    frozen = tmp_path / "frozen"
+    receipt = evidence.snapshot(source, frozen)
+    report = runner.run_native(
+        frozen, receipt["manifest_sha256"], "Inspect the task.", tmp_path / "run", **route
+    )
+    assert report["status"] == "failed"
+    assert report["execution"]["execution_status"] == "unknown"
+    assert report["usage_accounting"]["status"] == "incomplete"
+    assert report["usage"] == {"input_tokens": 3, "cached_input_tokens": 1, "output_tokens": 2}
 
 
 def test_input_drift_refused_before_vm_create(tmp_path: Path, route: dict[str, Any]) -> None:
@@ -377,9 +474,12 @@ def test_extension_headers_are_rejected_before_tarfile_can_expand_them(tmp_path:
         runner._member(archive, "evidence/final.txt", 1024)
 
 
-@pytest.mark.parametrize("name", [".codex/config.toml", ".agents/skills/ambient/SKILL.md"])
+@pytest.mark.parametrize("mode", ["review", "repair", "judge"])
+@pytest.mark.parametrize(
+    "name", [".codex/config.toml", ".codex/hooks.json", ".agents/skills/ambient/SKILL.md"]
+)
 def test_review_refuses_ambient_discovery_before_auth_or_vm(
-    tmp_path: Path, route: dict[str, Any], name: str
+    tmp_path: Path, route: dict[str, Any], name: str, mode: str
 ) -> None:
     source = tmp_path / "source"
     target = source / name
@@ -388,7 +488,15 @@ def test_review_refuses_ambient_discovery_before_auth_or_vm(
     frozen = tmp_path / "frozen"
     receipt = evidence.snapshot(source, frozen)
     with pytest.raises(SkillEvalError, match=r"ambient|native|skills|configuration"):
-        runner.run_native(frozen, receipt["manifest_sha256"], "Review", tmp_path / "run", **route)
+        runner.run_native(
+            frozen,
+            receipt["manifest_sha256"],
+            "Review",
+            tmp_path / "run",
+            mode=mode,
+            investigation=True if mode == "judge" else None,
+            **route,
+        )
     assert not (tmp_path / "run").exists()
 
 
@@ -444,6 +552,62 @@ def test_actual_native_child_deadline_retains_streamed_output_and_kills_group(
     assert not (tmp_path / "escaped").exists()
 
 
+def test_native_streams_use_pipes_instead_of_controller_file_descriptors(tmp_path: Path) -> None:
+    prompt = tmp_path / "private-prompt.txt"
+    prompt.write_text("ordinary task request")
+    result = guest_runner._execute_native(
+        [
+            sys.executable,
+            "-c",
+            "import os,stat,sys; "
+            "assert all(stat.S_ISFIFO(os.fstat(fd).st_mode) for fd in (0,1,2)); "
+            "print(sys.stdin.read()); print('diagnostic',file=sys.stderr)",
+        ],
+        {"PATH": os.defpath},
+        prompt,
+        tmp_path,
+        tmp_path,
+        5,
+    )
+    assert result["returncode"] == 0
+    assert (tmp_path / "events.jsonl").read_text() == "ordinary task request\n"
+    assert (tmp_path / "stderr.log").read_text() == "diagnostic\n"
+
+
+def test_trusted_relay_does_not_import_modules_from_task_working_directory(tmp_path: Path) -> None:
+    # This is authored hostile fixture code, never an imported repository.
+    (tmp_path / "runpy.py").write_text("raise RuntimeError('task module ran with relay authority')")
+    (tmp_path / "json.py").write_text("raise RuntimeError('task module ran with relay authority')")
+    command = list(guest_runner.RELAY_PREFIX)
+    command[0] = sys.executable
+    vendor = Path(runner.__file__).parent / "_vendor/openbench_gateway.py"
+    command[-1] = command[-1].replace("/opt/skilleval/openbench_gateway.py", str(vendor))
+    result = subprocess.run(
+        [*command, "--help"],
+        cwd=tmp_path,
+        env={"PATH": os.defpath},
+        capture_output=True,
+        text=True,
+        timeout=5,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "{broker,relay}" in result.stdout
+
+
+def test_guest_archive_refuses_symlink_collection_root(tmp_path: Path) -> None:
+    root, task = tmp_path / "native", tmp_path / "task"
+    root.mkdir()
+    task.mkdir()
+    for name in ("evidence", "home"):
+        (root / name).mkdir()
+    private = tmp_path / "private"
+    private.mkdir()
+    (private / "secret").write_text("private")
+    (root / "codex-home").symlink_to(private, target_is_directory=True)
+    with pytest.raises(ValueError, match="collection root"):
+        guest_runner._archive(root, task, 1024 * 1024, 100)
+
+
 def test_provider_failure_never_completes(
     tmp_path: Path, route: dict[str, Any], monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -482,7 +646,10 @@ def test_cleanup_failure_retains_ticket_and_namespace_until_recovered(
 def test_host_broker_observer_keeps_hashes_without_raw_values(
     tmp_path: Path, route: dict[str, Any], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    secret = b'{"input":"PRIVATE_TASK_VALUE"}'
+    secret = (
+        b'{"input":[{"type":"message","role":"user","content":'
+        b'[{"type":"input_text","text":"PRIVATE_TASK_VALUE"}]}]}'
+    )
 
     @contextmanager
     def broker(auth: Any, directory: Path, **kwargs: Any) -> Iterator[Any]:
@@ -506,10 +673,11 @@ def test_host_broker_observer_keeps_hashes_without_raw_values(
             "input_sha256": hashlib.sha256(secret).hexdigest(),
             "input_bytes": len(secret),
             **runner.protocol_shape(secret),
+            "context": runner.context_guard.request_context(secret),
         }
     ]
     assert b"PRIVATE_TASK_VALUE" not in (tmp_path / "run/native-run.json").read_bytes()
-    assert report["request_observations"][0]["request_structure"]["input"] == {"type": "str"}
+    assert report["request_observations"][0]["request_structure"]["input"]["type"] == "list"
 
 
 def test_available_skill_is_installed_outside_identical_task_and_prompt(

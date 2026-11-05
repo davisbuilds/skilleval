@@ -10,4 +10,6 @@ The cases distinguish a repair that honors the contract, a blanket rejection
 that breaks legitimate admission, and an unverifiable external-testing claim.
 Expectations are authored labels pending independent audit. Agreement alone does
 not establish judge reliability; preserve disagreements and missing judgments.
-These controls are separate from earlier review calibration and its pending audit.
+These controls are separate from earlier review calibration. Its tiny-control
+audit is preserved as historical evidence, no longer an active prerequisite after
+task realignment; independent audits must address the selected real tasks.

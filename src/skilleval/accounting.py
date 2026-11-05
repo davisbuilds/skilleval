@@ -26,6 +26,12 @@ CODEX_USAGE_SOURCE = (
     + CODEX_USAGE_SOURCE_REVISION
     + "/codex-rs/exec/src/event_processor_with_jsonl_output.rs#L118-L128"
 )
+CODEX_APP_SERVER_USAGE_SOURCE_REVISION = "6aaac694803004a63c6f393d153c96d22521a6b9"
+CODEX_APP_SERVER_USAGE_SOURCE = (
+    "https://github.com/openai/codex/blob/"
+    + CODEX_APP_SERVER_USAGE_SOURCE_REVISION
+    + "/codex-rs/app-server/src/bespoke_event_handling.rs#L1602-L1615"
+)
 _COUNTS = ("input_tokens", "cached_input_tokens", "output_tokens")
 _USAGE_FIELDS = {*_COUNTS, "cache_write_input_tokens", "reasoning_output_tokens", "total_tokens"}
 
@@ -186,13 +192,18 @@ def normalize_codex_usage(
     model: str,
     provider_observations: Sequence[Mapping[str, Any]] | None = None,
     parse_errors: Sequence[Mapping[str, Any]] | None = None,
+    surface: str = "codex-exec-json",
 ) -> dict[str, Any]:
-    """Normalize one fresh, fully captured exec turn; never sum terminal snapshots.
+    """Normalize one fresh, fully captured canonical turn; never sum snapshots.
 
     Provider observations, when supplied, must be the full host broker request
     ledger for this invocation. This function can check its rows, not independently
     establish that the caller supplied an exhaustive ledger or a fresh thread.
+    The surface selects provenance, not parsing: app-server callers supply the
+    adapter's canonical events and parse errors while retaining the raw RPC stream.
     """
+    if surface not in {"codex-exec-json", "codex-app-server-jsonrpc-v2"}:
+        raise SkillEvalError("unsupported Codex usage surface")
     result: dict[str, Any] = {
         "schema_version": 1,
         "status": "unknown",
@@ -214,6 +225,15 @@ def normalize_codex_usage(
         },
         "provider_reconciliation": _reconcile(None, model, {}),
     }
+    if surface == "codex-app-server-jsonrpc-v2":
+        result["provenance"].update(
+            surface=surface,
+            record="thread/tokenUsage/updated.params.tokenUsage.total",
+            form="latest matched-thread cumulative snapshot before matched turn/completed",
+            adapter="app-server-v2-to-canonical-v1",
+            source_revision=CODEX_APP_SERVER_USAGE_SOURCE_REVISION,
+            source_url=CODEX_APP_SERVER_USAGE_SOURCE,
+        )
 
     def stop(status: str, reason: str) -> dict[str, Any]:
         result.update(status=status, reasons=[reason])

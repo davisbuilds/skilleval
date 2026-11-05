@@ -30,8 +30,9 @@ approve pull requests. Repository security settings enable secret scanning,
 push protection, dependency alerts, and automated security-update proposals
 where supported; these complement the required scanner.
 
-The local pre-push gate is `scripts/check`. For workflow/tool changes, also run
-the [CI-tool checks](../../.github/ci-tools/README.md). Exact toolchain inputs need
+The local pre-push gate is `scripts/check`. CI sets its pytest worker count per
+runner image through `PYTEST_WORKERS`. For workflow/tool changes, also run
+the [CI-tool checks](../../tools/ci/README.md). Exact toolchain inputs need
 manual maintenance; Dependabot owns the configured uv and action updates. Keep
 the eight-day update cooldown aligned with the seven-day installation quarantine.
 

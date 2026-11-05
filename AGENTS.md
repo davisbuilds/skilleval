@@ -20,13 +20,15 @@ interfaces. Do not load every reference for a small change.
   paired plans, attempts, reporting, and usage/cost/time semantics.
 - [ENVIRONMENT.md](docs/system/ENVIRONMENT.md), [GATEWAY.md](docs/system/GATEWAY.md),
   [NATIVE.md](docs/system/NATIVE.md): qualification, recovery, inference, and native runs.
+- [TASK-PRESENTATION.md](docs/system/TASK-PRESENTATION.md): solver-visible context,
+  evaluation disclosures, the solver boundary, and its qualification limits.
 - [CALIBRATION.md](docs/system/CALIBRATION.md), [RELIABILITY.md](docs/system/RELIABILITY.md):
   judge contracts, authored controls, stability checks, and independent audit limits.
 - [PILOT-CANDIDATES.md](docs/project/PILOT-CANDIDATES.md),
   [SOURCES.md](docs/project/SOURCES.md): task selection and external provenance.
 - [CONTRIBUTING.md](CONTRIBUTING.md): contribution scope and review expectations.
 - [GIT_HISTORY_POLICY.md](docs/project/GIT_HISTORY_POLICY.md): hosting, required
-  checks, review, and merge policy; [CI tools](.github/ci-tools/README.md): tool renewal.
+  checks, review, and merge policy; [CI tools](tools/ci/README.md): tool renewal.
 
 ## Command quickstart
 
@@ -46,6 +48,11 @@ belong in an explicit external directory or ignored `.local/`.
 - Keep execution validity, task quality, skill exposure/consultation, and usage
   separate. Missing telemetry is unknown. A read is not semantic application;
   authored controls are not holdouts; one pair is not a skill-effect estimate.
+- Give solvers ordinary work briefs without evaluation announcements. Keep
+  evaluation-only context inaccessible; operator-state isolation alone does not
+  establish that boundary. Preserve faithful upstream skill bytes and old evidence.
+  Native commands use the unprivileged solver boundary; do not bypass it to make
+  a task pass. Qualify required tools and image contents through that same route.
 - Grade outcomes independently of the skill's instructions. Preserve alternative
   valid solutions, novel findings, failures, disagreements, and unresolved verdicts.
   Scored correctness requires independent grader audit and applicable admission.
@@ -71,6 +78,9 @@ Use behavioral red/green tests for substantial features and refactors. The red
 step must fail on the behavior being changed, not a missing symbol. Prefer real
 filesystem/process dependencies; run relevant existing checks for smaller edits.
 Subprocess fixtures cannot establish real VM isolation or semantic judge quality.
+The gate runs tests in parallel processes (`PYTEST_WORKERS=0` runs serially), so
+tests must not share fixed host state: use `tmp_path` or unique temporary names,
+ephemeral ports, and test-scoped environment changes.
 
 After changing a field or contract, inspect every producer and consumer: schemas,
 CLI parsing, recording/replay, report selection, docs, and parallel task families.

@@ -3,11 +3,14 @@
 from datetime import date
 from decimal import Decimal, localcontext
 
+import pytest
+
 from skilleval.accounting import (
     PriceSchedule,
     estimate_api_equivalent_cost,
     normalize_codex_usage,
 )
+from skilleval.errors import SkillEvalError
 
 IDENTITY = {"observed_version": "0.164.0", "baseline_match": True}
 MODEL = "synthetic-model"
@@ -60,6 +63,96 @@ def test_terminal_snapshot_counts_cache_once_and_retains_provenance():
     assert result["provenance"]["terminal_event_index"] == 3
     assert result["provenance"]["codex_identity"] == IDENTITY
     assert result["provider_reconciliation"]["status"] == "unknown"
+
+
+def test_explicit_exec_surface_preserves_legacy_default_provenance():
+    result = normalize_codex_usage(
+        transcript(), codex_identity=IDENTITY, model=MODEL, surface="codex-exec-json"
+    )
+    assert result == normalize()
+    assert result["provenance"] == {
+        "surface": "codex-exec-json",
+        "record": "turn.completed.usage",
+        "form": "single terminal cumulative thread snapshot",
+        "codex_identity": IDENTITY,
+        "source_revision": "1c0c45bfc372fb7d7d581508fdef5eef8235eab7",
+        "source_url": (
+            "https://github.com/openai/codex/blob/"
+            "1c0c45bfc372fb7d7d581508fdef5eef8235eab7/"
+            "codex-rs/exec/src/event_processor_with_jsonl_output.rs#L118-L128"
+        ),
+        "source_binary_equivalence": "unverified",
+        "measurement": "native-reported; not calibrated provider billing",
+        "terminal_event_index": 3,
+    }
+
+
+def test_app_server_surface_preserves_counts_with_distinct_transport_provenance():
+    events = transcript()
+    events[-1]["usage"].update(
+        total_tokens=1050, cache_write_input_tokens=0, reasoning_output_tokens=20
+    )
+    result = normalize_codex_usage(
+        events,
+        codex_identity=IDENTITY,
+        model=MODEL,
+        provider_observations=[receipt()],
+        surface="codex-app-server-jsonrpc-v2",
+    )
+    assert result["status"] == "complete"
+    for field, value in {
+        "input_tokens": 1000,
+        "cached_input_tokens": 200,
+        "uncached_input_tokens": 800,
+        "output_tokens": 50,
+        "total_tokens": 1050,
+        "cache_write_input_tokens": 0,
+        "reasoning_output_tokens": 20,
+    }.items():
+        assert result[field] == value
+    assert result["provider_reconciliation"]["status"] == "matched"
+    provenance = result["provenance"]
+    assert provenance["surface"] == "codex-app-server-jsonrpc-v2"
+    assert provenance["adapter"] == "app-server-v2-to-canonical-v1"
+    assert provenance["record"] == "thread/tokenUsage/updated.params.tokenUsage.total"
+    assert provenance["form"] == (
+        "latest matched-thread cumulative snapshot before matched turn/completed"
+    )
+    assert provenance["source_revision"] == "6aaac694803004a63c6f393d153c96d22521a6b9"
+    assert provenance["source_url"] == (
+        "https://github.com/openai/codex/blob/6aaac694803004a63c6f393d153c96d22521a6b9/"
+        "codex-rs/app-server/src/bespoke_event_handling.rs#L1602-L1615"
+    )
+    assert provenance["source_binary_equivalence"] == "unverified"
+    assert provenance["terminal_event_index"] == 3
+    assert estimate_api_equivalent_cost(result, schedule(), model=MODEL)["status"] == "estimated"
+
+
+def test_app_server_surface_does_not_complete_missing_failed_or_duplicate_usage():
+    cases = [
+        ([], None, "unknown"),
+        (transcript()[:-1], None, "incomplete"),
+        ([*transcript()[:-1], {"type": "turn.completed"}], None, "incomplete"),
+        ([*transcript()[:-1], {"type": "turn.failed"}], None, "incomplete"),
+        ([*transcript(), transcript()[-1]], None, "invalid"),
+        (transcript(), [{"line": 2, "error": "synthetic invalid JSON"}], "incomplete"),
+    ]
+    for events, parse_errors, expected in cases:
+        result = normalize_codex_usage(
+            events,
+            codex_identity=IDENTITY,
+            model=MODEL,
+            parse_errors=parse_errors,
+            surface="codex-app-server-jsonrpc-v2",
+        )
+        assert result["status"] == expected
+        assert result["total_tokens"] is None
+        assert result["provenance"]["surface"] == "codex-app-server-jsonrpc-v2"
+
+
+def test_unknown_accounting_surface_is_rejected_even_without_events():
+    with pytest.raises(SkillEvalError, match="unsupported Codex usage surface"):
+        normalize_codex_usage([], codex_identity=IDENTITY, model=MODEL, surface="unknown")
 
 
 def test_hypothetical_cost_uses_partition_and_is_never_cash_charge():
@@ -211,7 +304,6 @@ def test_unknown_usage_and_missing_schedule_never_become_zero_cost():
 
 
 def test_schedule_exact_model_and_strict_public_rate_metadata():
-    import pytest
     from pydantic import ValidationError
 
     with pytest.raises(ValueError, match="exact model"):

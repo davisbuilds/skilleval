@@ -6,6 +6,7 @@ from typing import Any
 
 import pytest
 
+from skilleval import evidence
 from skilleval.errors import SkillEvalError
 from skilleval.treatments import (
     capture_skill,
@@ -54,7 +55,7 @@ def test_capture_and_install_preserve_full_tree_bytes_modes_and_notice(tmp_path:
     assert (skill / "references" / "flow.md").read_bytes() == b"Trace every consumer.\r\n"
     assert (skill / "scripts" / "inspect.sh").stat().st_mode & 0o111
     assert not (skill / "SKILL.md").stat().st_mode & 0o111
-    assert (skill / ".skilleval-notices" / "ROOT_LICENSE").read_bytes() == (
+    assert (skill / ".source-notices" / "ROOT_LICENSE").read_bytes() == (
         tmp_path / "LICENSE"
     ).read_bytes()
     assert receipt["manifest_sha256"] == digest
@@ -62,13 +63,57 @@ def test_capture_and_install_preserve_full_tree_bytes_modes_and_notice(tmp_path:
         "skills/careful-review/SKILL.md",
         "skills/careful-review/references/flow.md",
         "skills/careful-review/scripts/inspect.sh",
-        "skills/careful-review/.skilleval-notices/ROOT_LICENSE",
+        "skills/careful-review/.source-notices/ROOT_LICENSE",
     }
     assert list(home.iterdir()) == [home / "skills"]
     manifest = json.loads((bundle / "manifest.json").read_bytes())
     assert str(tmp_path) not in json.dumps(manifest)
     assert manifest["meta"]["source_revision"] == "fixture-revision"
     assert manifest["meta"]["license_status"] == "provided"
+    assert manifest["meta"]["notice_path"] == ".source-notices/ROOT_LICENSE"
+
+
+def test_legacy_notice_is_preserved_without_rewriting_the_pinned_capture(tmp_path: Path) -> None:
+    source = tmp_path / "source"
+    source.mkdir()
+    bundle = tmp_path / "legacy"
+    notice = "skills/careful-review/.skilleval-notices/ROOT_LICENSE"
+
+    def populate(_descriptor: int, writer: evidence._Writer) -> None:
+        writer.add("skills/careful-review/SKILL.md", BODY)
+        writer.add(notice, b"Original upstream notice.\n")
+
+    captured = evidence._capture(
+        source,
+        bundle,
+        "snapshot",
+        {
+            "purpose": "skill-treatment",
+            "skill_name": "careful-review",
+            "license_status": "provided",
+        },
+        populate,
+    )
+    original = (bundle / "manifest.json").read_bytes()
+    home = tmp_path / "home"
+    installed = install_skill(bundle, captured["manifest_sha256"], home)
+    assert (home / notice).read_bytes() == b"Original upstream notice.\n"
+    assert not (home / "skills/careful-review/.source-notices").exists()
+    assert (bundle / "manifest.json").read_bytes() == original
+    assert installed["manifest_sha256"] == captured["manifest_sha256"]
+
+
+@pytest.mark.parametrize("directory", [".source-notices", ".skilleval-notices"])
+def test_reserved_notice_never_overwrites_upstream_material(tmp_path: Path, directory: str) -> None:
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "SKILL.md").write_bytes(BODY)
+    (source / directory).mkdir()
+    (source / directory / "ROOT_LICENSE").write_bytes(b"Existing upstream file.")
+    with pytest.raises(SkillEvalError, match="reserved notice directory"):
+        capture_skill(source, None, tmp_path / "bundle", source_url="x", source_revision="y")
+    assert (source / directory / "ROOT_LICENSE").read_bytes() == b"Existing upstream file."
+    assert not (tmp_path / "bundle").exists()
 
 
 def test_matched_pair_preserves_instructions_git_inputs_and_exact_prompt(tmp_path: Path) -> None:
@@ -105,7 +150,15 @@ def test_matched_pair_preserves_instructions_git_inputs_and_exact_prompt(tmp_pat
 
 @pytest.mark.parametrize(
     "embedded",
-    [".agents/skills/existing/SKILL.md", ".codex/skills/x/SKILL.md", ".codex/config.toml"],
+    [
+        ".agents/skills/existing/SKILL.md",
+        ".codex/skills/x/SKILL.md",
+        ".codex/config.toml",
+        ".codex/hooks.json",
+        "nested/.codex/managed_config.toml",
+        ".codex/memories/MEMORY.md",
+        ".codex/plugins/plugin.json",
+    ],
 )
 def test_contaminated_baseline_is_refused_without_deleting_instructions(
     tmp_path: Path, embedded: str
@@ -258,8 +311,8 @@ def test_missing_root_license_is_explicit_without_inventing_notice(tmp_path: Pat
     )
     manifest = json.loads((bundle / "manifest.json").read_bytes())
     assert manifest["meta"]["license_status"] == "not-provided"
-    assert not (bundle / "skills/careful-review/.skilleval-notices").exists()
+    assert not (bundle / "skills/careful-review/.source-notices").exists()
     home = tmp_path / "home"
     install_skill(bundle, receipt["manifest_sha256"], home)
     assert (home / "skills/careful-review/NOTICE").read_bytes() == (source / "NOTICE").read_bytes()
-    assert not (home / "skills/careful-review/.skilleval-notices").exists()
+    assert not (home / "skills/careful-review/.source-notices").exists()

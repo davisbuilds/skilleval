@@ -36,3 +36,5 @@ grading fixtures outside solver input. Give both arms the same source and brief;
 ON adds only the explicit selected-skill invocation. Freeze outcomes and budgets
 before running. Preserve disagreements and failures rather than revising the
 rubric to favor a result. A writing-quality judgment is not conversion evidence.
+The current brief omits evaluator-specific wording. Old frozen prompts and runs
+retain their original bytes and are not retroactively blinded.

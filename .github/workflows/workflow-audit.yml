@@ -28,6 +28,6 @@ jobs:
           python-version: "3.12.15"
           enable-cache: false
       - name: Install isolated workflow auditor
-        run: uv sync --project .github/ci-tools --locked
+        run: uv sync --project tools/ci --locked
       - name: Audit workflows without network queries
-        run: uv run --project .github/ci-tools --locked zizmor --offline .github/workflows/
+        run: uv run --project tools/ci --locked zizmor --offline .github/workflows/

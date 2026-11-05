@@ -38,7 +38,7 @@ its contents or of relationships to other records.
 | Review workspace reconstruction | `workspace.py` | Native review reconstruction below |
 | Task and environment packages | `task_package.py`, `task_validation_guest.py` | [TASKS.md](TASKS.md) |
 | Runtime identity, lifecycle and admission | `identity.py`, `qualification.py`, `lifecycle.py`, `admission.py` | [ENVIRONMENT.md](ENVIRONMENT.md) |
-| Inference and native execution | `gateway.py`, `runner.py`, `harnesses/codex.py` | [GATEWAY.md](GATEWAY.md), [NATIVE.md](NATIVE.md) |
+| Inference and native execution | `gateway.py`, `runner.py`, `app_server.py`, `harnesses/codex.py` | [GATEWAY.md](GATEWAY.md), [NATIVE.md](NATIVE.md) |
 | Skill treatments and paired attempts | `treatments.py`, `study.py` | [STUDIES.md](STUDIES.md) |
 | File collection, observations and selection | `repair.py`, `repair_check.py`, `repair_outcomes.py` | [REPAIRS.md](REPAIRS.md), [TASKS.md](TASKS.md) |
 | Semantic assessment and judge controls | `grading.py`, `judge.py`, `repair_assessment.py`, `calibration.py`, `reliability.py` | [CALIBRATION.md](CALIBRATION.md), [RELIABILITY.md](RELIABILITY.md) |
@@ -98,6 +98,20 @@ restriction avoids this version's automatic packed-machine policy import for
 other registries. Host image acquisition and guest network access are distinct.
 Colima is an image-building option and an execution alternative to evaluate;
 there is no automatic fallback adapter.
+
+The VM protects the host; a separate guest boundary protects controller context
+from the solver. The trusted launcher gives native Codex a private filesystem,
+PID and hostname view, drops its identity and capabilities, and keeps the
+controller, staging archive and relay outside that view. Native Codex becomes
+PID 1; its exit tears down detached descendants before trusted file collection.
+Native stdio uses pipes without controller file descriptors. See [TASK-PRESENTATION.md](TASK-PRESENTATION.md)
+for the allowed filesystem, controls and remaining presentation limits.
+
+Keep smolvm while its measured capabilities support this profile. Switching VM
+brands alone would not separate a controller from a solver. A Colima alternative
+would need a controller outside the solver container, explicit socket forwarding,
+no host mounts, and independently qualified freshness and recovery. Revisit it
+if the allowlisted runtime/tool view becomes fragile for representative tasks.
 
 Each VM uses fresh identity and isolated runtime directories, an allowlisted
 host process environment, bounded operations, and stop/delete cleanup receipts.

@@ -12,15 +12,33 @@ import io
 import json
 import os
 import resource
+import selectors
 import signal
 import stat
 import subprocess
 import sys
 import tarfile
 import time
-from contextlib import suppress
+from contextlib import nullcontext, suppress
 from pathlib import Path
 from typing import Any
+
+if __package__:
+    from skilleval import app_server, context_guard, solver_boundary
+else:
+    import app_server  # type: ignore[no-redef,import-not-found]
+    import context_guard  # type: ignore[no-redef,import-not-found]
+    import solver_boundary  # type: ignore[no-redef,import-not-found]
+
+
+# Preserve the vendored file verbatim; presentation is owned by this launcher.
+RELAY_PROGRAM = """import runpy, sys
+gateway = runpy.run_path('/opt/skilleval/openbench_gateway.py')
+gateway['_Handler'].server_version = 'LocalGateway'
+raise SystemExit(gateway['main'](sys.argv[1:]))
+"""
+# The inherited cwd is the untrusted task. Exclude it from privileged imports.
+RELAY_PREFIX = ("python3", "-I", "-c", RELAY_PROGRAM)
 
 
 def _stop(process: subprocess.Popen[bytes]) -> None:
@@ -42,35 +60,158 @@ def _execute_native(
     work: Path,
     evidence: Path,
     timeout: int,
+    *,
+    stream_limit_bytes: int | None = None,
+    protocol: app_server.Session | None = None,
 ) -> dict[str, Any]:
-    """Stream both pipes to files; terminate the process group on every exit."""
+    """Keep controller file descriptors outside the child; stream bounded pipes.
+
+    Namespace-wide teardown is the boundary launcher's responsibility. The
+    process-group fallback here also serves the trusted relay and host tests.
+    """
     with (
-        (evidence / "events.jsonl").open("wb") as stdout,
+        (evidence / ("app-server-rpc.jsonl" if protocol else "events.jsonl")).open("wb") as stdout,
         (evidence / "stderr.log").open("wb") as stderr,
-        prompt.open("rb") as stdin,
+        (
+            (evidence / "app-server-input.jsonl").open("wb") if protocol else nullcontext()
+        ) as rpc_input,
+        selectors.DefaultSelector() as selector,
     ):
+        pending = b"" if protocol else prompt.read_bytes()
+        received = b""
+        protocol_error = None
+
+        def enqueue(messages: list[dict[str, Any]]) -> None:
+            nonlocal pending
+            for message in messages:
+                pending += json.dumps(message, ensure_ascii=False).encode() + b"\n"
+
+        if protocol:
+            enqueue(protocol.start())
         started = time.monotonic()
         process = subprocess.Popen(
             argv,
-            stdin=stdin,
-            stdout=stdout,
-            stderr=stderr,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             cwd=work,
             env=environment,
             start_new_session=True,
+            close_fds=True,
         )
+        assert process.stdin and process.stdout and process.stderr
+        for stream in (process.stdin, process.stdout, process.stderr):
+            os.set_blocking(stream.fileno(), False)
+        selector.register(process.stdin, selectors.EVENT_WRITE, None)
+        selector.register(process.stdout, selectors.EVENT_READ, stdout)
+        selector.register(process.stderr, selectors.EVENT_READ, stderr)
         timed_out = False
+        truncated = False
+        drain_incomplete = False
+        stopped_at = None
         try:
-            process.wait(timeout=timeout)
-        except subprocess.TimeoutExpired:
-            timed_out = True
+            while selector.get_map():
+                now = time.monotonic()
+                if stopped_at is None and (
+                    process.poll() is not None or now - started >= timeout or protocol_error
+                ):
+                    timed_out = process.poll() is None
+                    if protocol_error:
+                        timed_out = False
+                    _stop(process)
+                    stopped_at = time.monotonic()
+                if stopped_at is not None and now - stopped_at > 1:
+                    drain_incomplete = True
+                    break
+                for key, _ in selector.select(timeout=0.05):
+                    if key.data is None:
+                        if pending:
+                            try:
+                                written = os.write(key.fd, pending[:4096])
+                                if rpc_input is not None:
+                                    rpc_input.write(pending[:written])
+                                pending = pending[written:]
+                            except BrokenPipeError:
+                                pending = b""
+                                if protocol:
+                                    protocol_error = "app-server input closed early"
+                        if not pending:
+                            selector.unregister(key.fileobj)
+                            if protocol is None or protocol.settled or protocol_error:
+                                process.stdin.close()
+                        continue
+                    block = os.read(key.fd, 65536)
+                    if not block:
+                        selector.unregister(key.fileobj)
+                        continue
+                    output = key.data
+                    if stream_limit_bytes is not None:
+                        available = max(0, stream_limit_bytes - output.tell())
+                        truncated |= len(block) > available
+                        block = block[:available]
+                    output.write(block)
+                    if protocol and output is stdout and not protocol_error:
+                        received += block
+                        if truncated or len(received) > 4 * 1024 * 1024:
+                            protocol_error = "app-server output limit exceeded"
+                            continue
+                        try:
+                            while b"\n" in received:
+                                line, received = received.split(b"\n", 1)
+                                enqueue(protocol.receive(json.loads(line)))
+                            if pending and not process.stdin.closed:
+                                if process.stdin not in selector.get_map():
+                                    selector.register(process.stdin, selectors.EVENT_WRITE, None)
+                            elif protocol.settled and not process.stdin.closed:
+                                process.stdin.close()
+                        except (ValueError, UnicodeError) as error:
+                            protocol_error = str(error)[:1024]
+            # A process can close all streams before it exits.
+            if stopped_at is None:
+                try:
+                    process.wait(timeout=max(0.001, timeout - (time.monotonic() - started)))
+                except subprocess.TimeoutExpired:
+                    timed_out = True
         finally:
             _stop(process)
-    return {
+            for stream in (process.stdin, process.stdout, process.stderr):
+                stream.close()
+    result = {
         "returncode": process.returncode,
         "timed_out": timed_out,
         "agent_elapsed_seconds": time.monotonic() - started,
+        "output_limit_reached": truncated,
+        "pipe_drain_incomplete": drain_incomplete,
     }
+    if protocol:
+        if received and protocol_error is None:
+            protocol_error = "incomplete app-server JSON line"
+        (evidence / "events.jsonl").write_text(
+            "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in protocol.events)
+        )
+        complete = protocol.complete and protocol_error is None and not timed_out
+        (evidence / "final.txt").write_text(protocol.final_text if complete else "")
+        result["protocol"] = {
+            "transport": "stdio-jsonrpc",
+            "harness": "codex-app-server-jsonrpc-v2",
+            "adapter": "app-server-v2-to-canonical-v1",
+            "complete": complete,
+            "permissions_confirmed": protocol.permissions_confirmed,
+            "error": protocol_error,
+            "errors": protocol.errors,
+        }
+    return result
+
+
+NATIVE_PAX_PATH_BYTES = 4096
+
+
+def _pax_path_size(name: str) -> int:
+    payload = len(("path=" + name + "\n").encode("utf-8"))
+    length = payload + 2
+    while (actual := payload + len(str(length)) + 1) != length:
+        length = actual
+    return length
 
 
 def _archive(root: Path, work: Path, maximum: int, count: int) -> dict[str, Any]:
@@ -78,13 +219,21 @@ def _archive(root: Path, work: Path, maximum: int, count: int) -> dict[str, Any]
     entries: list[tuple[str, Path]] = []
     links: list[dict[str, str]] = []
     total = 0
+
+    def traversal_error(error: OSError) -> None:
+        raise error
+
     for prefix, directory in (
         ("evidence", root / "evidence"),
         ("task", work),
         ("home", root / "home"),
         ("codex-home", root / "codex-home"),
     ):
-        for current, directories, files in os.walk(directory, followlinks=False):
+        if directory.is_symlink():
+            raise ValueError("unsafe collection root")
+        for current, directories, files in os.walk(
+            directory, followlinks=False, onerror=traversal_error
+        ):
             for name in sorted([*directories, *files]):
                 path = Path(current) / name
                 relative = prefix + "/" + path.relative_to(directory).as_posix()
@@ -92,6 +241,8 @@ def _archive(root: Path, work: Path, maximum: int, count: int) -> dict[str, Any]
                 if stat.S_ISLNK(observed_info.st_mode):
                     links.append({"path": relative, "kind": "symlink", "target": os.readlink(path)})
                 elif stat.S_ISREG(observed_info.st_mode):
+                    if _pax_path_size(relative) > NATIVE_PAX_PATH_BYTES:
+                        raise ValueError("artifact path exceeds native PAX metadata limit")
                     entries.append((relative, path))
                     total += observed_info.st_size
                 elif not stat.S_ISDIR(observed_info.st_mode):
@@ -99,11 +250,16 @@ def _archive(root: Path, work: Path, maximum: int, count: int) -> dict[str, Any]
                 if len(entries) + len(links) >= count or total > maximum:
                     return {"status": "limit-exceeded", "bytes": total, "files": len(entries)}
     metadata = json.dumps(links, sort_keys=True).encode()
-    # Conservative PAX/name allowance plus tar block padding before opening output.
-    if total + len(metadata) + (len(entries) + 1) * 4096 + 10240 > maximum:
+    # Preserve the existing short-name allowance; larger bounded PAX headers
+    # also need their actual header bytes plus worst-case file block padding.
+    headers = sum(
+        max(4096, len(tarfile.TarInfo(name).tobuf(format=tarfile.PAX_FORMAT)) + 511)
+        for name, _path in entries
+    )
+    if total + len(metadata) + headers + 4096 + 10240 > maximum:
         return {"status": "limit-exceeded", "bytes": total, "files": len(entries)}
     archive = root / "artifacts.tar"
-    with tarfile.open(archive, "w", format=tarfile.USTAR_FORMAT) as target:
+    with tarfile.open(archive, "w", format=tarfile.PAX_FORMAT) as target:
         for name, path in entries:
             descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
             with os.fdopen(descriptor, "rb") as source:
@@ -147,23 +303,25 @@ def run(root: Path, work: Path) -> int:
         "CODEX_HOME": str(codex_home),
         "LANG": "C.UTF-8",
     }
-    argv = [
-        "codex",
-        "exec",
-        "--json",
-        "--skip-git-repo-check",
-        "--color",
-        "never",
-        "--output-last-message",
-        str(evidence / "final.txt"),
-        "-",
-    ]
+    argv = ["codex", "app-server"]
     relay: subprocess.Popen[bytes] | None = None
+    boundary_started = False
+    safe_to_collect = True
     result: dict[str, Any] = {"returncode": None, "timed_out": False, "argv": argv}
     result["environment"] = environment
     result["cwd"] = str(work)
     result["config_sha256"] = hashlib.sha256((codex_home / "config.toml").read_bytes()).hexdigest()
+    for name in ("events.jsonl", "stderr.log", "final.txt"):
+        (evidence / name).touch(exist_ok=False)
     try:
+        # Synthetic negative control is never available on the authenticated route.
+        if settings.get("context_control") == "dirty-system":
+            contaminated = Path("/etc/codex")
+            contaminated.mkdir(exist_ok=True)
+            (contaminated / "hooks.json").write_text('{"hooks": {}}')
+        result["context_preflight"] = context_guard.preflight(
+            root, work, settings["expected_codex_home"]
+        )
         version = subprocess.run(
             ["codex", "--version"], capture_output=True, env=environment, timeout=15, check=False
         )
@@ -182,8 +340,7 @@ def run(root: Path, work: Path) -> int:
         ):
             relay = subprocess.Popen(
                 [
-                    "python3",
-                    "/opt/skilleval/openbench_gateway.py",
+                    *RELAY_PREFIX,
                     "relay",
                     "--socket",
                     "/run/inference.sock",
@@ -219,28 +376,47 @@ def run(root: Path, work: Path) -> int:
         # Apply to the child and descendants; logs are streamed, not buffered in RAM.
         maximum = settings["max_artifact_bytes"]
         resource.setrlimit(resource.RLIMIT_FSIZE, (maximum, maximum))
+        boundary_started = True
+        safe_to_collect = False
         result.update(
             _execute_native(
-                argv,
+                ["python3", str(root / "solver_boundary.py"), str(root), str(work), "--", *argv],
                 environment,
                 root / "prompt.txt",
                 work,
                 evidence,
                 settings["native_timeout_seconds"],
+                stream_limit_bytes=maximum,
+                protocol=app_server.Session((root / "prompt.txt").read_text(), str(work)),
             )
         )
+        boundary = json.loads((root / "boundary.json").read_bytes())
+        result["boundary"] = boundary
+        safe_to_collect = boundary.get("namespace_reaped") is True
+        if not solver_boundary.valid_receipt(boundary):
+            raise ValueError("solver boundary failed")
+        result["launcher_elapsed_seconds"] = result["agent_elapsed_seconds"]
+        result["agent_elapsed_seconds"] = boundary["native_elapsed_seconds"]
+        result["context_skills_after"] = context_guard.inventory(codex_home / "skills")
     except (OSError, ValueError, subprocess.SubprocessError) as error:
         result["error"] = type(error).__name__
+        result["context_error"] = str(error)[:1024]
     finally:
         if relay is not None:
             _stop(relay)
         (evidence / "process.json").write_text(json.dumps(result, sort_keys=True))
         try:
+            if boundary_started and not safe_to_collect:
+                raise ValueError("solver namespace termination unconfirmed")
             collection = _archive(
                 root, work, settings["max_artifact_bytes"], settings["max_artifact_files"]
             )
-        except (OSError, ValueError, tarfile.TarError):
-            collection = {"status": "failed"}
+        except (OSError, ValueError, tarfile.TarError) as error:
+            collection = {
+                "status": "failed",
+                "error_type": type(error).__name__,
+                "error": str(error)[:1024],
+            }
         (root / "collection.json").write_text(json.dumps(collection, sort_keys=True))
     return 0 if collection["status"] == "complete" else 24
 

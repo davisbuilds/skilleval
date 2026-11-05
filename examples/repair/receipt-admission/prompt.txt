@@ -13,7 +13,6 @@ for this bounded task are obench/repair_validation.py,
 obench/tests/test_repair_validation.py and docs/repair-validation.md. Preserve
 other project files. Use /tmp for scratch work. The snapshot contains ordinary
 source, guidance, tests and contracts; unavailable Docker services are outside
-this development task's execution scope. Run relevant checks available in the
+this task's execution scope. Run relevant checks available in the
 offline Python environment and explain any verification limits in your final
-response. Leave the changes in the workspace; the evaluator collects the actual
-file bytes. Do not submit a review findings JSON or a claimed score.
+response. Leave the changes in the workspace and summarize the repair and checks.

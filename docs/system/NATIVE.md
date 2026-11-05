@@ -4,6 +4,10 @@ This reference owns the explicit native review, repair and judge procedure. Thes
 runs use a fresh VM, the bounded host inference gateway, and retained evidence. They
 remain development-only: `native qualify` never grants scored admission, and a
 completed native turn does not establish a correct review or calibrated judge.
+The [task-presentation reference](TASK-PRESENTATION.md) owns the enforced solver
+boundary, tested access paths and limits of native permission wording.
+Task/skill/history content and new image capabilities still require inspection;
+the controls do not establish absence of every possible evaluation cue.
 The [environment reference](ENVIRONMENT.md) owns runtime admission and recovery;
 the [gateway reference](GATEWAY.md) owns authentication and provider limits.
 The [repair reference](REPAIRS.md) owns editable scope, patch collection and offline
@@ -13,6 +17,52 @@ Document tasks use this writable-file mode with a separate document package and
 rubric; [TASKS.md](TASKS.md) owns their preparation, grading, and readable reports.
 
 ## Inputs and boundaries
+
+The production adapter runs `codex app-server` over stdio inside the solver
+boundary. A controller outside that boundary initializes a fresh ephemeral thread,
+then starts one turn with approvals disabled and
+`externalSandbox` / `networkAccess: restricted`. The controller requires Codex's
+effective-settings notification to confirm that policy. The VM and solver
+boundary enforce it; the RPC declaration is not an additional sandbox.
+
+The ordinary task brief is unchanged. ON still adds the selected skill's native
+text invocation and installed files. App-server uses Codex's native tools and
+skill discovery, but its transport and session source differ from `codex exec`;
+qualification compares actual requests and tool behavior rather than assuming
+byte equivalence. Model and reasoning effort still come from the pinned profile.
+
+`app-server-rpc.jsonl` retains bytes read from native stdout, and
+`app-server-input.jsonl` retains bytes successfully written to native stdin.
+Either can end with a partial line after failure. `events.jsonl` contains derived
+canonical events under adapter `app-server-v2-to-canonical-v1`; its harness is
+`codex-app-server-jsonrpc-v2`. Legacy exec captures remain readable unchanged.
+Final text comes from a successful, matched terminal exchange. Missing replies,
+malformed records, unexpected approval requests, output limits and incomplete
+drains prevent completion. The process deadline terminates the namespace;
+turn-interrupt acknowledgments are not used as proof of termination.
+
+Usage uses the latest matched cumulative snapshot, never the sum of snapshots;
+missing telemetry stays unknown. [ACCOUNTING.md](ACCOUNTING.md) owns provenance
+and reconciliation. Closing stdin after the matched terminal lets app-server
+exit; collection still requires confirmed namespace teardown.
+
+Review and repair runs default to a 1,800-second (30-minute) native deadline;
+judge runs default to 900 seconds (15 minutes). These are also the respective
+ceilings. `--timeout-seconds` can select a shorter positive deadline. The native
+API selects the same mode-dependent default when its timeout is omitted.
+Default gateway lifetime includes 900 seconds for setup, the selected native
+deadline, and 120 seconds of headroom. The gateway starts before VM setup so its
+socket can be mounted. Immediately before native dispatch, the runner requires
+enough remaining gateway lifetime for the whole native deadline plus at least
+60 seconds; an overrun refuses dispatch and cleans up the VM. This check also
+applies to explicitly supplied gateway limits. Credential preflight requires
+validity for the gateway lifetime plus 30 seconds, rechecked after host preparation.
+Before dispatch, retained credentials must still cover the native deadline,
+60 seconds of headroom and a 30-second expiry margin. Expiry is also checked
+before each provider request. VM setup, collection and cleanup retain their
+individual bounds, so the native deadline is not total wall-clock time.
+Request budgets are independent: a run can exhaust its request allowance before
+its time budget. Longer deadlines do not imply complete usage after interruption.
 
 Use a prepared, hash-pinned image containing native Codex and the task's existing
 tools/dependencies. Keep its selected runtime, catalog, image, runner source and
@@ -33,6 +83,14 @@ outside the guest and available through recording.
 Native Codex and imported source execute only in the VM. The host validates and
 retains outputs without extracting or executing guest archives. The runner
 enforces overall time, inference and artifact bounds and records cleanup. The
+native collector and task/tooling transfer preserve long filenames with local
+PAX `path` records capped at 4 KiB. Native readers permit one such record directly
+before a regular file; they reject global, chained, malformed or duplicate
+records, other metadata keys, links, sparse files, unsafe paths and aliases.
+Header counts, archive bytes and the retained manifest remain bounded. Short-name
+archives retain their previous bytes; Docker-save image parsing still refuses
+PAX extensions. These rules preserve ordinary long cache and independently named
+source files without extracting guest content on the host. The
 native staging area uses `/var/tmp/native` on the guest disk, outside the task
 tree. The qualified image's `/run` filesystem has only 64 MiB; retaining input
 archives, transcripts and output there exhausted capacity on the repair workload.
@@ -53,6 +111,69 @@ Collected files are cited as `task/investigation/CASE_ID/...`; review judges use
 `review` as the case identifier. Guest source copies, logs, process reports and
 transcripts remain untrusted evidence. Their hashes establish consistency, not
 semantic authenticity or independent correctness.
+
+### Operator state and effective context
+
+The production runner creates fresh guest `HOME` and `CODEX_HOME` directories,
+writes its own provider configuration, and launches Codex with an explicit process
+environment. VM creation declares no host directory mounts; task, tooling and the
+selected skill are explicit copied inputs. The host runtime also gets separate
+HOME/XDG state. Task-repository instructions remain frozen, shared task context.
+Codex runs through the [solver boundary](TASK-PRESENTATION.md#solver-boundary).
+The controller and relay remain outside its filesystem and process view; only
+the local inference endpoint is shared. A fresh home alone is not this boundary.
+
+Before native execution, the copied context guard checks the exact initial Codex
+home and empty user home, rejects ambient instructions/configuration in the known
+ancestor, user and system discovery roots, and inventories task instructions.
+All review, repair and judge inputs reject embedded skills and `.codex` state,
+including hooks and managed configuration; they retain ordinary `AGENTS.md` and
+`AGENTS.override.md`. Hooks, plugins, memories and shell snapshots are disabled in
+the generated profile. Version probes use disposable homes too: even
+`codex --version` can create launcher state, which must not remain in the image's
+default home. The [image recipe](../../environments/python-review/README.md) owns
+build preparation.
+
+Every broker request records bounded message, top-level instruction and tool
+definition identities, native instruction-source headers and advertised skill
+names/paths. Inline message images have separate position/content identities;
+they are not parsed as instruction prose, and gateway image validation still applies.
+Unsupported observations and unexpected instruction/skill roots are
+refused. Codex's auto-installed built-in skills remain declared harness defaults:
+the runner retains their post-start file inventory and rejects a selected skill
+name that collides with an advertised builtin. Installed bytes, advertised
+metadata, successful full-body reads and semantic use remain different evidence.
+
+Run the opt-in production-route controls without credentials or real inference:
+
+```sh
+uv run python scripts/qualify-context.py \
+  --runtime NATIVE_RUNTIME --image-archive IMAGE_ARCHIVE \
+  --image-sha256 IMAGE_SHA256 --catalog MODEL_CATALOG --output FRESH_OUTPUT
+```
+
+The control creates synthetic operator instructions, configuration, skills,
+memories, hooks, shell initialization and prior sessions outside the copied task.
+It runs OFF, ON, fresh OFF, a deliberately exposed instruction marker, and a
+system-context refusal through `run_native` and the production guest runner.
+It verifies intended task instructions, selected metadata/full-body exposure,
+successful reads, shared base instructions and tool definitions, identical
+advertised/on-disk builtins, the explicit invocation difference, fresh sessions,
+and cleanup. Per-run tool-record IDs are retained in original requests but excluded
+from capability comparisons. Synthetic receipts have the distinct kind
+`skilleval-native-context-control`; task/judge recorders and studies reject them.
+
+Retain the summary, original synthetic requests, native audits/artifacts and
+recovery tickets. Evidence binds the actual source, runtime, image and harness
+identities. The 2026-10-30 control passed all 56 assertions across five fresh VMs
+on Codex 0.164.0 and smolvm 1.32.3, after removing image-build launcher residue,
+and passed again with the neutral provider profile. Each generation retains its
+exact configuration identity rather than granting evidence to later profiles.
+Earlier failed generations remain retained. This establishes the tested context
+boundary and comparison, not model behavior, general resistance to malicious
+guest code, every future discovery path, or skill effectiveness. It does not
+retroactively qualify earlier attempts or grant a scored-study seal; full-workload
+admission still needs treatment-specific evidence and independent grader audit.
 
 ## Prepare, freeze, run and record a calibration judge
 
@@ -185,7 +306,10 @@ uv run skilleval treatment capture SELECTED_SKILL_TREE \
 
 The capture preserves all files in that tree, including references, scripts and
 existing notices, plus executable flags. It does not install a host skill or run
-its scripts. For the available review input, supply `--skill-bundle` and
+its scripts. A supplied root notice is added at `.source-notices/ROOT_LICENSE`,
+with its location recorded in host metadata. Older captures without that metadata
+keep their original `.skilleval-notices/ROOT_LICENSE` bytes and location. Do not
+rename pinned inputs in place. For the available review input, supply `--skill-bundle` and
 `--skill-sha256` together to `native qualify`. Omit both for the absent selected
 skill. Judge mode rejects skill bundles. CLI help owns the exact invocation.
 
@@ -217,10 +341,22 @@ analysis; availability and observed consultation answer different questions.
 
 Inspect the bounded `native-run.json` together with its hash-bound
 `native-audit.json`, `events.jsonl`, `final.txt`, retained prompt and artifact
-inventory. Complete command outputs stay in the raw events/archive; compact
+inventory. The process record includes complete context inventories and is read
+up to the smaller of the run's artifact budget and the 32 MiB full-audit ceiling.
+Overall audit and compact-receipt limits still apply; overflow remains partial
+evidence, not successful recording. Complete command outputs stay in the raw events/archive; compact
 metadata exposes hashes, counts and explicit sample omissions. Completion requires the observed process, native
-turn, provider requests and cleanup to agree; it leaves task quality unassessed.
+turn, provider requests, solver setup/namespace teardown and cleanup to agree;
+it leaves task quality unassessed. The trusted boundary receipt records identity,
+privilege removal and timings. Agent time starts after namespace setup and ends
+when native PID 1 is reaped; launcher time is retained separately. Collection
+does not proceed when namespace termination is unconfirmed.
 A timeout, partial collection or failed execution is not an empty clean report.
+New collection failures retain the collector's bounded error type and message.
+Any copied failed archive remains unvalidated private diagnostic evidence; the
+runner does not treat it as a complete artifact or replace the primary error
+with a later archive-parser failure. Earlier receipts retain their original
+diagnostics unchanged.
 Missing/invalid final JSON is refused by judge recording rather than filled in.
 
 Recording verifies the original frozen input, packet bytes/digests, exact prompt,
