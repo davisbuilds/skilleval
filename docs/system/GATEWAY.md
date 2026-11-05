@@ -72,12 +72,38 @@ requires enough remaining validity for its request timeout plus 30 seconds at
 startup and checks again before each request. It never refreshes or writes the
 login cache. Authentication expiry and upstream 401 fail closed.
 
-`GatewayLimits` bounds admitted requests (maximum 32), concurrency (maximum 2),
+`GatewayLimits` bounds admitted requests (maximum 128), concurrency (maximum 2),
 body bytes (maximum 8 MiB), request deadline (maximum 300 seconds), and total
-service lifetime (maximum 900 seconds). Defaults are smaller. These are request
+service lifetime (maximum 2,820 seconds). Defaults are smaller. These are request
 and time bounds, not a token or monetary quota. The upstream implementation also
 caps response bytes at 64 MiB. Original task/trial timeouts and external cleanup
 supervision remain necessary.
+
+The native runner derives gateway lifetime from its selected task/judge deadline
+plus a 900-second setup allowance and 120 seconds of headroom. The timer starts
+before VM setup. A monotonic remaining-lifetime check immediately before native
+dispatch requires the entire native deadline plus 60 seconds; an overrun refuses
+dispatch and enters cleanup instead of shortening the agent's time. Explicit
+gateway limits must pass the same check. Credentials must cover the gateway
+lifetime plus 30 seconds both at initial loading and after host preparation;
+before native dispatch, their remaining validity must cover the native deadline
+plus 60 seconds of headroom and a 30-second expiry margin. The standalone broker
+retains its smaller defaults and request-level expiry checks. Native tasks default
+to 1,800 seconds and judges to 900 seconds; their process deadlines, host
+supervision and cleanup remain separate from the gateway timer.
+
+The native CLI and study default remain 32 admitted requests; the gateway's
+standalone default remains four. Raising a declared budget creates a new frozen
+plan rather than changing an earlier attempt. Native request observation has a
+separate ceiling of 252 bodies because it also sees policy and budget refusals.
+All observations within that bound are retained. The 256-record receipt sink
+reserves capacity for ready/stopped, an observer-cap diagnostic and its HTTP
+refusal; other rejection traffic can still exhaust it and fail closed.
+A request after the admitted allowance receives the vendor's `429 request_limit`.
+Actual observer-cap exhaustion returns `503 request_observation_limit`; other
+observer failures retain their existing refusal and prevent completion. Native
+and attempt reports retain admitted counts, limit-rejection counts and the
+observation bound separately. These counts do not establish task quality.
 
 ## Guest setup
 

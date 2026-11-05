@@ -17,6 +17,7 @@ import re
 import stat
 import sys
 import tarfile
+import threading
 import time
 from collections.abc import Callable
 from dataclasses import asdict
@@ -26,16 +27,20 @@ from typing import Any, Literal
 from skilleval import app_server, context_guard, evidence, guest_runner, solver_boundary
 from skilleval._vendor import openbench_gateway as vendor
 from skilleval.accounting import normalize_codex_usage
+from skilleval.budgets import MIN_GATEWAY_HEADROOM_SECONDS, TASK_TIMEOUT_SECONDS, native_deadline
 from skilleval.errors import SkillEvalError
 from skilleval.gateway import (
     EFFORT,
+    MAX_REQUEST_OBSERVATIONS,
     MODEL,
     GatewayLimits,
     HostAuth,
+    RequestObservationLimitError,
     TestTransport,
     broker_scope,
     codex_provider_config,
     load_chatgpt_auth,
+    native_limits,
 )
 from skilleval.harnesses.codex import codex_version_identity, parse_codex_jsonl
 from skilleval.identity import file_digest
@@ -45,10 +50,10 @@ from skilleval.lifecycle import (
     interrupt_scope,
     successful,
 )
-from skilleval.qualification import _invoke, _plain_tar_headers
+from skilleval.qualification import _invoke
 
 CATALOG_SHA256 = "943ca7fe1d19ed019054158303f0dbbd80b3bef43b3aa425a71aa7cb3fb52c2b"
-DEFAULT_LIMITS = GatewayLimits(max_requests=32, timeout_seconds=90, lifetime_seconds=900)
+DEFAULT_LIMITS = native_limits(TASK_TIMEOUT_SECONDS)
 # /run is a 64 MiB tmpfs in the qualified guest. Repository archives, native
 # logs and output collection need guest disk capacity, outside the task tree.
 GUEST_ROOT = "/var/tmp/native"
@@ -470,7 +475,9 @@ def _snapshot_files(
 
 
 def _tar(path: Path, entries: list[tuple[str, bytes, bool]]) -> None:
-    with tarfile.open(path, "x", format=tarfile.USTAR_FORMAT) as target:
+    if any(guest_runner._pax_path_size(name) > NATIVE_PAX_PATH_BYTES for name, _, _ in entries):
+        raise SkillEvalError("task transfer path exceeds native PAX metadata limit")
+    with tarfile.open(path, "x", format=tarfile.PAX_FORMAT) as target:
         for name, data, executable in entries:
             info = tarfile.TarInfo(name)
             info.size, info.mode = len(data), 0o755 if executable else 0o644
@@ -478,10 +485,82 @@ def _tar(path: Path, entries: list[tuple[str, bytes, bool]]) -> None:
     path.chmod(0o600)
 
 
+NATIVE_PAX_PATH_BYTES = 4096
+
+
+def _native_pax_path(payload: bytes) -> str:
+    """Accept one complete local path record before tarfile can expand it."""
+    separator = payload.find(b" ")
+    if (
+        separator < 1
+        or not re.fullmatch(rb"[1-9][0-9]*", payload[:separator])
+        or int(payload[:separator]) != len(payload)
+        or not payload.endswith(b"\n")
+    ):
+        raise SkillEvalError("invalid native artifact PAX path record")
+    record = payload[separator + 1 : -1]
+    if not record.startswith(b"path=") or b"\n" in record or b"\0" in record:
+        raise SkillEvalError("unsupported native artifact PAX field")
+    try:
+        path = record[5:].decode("utf-8")
+    except UnicodeDecodeError:
+        raise SkillEvalError("invalid native artifact PAX path encoding") from None
+    if not path:
+        raise SkillEvalError("empty native artifact PAX path")
+    return path
+
+
+def _native_tar_headers(source: Any, maximum: int, count: int) -> None:
+    """Bound native path-only PAX framing; Docker-save parsing stays separate."""
+    length = source.seek(0, os.SEEK_END)
+    if length > maximum:
+        raise SkillEvalError("native artifact archive exceeds maximum size")
+    source.seek(0)
+    headers = members = 0
+    pending_path = False
+    while header := source.read(512):
+        if len(header) != 512:
+            raise SkillEvalError("truncated native artifact tar header")
+        if header == b"\0" * 512:
+            if pending_path:
+                raise SkillEvalError("dangling native artifact PAX extension")
+            while tail := source.read(1024 * 1024):
+                if tail.strip(b"\0"):
+                    raise SkillEvalError("unexpected data after native artifact archive end")
+            source.seek(0)
+            return
+        headers += 1
+        encoded_size = header[124:136].strip(b"\0 ")
+        kind = header[156:157]
+        if (
+            headers > 2 * count
+            or kind not in (b"0", b"\0", b"x")
+            or not re.fullmatch(rb"[0-7]+", encoded_size)
+        ):
+            raise SkillEvalError("unsupported native artifact tar header or extension")
+        size = int(encoded_size, 8)
+        next_header = source.tell() + ((size + 511) // 512) * 512
+        if size > maximum or next_header > length:
+            raise SkillEvalError("native artifact member exceeds archive bounds")
+        if kind == b"x":
+            if pending_path or not 1 <= size <= NATIVE_PAX_PATH_BYTES:
+                raise SkillEvalError("unsupported native artifact PAX extension")
+            _native_pax_path(source.read(size))
+            pending_path = True
+        else:
+            members += 1
+            if members > count:
+                raise SkillEvalError("native artifact header inventory limit exceeded")
+            pending_path = False
+        source.seek(next_header)
+    raise SkillEvalError("native artifact archive has no end marker")
+
+
 def validate_artifacts(archive: Path, maximum: int, count: int) -> dict[str, Any]:
     """Validate all archive members before any consumer reads their content.
 
-    Links, sparse/PAX extensions, aliases and noncanonical names are refused.
+    Only bounded local PAX path extensions are accepted. Links, sparse/other
+    extensions, aliases and noncanonical names are refused.
     Even rejected raw archives remain private evidence; nothing is extracted.
     """
     if archive.is_symlink() or not archive.is_file() or archive.stat().st_size > maximum:
@@ -494,7 +573,7 @@ def validate_artifacts(archive: Path, maximum: int, count: int) -> dict[str, Any
         with os.fdopen(descriptor, "rb") as raw:
             if not stat.S_ISREG(os.fstat(raw.fileno()).st_mode):
                 raise SkillEvalError("native artifact archive must be regular")
-            _plain_tar_headers(raw)
+            _native_tar_headers(raw, maximum, count)
         with tarfile.open(archive, "r:") as source:
             for member in source:
                 name = member.name
@@ -502,7 +581,8 @@ def validate_artifacts(archive: Path, maximum: int, count: int) -> dict[str, Any
                 alias = name.casefold()
                 if (
                     not member.isreg()
-                    or member.pax_headers
+                    or set(member.pax_headers) - {"path"}
+                    or (member.pax_headers and member.pax_headers.get("path") != name)
                     or member.sparse is not None
                     or not parts
                     or parts[0] not in {"task", "home", "codex-home", "evidence"}
@@ -540,12 +620,15 @@ def validate_artifacts(archive: Path, maximum: int, count: int) -> dict[str, Any
                 )
     except (OSError, ValueError, tarfile.TarError):
         raise SkillEvalError("invalid native artifact archive") from None
-    return {
+    manifest = {
         "schema_version": 1,
         "kind": "skilleval-native-artifacts",
         "sha256": file_digest(archive),
         "entries": entries,
     }
+    if len(_json(manifest)) > evidence.MAX_MANIFEST_BYTES:
+        raise SkillEvalError("native artifact manifest exceeds its file limit")
+    return manifest
 
 
 def _member(archive: Path, name: str, maximum: int) -> bytes:
@@ -553,7 +636,7 @@ def _member(archive: Path, name: str, maximum: int) -> bytes:
     with os.fdopen(descriptor, "rb") as raw:
         if os.fstat(raw.fileno()).st_size > MAX_ARTIFACT_BYTES:
             raise SkillEvalError("native artifact archive exceeds maximum size")
-        _plain_tar_headers(raw)
+        _native_tar_headers(raw, MAX_ARTIFACT_BYTES, MAX_ARTIFACT_FILES)
     with tarfile.open(archive, "r:") as source:
         info = source.getmember(name)
         if info.size > maximum:
@@ -633,8 +716,8 @@ def run_native(
     catalog: Path,
     auth_file: Path | None,
     mode: Literal["review", "repair", "judge"] = "review",
-    limits: GatewayLimits = DEFAULT_LIMITS,
-    native_timeout_seconds: int = 600,
+    limits: GatewayLimits | None = None,
+    native_timeout_seconds: int | None = None,
     max_artifact_bytes: int = 64 * 1024 * 1024,
     max_artifact_files: int = 10_000,
     skill_bundle: Path | None = None,
@@ -652,15 +735,16 @@ def run_native(
     context-control receipt, which task/judgment consumers must reject.
     """
     started = time.monotonic()
+    native_timeout_seconds = native_deadline(mode, native_timeout_seconds)
+    if limits is None:
+        limits = native_limits(native_timeout_seconds)
     if (
         mode not in {"review", "repair", "judge"}
         or not isinstance(prompt, str)
         or not prompt.strip()
         or len(prompt.encode()) > 1024 * 1024
         or not re.fullmatch(r"[0-9a-f]{64}", expected_digest)
-        or type(native_timeout_seconds) is not int
-        or not 1 <= native_timeout_seconds <= 780
-        or native_timeout_seconds + 60 > limits.lifetime_seconds
+        or native_timeout_seconds + MIN_GATEWAY_HEADROOM_SECONDS > limits.lifetime_seconds
         or type(max_artifact_bytes) is not int
         or not 1024 * 1024 <= max_artifact_bytes <= MAX_ARTIFACT_BYTES
         or type(max_artifact_files) is not int
@@ -710,6 +794,12 @@ def run_native(
         "effort": EFFORT,
         "gateway_limits": asdict(limits),
         "native_timeout_seconds": native_timeout_seconds,
+        "gateway_budget": {
+            "status": "not-started",
+            "setup_seconds": None,
+            "remaining_seconds": None,
+            "required_native_seconds": native_timeout_seconds + MIN_GATEWAY_HEADROOM_SECONDS,
+        },
         "artifact_limits": {"bytes": max_artifact_bytes, "files": max_artifact_files},
         "image": session.ticket["image"],
         "machine_name": session.machine,
@@ -723,6 +813,8 @@ def run_native(
     }
     broker = None
     request_records: list[dict[str, Any]] = []
+    observation_lock = threading.Lock()
+    observation_failure: str | None = None
     protocol_rejections: list[dict[str, Any]] = []
     skill_detector: Callable[[bytes], dict[str, Any]] | None = None
     guest_skill_path: str | None = None
@@ -741,9 +833,7 @@ def run_native(
     native_started: float | None = None
     collection_started: float | None = None
 
-    def observe_request(raw: bytes) -> None:
-        if len(request_records) >= 32:
-            raise SkillEvalError("native request observation limit exceeded")
+    def collect_request_observation(raw: bytes) -> None:
         record: dict[str, Any] = {
             "index": len(request_records) + 1,
             "input_sha256": hashlib.sha256(raw).hexdigest(),
@@ -783,6 +873,29 @@ def run_native(
                 protocol_rejections.append(
                     {"request_index": record["index"], **protocol_shape(raw)}
                 )
+
+    def observe_request(raw: bytes) -> None:
+        nonlocal observation_failure
+        # Observation includes bodies the broker subsequently refuses, so its
+        # capacity is separate from the admitted provider-request allowance.
+        with observation_lock:
+            if len(request_records) >= MAX_REQUEST_OBSERVATIONS:
+                observation_failure = "request_observation_limit"
+                raise RequestObservationLimitError("native request observation limit exceeded")
+            try:
+                collect_request_observation(raw)
+            except Exception:
+                observation_failure = "request_observation_failed"
+                raise
+
+    def require_auth_horizon(required_seconds: float) -> None:
+        # Recheck retained credentials after host preparation and VM setup. Never
+        # refresh credentials or disclose their expiration in retained evidence.
+        if (
+            not math.isfinite(auth.expires_at)
+            or auth.expires_at <= time.time() + required_seconds + 30
+        ):
+            raise SkillEvalError("ChatGPT authentication unavailable or expired")
 
     try:
         config = codex_provider_config(8765, Path(GUEST_ROOT) / "models.json")
@@ -841,6 +954,10 @@ def run_native(
         _exclusive(output / "prompt.txt", prompt.encode())
         # Recheck both authority-bearing copied inputs before the first VM mutation.
         evidence.verify(input_bundle, expected_digest)
+        require_auth_horizon(limits.lifetime_seconds)
+        # Start conservatively before broker startup. Its actual expiry is no
+        # earlier; VM setup must not consume the reserved native execution time.
+        broker_started = time.monotonic()
         with broker_scope(
             auth,
             Path(session.ticket["runtime_home"]) / "b",
@@ -883,6 +1000,21 @@ def run_native(
                 ),
                 "prepare_task",
             )
+            ready_at = time.monotonic()
+            setup_seconds = ready_at - broker_started
+            remaining_seconds = max(0.0, limits.lifetime_seconds - setup_seconds)
+            required_seconds = native_timeout_seconds + MIN_GATEWAY_HEADROOM_SECONDS
+            enough_time = remaining_seconds >= required_seconds
+            report["gateway_budget"].update(
+                {
+                    "status": "ready" if enough_time else "insufficient-time",
+                    "setup_seconds": setup_seconds,
+                    "remaining_seconds": remaining_seconds,
+                }
+            )
+            if not enough_time:
+                raise SkillEvalError("native gateway lifetime exhausted during setup")
+            require_auth_horizon(required_seconds)
             native_started = time.monotonic()
             timings["setup_seconds"] = native_started - started
             native = session.guest(
@@ -897,6 +1029,35 @@ def run_native(
                 "collection_status", ["cat", GUEST_ROOT + "/collection.json"]
             )
             report["collection"] = collection
+            _required(collection, "native collection status")
+            collection_result = evidence._parse_json(collection["stdout"].encode())
+            if not isinstance(collection_result, dict) or collection_result.get("status") not in {
+                "complete",
+                "failed",
+                "limit-exceeded",
+            }:
+                raise SkillEvalError("invalid native collection status")
+            report["collection_result"] = collection_result
+            if collection_result["status"] != "complete":
+                # A failed archive is private diagnostic evidence, never an
+                # eligible artifact. A copy failure must not mask the cause.
+                try:
+                    _required(
+                        _copy_artifacts(session, output / "artifacts.tar", max_artifact_bytes),
+                        "retain failed native archive",
+                    )
+                    report["failed_artifact"] = {
+                        "archive": "artifacts.tar",
+                        "sha256": file_digest(output / "artifacts.tar"),
+                        "validated": False,
+                    }
+                except (SkillEvalError, OSError) as copy_error:
+                    report["failed_artifact_copy_error"] = type(copy_error).__name__
+                error_type = str(collection_result.get("error_type", ""))[:128]
+                error = str(collection_result.get("error", ""))[:1024]
+                raise SkillEvalError(
+                    f"native collection {collection_result['status']}: {error_type}: {error}"
+                )
             _required(
                 _copy_artifacts(session, output / "artifacts.tar", max_artifact_bytes),
                 "collect_artifacts_bounded",
@@ -1003,6 +1164,7 @@ def run_native(
                 == settings["expected_codex_home"]
                 and isinstance(process.get("context_skills_after"), list)
                 and request_records
+                and observation_failure is None
                 and not any("context_error" in row for row in request_records)
             ):
                 report["status"] = "completed"
@@ -1022,6 +1184,22 @@ def run_native(
             report["broker_receipts"] = broker.receipts
             report["broker_clean"] = broker.clean
             report["request_count"] = sum(row.get("event") == "request" for row in broker.receipts)
+            report["request_budget"] = {
+                "admitted_limit": limits.max_requests,
+                "admitted": report["request_count"],
+                "request_limit_rejections": sum(
+                    row.get("event") == "rejected" and row.get("code") == "request_limit"
+                    for row in broker.receipts
+                ),
+                "observation_limit": MAX_REQUEST_OBSERVATIONS,
+                "observations": len(request_records),
+                "observation_limit_rejections": sum(
+                    row.get("event") == "rejected"
+                    and row.get("code") == "request_observation_limit"
+                    for row in broker.receipts
+                ),
+                "observation_failure": observation_failure,
+            }
         report["request_observations"] = request_records
         report["protocol_rejections"] = protocol_rejections
         cleanup_started = time.monotonic()

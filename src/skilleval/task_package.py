@@ -116,7 +116,7 @@ def prepare_package(spec: TaskPackageSpec, output: Path) -> dict[str, Any]:
     _outside(spec, output)
     value = {"schema_version": 1, "kind": "skilleval-task-package", "spec": data}
     digest = repair._publish(output, value)
-    return {
+    summary = {
         "status": "prepared",
         "path": str(output.absolute()),
         "sha256": digest,
@@ -125,6 +125,9 @@ def prepare_package(spec: TaskPackageSpec, output: Path) -> dict[str, Any]:
         "output_paths": list(task.editable_paths),
         "scored_admitted": False,
     }
+    if task.editable_directories:
+        summary["output_directories"] = list(task.editable_directories)
+    return summary
 
 
 def load_package(path: Path, digest: str) -> TaskPackageSpec:

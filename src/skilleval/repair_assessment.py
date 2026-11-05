@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from pathlib import Path
 from typing import Any, Literal
 
@@ -17,11 +18,27 @@ from skilleval.contracts import Citation, Digest, Identifier, Record
 from skilleval.errors import SkillEvalError
 from skilleval.gateway import EFFORT, MODEL
 from skilleval.identity import file_digest, object_digest
-from skilleval.repair_check import compare_observations
+from skilleval.repair_check import compare_observations, validate_observer_resources
 from skilleval.study import _clean_native
 
 Criterion = Literal["task-contract", "scope-and-regressions", "verification-claims"]
 CRITERIA = ("task-contract", "scope-and-regressions", "verification-claims")
+ToolEvidencePolicy = Literal["legacy-v1", "application-context-v2"]
+_HARNESS_HOME_LOOKUP = re.compile(
+    r"\$CODEX_HOME\b|\$\{CODEX_HOME\b|\bprintenv\s+CODEX_HOME\b|"
+    r"\b(?:os\s*\.\s*)?(?:environ(?:\s*\.\s*get)?|getenv)\s*[\[(]\s*['\"]CODEX_HOME['\"]|"
+    r"\bprocess\s*\.\s*env\s*(?:\.\s*CODEX_HOME\b|\[\s*['\"]CODEX_HOME['\"])"
+)
+_APPLICATION_EVIDENCE_NOTE = """
+Tool evidence uses application-context-v2: application settings and mentions of
+CODEX_HOME are retained. Recognized harness-control paths, skill-access markers
+and direct harness-home lookups are withheld. This is a bounded text filter,
+not shell/program analysis or proof of independent blinding. Commands may be
+omitted or truncated, and evidence may precede later edits. Missing supporting
+observations do not establish that a solver's claim is false; keep such claims
+unresolved unless other evidence settles them. Read the retained statement's
+qualifications, including any substituted test dependencies.
+"""
 
 
 class RepairSource(Record):
@@ -41,6 +58,9 @@ class RepairAssessmentSpec(RepairSource):
     investigation: bool = True
     authored_statement: str | None = Field(default=None, max_length=65536)
     limitations: tuple[str, ...] = Field(default=(), max_length=32)
+    tool_evidence_policy: ToolEvidencePolicy = Field(
+        default="legacy-v1", exclude_if=lambda value: value == "legacy-v1"
+    )
 
     @model_validator(mode="after")
     def unique_checks(self) -> RepairAssessmentSpec:
@@ -262,6 +282,7 @@ def checked_report(ref: RepairCheckSource) -> dict[str, Any]:
         object_digest(value.get(key)) != object_digest(wanted) for key, wanted in expected.items()
     ):
         raise SkillEvalError("repair check binding differs from selected source")
+    validate_observer_resources(task, value)
     directory = Path(ref.report).absolute().parent
     recovery = evidence._parse_json(
         grading._read_regular(directory / "recovery.json", 4 * 1024 * 1024)
@@ -276,6 +297,7 @@ def checked_report(ref: RepairCheckSource) -> dict[str, Any]:
         process = value.get("process", {})
         if not isinstance(process, dict) or not isinstance(process.get("stdout"), str):
             raise SkillEvalError("invalid repair check process evidence")
+        validate_observer_resources(task, process)
         if (
             value.get("cleanup_complete") is not True
             or process.get("worker_uid") != 65534
@@ -307,9 +329,12 @@ def _native_evidence(
 ) -> tuple[bytes, bytes, dict[str, Any]]:
     origin = result["provenance"]
     if origin["kind"] == "authored-control":
+        tools: dict[str, Any] = {"items": [], "origin": "authored-control"}
+        if spec.tool_evidence_policy != "legacy-v1":
+            tools["tool_evidence_policy"] = spec.tool_evidence_policy
         return (
             (spec.authored_statement or "").encode(),
-            evidence._json_bytes({"items": [], "origin": "authored-control"}),
+            evidence._json_bytes(tools),
             {"execution_status": "not-a-model-attempt"},
         )
     if origin["kind"] != "native-repair" or spec.authored_statement is not None:
@@ -318,8 +343,19 @@ def _native_evidence(
     if file_digest(run / "native-run.json") != origin["native_receipt_sha256"]:
         raise SkillEvalError("repair native provenance differs")
     receipt, retained, _ = judge._run_files(run, mode="repair")
+    tools = _tool_evidence(retained.get("events.jsonl", b""), spec.tool_evidence_policy)
+    return (
+        retained["final.txt"],
+        evidence._json_bytes(tools),
+        {"execution_status": receipt["status"]},
+    )
+
+
+def _tool_evidence(raw: bytes, policy: ToolEvidencePolicy = "legacy-v1") -> dict[str, Any]:
+    if policy not in ("legacy-v1", "application-context-v2"):
+        raise SkillEvalError("unsupported tool evidence policy")
     items = []
-    for line in retained.get("events.jsonl", b"").splitlines():
+    for line in raw.splitlines():
         event = evidence._parse_json(line)
         if not isinstance(event, dict) or event.get("type") != "item.completed":
             continue
@@ -330,11 +366,15 @@ def _native_evidence(
         output = item.get("aggregated_output", "")
         if not isinstance(command, str) or not isinstance(output, str):
             continue
-        # Apply one policy to both arms; never expose selected skill contents or
-        # installed harness paths. This is metadata masking, not proven blinding.
-        if any(
-            token in command + output
-            for token in ("/var/tmp/native", "/run/native", "CODEX_HOME", "/skills/", "SKILL.md")
+        # Scan full strings before display truncation. Keep v1 bytes reconstructible;
+        # v2 removes the bare application-setting keyword, not known harness access.
+        tokens: tuple[str, ...] = ("/var/tmp/native", "/run/native", "/skills/", "SKILL.md")
+        if policy == "legacy-v1":
+            tokens += ("CODEX_HOME",)
+        combined = command + output
+        if any(token in combined for token in tokens) or (
+            policy != "legacy-v1"
+            and any(_HARNESS_HOME_LOOKUP.search(value) for value in (command, output))
         ):
             continue
         items.append(
@@ -346,7 +386,7 @@ def _native_evidence(
                 "truncated": len(command) > 8192 or len(output) > 65536,
             }
         )
-    tools = {
+    tools: dict[str, Any] = {
         "items": items[:256],
         "items_truncated": len(items) > 256,
         "limits": [
@@ -355,11 +395,16 @@ def _native_evidence(
             "Tool evidence may precede further edits; it is not an immutable candidate check.",
         ],
     }
-    return (
-        retained["final.txt"],
-        evidence._json_bytes(tools),
-        {"execution_status": receipt["status"]},
-    )
+    if policy != "legacy-v1":
+        tools["tool_evidence_policy"] = policy
+        tools["limits"] = [
+            "Recognized harness paths, skill-access markers and direct home lookups are withheld.",
+            "Application CODEX_HOME settings and mentions are retained; "
+            "filtering is not program analysis.",
+            "Missing observations do not establish a false claim; masking is not proven blinding.",
+            *tools["limits"][1:],
+        ]
+    return tools
 
 
 def packet(spec: RepairAssessmentSpec) -> tuple[dict[str, bytes], str, dict[str, Any]]:
@@ -417,6 +462,11 @@ def packet(spec: RepairAssessmentSpec) -> tuple[dict[str, bytes], str, dict[str,
                 },
                 "limits": observed.get("limits", []),
                 "error": observed.get("error"),
+                **(
+                    {"observer_resources": observed["observer_resources"]}
+                    if "observer_resources" in observed
+                    else {}
+                ),
             }
         )
     digest = object_digest(
@@ -435,6 +485,11 @@ def packet(spec: RepairAssessmentSpec) -> tuple[dict[str, bytes], str, dict[str,
             "population": "development",
             "treatment_metadata": "withheld",
             "independent_blind": False,
+            **(
+                {"tool_evidence_policy": spec.tool_evidence_policy}
+                if spec.tool_evidence_policy != "legacy-v1"
+                else {}
+            ),
         }
     )
     permission = (
@@ -445,6 +500,8 @@ def packet(spec: RepairAssessmentSpec) -> tuple[dict[str, bytes], str, dict[str,
         else judge._STATIC.replace("calibration-static-v1", version)
     )
     payloads["ASSESS.md"] = ((DOCUMENT_RUBRIC if document else RUBRIC) + permission).encode()
+    if spec.tool_evidence_policy != "legacy-v1":
+        payloads["ASSESS.md"] += _APPLICATION_EVIDENCE_NOTE.encode()
     payloads["source-modes.json"] = evidence._json_bytes(
         {"schema_version": 1, "permissions": "bytes-and-executable-flag", "files": modes}
     )
@@ -477,6 +534,22 @@ def prepare_assessment(spec: RepairAssessmentSpec, output: Path) -> dict[str, An
     }
 
 
+def prepare_citation_correction(
+    spec: RepairAssessmentSpec,
+    prepared: Path,
+    run: Path,
+    output: Path,
+    *,
+    timeout_seconds: int = 180,
+    max_requests: int = 4,
+) -> dict[str, Any]:
+    from skilleval.citation_correction import prepare_correction
+
+    return prepare_correction(
+        spec, prepared, run, output, timeout_seconds=timeout_seconds, max_requests=max_requests
+    )
+
+
 def _validated_assessment(
     spec: RepairAssessmentSpec, prepared: Path, run: Path
 ) -> tuple[
@@ -486,10 +559,22 @@ def _validated_assessment(
     judge._check_packet(prepared, payloads)
     receipt, retained, artifacts = judge._run_files(run)
     judge._native_policy(receipt, retained, payloads, digest, spec.investigation)
+    result = _assessment_result(spec, retained["final.txt"], receipt, payloads, digest, artifacts)
+    return result, receipt, retained, payloads, digest
+
+
+def _assessment_result(
+    spec: RepairAssessmentSpec,
+    raw: bytes,
+    receipt: dict[str, Any],
+    payloads: dict[str, bytes],
+    digest: str,
+    artifacts: dict[str, bytes],
+) -> RepairAssessment | DocumentAssessment:
     result_model = (
         DocumentAssessment if isinstance(spec, DocumentAssessmentSpec) else RepairAssessment
     )
-    result = result_model.model_validate_json(retained["final.txt"])
+    result = result_model.model_validate_json(raw)
     if result.model != receipt.get("model"):
         raise SkillEvalError("repair judge model differs from native invocation")
     meta = evidence._parse_json(payloads["packet.json"])
@@ -527,7 +612,7 @@ def _validated_assessment(
             for path in paths
         ):
             raise SkillEvalError("resolved repair judgments require substantive original evidence")
-    return result, receipt, retained, payloads, digest
+    return result
 
 
 def summary(result: RepairAssessment | DocumentAssessment, execution: str) -> dict[str, Any]:
@@ -571,13 +656,32 @@ def _outside_sources(spec: RepairAssessmentSpec, output: Path) -> None:
 
 
 def record_assessment(
-    spec: RepairAssessmentSpec, prepared: Path, run: Path, output: Path
+    spec: RepairAssessmentSpec,
+    prepared: Path,
+    run: Path,
+    output: Path,
+    *,
+    correction_packet: Path | None = None,
+    correction_run: Path | None = None,
 ) -> dict[str, Any]:
     spec = _normalize(spec)
     _outside_sources(spec, output)
     for root in (prepared, run):
         grading._outside(root, output)
-    result, receipt, retained, payloads, digest = _validated_assessment(spec, prepared, run)
+    if (correction_packet is None) != (correction_run is None):
+        raise SkillEvalError("citation correction requires both packet and run")
+    correction_files: dict[str, bytes] = {}
+    correction_meta: dict[str, Any] | None = None
+    if correction_packet is not None and correction_run is not None:
+        from skilleval.citation_correction import validated_correction
+
+        for root in (correction_packet, correction_run):
+            grading._outside(root, output)
+        result, receipt, retained, payloads, digest, correction_files, correction_meta = (
+            validated_correction(spec, prepared, run, correction_packet, correction_run)
+        )
+    else:
+        result, receipt, retained, payloads, digest = _validated_assessment(spec, prepared, run)
     _, repair_result, _ = source(spec)
     if result.supersedes:
         previous = output / result.supersedes
@@ -595,6 +699,7 @@ def record_assessment(
     audit = summary(result, receipt["status"])
     files = {
         **retained,
+        **correction_files,
         **{"packet/" + name: raw for name, raw in payloads.items()},
         "source-spec.json": evidence._json_bytes(spec.model_dump(mode="json")),
         "result.json": (result.model_dump_json(indent=2) + "\n").encode(),
@@ -617,6 +722,8 @@ def record_assessment(
         "task_quality": "independent-audit-pending",
         "scored_admitted": False,
     }
+    if correction_meta is not None:
+        record["citation_correction"] = correction_meta
     files["record.json"] = evidence._json_bytes(record)
     destination = output / result.result_id
     judge._write_tree(
@@ -653,11 +760,29 @@ def read_assessment(directory: Path, digest: str) -> tuple[dict[str, Any], Repai
         ):
             raise SkillEvalError("retained repair assessment evidence differs")
     spec = parse_spec(grading._read_regular(directory / "source-spec.json", 4 * 1024 * 1024))
-    result, receipt, retained, payloads, packet_digest = _validated_assessment(
-        spec, directory / "packet", directory
-    )
+    correction_files: dict[str, bytes] = {}
+    correction_meta: dict[str, Any] | None = None
+    if "citation_correction" in record:
+        from skilleval.citation_correction import validated_correction
+
+        result, receipt, retained, payloads, packet_digest, correction_files, correction_meta = (
+            validated_correction(
+                spec,
+                directory / "packet",
+                directory,
+                directory / "correction/packet",
+                directory / "correction/run",
+            )
+        )
+        if object_digest(record["citation_correction"]) != object_digest(correction_meta):
+            raise SkillEvalError("citation correction lineage differs")
+    else:
+        result, receipt, retained, payloads, packet_digest = _validated_assessment(
+            spec, directory / "packet", directory
+        )
     expected_files = {
         **retained,
+        **correction_files,
         **{"packet/" + name: raw for name, raw in payloads.items()},
         "source-spec.json": evidence._json_bytes(spec.model_dump(mode="json")),
         "result.json": (result.model_dump_json(indent=2) + "\n").encode(),

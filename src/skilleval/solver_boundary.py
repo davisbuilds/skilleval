@@ -37,6 +37,8 @@ MS_RDONLY, MS_NOSUID, MS_NODEV, MS_NOEXEC = 1, 2, 4, 8
 MS_REMOUNT, MS_BIND, MS_REC, MS_PRIVATE = 32, 4096, 16384, 1 << 18
 RUNTIME_PATHS = ("/usr", "/bin", "/sbin", "/lib", "/lib32", "/lib64", "/libx32")
 ETC_PATHS = ("/etc/alternatives", "/etc/ssl", "/etc/ld.so.cache")
+NODE_DEPENDENCIES = Path("/usr/local/share/task-dependencies/node_modules")
+NODE_DEPENDENCIES_TARGET = Path("/workspace/node_modules")
 TRANSPORT_FILTER = "vsock-deny-v1"
 # Linux v6.18 uapi audit.h, asm-generic/unistd.h, x86 syscall_64.tbl.
 # The profile intentionally supports only the native little-endian 64-bit ABI.
@@ -99,6 +101,11 @@ def validate_layout(root: Path, work: Path) -> tuple[Path, Path]:
     _real_directory(work)
     if root.is_relative_to(work) or work.is_relative_to(root):
         raise ValueError("boundary roots must not overlap")
+    for path in (root, work):
+        if path.is_relative_to(NODE_DEPENDENCIES_TARGET) or NODE_DEPENDENCIES_TARGET.is_relative_to(
+            path
+        ):
+            raise ValueError("boundary root overlaps image dependencies")
     # Keep task/controller paths away from the runtime and kernel mount points.
     for path in (root, work):
         if path == Path("/") or any(
@@ -304,10 +311,29 @@ def _runtime_tree(linux: Linux, jail: Path, source: Path) -> None:
         raise ValueError("runtime tree has an unsupported type")
 
 
+def node_dependencies(source: Path = NODE_DEPENDENCIES) -> Path | None:
+    """Accept the image-owned optional tree, never a task-provided path or link."""
+    if not source.exists() and not source.is_symlink():
+        return None
+    _real_directory(source)
+    return source
+
+
+def prepare_node_workdir(work: Path) -> None:
+    """Keep ordinary tool caches and temporary bin fixtures off the read-only tree."""
+    directory = work / "node_modules"
+    if not directory.exists() and not directory.is_symlink():
+        directory.mkdir(mode=0o755)
+    _real_directory(directory)
+
+
 def _assemble(linux: Linux, root: Path, work: Path) -> tuple[Path, list[str], int]:
     root_info = root.stat()
     if root_info.st_uid != 0 or root_info.st_mode & 0o077:
         raise ValueError("controller root must be root-owned and private")
+    dependencies = node_dependencies()
+    if dependencies is not None:
+        prepare_node_workdir(work)
     for writable in (work, root / "home", root / "codex-home"):
         _own_tree(writable)
     (root / "models.json").chmod(0o444)
@@ -349,6 +375,9 @@ def _assemble(linux: Linux, root: Path, work: Path) -> tuple[Path, list[str], in
                 raise ValueError("etc allowlist source must not be a symlink")
             _bind(linux, source, _destination(jail, source), readonly=True)
             sources.append(name)
+    if dependencies is not None:
+        _bind(linux, dependencies, _destination(jail, NODE_DEPENDENCIES_TARGET), readonly=True)
+        sources.append(str(dependencies))
     etc = jail / "etc"
     etc.mkdir(mode=0o755, exist_ok=True)
     (etc / "passwd").write_text(

@@ -9,7 +9,7 @@ As of **2026-10-30**, prioritize ordinary engineering work using skills from
 [Cursor pstack](https://github.com/cursor/plugins/tree/main/pstack), and
 [gstack](https://github.com/garrytan/gstack).
 Defer new task selection involving blacktwist, charlie947, coreyhaines31, and
-google-design-md. Existing writing captures, judgments, and pending audit
+google-design-md. Existing writing captures, judgments, and historical audit
 materials remain retained; this changes expansion priority, not earlier evidence.
 
 Select concrete jobs a maintainer would actually delegate, with normal project
@@ -36,13 +36,13 @@ seeing treatment outcomes, not only cases where vanilla fails.
 
 ## Single-skill development candidates
 
-Shortlist dated **2026-10-30**. All three candidates below are **uncaptured and
-unqualified**: no task package, accepted outcome adapter or skill-effect result is
-established by this inspection. Recommend **Matt's debugging skill first**, then
-**Emil's UI stress test after browser qualification**. Addy's performance task
-needs complete reference packaging and a reproducible workload first. These are
-bounded development proposals, not a selected evaluation population. They all use
-AgentMonitor; that convenience does not establish repository or language diversity.
+Shortlist established **2026-10-30**, updated **2026-11-02**. Matt's debugging
+task now has complete captures, ordinary environment validation and independent
+outcome controls. Emil's UI stress test remains proposed pending browser
+qualification. Addy's performance task needs complete reference packaging and a
+reproducible workload. No skill-effect estimate is established. These cases all
+use AgentMonitor; that convenience does not establish repository or language
+diversity.
 
 Preserve the task snapshot's ordinary guidance and dependencies in both arms.
 Inspect references to unavailable external guidance before capture; supply the
@@ -54,12 +54,17 @@ revision. No candidate requires a second skill or delegation.
 
 ### 1. Diagnose missing completed sessions
 
-**Real historical seed; first recommendation.** AgentMonitor's
+**Selected development slice.** AgentMonitor's
 [repair f700961](https://github.com/davisbuilds/agentmonitor/commit/f7009616a272eba3ff96bcb851457cc2b8e4b66c)
 restored access to compressed Codex rollouts across discovery, import, session
 sync and related readers. Candidate starting snapshot:
 [5f681e2](https://github.com/davisbuilds/agentmonitor/tree/5f681e21c8af7766bb21efe60d15bae33c4ac68b).
-This is an exposed development repair, not an unexposed holdout.
+This is an exposed development repair, not an unexposed holdout. The
+[capture and observer](../../examples/repair/completed-sessions/README.md) preserve
+the full ordinary source and selected skill resources. The baseline backlog
+already names the compressed-file defect and suggests a fix. Keep that context
+equal across arms: this task measures repair completeness and verification,
+not discovery of a concealed cause.
 
 **Proposed shared brief.** Some completed Codex sessions are missing from the
 session browser and usage history, even after a forced sync, while active sessions
@@ -91,7 +96,9 @@ qualify its lockfile, native SQLite dependency, zstd support and existing tests 
 the task VM. Use synthetic files and a temporary database, never a real session
 store. An unattended reproduction should suffice. The upstream skill shows
 ranked hypotheses without requiring a reply; its HITL fallback stays available
-but is not inherently needed here. This inspection ran no imported code.
+but is not inherently needed here. Capturing inputs does not qualify their
+execution; the selected image, resource profile and ordinary commands require
+fresh VM evidence.
 
 ### 2. Stress-test the Sessions table
 

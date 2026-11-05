@@ -601,7 +601,7 @@ def test_receipt_flood_revokes_with_bounded_memory_and_no_extra_inference(short_
 @pytest.mark.parametrize(
     "changes",
     [
-        {"max_requests": 33},
+        {"max_requests": 129},
         {"timeout_seconds": 0},
         {"lifetime_seconds": float("nan")},
         {"max_requests": True},

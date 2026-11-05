@@ -82,6 +82,24 @@ teardown have their existing individual limits; this does not impose a separate
 whole-study wall-clock deadline or infer a token/currency budget from missing
 provider telemetry. Output parent directories must already exist.
 
+New study specifications default `native_timeout_seconds` to 1,800 seconds
+(30 minutes), also the task ceiling. Preparation freezes the explicit deadline;
+both arms use it and derive gateway lifetime with the native runner's separate
+setup allowance and headroom. Setup cannot silently reduce the native budget:
+insufficient remaining gateway lifetime refuses dispatch.
+Older frozen plans keep their recorded value. Schema-1, -2 or -3 plans that omitted
+the field retain the historical 600-second interpretation on readback; changing
+the default does not upgrade their budget. Judge runs are separate and default
+to a 900-second deadline. Changed budgets require fresh plans and applicable
+environment evidence before another comparison.
+
+`max_requests_per_attempt` defaults to 32 and accepts an explicit value up to
+128. Existing plans retain their frozen values. Native request-budget diagnostics
+flow into the attempt summary: admitted provider calls, `request_limit`
+refusals, retained observation count and any observer-cap failure are separate.
+A configured quota stop does not become evidence of task correctness or skill
+benefit. Missing diagnostics in older receipts remain missing.
+
 ## Attempts, interruption and recovery
 
 One local controller holds a nonblocking process lock on a study output. Different
@@ -134,7 +152,8 @@ files, judgments, and consumption; see [readable comparisons](TASKS.md#inspect-q
 Audit-backed task quality, scalar quality differences and uncertainty are not
 estimated. Native completion, a skill read, a parseable judgment or a stable judge
 is not correctness or skill benefit.
-The human audit packet remains frozen. Before scored studies, extend admission to
+Historical audit packets remain frozen; the earlier tiny-control audit is no
+longer an active prerequisite after task realignment. Before scored studies, extend admission to
 the actual task/treatment/dispatch route, resolve independent grader validation,
 and freeze duplicate/severity/coverage and assessment-selection policies. Known
 defect probes do not measure exhaustive review recall.
@@ -144,5 +163,6 @@ source bytes, scopes edits, and checks a candidate in a separate offline VM.
 Checking remains an explicit operation outside the study's task-agent loop; its
 results and optional native judgments are linked without overwriting native
 outcomes. Judge consumption stays separate; pending audit remains explicit.
-The [pilot shortlist](../project/PILOT-CANDIDATES.md) separates the first exposed
-repair seed from a still-unselected representative evaluation population.
+The [candidate register](../project/PILOT-CANDIDATES.md) records the selected
+completed-session debugging task and proposed expansion. One exposed engineering
+task does not establish a representative evaluation population.

@@ -10,7 +10,21 @@ from skilleval.errors import SkillEvalError
 from skilleval.grading import _read_regular
 from skilleval.identity import object_digest
 from skilleval.lifecycle import Lifecycle, LifecycleInterruptedError, interrupt_scope
-from skilleval.repair import _publish, load_task, result_files
+from skilleval.repair import RepairSpec, _publish, load_task, result_files
+
+
+def validate_observer_resources(spec: RepairSpec, observation: dict[str, Any]) -> None:
+    """Bind explicit opt-in resources; absent metadata retains the legacy default."""
+    expected = (
+        {
+            "profile": spec.observer_resource_profile,
+            **repair_guest.resource_limits(spec.observer_resource_profile),
+        }
+        if spec.observer_resource_profile != "python-v1"
+        else None
+    )
+    if object_digest(observation.get("observer_resources")) != object_digest(expected):
+        raise SkillEvalError("repair observer resource profile differs from frozen task")
 
 
 def compare_observations(probes: list[dict[str, Any]], raw: str) -> list[dict[str, Any]]:
@@ -77,11 +91,18 @@ def check_repair(
             "Expected answers and verdict computation stay outside the guest.",
         ],
     }
+    if spec.observer_resource_profile != "python-v1":
+        report["observer_resources"] = {
+            "profile": spec.observer_resource_profile,
+            **repair_guest.resource_limits(spec.observer_resource_profile),
+        }
     try:
         requests = {
             "timeout_seconds": spec.timeout_seconds,
             "requests": [p.request for p in spec.probes],
         }
+        if spec.observer_resource_profile != "python-v1":
+            requests["observer_resource_profile"] = spec.observer_resource_profile
         archive = state / "checker-input.tar"
         runner._tar(
             archive,
@@ -124,6 +145,7 @@ def check_repair(
             or envelope.get("expected_answers_supplied") is not False
         ):
             raise SkillEvalError("invalid repair supervisor protocol")
+        validate_observer_resources(spec, envelope)
         if (
             envelope.get("returncode") != 0
             or envelope.get("timed_out") is not False

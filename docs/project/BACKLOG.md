@@ -39,7 +39,14 @@ shipped history. Private provenance stays outside public entries and issues.
   exposed development work. Selected browser tasks will need environment and
   rendered-outcome validation; the narrow proposed game repair is a weak design
   skill comparison.
-- **Task environment profile and coverage:** the restored receipt-repair capture
+- **Task environment profile and coverage:** the selected completed-session task
+  now has [Node environment and outcome controls](../../examples/repair/completed-sessions/environment.md).
+  Preserve its shared quota/shutdown failure, platform skips and unsupported lanes.
+  Before the next solver comparison, revalidate the revised disposable-copy
+  application home: the earlier source-tree home allowed ordinary quota polling
+  to create support databases where the brief prohibited scratch. Preserve the
+  older runs and that task-context limitation.
+  The restored receipt-repair capture
   now has matching baseline/reference unit failures and skips, with required
   assets/history retained. The [environment record](../../examples/repair/receipt-admission/environment.md)
   identifies two root-sensitive failures, eight unit skips and zero local tasks
@@ -58,6 +65,19 @@ shipped history. Private provenance stays outside public entries and issues.
   controls cannot establish reliability. Treatment metadata masking is not proven
   blinding. Observation workers share candidate imports; test adversarial output
   and independent perturbation sessions before claiming resistance to manipulation.
+- **Tool-evidence coverage:** the explicit `application-context-v2` policy retains
+  ordinary application `CODEX_HOME` commands while preserving legacy packets.
+  Its text filters can still omit legitimate mixed commands or miss indirect
+  treatment disclosure. Audit evidence sufficiency across representative tasks;
+  preserve missing observations as unknown. Use fresh policy-bound packets and
+  explicit outcome selection when replaying retained repairs, then independently
+  assess verification disagreements before treating them as solver failures.
+- **Broader judge finalization:** repair/document assessments support one explicit
+  line-range correction with original evidence and both linked invocation costs
+  retained. Missing citation paths, malformed results and calibration/review
+  judgments remain ineligible. Expand only when retained failures justify it;
+  preserve mechanical correction separately from semantic reassessment and keep
+  all unselected attempts visible in the operational ledger.
 - **Representative writing grader validation (deferred):** the document rubric and artifact
   path are implemented, with different valid drafts and a format-valid false-claim
   control. Independently audit judgments on varied real writing tasks and preserve
@@ -73,10 +93,24 @@ shipped history. Private provenance stays outside public entries and issues.
   uncertainty estimate is implemented. Add independently supported cache
   partition evidence and actual tier/context/charge contracts before broadening
   the conditional API-equivalent scenario; never infer observed charges from it.
+  Expose completed-request provider subtotals when native accounting is interrupted;
+  currently raw receipts retain them while the normalized report stays unknown.
+  Distinguish incomplete provider observations from absent observations, and keep
+  the unobserved remainder and missing cache partition unknown.
   Prespecify estimands, missing-data policy and repeated-run analysis, with
   uncertainty that respects task/repository clustering.
+- **Representative runs with revised budgets:** native tasks now default to
+  30 minutes and judges to 15 minutes, with gateway and credential headroom.
+  Revalidate selected task context and execution identity before new comparisons,
+  freeze the same budget for both arms, and retain the earlier 780-second
+  debugging timeout. Short synthetic controls establish deadline wiring and
+  termination behavior, not sustained provider behavior or task performance at
+  the longer defaults. Interrupted usage reporting remains a separate gap above.
 - **Judge reliability and label audit:** independently audit authored labels,
-  native verdicts and disagreements. The human audit remains pending; agreement
+  native verdicts and disagreements. The earlier tiny-control audit was retired
+  from active work on 2026-11-02 after task realignment. Its records remain
+  unchanged and it does not gate the engineering slice. New audits must address
+  the selected real tasks. Agreement
   with authored labels does not establish general reliability. The separate
   reliability suite now checks repeat/probe-order stability and within-packet
   paraphrase, anchor, injection and treatment-cue invariance. Expand to isolated

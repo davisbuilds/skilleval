@@ -46,6 +46,24 @@ missing telemetry stays unknown. [ACCOUNTING.md](ACCOUNTING.md) owns provenance
 and reconciliation. Closing stdin after the matched terminal lets app-server
 exit; collection still requires confirmed namespace teardown.
 
+Review and repair runs default to a 1,800-second (30-minute) native deadline;
+judge runs default to 900 seconds (15 minutes). These are also the respective
+ceilings. `--timeout-seconds` can select a shorter positive deadline. The native
+API selects the same mode-dependent default when its timeout is omitted.
+Default gateway lifetime includes 900 seconds for setup, the selected native
+deadline, and 120 seconds of headroom. The gateway starts before VM setup so its
+socket can be mounted. Immediately before native dispatch, the runner requires
+enough remaining gateway lifetime for the whole native deadline plus at least
+60 seconds; an overrun refuses dispatch and cleans up the VM. This check also
+applies to explicitly supplied gateway limits. Credential preflight requires
+validity for the gateway lifetime plus 30 seconds, rechecked after host preparation.
+Before dispatch, retained credentials must still cover the native deadline,
+60 seconds of headroom and a 30-second expiry margin. Expiry is also checked
+before each provider request. VM setup, collection and cleanup retain their
+individual bounds, so the native deadline is not total wall-clock time.
+Request budgets are independent: a run can exhaust its request allowance before
+its time budget. Longer deadlines do not imply complete usage after interruption.
+
 Use a prepared, hash-pinned image containing native Codex and the task's existing
 tools/dependencies. Keep its selected runtime, catalog, image, runner source and
 frozen task input stable for the run. Explicitly select an existing host login;
@@ -65,6 +83,14 @@ outside the guest and available through recording.
 Native Codex and imported source execute only in the VM. The host validates and
 retains outputs without extracting or executing guest archives. The runner
 enforces overall time, inference and artifact bounds and records cleanup. The
+native collector and task/tooling transfer preserve long filenames with local
+PAX `path` records capped at 4 KiB. Native readers permit one such record directly
+before a regular file; they reject global, chained, malformed or duplicate
+records, other metadata keys, links, sparse files, unsafe paths and aliases.
+Header counts, archive bytes and the retained manifest remain bounded. Short-name
+archives retain their previous bytes; Docker-save image parsing still refuses
+PAX extensions. These rules preserve ordinary long cache and independently named
+source files without extracting guest content on the host. The
 native staging area uses `/var/tmp/native` on the guest disk, outside the task
 tree. The qualified image's `/run` filesystem has only 64 MiB; retaining input
 archives, transcripts and output there exhausted capacity on the repair workload.
@@ -326,6 +352,11 @@ privilege removal and timings. Agent time starts after namespace setup and ends
 when native PID 1 is reaped; launcher time is retained separately. Collection
 does not proceed when namespace termination is unconfirmed.
 A timeout, partial collection or failed execution is not an empty clean report.
+New collection failures retain the collector's bounded error type and message.
+Any copied failed archive remains unvalidated private diagnostic evidence; the
+runner does not treat it as a complete artifact or replace the primary error
+with a later archive-parser failure. Earlier receipts retain their original
+diagnostics unchanged.
 Missing/invalid final JSON is refused by judge recording rather than filled in.
 
 Recording verifies the original frozen input, packet bytes/digests, exact prompt,

@@ -134,7 +134,10 @@ the original evidence, substantive verdicts and reproduction limits before a
 scored correctness claim. No native result, hash check, authored-label agreement,
 or additional model pass supplies that independent human audit automatically.
 The current workflow implements preparation, execution and retention; live
-workload success and general judge reliability require their own evidence.
+workload success and general judge reliability require their own evidence. The
+earlier tiny-control audit was retired from the active roadmap on 2026-11-02
+when the task population was realigned. Preserve its original records; it is not
+a prerequisite for new engineering development runs or evidence for their grades.
 
 ## Offline result contract and recording
 

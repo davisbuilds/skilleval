@@ -10,11 +10,15 @@ No upstream runner is required.
 ## Freeze and validate
 
 `schema artifact-spec` exposes the existing file-artifact contract: captured input,
-shared prompt, editable/output paths, pinned observation worker, expected
+shared prompt, editable/output paths and optional editable directories, pinned
+observation worker, expected
 observations and source provenance. `artifact` is an alias of `repair`; existing
 commands and evidence formats remain supported. A document adds an output file
 to an otherwise unchanged source packet. Collection preserves actual bytes and
-out-of-scope changes, using the same rules as [repairs](REPAIRS.md).
+out-of-scope changes, using the same rules as [repairs](REPAIRS.md). Directory scope permits independently
+chosen helper/test filenames within declared trees; it grants no authority over
+Git metadata, cache directories or capture manifests. Preparation summaries list
+exact output paths and any directory grants separately.
 
 `schema task-package-spec` adds:
 

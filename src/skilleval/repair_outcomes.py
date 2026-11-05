@@ -9,6 +9,7 @@ from typing import Any
 from pydantic import Field, model_validator
 
 from skilleval.contracts import Digest, Identifier, Record
+from skilleval.efficiency import TIME_FIELDS, TOKEN_FIELDS, _seconds, _summary, _tokens
 from skilleval.errors import SkillEvalError
 from skilleval.grading import _read_regular
 from skilleval.identity import file_digest
@@ -44,6 +45,63 @@ class RepairOutcomeSelection(Record):
         if len(set(ids)) != len(ids):
             raise ValueError("select each attempt only once")
         return self
+
+
+def _judge_consumption(directory: Path, record: dict[str, Any]) -> dict[str, Any]:
+    """Read only the invocation lineage already validated by read_assessment."""
+    from skilleval.study import _document
+
+    native = _document(directory / "native-run.json")
+    fields = ("usage_accounting", "timings", "request_count")
+    original = {key: native.get(key) for key in fields}
+    if "citation_correction" not in record:
+        return original
+    attempts = []
+    for kind, relative, receipt in (
+        ("original", Path("native-run.json"), native),
+        (
+            "citation-correction",
+            Path("correction/run/native-run.json"),
+            _document(directory / "correction/run/native-run.json"),
+        ),
+    ):
+        attempts.append(
+            {
+                "kind": kind,
+                "native_run": str(directory / relative),
+                "native_receipt_sha256": file_digest(directory / relative),
+                "status": receipt.get("status"),
+                **{key: receipt.get(key) for key in fields},
+            }
+        )
+    tokens = {field: _summary([_tokens(a, field) for a in attempts]) for field in TOKEN_FIELDS}
+    timings = {field: _summary([_seconds(a, field) for a in attempts]) for field in TIME_FIELDS}
+    requests = _summary(
+        [
+            value if type(value) is int and 0 <= value <= 2**63 - 1 else None
+            for attempt in attempts
+            for value in (attempt["request_count"],)
+        ]
+    )
+    return {
+        "scope": "linked-selected-judge-invocations",
+        "attempt_count": len(attempts),
+        "attempts": attempts,
+        "usage_accounting": {
+            "status": "complete"
+            if all(value["total"] is not None for value in tokens.values())
+            else "unknown",
+            **{field: value["total"] for field, value in tokens.items()},
+        },
+        "timings": {field: value["total"] for field, value in timings.items()},
+        "request_count": requests["total"],
+        "summary": {"tokens": tokens, "timings_seconds": timings, "request_count": requests},
+        "limits": [
+            "Only the original invocation and its linked citation correction are included; "
+            "external or repeated judge invocations are not enumerated.",
+            "Missing telemetry remains unknown; known subtotals are not complete totals.",
+        ],
+    }
 
 
 def attach_outcomes(
@@ -116,13 +174,10 @@ def attach_outcomes(
             }
             from skilleval.study import _document
 
-            judge_native = _document(Path(entry.assessment.path) / "native-run.json")
             semantic["judgments"] = _document(Path(entry.assessment.path) / "result.json")[
                 "judgments"
             ]
-            judge_usage = {
-                k: judge_native.get(k) for k in ("usage_accounting", "timings", "request_count")
-            }
+            judge_usage = _judge_consumption(Path(entry.assessment.path), record)
         rows[(entry.cell_id, entry.attempt)] = {
             "artifact_path": entry.checks[0].result,
             "artifact_files": [
@@ -245,12 +300,54 @@ def render_review(report: dict[str, Any]) -> str:
                     + safe(judgment["reasoning"])
                 ]
             lines += ["", "Selected judge consumption (separate from task usage):", ""]
-            judge_usage = (outcome.get("judge_consumption") or {}).get("usage_accounting") or {}
+            consumption = outcome.get("judge_consumption") or {}
+            judge_usage = consumption.get("usage_accounting") or {}
+            if "attempts" in consumption:
+                lines += [
+                    f"{consumption['attempt_count']} linked invocations "
+                    "(original and citation correction).",
+                    "",
+                    "| Invocation | Input tokens | Output tokens | Agent seconds | Requests |",
+                    "| --- | ---: | ---: | ---: | ---: |",
+                ]
+                for invocation in consumption["attempts"]:
+                    timing = invocation.get("timings") or {}
+                    lines += [
+                        "| "
+                        + " | ".join(
+                            (
+                                link(safe(invocation["kind"]), invocation["native_run"]),
+                                known(_tokens(invocation, "input_tokens")),
+                                known(_tokens(invocation, "output_tokens")),
+                                known(timing.get("agent_seconds")),
+                                known(invocation.get("request_count")),
+                            )
+                        )
+                        + " |"
+                    ]
+                lines += ["", "Linked invocation totals:", ""]
             lines += [
                 f"Input {known(judge_usage.get('input_tokens'))}; "
                 f"output {known(judge_usage.get('output_tokens'))} tokens.",
                 "",
             ]
+            if "summary" in consumption:
+                lines += [
+                    "Agent seconds "
+                    + known(consumption["timings"].get("agent_seconds"))
+                    + "; requests "
+                    + known(consumption.get("request_count"))
+                    + ".",
+                    "",
+                ]
+                for field in ("input_tokens", "output_tokens"):
+                    summary = consumption["summary"]["tokens"][field]
+                    lines += [
+                        f"{safe(field)} known subtotal {known(summary['known_subtotal'])}; "
+                        f"{summary['known_attempt_count']} known, "
+                        f"{summary['unknown_attempt_count']} unknown invocations.",
+                        "",
+                    ]
     lines += [
         "Only explicitly selected judge consumption appears here; failed or unselected "
         "judge invocations need the separate operational ledger.",

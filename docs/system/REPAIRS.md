@@ -9,13 +9,20 @@ task-agent consumption. Repair checks are a separate, credential-free operation.
 ## Freeze the task and checks
 
 `schema repair-spec` owns the input contract. A task binds its source snapshot and
-digest, shared prompt, exact editable paths, a Python observation worker and its
+digest, shared prompt, editable paths, a Python observation worker and its
 digest, named requests/expected observations, deadline and source provenance.
 `repair prepare SPEC --output TASK` verifies those inputs, resolves paths and
 publishes a task identity without launching anything. Retain its digest separately.
 The initial patch adapter accepts portable ASCII paths containing letters, digits
 and `_./@+-`; spaces and other encodings are unsupported. Preparation checks all
 retained source paths, including unchanged context, before a native attempt.
+
+Optional `editable_directories` permits additions, edits and deletions below
+declared directories without prescribing helper or test filenames. Both collection
+and readback enforce the same path-ancestor rule: `src` includes `src/new.ts`,
+not `src-other/new.ts` or replacement of `src` itself with a file. Directory grants
+exclude Git/cache metadata and capture manifests. Omitting the field preserves
+legacy contract bytes. Exact `editable_paths` remain supported.
 
 Keep the worker, expected observations, reference solutions, earlier attempts and
 task contract outside solver input. Only the frozen source and task prompt go to
@@ -94,6 +101,20 @@ The worker's Python process shares candidate imports, so its observations remain
 untrusted. Candidate code can inspect its process; this is not a claim that
 arbitrary hostile code cannot infer or game finite probes.
 
+`observer_resource_profile` selects a fixed offline observation budget. Omit it
+for the legacy `python-v1` profile: 512 MiB address space, 128 KiB maximum file
+size, 64 open files, 32 processes and no core dumps. The explicit `node-v1`
+profile allows 2 GiB address space, 8 MiB maximum file size and 256 open files;
+the process and core limits stay the same. These are child resource limits,
+including per-process address space and per-file size, not a total disk budget.
+Both profiles retain at most 128 KiB of stdout and 128 KiB of stderr. The
+supervisor reads each stream file with a bounded 128 KiB + 1 byte read; reaching
+the output cap makes execution incomplete and acceptance unknown. The larger
+file allowance supports temporary databases without expanding retained output.
+Nondefault settings and their exact limits are bound into the task, supervisor
+envelope and check report, and validated again when a report is selected for
+assessment. Omitted defaults preserve legacy task bytes and report compatibility.
+
 The worker reads `{"requests": [...]}` on stdin and receives the source root as
 its first argument. It returns exactly `{"observations": [...]}` in request order.
 It must not emit grading verdicts. The host rejects missing, extra, duplicate-key
@@ -135,11 +156,38 @@ The prepared packet contains original and candidate source, the generated patch,
 the shared task instruction, the solver's retained final statement, bounded command
 observations and separately collected worker observations. It withholds structured
 arm/skill identity, host provenance, consumption, expected answers and check pass
-labels. The same filter withholds harness/skill-access commands in both arms;
+labels. The selected filter applies to both arms;
 individual commands/outputs and the list have explicit truncation indicators.
 Original raw traces stay retained outside the packet. Free-form prose or source
 can still reveal treatment cues: this is metadata masking, not proven independent
 blinding. The judge can question check fixtures rather than inherit their grades.
+
+Set `"tool_evidence_policy": "application-context-v2"` in new repair or document
+assessment specifications. This policy retains application settings and mentions
+of `CODEX_HOME`, including Python environment construction and shell assignments.
+It withholds commands or outputs with recognized harness-control paths, skill-access
+markers, or direct harness-home lookups such as `$CODEX_HOME` and
+`os.environ["CODEX_HOME"]`. Filtering scans complete strings before display
+truncation. It does not parse arbitrary programs: indirect access and free-form
+content can still reveal treatment cues, and legitimate commands mentioning a
+blocked marker can still be omitted. Missing evidence remains unknown, not proof
+of a false claim. The v2 instructions ask the judge to retain that distinction and
+read qualifications such as substituted test dependencies.
+
+An omitted policy, or explicit `legacy-v1`, preserves the original keyword filter
+and exact packet, rubric, schema and source-spec serialization. It can hide
+legitimate application commands containing `CODEX_HOME`; this affected a qualified
+test rerun in the completed-session task. The default stays legacy for readback
+compatibility, so opt into v2 explicitly. Unknown policies are rejected. The v2
+policy is bound in the source specification, packet metadata and tool evidence;
+repair and document preparation, recording and readback use the same selection.
+
+To correct an earlier assessment, prepare a fresh v2 packet from the same retained
+repair and checks, run a new judgment, and select its record explicitly in a new
+outcome report. Keep the old packet and judgment unchanged. Changing evidence
+policy changes evidence identity, so this is a new evidence generation, not a
+same-evidence `supersedes` revision. No new task-agent run is needed. Review the
+retained raw trace when diagnosing a verification discrepancy.
 
 The rubric separates `task-contract`, `scope-and-regressions` and
 `verification-claims`. Each permits `satisfied`, `violated` or `unresolved`, with
@@ -177,6 +225,65 @@ The [authored assessment controls](../../examples/repair/assessment-v1/README.md
 exercise valid, defective and unsupported-claim judgments. Labels stay outside
 judge packets. These tiny examples test the grader path, not frontier-agent
 ability or representative task difficulty.
+
+## Correct citation line ranges
+
+Repair and document assessments support one explicitly linked correction when a
+completed judge returns a structurally valid result with citations extending past
+an existing UTF-8 file. Preparation verifies the original invocation, packet,
+result identities and every non-range constraint before creating a fresh static
+packet. Missing files, changed evidence, invalid schemas, failed execution and
+already valid results are ineligible. Calibration and review judgments do not yet
+use this path.
+
+```sh
+uv run skilleval repair prepare-citation-correction SPEC \
+  --packet ORIGINAL_PACKET --run ORIGINAL_RUN \
+  --timeout-seconds 180 --max-requests 4 --output CORRECTION_PACKET
+```
+
+Preparation makes no model call. Its JSON response supplies the exact `prompt`,
+`input_digest` and declared `budget`. Save the prompt to a file, capture the
+correction packet with `skilleval capture`, and check the capture digest against
+`input_digest`. Run `native qualify` in `--mode judge --judge-policy static`, with
+the saved prompt, captured packet and explicit `--timeout-seconds 180
+--max-requests 4` matching this example. Use fresh output directories and the
+usual pinned runtime, image, catalog and explicitly selected host login.
+
+The packet contains the original raw result, exact cited file bytes and structural
+diagnostics naming JSON pointers and observed line counts. It supplies no suggested
+replacement range or correctness label. The correction may change only citation
+line starts and ends; paths, list membership/order, result ID, reasoning, verdicts,
+and original evidence/rubric identities remain unchanged. The correction invocation
+has its own packet identity and static policy, while the assessment retains its
+original investigation policy and artifact authority. New correction artifacts
+cannot substitute for original investigation evidence.
+
+```sh
+uv run skilleval repair record-assessment SPEC \
+  --packet ORIGINAL_PACKET --run ORIGINAL_RUN \
+  --correction-packet CORRECTION_PACKET --correction-run CORRECTION_RUN \
+  --output RECORDS
+```
+
+Both correction flags are required together. Recording validates the exact new
+input/prompt/model, configured time/request ceilings, admitted request counts,
+unchanged non-bound content and every corrected citation. An invalid or incomplete
+correction remains retained in its run directory and produces no accepted record.
+There is no automatic retry, range clamping or semantic reassessment.
+
+Accepted records preserve the original root `final.txt`, native receipt and
+artifacts, add `correction/packet/` and `correction/run/`, and bind them through
+`citation_correction` metadata. `result.json` contains the corrected judgment;
+read-back revalidates both invocations and the permitted difference. Legacy records
+retain their original bytes and behavior. This is a correction of a previously
+unrecordable result, not a `supersedes` revision of an accepted assessment.
+
+The default correction budget is 180 seconds and four requests, with one linked
+attempt. Preparing or running duplicates elsewhere is still possible; the record
+does not claim to enumerate those external attempts. Selected judge consumption
+includes both linked invocations as described in [ACCOUNTING.md](ACCOUNTING.md).
+Structural acceptance still requires independent semantic audit.
 
 ## Select outcomes for a study report
 
