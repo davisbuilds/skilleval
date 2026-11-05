@@ -29,9 +29,13 @@ shipped history. Private provenance stays outside public entries and issues.
   [engineering source priorities](PILOT-CANDIDATES.md#current-selection-direction)
   to select concrete debugging, implementation, review, UI, performance or QA
   work that maintainers actually delegate, then freeze separate evaluation cases.
-  Establish the task brief, skill fit and independent outcomes before capture;
-  the earlier shortlist does not select the next population. The repair
-  adapter, source capture and polarity controls are implemented; one seed's
+  The [debugging expansion shortlist](PILOT-CANDIDATES.md#debugging-expansion-shortlist)
+  identifies four source-inspected candidates across three repositories. Qualify
+  the next capture, starting with fetchmd address validation; Promptfoo needs a
+  separate dependency image and Dojo remains a reserve. Establish each task brief,
+  skill fit and independent outcomes before capture. These candidates are not yet
+  validated tasks. The repair adapter, source capture and polarity controls are
+  implemented; one seed's
   related probes are not independent tasks or representative capability evidence.
   Retain selection decisions; do not retain only vanilla failures or skill wins.
   A source-grounded writing task exercises a complete upstream skill and document
@@ -42,10 +46,11 @@ shipped history. Private provenance stays outside public entries and issues.
 - **Task environment profile and coverage:** the selected completed-session task
   now has [Node environment and outcome controls](../../examples/repair/completed-sessions/environment.md).
   Preserve its shared quota/shutdown failure, platform skips and unsupported lanes.
-  Before the next solver comparison, revalidate the revised disposable-copy
-  application home: the earlier source-tree home allowed ordinary quota polling
-  to create support databases where the brief prohibited scratch. Preserve the
-  older runs and that task-context limitation.
+  The disposable-copy application home is now qualified against real discovery,
+  import and Codex initialization; account RPCs were suppressed, so provider quota
+  behavior remains outside that control. Preserve the older source-home runs and
+  their contradictory scratch constraint as a task-context limitation. New task
+  captures still need their own ordinary command and required-tool qualification.
   The restored receipt-repair capture
   now has matching baseline/reference unit failures and skips, with required
   assets/history retained. The [environment record](../../examples/repair/receipt-admission/environment.md)
@@ -61,17 +66,32 @@ shipped history. Private provenance stays outside public entries and issues.
   identity and original citations rather than silently dropping evidence.
 - **Representative repair grader validation:** semantic packets, native recording
   and explicit outcome linking are implemented. Audit representative verdicts,
-  fixture suitability and alternative solutions; tiny positive/negative/unknown
+  fixture suitability and alternative solutions. Add controlled archive/plain
+  sibling handover coverage after both fresh debugging repairs left restored
+  history shortened; keep supplemental diagnostics separate from frozen checks
+  and related lifecycle probes separate from independent tasks. Tiny authored
   controls cannot establish reliability. Treatment metadata masking is not proven
   blinding. Observation workers share candidate imports; test adversarial output
   and independent perturbation sessions before claiming resistance to manipulation.
 - **Tool-evidence coverage:** the explicit `application-context-v2` policy retains
   ordinary application `CODEX_HOME` commands while preserving legacy packets.
   Its text filters can still omit legitimate mixed commands or miss indirect
-  treatment disclosure. Audit evidence sufficiency across representative tasks;
+  treatment disclosure. A retained debugging audit identified two concrete losses:
+  completed commands with null output lose their exit/status evidence, and a
+  verification summary is withheld when its ordinary source diff mentions an
+  application home lookup. Preserve meaningful outputless completions and narrow
+  whole-command filtering in a new policy; prove the correction against retained
+  raw events and harness-disclosure controls, then replay judgments without new
+  solver attempts. Audit evidence sufficiency across representative tasks;
   preserve missing observations as unknown. Use fresh policy-bound packets and
   explicit outcome selection when replaying retained repairs, then independently
   assess verification disagreements before treating them as solver failures.
+  Preserve command start/completion order and intervening source edits in a new
+  evidence policy: completed-command lists cannot establish that a suite exercised
+  the final candidate. A development audit found a broad suite running while
+  source changed, despite later focused/lint/build completions. Qualify meaningful
+  chronology and candidate identity without exposing treatment metadata; keep old
+  packet bytes reconstructible.
 - **Broader judge finalization:** repair/document assessments support one explicit
   line-range correction with original evidence and both linked invocation costs
   retained. Missing citation paths, malformed results and calibration/review
@@ -99,13 +119,6 @@ shipped history. Private provenance stays outside public entries and issues.
   the unobserved remainder and missing cache partition unknown.
   Prespecify estimands, missing-data policy and repeated-run analysis, with
   uncertainty that respects task/repository clustering.
-- **Representative runs with revised budgets:** native tasks now default to
-  30 minutes and judges to 15 minutes, with gateway and credential headroom.
-  Revalidate selected task context and execution identity before new comparisons,
-  freeze the same budget for both arms, and retain the earlier 780-second
-  debugging timeout. Short synthetic controls establish deadline wiring and
-  termination behavior, not sustained provider behavior or task performance at
-  the longer defaults. Interrupted usage reporting remains a separate gap above.
 - **Judge reliability and label audit:** independently audit authored labels,
   native verdicts and disagreements. The earlier tiny-control audit was retired
   from active work on 2026-11-02 after task realignment. Its records remain

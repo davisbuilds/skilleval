@@ -1,6 +1,6 @@
 ---
 status: in-progress
-updated: 2026-11-02
+updated: 2026-11-05
 ---
 
 # Roadmap
@@ -55,11 +55,21 @@ and the adapted OpenBench gateway. External skills remain experimental inputs.
    The first selected engineering slice pairs the completed-session repair with
    Matt Pocock's diagnosing-bugs skill. Its source and full skill closure are
    captured with [environment and checker controls](../../examples/repair/completed-sessions/environment.md).
-   Preserve ordinary test exceptions and task-specific audit limits in comparisons.
+   Its revised disposable application home is qualified; ordinary test exceptions
+   and task-specific audit limits remain. The
+   [debugging expansion shortlist](PILOT-CANDIDATES.md#debugging-expansion-shortlist)
+   proposes fetchmd address validation next, followed by separately qualified
+   Promptfoo cases, with Dojo reserved. These source-inspected candidates still
+   need capture and executable validation.
    Preserve selection reasons and exclusions. Do not retain
    only vanilla failures or wins for the skill.
-3. **Audit representative judgments.** Review actual artifacts, source support,
-   novel findings, alternative solutions, checker defects, and disagreements.
+3. **Audit representative judgments and repair evidence loss.** Review actual
+   artifacts, source support, novel findings, alternative solutions, checker
+   defects, and disagreements. The debugging audit traced missing verification
+   evidence to dropped outputless command completions and overly broad application
+   home filtering. Preserve those observations and source-edit chronology in a new
+   packet policy, then reassess retained repairs before interpreting more pairs.
+   This needs fresh evidence generations, not new solver attempts.
    Tiny authored label controls test the grader machinery; their difficulty does
    not define the task population. The earlier tiny-control human audit is no
    longer an active request or prerequisite after the task realignment; preserve

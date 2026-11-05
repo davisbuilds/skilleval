@@ -1,6 +1,6 @@
 # Completed-session development validation
 
-Maintainer-observed Linux aarch64 results on 2026-11-02. Exact captures, images,
+Maintainer-observed Linux aarch64 results through 2026-11-05. Exact captures, images,
 receipts, logs and failed generations remain private retained evidence. These
 observations qualify a bounded development route; they are not a public benchmark
 release, independently audited correctness labels or a skill-effect estimate.
@@ -23,7 +23,8 @@ Image controls verify native SQLite and zstd, tsx execution, readable dependenci
 through both declared aliases, read-only mount flags and `EROFS` on writes. Task
 storage and its local `node_modules` directory remain writable. Synthetic native
 solver controls passed 80/80 assertions; operator-context controls passed 56/56.
-These controls used no credentials or real model inference.
+These controls used no credentials or real model inference. Both control suites
+were repeated successfully on 2026-11-05 with the current execution source.
 
 ## Ordinary commands
 
@@ -56,6 +57,35 @@ Chromium E2E, separate built/verify/parity lanes, optional sibling-skill smoke a
 installed macOS services remain outside this validation. The six outcome probes
 exercise finite production paths, not every live watcher or service lifecycle.
 
+## Disposable application home
+
+On 2026-11-05, both snapshots repeated the ordinary commands above with a copy of
+the three supplied history files in a disposable `CODEX_HOME` outside source.
+Pass/failure/skip identities and build outputs matched the earlier observations.
+Original captured files and the supplied source-tree history stayed unchanged.
+The existing root-test failure remains declared; matching it is not a clean suite.
+
+The separate `application-home` lane in [validate.py](environment/validate.py)
+exercises production discovery/import, checks the actual temporary database
+identity, and starts the pinned Codex app-server through production quota code.
+It forwards initialization while suppressing account RPCs; the resulting quota
+timeout is expected. The credential-free offline VM supplies the network boundary.
+This control qualifies local support initialization, not provider quota behavior.
+
+The copied-home case created real Codex support files outside source while
+preserving the fixture. A positive control using the old source-tree home created
+the same support state inside its disposable source copy. Both baseline and
+reference reproduced this distinction, and all owned scratch and VMs were removed.
+Ordinary root tests retain their full quota behavior without this interception.
+
+Each lane records home placement, fixture preservation, and generated support
+entries. Declared root-test observations include those support entries. An initial
+validation with an empty expected list remains retained separately; only that
+metadata differed, and a fresh generation reproduced the corrected expectations.
+Full raw output is bounded, and truncating an added log header also marks the
+observation incomplete. Authored transport tests do not substitute for these VM
+observations.
+
 ## Independent outcome controls
 
 The same observer runs against untouched, reference and deliberately incomplete
@@ -86,7 +116,8 @@ source changes, regression risk, verification claims and limitations independent
   access or poor repair quality. New briefs require a disposable copy of the
   supplied home outside source. Existing task contracts, runs and judgments retain
   the original brief; the historical development pair does not qualify the revised
-  context. Revalidate the new context before another solver comparison.
+  context. The disposable-home validation above qualifies the new context for
+  development work without upgrading those earlier attempts.
 - pnpm's automatic dependency check attempted installation in the offline guest.
   The image now explicitly disables implicit installation for preinstalled frozen
   dependencies, including nested scripts; ordinary commands remain unchanged.

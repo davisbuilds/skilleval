@@ -29,17 +29,142 @@ LANES = {
 }
 RAW_LIMIT = 700 * 1024
 
+# Production discovery/import and quota transport, with a real Codex child. The
+# spawn seam forwards initialization only: account RPCs are suppressed so this
+# checks local support initialization with account RPCs suppressed. The offline
+# VM supplies the network boundary. The quota result must therefore be the
+# ordinary timeout, not an available account.
+APPLICATION_HOME_PROBE = r"""
+import fs from 'node:fs';
+import path from 'node:path';
+import {spawn} from 'node:child_process';
+import {pathToFileURL} from 'node:url';
+const load = name => import(pathToFileURL(path.resolve('src', name)).href);
+const {discoverCodexLogs} = await load('import/codex.ts');
+const {runImport} = await load('import/index.ts');
+const {getDb, closeDb} = await load('db/connection.ts');
+const {initSchema} = await load('db/schema.ts');
+const {fetchCodexQuotaSnapshot} = await load('provider-quotas/codex.ts');
+const files = discoverCodexLogs();
+let imported;
+try {
+  initSchema();
+  if (fs.realpathSync(getDb().name) !== fs.realpathSync(process.env.AGENTMONITOR_DB_PATH)) {
+    throw new Error('application probe database is not the temporary database');
+  }
+  imported = runImport({source:'codex', force:true});
+} finally {
+  closeDb();
+}
+let initialized = false;
+let responseBuffer = '';
+const suppressed = [];
+const quota = await fetchCodexQuotaSnapshot(5000, {spawn: () => {
+  const child = spawn('codex', ['app-server', '--listen', 'stdio://'],
+    {stdio:['pipe','pipe','pipe']});
+  child.stdout.on('data', data => {
+    responseBuffer += data.toString();
+    let end;
+    while ((end = responseBuffer.indexOf('\n')) !== -1) {
+      const line = responseBuffer.slice(0, end);
+      responseBuffer = responseBuffer.slice(end + 1);
+      try {
+        const response = JSON.parse(line);
+        if (response.id === 1 && response.result && !response.error) initialized = true;
+      } catch {}
+    }
+  });
+  const write = child.stdin.write.bind(child.stdin);
+  child.stdin.write = (data, ...args) => {
+    const message = JSON.parse(data.toString());
+    if (['initialize','initialized'].includes(message.method)) return write(data, ...args);
+    suppressed.push(message.method);
+    return true;
+  };
+  return child;
+}});
+console.log(JSON.stringify({
+  discovery:files.map(file => path.relative(process.env.CODEX_HOME, file)).sort(),
+  import_files:imported.totalFiles, imported_events:imported.totalEventsImported,
+  database_created:fs.existsSync(process.env.AGENTMONITOR_DB_PATH),
+  quota:{status:quota.status, initialized, suppressed_methods:suppressed,
+    expected_timeout:quota.error_message ===
+      'Timed out waiting for Codex quota response after 5000ms'},
+}));
+"""
+
+
+def fixture_home(project):
+    home = project / "sample-history/codex-home"
+    if not (home / "sessions").is_dir() or not inventory(home):
+        raise ValueError("supplied Codex history is missing or empty")
+    return home
+
+
+def home_observation(home, original):
+    after = inventory(home)
+    return {
+        "copied_fixture_files": len(original),
+        "fixture_changes": changed(original, after),
+        "generated_support_entries": sorted(
+            {name.split("/", 1)[0] for name in set(after) - set(original)}
+        ),
+    }
+
+
+def application_environment(root, home):
+    env = dict(os.environ)
+    env.update(
+        {
+            "HOME": str(root / "home"),
+            "CODEX_HOME": str(home),
+            "AGENTMONITOR_CLAUDE_DIR": str(root / "claude-home"),
+            "AGENTMONITOR_SKILL_CATALOG_DIRS": str(root / "empty-skills"),
+            "AGENTMONITOR_DB_PATH": str(root / "application.db"),
+            "AGENTMONITOR_PROJECTS_DIR": str(root / "projects"),
+            "TMPDIR": str(root / "tmp"),
+            "TMP": str(root / "tmp"),
+            "TEMP": str(root / "tmp"),
+            "GIT_CONFIG_NOSYSTEM": "1",
+            "GIT_CONFIG_GLOBAL": os.devnull,
+            "NO_COLOR": "1",
+            "FORCE_COLOR": "0",
+            "CI": "1",
+        }
+    )
+    return env
+
+
+def prepare_scratch(root, source, dependencies, *, source_home=False):
+    project = root / "projects" / source.name
+    shutil.copytree(source, project)
+    bridge_dependencies(project, dependencies)
+    for name in ("home", "claude-home", "empty-skills", "tmp", "logs"):
+        (root / name).mkdir()
+    fixture = fixture_home(project)
+    home = fixture if source_home else root / "codex-home"
+    if not source_home:
+        shutil.copytree(fixture, home)
+    return project, home, application_environment(root, home)
+
 
 def inventory(root):
     result = {}
     for directory, dirs, files in os.walk(root, followlinks=False):
         dirs[:] = [name for name in dirs if name != "node_modules"]
-        for name in files:
+        links = [name for name in dirs if (Path(directory) / name).is_symlink()]
+        dirs[:] = [name for name in dirs if name not in links]
+        for name in [*files, *links]:
             path = Path(directory) / name
             relative = path.relative_to(root).as_posix()
             if relative == ".git/index":
                 continue
-            if path.is_symlink() or not path.is_file():
+            if path.is_symlink():
+                # Record support-state links without following them outside the
+                # disposable tree (Codex creates temporary executable aliases).
+                result[relative] = {"symlink": os.readlink(path)}
+                continue
+            if not path.is_file():
                 raise ValueError("source inventory contains a nonregular file")
             data = path.read_bytes()
             result[relative] = {
@@ -191,30 +316,9 @@ def run_lane(lane, source, dependencies, timeout=570):
     raw_remaining = RAW_LIMIT
     with tempfile.TemporaryDirectory(prefix="ordinary-validation-") as temporary:
         root = Path(temporary)
-        project = root / "projects" / source.name
-        shutil.copytree(source, project)
-        bridge_dependencies(project, dependencies)
-        for name in ("home", "codex-home", "claude-home", "empty-skills", "tmp", "logs"):
-            (root / name).mkdir()
-        env = dict(os.environ)
-        env.update(
-            {
-                "HOME": str(root / "home"),
-                "CODEX_HOME": str(root / "codex-home"),
-                "AGENTMONITOR_CLAUDE_DIR": str(root / "claude-home"),
-                "AGENTMONITOR_SKILL_CATALOG_DIRS": str(root / "empty-skills"),
-                "AGENTMONITOR_DB_PATH": str(root / "application.db"),
-                "AGENTMONITOR_PROJECTS_DIR": str(root / "projects"),
-                "TMPDIR": str(root / "tmp"),
-                "TMP": str(root / "tmp"),
-                "TEMP": str(root / "tmp"),
-                "GIT_CONFIG_NOSYSTEM": "1",
-                "GIT_CONFIG_GLOBAL": os.devnull,
-                "NO_COLOR": "1",
-                "FORCE_COLOR": "0",
-                "CI": "1",
-            }
-        )
+        project, home, env = prepare_scratch(root, source, dependencies)
+        original_home = inventory(home)
+        observations["application_home"] = {"outside_source": not home.is_relative_to(project)}
         report = root / "vitest.json"
         for template in LANES[lane]:
             argv = [part.replace("{report}", str(report)) for part in template]
@@ -262,6 +366,13 @@ def run_lane(lane, source, dependencies, timeout=570):
             observations["commands"].append(result)
             if not result["output_complete"]:
                 break
+        observations["application_home"].update(home_observation(home, original_home))
+        observations["application_home"]["source_fixture_unchanged"] = (
+            inventory(fixture_home(project)) == original_home
+        )
+        observations["application_home"]["captured_fixture_unchanged"] = (
+            inventory(fixture_home(source)) == original_home
+        )
         after = inventory(project)
         observations["existing_source_changes"] = changed(before, after)
         generated = {name: value for name, value in after.items() if name not in before}
@@ -269,8 +380,8 @@ def run_lane(lane, source, dependencies, timeout=570):
             "scope": "scratch repository excluding dependency bridges and .git/index",
             "paths": sorted(generated),
             "count": len(generated),
-            "total_bytes": sum(row["size"] for row in generated.values()),
-            "max_bytes": max((row["size"] for row in generated.values()), default=0),
+            "total_bytes": sum(row.get("size", 0) for row in generated.values()),
+            "max_bytes": max((row.get("size", 0) for row in generated.values()), default=0),
         }
     observations["captured_source_changes"] = changed(before, inventory(source))
     if (
@@ -279,6 +390,9 @@ def run_lane(lane, source, dependencies, timeout=570):
             row["exit_code"] == 0 and row["output_complete"] and "parse_error" not in row
             for row in observations["commands"]
         )
+        and not observations["application_home"]["fixture_changes"]
+        and observations["application_home"]["source_fixture_unchanged"]
+        and observations["application_home"]["captured_fixture_unchanged"]
         and not observations["existing_source_changes"]
         and not observations["captured_source_changes"]
     ):
@@ -286,14 +400,105 @@ def run_lane(lane, source, dependencies, timeout=570):
     return observations
 
 
+def run_application_home(source, dependencies, timeout=90):
+    """Compare the corrected home to the former source-tree home, in scratch only."""
+    before = inventory(source)
+    fixture_before = inventory(fixture_home(source))
+    observations = {"lane": "application-home", "status": "failed", "cases": {}}
+    for name, source_home in (("external", False), ("source_tree_control", True)):
+        with tempfile.TemporaryDirectory(prefix="application-home-validation-") as temporary:
+            root = Path(temporary)
+            project, home, env = prepare_scratch(
+                root, source, dependencies, source_home=source_home
+            )
+            original_home = inventory(home)
+            original_project = inventory(project)
+            # No credentials should exist in the VM; explicitly strip provider
+            # credentials as defense in depth for this initialization-only probe.
+            for key in tuple(env):
+                if key.endswith("API_KEY") or key in {"OPENAI_ACCESS_TOKEN", "CODEX_AUTH_TOKEN"}:
+                    env.pop(key)
+            result, stdout, stderr = execute(
+                [
+                    "node",
+                    "--import",
+                    str(dependencies / "tsx/dist/loader.mjs"),
+                    "--input-type=module",
+                    "-e",
+                    APPLICATION_HOME_PROBE,
+                ],
+                project,
+                env,
+                timeout,
+                RAW_LIMIT // 2,
+                root / "logs",
+            )
+            shown = b"APPLICATION HOME " + name.encode() + b"\n" + stdout + stderr
+            retained = shown[: RAW_LIMIT // 2]
+            sys.stderr.buffer.write(retained)
+            sys.stderr.buffer.flush()
+            if len(retained) != len(shown):
+                result["output_complete"] = False
+            # stdout may include ordinary importer diagnostics. Retain them in
+            # raw logs and parse only the final compact JSON record.
+            try:
+                result["application"] = json.loads(stdout.decode().strip().splitlines()[-1])
+            except (ValueError, IndexError, UnicodeError):
+                result["parse_error"] = "application observation missing"
+            result["home"] = home_observation(home, original_home)
+            result["home"]["outside_source"] = not home.is_relative_to(project)
+            result["existing_source_changes"] = changed(original_project, inventory(project))
+            generated = sorted(set(inventory(project)) - set(original_project))
+            result["source_support_entries"] = sorted(
+                {
+                    item.removeprefix("sample-history/codex-home/").split("/", 1)[0]
+                    for item in generated
+                    if item.startswith("sample-history/codex-home/")
+                }
+            )
+            observations["cases"][name] = result
+    observations["captured_source_changes"] = changed(before, inventory(source))
+    observations["captured_fixture_unchanged"] = inventory(fixture_home(source)) == fixture_before
+    valid = True
+    for name, row in observations["cases"].items():
+        app = row.get("application", {})
+        quota = app.get("quota", {})
+        valid &= (
+            row["exit_code"] == 0
+            and row["output_complete"]
+            and bool(app.get("discovery"))
+            and app.get("import_files", 0) > 0
+            and app.get("imported_events", 0) > 0
+            and app.get("database_created") is True
+            and quota.get("initialized") is True
+            and quota.get("expected_timeout") is True
+            and quota.get("status") == "error"
+            and quota.get("suppressed_methods") == ["account/read", "account/rateLimits/read"]
+            and not row["home"]["fixture_changes"]
+            and not row["existing_source_changes"]
+            and bool(row["home"]["generated_support_entries"])
+            and (bool(row["source_support_entries"]) == (name == "source_tree_control"))
+        )
+    if (
+        valid
+        and not observations["captured_source_changes"]
+        and observations["captured_fixture_unchanged"]
+    ):
+        observations["status"] = "passed"
+    return observations
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("lane", choices=LANES)
+    parser.add_argument("lane", choices=[*LANES, "application-home"])
     parser.add_argument("--source", type=Path, default=Path.cwd())
     parser.add_argument("--dependencies", type=Path, default=Path("/workspace/node_modules"))
     args = parser.parse_args()
     try:
-        result = run_lane(args.lane, args.source.resolve(), args.dependencies.resolve())
+        if args.lane == "application-home":
+            result = run_application_home(args.source.resolve(), args.dependencies.resolve())
+        else:
+            result = run_lane(args.lane, args.source.resolve(), args.dependencies.resolve())
     except (OSError, ValueError) as error:
         result = {"lane": args.lane, "status": "incomplete", "error": type(error).__name__}
     print(json.dumps(result, sort_keys=True))
