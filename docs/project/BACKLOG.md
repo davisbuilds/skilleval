@@ -14,6 +14,15 @@ shipped history. Private provenance stays outside public entries and issues.
 
 ## Open
 
+- **Acceptance validity before more comparisons:** operator maps now freeze
+  declared source rationale, probe-field and semantic routes, controls, exposure
+  and gaps. They do not establish that those requirements are correct or complete.
+  Independently review the completed-session map's scope against ordinary work
+  records, then close consequential lifecycle and packet gaps below. Use baseline,
+  plausible partial fixes and legitimate alternatives to challenge the grader;
+  include independent implementation from the brief where useful. Preserve the
+  map's retrospective status and original outcomes. [Measurement design](MEASUREMENT.md)
+  owns this procedure. Do not resume comparisons merely because a map validates.
 - **Native capability description and task presentation:** the app-server adapter
   declares restricted networking with external enforcement. Codex 0.164.0 still
   renders generic full-filesystem-access prose for that policy; track upstream
@@ -37,7 +46,10 @@ shipped history. Private provenance stays outside public entries and issues.
   validated tasks. The repair adapter, source capture and polarity controls are
   implemented; one seed's
   related probes are not independent tasks or representative capability evidence.
-  Retain selection decisions; do not retain only vanilla failures or skill wins.
+  Define the workload population and sampling/exclusion rules; retain selection
+  decisions, including rejected candidates. Split development, grader validation
+  and effect-estimation cases by shared repository/incident/template provenance
+  where needed. Do not retain only vanilla failures or skill wins.
   A source-grounded writing task exercises a complete upstream skill and document
   grader; expansion of that source collection is deferred. Both seeds remain
   exposed development work. Selected browser tasks will need environment and

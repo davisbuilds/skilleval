@@ -12,6 +12,7 @@ from typing import Any
 from pydantic import ValidationError
 
 from skilleval import __version__
+from skilleval.acceptance import AcceptanceMapSpec
 from skilleval.accounting import PriceSchedule
 from skilleval.calibration import CalibrationResult
 from skilleval.contracts import Assessment, Attempt, Experiment, Record, Task
@@ -50,6 +51,7 @@ RECORDS: dict[str, type[Record]] = {
     "document-assessment-spec": DocumentAssessmentSpec,
     "document-assessment": DocumentAssessment,
     "task-package-spec": TaskPackageSpec,
+    "acceptance-map-spec": AcceptanceMapSpec,
 }
 
 
@@ -246,12 +248,23 @@ def parser() -> argparse.ArgumentParser:
     skill.add_argument("--source-revision", required=True)
     skill.add_argument("--output", type=Path, required=True)
     package = commands.add_parser(
-        "task-package", help="Freeze task requirements and validate in VMs"
+        "task-package", help="Prepare task context and acceptance; validate environments in VMs"
     )
     package_commands = package.add_subparsers(dest="operation", required=True)
     package_prepare = package_commands.add_parser("prepare")
     package_prepare.add_argument("spec", type=Path)
     package_prepare.add_argument("--output", type=Path, required=True)
+    acceptance_prepare = package_commands.add_parser(
+        "prepare-acceptance", help="Freeze an operator acceptance map without execution"
+    )
+    acceptance_prepare.add_argument("spec", type=Path)
+    acceptance_prepare.add_argument("--output", type=Path, required=True)
+    acceptance_inspect = package_commands.add_parser(
+        "inspect-acceptance", help="Verify and render an acceptance map; validity stays unassessed"
+    )
+    acceptance_inspect.add_argument("map", type=Path)
+    acceptance_inspect.add_argument("--sha256", required=True)
+    acceptance_inspect.add_argument("--review-output", type=Path)
     package_validate = package_commands.add_parser("validate-environment")
     package_validate.add_argument("package", type=Path)
     package_validate.add_argument("--sha256", required=True)
@@ -359,6 +372,25 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
             return prepare_package(
                 TaskPackageSpec.model_validate_json(json.dumps(read_json(args.spec))), args.output
             )
+        if args.operation == "prepare-acceptance":
+            from skilleval.acceptance import prepare_acceptance
+
+            return prepare_acceptance(
+                AcceptanceMapSpec.model_validate_json(json.dumps(read_json(args.spec))), args.output
+            )
+        if args.operation == "inspect-acceptance":
+            from skilleval.acceptance import (
+                load_acceptance,
+                summarize_acceptance,
+                write_acceptance_review,
+            )
+
+            acceptance_spec = load_acceptance(args.map, args.sha256)
+            result = summarize_acceptance(acceptance_spec)
+            if args.review_output is not None:
+                write_acceptance_review(acceptance_spec, args.review_output)
+                result["review_output"] = str(args.review_output.absolute())
+            return result
         return validate_environment(args.package, args.sha256, args.output, runtime=args.runtime)
     if args.command in {"repair", "artifact"}:
         from skilleval.repair import collect_control, collect_repair, prepare_repair

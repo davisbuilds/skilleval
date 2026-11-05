@@ -18,6 +18,10 @@ static or investigative semantic judgments. Development studies freeze paired
 inputs and budgets, preserve every attempt, and produce readable artifact and
 usage comparisons. [Task packages](../system/TASKS.md) and
 [study orchestration](../system/STUDIES.md) own those contracts.
+Operator acceptance maps now bind declared requirements to exact probe fields,
+semantic questions, controls and coverage gaps. Mapped plans freeze their identities
+without exposing them to solvers. [Measurement design](MEASUREMENT.md) owns source
+work selection and validation; structural map checks do not establish validity.
 
 Runtime controls cover bounded filesystem/network behavior, task fidelity,
 termination, recovery, and cleanup on the tested smolvm route. Admission is tied
@@ -39,9 +43,15 @@ SkillsBench/Harbor packaging, Tessl fixtures and explicit variants,
 Anthropic/Engram assessment patterns, gstack's separation of validity and benefit,
 and the adapted OpenBench gateway. External skills remain experimental inputs.
 
-## Now: solver visibility, useful tasks and independent judgment audit
+## Now: valid acceptance, useful tasks and independent judgment audit
 
-1. **Finish task presentation and coverage before new comparisons.** Preserve the
+1. **Validate acceptance before new comparisons.** Use ordinary work records to
+   define success and freeze an acceptance map under `mapped-acceptance-v1`.
+   The retrospective completed-session map exposes uncovered lifecycle cases and
+   grader evidence loss; it does not upgrade the original six-probe results.
+   Add discriminating controls and repair packet omissions before further model
+   comparisons. Seek independent domain review of scope and brief sufficiency;
+   include a blind alternative implementation where useful. Preserve the
    qualified external-enforcement route and track its documented native wording
    limits. Use ordinary work briefs; review
    actual instructions, accessible files/history, skill resources and tool outputs
@@ -83,8 +93,9 @@ and the adapted OpenBench gateway. External skills remain experimental inputs.
    Capture corrections do not upgrade earlier attempts.
 
 Task design and judgment audit can progress alongside isolation; new comparisons
-depend on the visibility boundary. Add an adapter when the selected task
-requires it, rather than expanding harnesses or infrastructure in advance.
+depend on both useful acceptance coverage and the visibility boundary. Add an
+adapter when the selected task requires it, rather than expanding harnesses or
+infrastructure in advance.
 Maintain the public foundation and [hosted checks](GIT_HISTORY_POLICY.md) as this
 work develops; publication is complete and does not qualify evaluation outcomes.
 
@@ -96,8 +107,10 @@ before dispatch. Keep ordinary context and capabilities comparable and vary only
 the declared treatment. Randomize adjacent matched runs and retain unsuccessful
 attempts and missing observations.
 
-Use pilot variance and the intended decision to choose repetitions and sample
-size. Report paired quality, failure, token, cost, and timing differences with
+Define the sampling frame and keep task/rubric development separate from held-out
+effect estimation. Use pilot variance, the smallest useful effect and desired
+precision to choose independent tasks and repetitions; six related probes are
+not six tasks. Report paired quality, failure, token, cost, and timing differences with
 uncertainty that respects task/repository clustering. Judge spend stays separate;
 conditional API-equivalent estimates are not observed subscription charges.
 Inconclusive or saturated comparisons are useful outcomes.

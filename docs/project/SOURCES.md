@@ -39,6 +39,22 @@ Harbor's [task environment](https://docs.harborframework.com/tasks/environment),
 contracts were rechecked on 2026-10-29. Skilleval retains its own smolvm lifecycle
 and observation/verdict boundary.
 
+## Measurement and acceptance design
+
+Methodology pass: **2026-11-05**. These primary sources informed
+[measurement design](MEASUREMENT.md) and the original operator acceptance-map
+implementation. They supply methods to evaluate, not certification of skilleval's
+tasks or graders. No implementation was copied from these sources.
+
+| Source | Adopted principle or next application | Limit |
+| --- | --- | --- |
+| [Mislevy, Almond and Lukas, evidence-centered design (CSE 632, 2004)](https://cresst.org/wp-content/uploads/R632.pdf) | Connect claims about successful work to observations and situations that can supply evidence; record the argument explicitly | Adaptation of an educational assessment framework, not a calibrated ability model. |
+| [Wallach et al., ICML 2025 measurement position paper](https://proceedings.mlr.press/v267/wallach25a.html) | Separate concept definition, instrument construction, population selection and validity evidence | A reproducible map or check does not establish that it measures the intended work. |
+| [SWE-Lancer, v1](https://arxiv.org/html/2502.12115v1) | Start from real work records and engineer-reviewed workflow checks; avoid selecting tasks only because existing tests make them convenient | Its paid-task population is not automatically representative of another user's work. |
+| [SWE-Bench Pro V2, v1](https://arxiv.org/html/2610.24206v1) | Independent implementation from the brief without the reference fix; review instruction sufficiency and grader defects | Authors' maintenance method, not independent validation of that benchmark. Its policy of retaining tests is not a rule to preserve defective checks here. |
+| [Anthropic, Demystifying evals for AI agents (2026-01-09)](https://www.anthropic.com/research/demystifying-evals-for-ai-agents) | Combine objective observations, semantic judgments and expert calibration; retain valid alternatives and unknown outcomes | Practitioner guidance does not replace representative independent labels or evidence-packet audits. |
+| [Evan Miller, Adding Error Bars to Evals, v1](https://arxiv.org/html/2411.00640v1), [METR long-task methods (2025-03-19)](https://metr.org/blog/2025-03-19-measuring-ai-ability-to-complete-long-tasks/) | Paired task differences, repetitions summarized within task, clustered uncertainty, and sample allocation based on useful effect and precision | Analysis remains future work; a selected pilot or many related probes cannot support population inference. |
+
 ## Runtime and harness contracts
 
 | Source | Current decision / possible reuse | Qualification still needed |

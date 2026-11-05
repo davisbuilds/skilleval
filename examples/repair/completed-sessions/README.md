@@ -241,3 +241,20 @@ UID and an explicit dependency projection after VM workspace preparation.
 The Node observer allows 2 GiB address space, 8 MiB files and 256 descriptors,
 while retained stdout/stderr remain capped at 128 KiB each. These limits are
 distinct from the ordinary test lanes and do not change legacy Python observers.
+
+## Acceptance design
+
+The [retrospective acceptance-map template](acceptance-map.template.json) separates
+user-relevant requirements from the six composite probes. It records exact field
+routes and semantic questions, including known gaps in sibling-cache handover,
+corrupt replacement and verification evidence. Required/supporting labels are
+proposed acceptance judgments that still need domain review; no scalar score is
+computed. This template was authored after observing results and does not qualify
+or replace those historical runs.
+
+Replace its task/package paths and zero digests with prepared identities, then use
+[offline acceptance preparation and review](../../../docs/system/TASKS.md#operator-acceptance-maps).
+Keep the map and its evidence outside all solver captures. A structurally valid map
+with coverage gaps remains incomplete measurement evidence. The
+[measurement workflow](../../../docs/project/MEASUREMENT.md) describes the remaining
+control, reviewer and sampling work before further comparisons.

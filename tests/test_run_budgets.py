@@ -223,6 +223,7 @@ def test_old_plan_readback_keeps_historic_budget_and_bytes(
     path = prepared["plan_path"]
     plan = json.loads(path.read_bytes())
     plan["schema_version"] = schema
+    plan.pop("acceptance_policy")
     if recorded is None:
         plan["spec"].pop("native_timeout_seconds")
     else:
