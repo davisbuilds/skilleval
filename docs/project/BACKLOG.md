@@ -88,11 +88,14 @@ shipped history. Private provenance stays outside public entries and issues.
   controls cannot establish reliability. Treatment metadata masking is not proven
   blinding. Observation workers share candidate imports; test adversarial output
   and independent perturbation sessions before claiming resistance to manipulation.
-- **Tool-evidence coverage and semantic replay:** `execution-context-v3` retains
+- **Broader tool-evidence coverage:** `execution-context-v3` retains
   outputless completions, ordinary application-home source text and observable
   command/file-edit chronology while preserving older packet policies. Audit the
-  corrected packets against retained raw traces across representative tasks, then
-  reassess judgments with explicit outcome selection before interpreting more pairs.
+  corrected packets against retained raw traces across additional representative
+  tasks. The completed-session development pair now has fresh investigative
+  assessments using corrected packets and supplementary observations; preserve
+  its original judgments and explicit new selections. This closes that replay,
+  not independent grader qualification.
   Text filters can still omit legitimate mixed commands or miss indirect treatment
   disclosure. Native file-change events omit arbitrary shell edits; chronology
   does not bind a command to final candidate bytes. Keep missing evidence unknown

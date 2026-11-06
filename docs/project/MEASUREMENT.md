@@ -152,9 +152,14 @@ Legacy/unmapped workflows remain available for compatibility and are labeled as 
 new repair/document comparisons should use the mapped policy. Raw result selection,
 mechanical acceptance and legacy judge packets retain their existing semantics.
 
-Before the next substantive comparison, audit the corrected v3 packets and versioned
-lifecycle controls against raw evidence and the task contract, then reassess retained
-repairs with independent review. Remaining mapped gaps stay explicit. Methodology
+The completed-session development pair now has audited v3 packet readback,
+supplementary lifecycle observations, fresh investigative judgments and explicit
+outcome selection. Its separate automated source audit is not independent human
+validation. Before the next substantive comparison, review task scope, legitimate
+alternative repairs and remaining mapped gaps with independent domain judgment.
+Keep supported test reports separate from broad completion claims contradicted by
+behavior: the latter can overlap the task-contract verdict and must not be counted
+as an additional independent defect. Methodology
 metadata and retrospective maps do not lift those limits. Independent grader
 qualification and a defensible held-out
 population remain prerequisites for scored skill-effect claims; engineering work and
