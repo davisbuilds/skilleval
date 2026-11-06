@@ -20,6 +20,8 @@ interfaces. Do not load every reference for a small change.
   environment validation, file artifacts, executable checks, and outcome selection.
 - [STUDIES.md](docs/system/STUDIES.md), [ACCOUNTING.md](docs/system/ACCOUNTING.md):
   paired plans, attempts, reporting, and usage/cost/time semantics.
+- [STORAGE.md](docs/system/STORAGE.md): durable data roots, native rollouts, staging
+  cleanup, and legacy path preservation.
 - [ENVIRONMENT.md](docs/system/ENVIRONMENT.md), [GATEWAY.md](docs/system/GATEWAY.md),
   [NATIVE.md](docs/system/NATIVE.md): qualification, recovery, inference, and native runs.
 - [TASK-PRESENTATION.md](docs/system/TASK-PRESENTATION.md): solver-visible context,
@@ -41,7 +43,9 @@ release quarantine. The gate never launches VMs, calls models, or reads credenti
 `src/skilleval/` owns implementation; `tests/` owns deterministic checks;
 `examples/` contains authored fixtures and templates; `environments/` contains
 opt-in image recipes. Private captures, traces, runtime state, and audit packets
-belong in an explicit external directory or ignored `.local/`.
+belong in the private `storage init` data root or another explicit external
+directory. Existing ignored `.local/` evidence remains supported; preserve its
+absolute locators when retiring implementation worktrees.
 
 ## Implementation guardrails
 

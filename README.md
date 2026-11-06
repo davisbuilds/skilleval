@@ -62,13 +62,19 @@ This small authored review fixture demonstrates evidence capture and packet
 preparation. It requires no model account or VM. Run once with fresh output paths:
 
 ```sh
-mkdir -p .local/quickstart
+uv run skilleval storage init
+experiment_dir="$(uv run skilleval storage path experiments quickstart-v1 --plain)"
+mkdir "$experiment_dir"
 uv run skilleval import-review examples/review/legacy --case demo \
-  --output .local/quickstart/evidence > .local/quickstart/receipt.json
-uv run skilleval inspect .local/quickstart/evidence
-uv run skilleval review prepare .local/quickstart/evidence \
-  --output .local/quickstart/review
+  --output "$experiment_dir/evidence" > "$experiment_dir/receipt.json"
+uv run skilleval inspect "$experiment_dir/evidence"
+uv run skilleval review prepare "$experiment_dir/evidence" \
+  --output "$experiment_dir/review"
 ```
+
+Run data belongs outside source checkouts; the [storage reference](docs/system/STORAGE.md)
+explains locations, retained native sessions, and preview/apply cleanup. Each
+attempt gets a new output directory and VM, without creating a Git worktree.
 
 Inspect the generated review packet and receipt. The original historical report
 is retained separately from the task source; preparation does not run or grade an

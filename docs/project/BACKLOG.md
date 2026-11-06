@@ -183,11 +183,13 @@ shipped history. Private provenance stays outside public entries and issues.
   captures. Extend supported validation formats and environment profiles only
   when selected task families require them; preserve current source/history and
   expected-exception evidence when doing so.
-- **Completed-run storage collection:** extend the preview/apply retention path
-  to disposable checker, validation, and native tooling staging archives. Require
-  terminal recovery and runtime HOME absence, distinguish qualification tooling
-  still consumed by admission, and verify downstream readers. The current image
-  pruner does not cover these archives; manual cleanup is not automatic retention.
+- **Evidence archival and legacy relocation:** durable storage roots and guarded
+  staging cleanup are implemented; native rollouts are retained without automatic
+  expiry. Define audit-aware archive/expiry and backup/restore coverage before
+  adding evidence deletion. Older records embed absolute paths and no-follow
+  readers reject symlink aliases. Preserve real legacy evidence directories until
+  a versioned locator scheme can relocate them without rewriting frozen records.
+  Keep opaque reasoning separate from readable summaries in any trajectory audit.
 - **OCI portability:** attest media types/effective image policy before permitting
   registries other than explicit Docker Hub references in the pinned adapter.
 - **General task packages:** protected holdouts, exposure tracking, and

@@ -173,11 +173,33 @@ def parser() -> argparse.ArgumentParser:
     )
     recovery = qualification_commands.add_parser("recover", help="Recover one retained VM ticket")
     recovery.add_argument("directory", type=Path, help="Original qualification output directory")
-    storage = commands.add_parser("storage", help="Inspect and prune disposable image staging")
+    storage = commands.add_parser(
+        "storage", help="Locate durable data and prune disposable staging"
+    )
     storage_commands = storage.add_subparsers(dest="operation", required=True)
+    initialize = storage_commands.add_parser("init", help="Create a private store outside Git")
+    initialize.add_argument(
+        "--root", type=Path, help="Override SKILLEVAL_DATA_HOME/platform default"
+    )
+    locate = storage_commands.add_parser("path", help="Print a stable path without creating output")
+    locate.add_argument("group", choices=("experiments", "captures", "images", "tools", "audits"))
+    locate.add_argument(
+        "name", nargs="?", help="Optional single-component experiment or asset name"
+    )
+    locate.add_argument("--root", type=Path, help="Override SKILLEVAL_DATA_HOME/platform default")
+    locate.add_argument("--plain", action="store_true", help="Print only the path for shell use")
     prune = storage_commands.add_parser("prune", help="Preview verified copies in completed runs")
     prune.add_argument("directories", type=Path, nargs="+", help="Explicit run output directories")
     prune.add_argument(
+        "--apply", action="store_true", help="Delete eligible copies; default is dry-run"
+    )
+    staging = storage_commands.add_parser(
+        "prune-staging", help="Preview completed-run checker, validation and native tooling copies"
+    )
+    staging.add_argument(
+        "directories", type=Path, nargs="+", help="Explicit run output directories"
+    )
+    staging.add_argument(
         "--apply", action="store_true", help="Delete eligible copies; default is dry-run"
     )
     admission = commands.add_parser("admission", help="Seal or check bounded environment evidence")
@@ -637,9 +659,16 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
             value, args.output, runtime_binary=args.runtime, capture_identity=args.capture_identity
         )
     if args.command == "storage":
-        from skilleval.retention import prune_images
+        from skilleval.retention import prune_images, prune_staging_runs
+        from skilleval.storage import initialize, storage_path
 
-        return prune_images(args.directories, apply=args.apply)
+        if args.operation == "init":
+            return initialize(args.root)
+        if args.operation == "path":
+            return storage_path(args.group, args.name, root=args.root)
+        if args.operation == "prune":
+            return prune_images(args.directories, apply=args.apply)
+        return prune_staging_runs(args.directories, apply=args.apply)
     if args.command == "admission":
         from skilleval.admission import check_admission, seal_admission
 
@@ -674,7 +703,10 @@ def main(argv: list[str] | None = None) -> int:
         message = str(exc) if isinstance(exc, SkillEvalError) else type(exc).__name__
         print(json.dumps({"status": "error", "error": message}), file=sys.stderr)
         return 2
-    print(json.dumps(result, indent=2, ensure_ascii=False, allow_nan=False))
+    if args.command == "storage" and args.operation == "path" and args.plain:
+        print(result["path"])
+    else:
+        print(json.dumps(result, indent=2, ensure_ascii=False, allow_nan=False))
     return (
         1
         if result.get("status")

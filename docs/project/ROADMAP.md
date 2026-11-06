@@ -1,6 +1,6 @@
 ---
 status: in-progress
-updated: 2026-11-05
+updated: 2026-11-06
 ---
 
 # Roadmap
@@ -37,6 +37,12 @@ wording remains an upstream limitation. Representative task/image coverage,
 independent semantic audit and scored-study admission
 remain pending. Development workflows can progress while those gates
 are open; they cannot become scored trials by relabeling their results.
+
+Run data now has a [durable storage layout](../system/STORAGE.md) outside
+implementation checkouts. Native runs retain guest-local session rollouts with
+explicit reasoning-summary coverage; guarded staging cleanup preserves replay
+evidence. Historical absolute locators remain in place until a supported
+relocation scheme exists. Backup and evidence-expiry policies remain open.
 
 The [source register](SOURCES.md) records adopted ideas and implementation:
 SkillsBench/Harbor packaging, Tessl fixtures and explicit variants,
