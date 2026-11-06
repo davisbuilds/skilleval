@@ -6,7 +6,7 @@ readme = "README.md"
 license = "Apache-2.0 AND MIT"
 license-files = ["LICENSE", "NOTICE", "src/skilleval/_vendor/OPENBENCH_LICENSE"]
 requires-python = ">=3.12"
-dependencies = ["pydantic>=2.12,<3"]
+dependencies = ["pydantic>=2.14.2,<3"]
 
 [project.scripts]
 skilleval = "skilleval.cli:main"
@@ -16,7 +16,7 @@ requires = ["hatchling>=1.32.4"]
 build-backend = "hatchling.build"
 
 [dependency-groups]
-dev = ["pytest>=8.4", "pytest-xdist>=3.8.0", "ruff>=0.14", "mypy>=1.18"]
+dev = ["pytest>=9.2.0", "pytest-xdist>=3.8.0", "ruff>=0.17.3", "mypy>=2.4.1"]
 
 [tool.uv]
 required-version = ">=0.9.17"
