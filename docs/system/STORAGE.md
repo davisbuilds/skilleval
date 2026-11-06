@@ -51,8 +51,10 @@ source); it is not a lossless copy of inference traffic.
 
 The native audit records the capture policy, matching thread/turn identity,
 member hashes and byte sizes, parse status and reasoning coverage. A completed
-run requires a matched rollout with terminal turn evidence. Partial or malformed
-capture remains retained and cannot silently count as a completed capture.
+run requires a matched rollout with terminal turn evidence. An incomplete or
+malformed primary rollout prevents completion. Secondary files retain their own
+parse-error coverage and cannot count as the matched primary or interrupt the
+study merely because a record is malformed.
 
 `model_reasoning_summary = "auto"` requests summaries from the pinned model.
 Coverage reports distinguish readable summary text, readable reasoning content,

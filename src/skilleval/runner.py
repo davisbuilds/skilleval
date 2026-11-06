@@ -672,6 +672,10 @@ def _rollout_coverage(raw: bytes, thread_id: str | None, turn_id: str | None) ->
                 raise ValueError
             payload = record["payload"]
             kind = record.get("type")
+            if not isinstance(kind, str) or (
+                kind in {"event_msg", "response_item"} and not isinstance(payload.get("type"), str)
+            ):
+                raise ValueError
             result["records"] += 1
             if kind == "session_meta":
                 result["session_metadata_records"] += 1

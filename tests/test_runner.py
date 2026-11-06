@@ -129,6 +129,11 @@ elif args[:2]==['machine','exec']:
    {'type':'event_msg','payload':{'type':'task_complete','turn_id':'turn-synthetic'}}]
   if fault=='rollout-incomplete':rollout.pop()
   if fault=='rollout-mismatch':rollout[0]['payload']['id']='other-thread'
+  if fault=='rollout-malformed':
+   rollout.insert(2,{'type':'response_item','payload':{'type':[]}})
+  if fault=='rollout-malformed-secondary':
+   entries['codex-home/sessions/2026/11/06/rollout-secondary.jsonl']=(
+    b'{"type":"response_item","payload":{"type":[]}}\n',0o600)
   if fault!='rollout-missing':
    entries['codex-home/sessions/2026/11/06/rollout-synthetic.jsonl']=(
     ('\n'.join(json.dumps(e) for e in rollout)+'\n').encode(),0o600)
@@ -919,3 +924,42 @@ def test_encrypted_reasoning_alone_does_not_claim_readable_summary() -> None:
     assert coverage["readable_content_observed"] is False
     broken = runner._rollout_coverage(raw + b"{", "t", "u")
     assert broken["status"] == "incomplete" and broken["parse_error_count"] == 2
+
+
+@pytest.mark.parametrize("kind", ["record", "response_item", "event_msg"])
+@pytest.mark.parametrize("invalid_type", [[], {}, None, 1])
+def test_malformed_rollout_types_are_incomplete_capture(kind: str, invalid_type: Any) -> None:
+    bad_record = (
+        {"type": invalid_type, "payload": {}}
+        if kind == "record"
+        else {"type": kind, "payload": {"type": invalid_type, "turn_id": "u"}}
+    )
+    records = [
+        {"type": "session_meta", "payload": {"id": "t"}},
+        {"type": "event_msg", "payload": {"type": "task_started", "turn_id": "u"}},
+        bad_record,
+        {"type": "event_msg", "payload": {"type": "task_complete", "turn_id": "u"}},
+    ]
+    raw = b"".join(json.dumps(record).encode() + b"\n" for record in records)
+    result = runner._rollout_coverage(raw, "t", "u")
+    assert result["status"] == "incomplete"
+    assert result["parse_error_count"] == 1
+    assert result["turn_started"] and result["turn_terminal"]
+
+
+@pytest.mark.parametrize("secondary", [False, True])
+def test_malformed_rollout_does_not_escape_native_attempt(
+    tmp_path: Path, route: dict[str, Any], secondary: bool
+) -> None:
+    fault = "rollout-malformed-secondary" if secondary else "rollout-malformed"
+    report = invoke(tmp_path, route, fault)
+    assert report["status"] == ("completed" if secondary else "failed")
+    assert report["cleanup_complete"] and report["runtime_home_removed"]
+    assert (tmp_path / "run/native-run.json").is_file()
+    files = report["native_rollouts"]["files"]
+    assert len(files) == (2 if secondary else 1)
+    malformed = [entry for entry in files if entry["coverage"]["status"] == "incomplete"]
+    assert len(malformed) == 1
+    assert malformed[0]["coverage"]["parse_error_count"] == 1
+    raw = runner._member(tmp_path / "run/artifacts.tar", malformed[0]["path"], 1024 * 1024)
+    assert b'"type": []' in raw or b'"type":[]' in raw
