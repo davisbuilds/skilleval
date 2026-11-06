@@ -13,6 +13,8 @@ interfaces. Do not load every reference for a small change.
 - [README.md](README.md): public introduction, setup, and workflow entry points.
 - [VISION.md](docs/project/VISION.md), [ROADMAP.md](docs/project/ROADMAP.md),
   [BACKLOG.md](docs/project/BACKLOG.md): principles, selected priorities, and future work.
+- [MEASUREMENT.md](docs/project/MEASUREMENT.md): task selection, acceptance maps,
+  grader validity and comparison design.
 - [ARCHITECTURE.md](docs/system/ARCHITECTURE.md): data flow and trust boundaries.
 - [TASKS.md](docs/system/TASKS.md), [REPAIRS.md](docs/system/REPAIRS.md): task packages,
   environment validation, file artifacts, executable checks, and outcome selection.
@@ -53,6 +55,11 @@ belong in an explicit external directory or ignored `.local/`.
   establish that boundary. Preserve faithful upstream skill bytes and old evidence.
   Native commands use the unprivileged solver boundary; do not bypass it to make
   a task pass. Qualify required tools and image contents through that same route.
+- Before new repair/document comparisons, freeze an operator acceptance map and
+  select `mapped-acceptance-v1`. Ground requirements in the work request and repo
+  contracts; record coverage gaps, exposure and review evidence. Keep maps outside
+  solver input. Structural validation or attached review prose does not establish
+  independent validity. Preserve legacy/unmapped runs without retroactive approval.
 - Grade outcomes independently of the skill's instructions. Preserve alternative
   valid solutions, novel findings, failures, disagreements, and unresolved verdicts.
   Scored correctness requires independent grader audit and applicable admission.

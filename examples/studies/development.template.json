@@ -3,6 +3,7 @@
   "study_id": "development-pair",
   "scope": "development-only",
   "invocation_policy": "explicit-use",
+  "acceptance_policy": "legacy-unmapped",
   "price_schedule": null,
   "tasks": [
     {

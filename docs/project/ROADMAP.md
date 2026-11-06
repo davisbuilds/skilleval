@@ -1,6 +1,6 @@
 ---
 status: in-progress
-updated: 2026-11-02
+updated: 2026-11-05
 ---
 
 # Roadmap
@@ -18,6 +18,10 @@ static or investigative semantic judgments. Development studies freeze paired
 inputs and budgets, preserve every attempt, and produce readable artifact and
 usage comparisons. [Task packages](../system/TASKS.md) and
 [study orchestration](../system/STUDIES.md) own those contracts.
+Operator acceptance maps now bind declared requirements to exact probe fields,
+semantic questions, controls and coverage gaps. Mapped plans freeze their identities
+without exposing them to solvers. [Measurement design](MEASUREMENT.md) owns source
+work selection and validation; structural map checks do not establish validity.
 
 Runtime controls cover bounded filesystem/network behavior, task fidelity,
 termination, recovery, and cleanup on the tested smolvm route. Admission is tied
@@ -39,9 +43,15 @@ SkillsBench/Harbor packaging, Tessl fixtures and explicit variants,
 Anthropic/Engram assessment patterns, gstack's separation of validity and benefit,
 and the adapted OpenBench gateway. External skills remain experimental inputs.
 
-## Now: solver visibility, useful tasks and independent judgment audit
+## Now: valid acceptance, useful tasks and independent judgment audit
 
-1. **Finish task presentation and coverage before new comparisons.** Preserve the
+1. **Validate acceptance before new comparisons.** Use ordinary work records to
+   define success and freeze an acceptance map under `mapped-acceptance-v1`.
+   The retrospective completed-session map exposes uncovered lifecycle cases and
+   grader evidence loss; it does not upgrade the original six-probe results.
+   Add discriminating controls and repair packet omissions before further model
+   comparisons. Seek independent domain review of scope and brief sufficiency;
+   include a blind alternative implementation where useful. Preserve the
    qualified external-enforcement route and track its documented native wording
    limits. Use ordinary work briefs; review
    actual instructions, accessible files/history, skill resources and tool outputs
@@ -55,11 +65,21 @@ and the adapted OpenBench gateway. External skills remain experimental inputs.
    The first selected engineering slice pairs the completed-session repair with
    Matt Pocock's diagnosing-bugs skill. Its source and full skill closure are
    captured with [environment and checker controls](../../examples/repair/completed-sessions/environment.md).
-   Preserve ordinary test exceptions and task-specific audit limits in comparisons.
+   Its revised disposable application home is qualified; ordinary test exceptions
+   and task-specific audit limits remain. The
+   [debugging expansion shortlist](PILOT-CANDIDATES.md#debugging-expansion-shortlist)
+   proposes fetchmd address validation next, followed by separately qualified
+   Promptfoo cases, with Dojo reserved. These source-inspected candidates still
+   need capture and executable validation.
    Preserve selection reasons and exclusions. Do not retain
    only vanilla failures or wins for the skill.
-3. **Audit representative judgments.** Review actual artifacts, source support,
-   novel findings, alternative solutions, checker defects, and disagreements.
+3. **Audit representative judgments and repair evidence loss.** Review actual
+   artifacts, source support, novel findings, alternative solutions, checker
+   defects, and disagreements. The debugging audit traced missing verification
+   evidence to dropped outputless command completions and overly broad application
+   home filtering. Preserve those observations and source-edit chronology in a new
+   packet policy, then reassess retained repairs before interpreting more pairs.
+   This needs fresh evidence generations, not new solver attempts.
    Tiny authored label controls test the grader machinery; their difficulty does
    not define the task population. The earlier tiny-control human audit is no
    longer an active request or prerequisite after the task realignment; preserve
@@ -73,8 +93,9 @@ and the adapted OpenBench gateway. External skills remain experimental inputs.
    Capture corrections do not upgrade earlier attempts.
 
 Task design and judgment audit can progress alongside isolation; new comparisons
-depend on the visibility boundary. Add an adapter when the selected task
-requires it, rather than expanding harnesses or infrastructure in advance.
+depend on both useful acceptance coverage and the visibility boundary. Add an
+adapter when the selected task requires it, rather than expanding harnesses or
+infrastructure in advance.
 Maintain the public foundation and [hosted checks](GIT_HISTORY_POLICY.md) as this
 work develops; publication is complete and does not qualify evaluation outcomes.
 
@@ -86,8 +107,10 @@ before dispatch. Keep ordinary context and capabilities comparable and vary only
 the declared treatment. Randomize adjacent matched runs and retain unsuccessful
 attempts and missing observations.
 
-Use pilot variance and the intended decision to choose repetitions and sample
-size. Report paired quality, failure, token, cost, and timing differences with
+Define the sampling frame and keep task/rubric development separate from held-out
+effect estimation. Use pilot variance, the smallest useful effect and desired
+precision to choose independent tasks and repetitions; six related probes are
+not six tasks. Report paired quality, failure, token, cost, and timing differences with
 uncertainty that respects task/repository clustering. Judge spend stays separate;
 conditional API-equivalent estimates are not observed subscription charges.
 Inconclusive or saturated comparisons are useful outcomes.

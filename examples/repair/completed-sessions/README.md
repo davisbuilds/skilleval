@@ -8,6 +8,31 @@ The adapter and session records here are newly authored; no upstream test or
 repair implementation is copied into them. The [development validation record](environment.md)
 tracks observed coverage, exceptions and corrected preparation defects.
 
+## Validate the application home
+
+The shared brief requires copying the supplied synthetic `CODEX_HOME` outside
+source before application commands. [The VM-only validator](environment/validate.py)
+now uses that same setup for every ordinary lane and retains fixture-preservation
+observations. Its separate `application-home` lane compares the copy with the old
+source-tree placement using real application imports and Codex initialization.
+
+Stage the trusted validator outside task source, or freeze its exact bytes in a
+task-package lane's `python3 -I -c` argument. Inside the credential-free
+`solver-isolated-v1` VM, the standalone invocation is:
+
+```sh
+python3 -I /trusted/validate.py application-home \
+  --source /workspace/task --dependencies /workspace/node_modules
+```
+
+This is a guest command, not a host setup command. Retain its complete JSON and raw
+logs through task-package validation. The existing `checks`, `root-tests` and
+`frontend-tests` lanes use the same source/dependency arguments. Freeze expected
+observations separately; do not automatically accept whatever a diagnostic emits.
+The [environment record](environment.md#disposable-application-home) describes the
+positive control, suppressed account RPCs, known ordinary failure, and coverage
+limits. A matching package does not grant scored admission.
+
 ## Prepare portable source and skill captures
 
 `prepare.py` reads Git objects from explicitly supplied local repositories. It
@@ -216,3 +241,20 @@ UID and an explicit dependency projection after VM workspace preparation.
 The Node observer allows 2 GiB address space, 8 MiB files and 256 descriptors,
 while retained stdout/stderr remain capped at 128 KiB each. These limits are
 distinct from the ordinary test lanes and do not change legacy Python observers.
+
+## Acceptance design
+
+The [retrospective acceptance-map template](acceptance-map.template.json) separates
+user-relevant requirements from the six composite probes. It records exact field
+routes and semantic questions, including known gaps in sibling-cache handover,
+corrupt replacement and verification evidence. Required/supporting labels are
+proposed acceptance judgments that still need domain review; no scalar score is
+computed. This template was authored after observing results and does not qualify
+or replace those historical runs.
+
+Replace its task/package paths and zero digests with prepared identities, then use
+[offline acceptance preparation and review](../../../docs/system/TASKS.md#operator-acceptance-maps).
+Keep the map and its evidence outside all solver captures. A structurally valid map
+with coverage gaps remains incomplete measurement evidence. The
+[measurement workflow](../../../docs/project/MEASUREMENT.md) describes the remaining
+control, reviewer and sampling work before further comparisons.

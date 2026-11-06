@@ -7,6 +7,41 @@ independent implementation informed by SkillsBench/Harbor task packaging,
 Tessl fixtures, and the evidence/assessment patterns in [SOURCES](../project/SOURCES.md).
 No upstream runner is required.
 
+## Operator acceptance maps
+
+[Measurement design](../project/MEASUREMENT.md) owns how requirements and task
+populations are selected. `schema acceptance-map-spec` defines an operator-only
+sidecar bound to an existing artifact task and task package by path and digest.
+It leaves those bytes and their environment receipts unchanged. A new acceptance
+map is a new evidence generation; it cannot make an old run prespecified.
+
+Requirements distinguish core outcome, regression and evidence roles, with declared
+importance, source rationale, exact probe/JSON-Pointer routes, semantic questions
+and explicit gaps. Every frozen probe must be mapped or expressly excluded with a
+reason. Pointer resolution checks expected-object structure, not observed success.
+Generic semantic criterion membership does not resolve each mapped requirement.
+Optional control/review attachments are checked for exact bytes only; their relevance,
+claimed provenance and independence remain unverified. No aggregate quality score or
+semantic admission is produced.
+
+```sh
+uv run skilleval task-package prepare-acceptance acceptance-spec.json --output acceptance-map.json
+uv run skilleval task-package inspect-acceptance acceptance-map.json --sha256 MAP_SHA256 \
+  --review-output acceptance-review.md
+```
+
+Both commands are offline: they read immutable inputs as data and do not execute
+imported code, launch VMs, read credentials or call models. Preparation and Markdown
+publication are exclusive; choose fresh destinations. Maps, attachments and review
+output must stay outside solver captures. `validate acceptance-map-spec` checks
+structure only, while preparation/readback also verify references and field routes.
+
+The [completed-session template](../../examples/repair/completed-sessions/acceptance-map.template.json)
+uses placeholder task/package paths and digests. Replace them with separately
+retained identities before preparation. Its retrospective status and declared gaps
+are intentional. [Study plan v4](STUDIES.md) pins selected map identities and rechecks
+them before dispatch without sending maps or attachments to the solver or judge.
+
 ## Freeze and validate
 
 `schema artifact-spec` exposes the existing file-artifact contract: captured input,

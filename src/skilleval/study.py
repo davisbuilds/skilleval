@@ -43,6 +43,8 @@ class StudyTask(Record):
     package_sha256: Digest | None = None
     environment_validation: str | None = None
     environment_validation_sha256: Digest | None = None
+    acceptance_map: str | None = Field(default=None, min_length=1, exclude_if=lambda x: x is None)
+    acceptance_map_sha256: Digest | None = Field(default=None, exclude_if=lambda x: x is None)
 
     @model_validator(mode="after")
     def package_bindings(self) -> StudyTask:
@@ -56,6 +58,8 @@ class StudyTask(Record):
             raise ValueError(
                 "task package requires its selected environment validation and digests"
             )
+        if (self.acceptance_map is None) != (self.acceptance_map_sha256 is None):
+            raise ValueError("acceptance map requires its independently retained digest")
         return self
 
 
@@ -78,11 +82,22 @@ class StudySpec(Record):
     max_requests_per_attempt: int = Field(default=32, ge=1, le=MAX_REQUESTS)
     assessment_policy: Literal["unassessed"] = "unassessed"
     primary_attempt_policy: Literal["first-attempt"] = "first-attempt"
+    acceptance_policy: Literal["legacy-unmapped", "mapped-acceptance-v1"] = Field(
+        default="legacy-unmapped", exclude_if=lambda x: x == "legacy-unmapped"
+    )
     admission: str | None = None
     admission_sha256: Digest | None = None
 
     @model_validator(mode="after")
     def distinct_inputs(self) -> StudySpec:
+        mapped = self.acceptance_policy == "mapped-acceptance-v1"
+        if mapped and any(
+            task.mode != "repair" or task.package is None or task.acceptance_map is None
+            for task in self.tasks
+        ):
+            raise ValueError("mapped acceptance requires every task to be a packaged mapped repair")
+        if not mapped and any(task.acceptance_map is not None for task in self.tasks):
+            raise ValueError("acceptance maps require the mapped acceptance policy")
         if self.price_schedule is not None and self.price_schedule.model != MODEL:
             raise ValueError("price schedule must cover the study model")
         if len({task.task_id for task in self.tasks}) != len(self.tasks):
@@ -195,6 +210,24 @@ def _check_inputs(spec: StudySpec) -> dict[str, Any]:
                 )
             ):
                 raise SkillEvalError("study differs from validated task package or execution route")
+            if task.acceptance_map is not None:
+                from skilleval.acceptance import load_acceptance
+
+                assert task.acceptance_map_sha256
+                selected = load_acceptance(Path(task.acceptance_map), task.acceptance_map_sha256)
+                if (
+                    Path(selected.package).resolve() != Path(task.package).resolve()
+                    or selected.package_sha256 != task.package_sha256
+                    or Path(selected.task).resolve() != Path(package.task).resolve()
+                    or selected.task_sha256 != package.task_sha256
+                ):
+                    raise SkillEvalError("acceptance map differs from selected study task package")
+                for reference in (
+                    *selected.review_evidence,
+                    *(c.evidence for c in selected.controls if c.evidence is not None),
+                ):
+                    _outside_inputs(spec, Path(reference.path))
+                _outside_inputs(spec, Path(task.acceptance_map))
     _verified_skill(Path(spec.skill_bundle), spec.skill_sha256)
     if file_digest(Path(spec.catalog)) != runner.CATALOG_SHA256:
         raise SkillEvalError("study model catalog differs from pinned native route")
@@ -209,8 +242,8 @@ def prepare_study(spec: StudySpec, destination: Path) -> dict[str, Any]:
             data[key] = os.path.abspath(data[key])
     for task in data["tasks"]:
         task["input_bundle"] = os.path.abspath(task["input_bundle"])
-        for key in ("package", "environment_validation"):
-            if task[key] is not None:
+        for key in ("package", "environment_validation", "acceptance_map"):
+            if task.get(key) is not None:
                 task[key] = os.path.abspath(task[key])
     spec = StudySpec.model_validate_json(json.dumps(data))
     image = _check_inputs(spec)
@@ -220,9 +253,10 @@ def prepare_study(spec: StudySpec, destination: Path) -> dict[str, Any]:
     skill_manifest, _ = _verified_skill(Path(spec.skill_bundle), spec.skill_sha256)
     skill_name = skill_manifest["meta"]["skill_name"]
     value: dict[str, Any] = {
-        "schema_version": 3,
+        "schema_version": 4,
         "kind": "skilleval-study-plan",
         "spec": spec.model_dump(mode="json"),
+        "acceptance_policy": spec.acceptance_policy,
         "model": MODEL,
         "effort": EFFORT,
         "identity": identity,
@@ -263,9 +297,24 @@ def _plan(path: Path, expected: str) -> tuple[dict[str, Any], StudySpec]:
     value = evidence._parse_json(raw)
     if not isinstance(value, dict):
         raise SkillEvalError("expected a study JSON object")
-    if value.get("kind") != "skilleval-study-plan" or value.get("schema_version") not in {1, 2, 3}:
+    if value.get("kind") != "skilleval-study-plan" or value.get("schema_version") not in {
+        1,
+        2,
+        3,
+        4,
+    }:
         raise SkillEvalError("unsupported study plan")
     data = dict(value["spec"])
+    if value["schema_version"] < 4 and (
+        any(
+            key in value or key in data
+            for key in ("acceptance_policy", "acceptance_map", "acceptance_map_sha256")
+        )
+        or any(
+            "acceptance_map" in task or "acceptance_map_sha256" in task for task in data["tasks"]
+        )
+    ):
+        raise SkillEvalError("legacy study plans cannot declare acceptance maps or policies")
     # Frozen schemas 1-3 predate mode-specific defaults. Preserve their historic
     # missing-field interpretation without altering the retained plan bytes.
     data.setdefault("native_timeout_seconds", LEGACY_STUDY_TIMEOUT_SECONDS)
@@ -277,9 +326,11 @@ def _plan(path: Path, expected: str) -> tuple[dict[str, Any], StudySpec]:
         raise SkillEvalError("new plans must freeze invocation and pricing policies")
     if value["schema_version"] < 3 and any("mode" in task for task in data["tasks"]):
         raise SkillEvalError("legacy study plans cannot declare task modes")
-    if value["schema_version"] == 3 and any("mode" not in task for task in data["tasks"]):
+    if value["schema_version"] >= 3 and any("mode" not in task for task in data["tasks"]):
         raise SkillEvalError("new study plans must freeze task modes")
     spec = StudySpec.model_validate_json(json.dumps(data))
+    if value["schema_version"] == 4 and value.get("acceptance_policy") != spec.acceptance_policy:
+        raise SkillEvalError("frozen acceptance policy differs from study specification")
     if value["schema_version"] >= 2 and value.get("invocations") != _invocations(
         spec, value.get("skill_name", "")
     ):
@@ -347,10 +398,52 @@ def _attempts(output: Path, cell: dict[str, Any]) -> list[Path]:
     return paths
 
 
-def _terminal(path: Path, plan_sha: str, cell: dict[str, Any]) -> dict[str, Any]:
+def _acceptance_metadata(plan: dict[str, Any], spec: StudySpec, task: StudyTask) -> dict[str, Any]:
+    if plan["schema_version"] < 4:
+        return {}
+    return {
+        "acceptance_policy": spec.acceptance_policy,
+        **(
+            {
+                "acceptance_map": task.acceptance_map,
+                "acceptance_map_sha256": task.acceptance_map_sha256,
+            }
+            if task.acceptance_map is not None
+            else {}
+        ),
+    }
+
+
+def _checked_dispatch(
+    path: Path,
+    plan_sha: str,
+    cell: dict[str, Any],
+    plan: dict[str, Any],
+    spec: StudySpec,
+) -> dict[str, Any]:
+    """Check retained operator bindings without reloading live acceptance artifacts."""
     dispatch = _document(path / "dispatch.json")
     if dispatch.get("plan_sha256") != plan_sha or dispatch.get("assignment") != cell:
         raise SkillEvalError("attempt belongs to a different plan or assignment")
+    task = next(task for task in spec.tasks if task.task_id == cell["task_id"])
+    selected = {
+        key: dispatch[key]
+        for key in ("acceptance_policy", "acceptance_map", "acceptance_map_sha256")
+        if key in dispatch
+    }
+    if selected != _acceptance_metadata(plan, spec, task):
+        raise SkillEvalError("dispatch acceptance metadata differs from frozen study plan")
+    return dispatch
+
+
+def _terminal(
+    path: Path,
+    plan_sha: str,
+    cell: dict[str, Any],
+    plan: dict[str, Any],
+    spec: StudySpec,
+) -> dict[str, Any]:
+    _checked_dispatch(path, plan_sha, cell, plan, spec)
     if not (path / "outcome.json").exists():
         raise SkillEvalError(
             "unfinished attempt; stop its controller, recover its VM, then reconcile"
@@ -531,7 +624,7 @@ def run_study(
             attempts = _attempts(output, cell)
             if len(attempts) > spec.max_attempts_per_cell:
                 raise SkillEvalError("recorded attempts exceed the frozen study budget")
-            previous = [_terminal(path, expected_sha256, cell) for path in attempts]
+            previous = [_terminal(path, expected_sha256, cell, plan, spec) for path in attempts]
             if any(not value["cleanup_complete"] for value in previous):
                 raise SkillEvalError(
                     "incomplete VM cleanup; recover and reconcile before continuing"
@@ -574,6 +667,7 @@ def run_study(
                             "admission": admission,
                             "scope": "development-only",
                             "native_expected": expected,
+                            **_acceptance_metadata(plan, spec, task),
                             "invocation_policy": spec.invocation_policy,
                             "price_schedule": spec.price_schedule.model_dump(mode="json")
                             if spec.price_schedule is not None
@@ -618,6 +712,7 @@ def run_study(
                     error = "controller-interrupted"
                 except (OSError, SkillEvalError) as exc:
                     error = type(exc).__name__
+                _checked_dispatch(path, expected_sha256, cell, plan, spec)
                 outcome = _record_outcome(
                     path, report, elapsed=time.monotonic() - started, error=error
                 )
@@ -638,14 +733,9 @@ def report_study(plan_path: Path, expected_sha256: str, output: Path) -> dict[st
         rows = []
         for path in _attempts(output, cell):
             if (path / "outcome.json").exists():
-                outcome = _terminal(path, expected_sha256, cell)
+                outcome = _terminal(path, expected_sha256, cell, plan, spec)
             else:
-                dispatch = _document(path / "dispatch.json")
-                if (
-                    dispatch.get("plan_sha256") != expected_sha256
-                    or dispatch.get("assignment") != cell
-                ):
-                    raise SkillEvalError("unfinished attempt binding differs")
+                _checked_dispatch(path, expected_sha256, cell, plan, spec)
                 outcome = {
                     "status": "unfinished",
                     "cleanup_complete": False,
@@ -710,6 +800,17 @@ def report_study(plan_path: Path, expected_sha256: str, output: Path) -> dict[st
         "human_audit": "required-pending",
         "primary_attempt_policy": spec.primary_attempt_policy,
         "invocation_policy": spec.invocation_policy,
+        "acceptance_policy": spec.acceptance_policy,
+        "acceptance_maps": [
+            {
+                "task_id": task.task_id,
+                "acceptance_map": task.acceptance_map,
+                "acceptance_map_sha256": task.acceptance_map_sha256,
+                "semantic_validity": "unassessed",
+            }
+            for task in spec.tasks
+            if task.acceptance_map is not None
+        ],
         "cells": cells,
         "pairs": paired,
         "efficiency_ledger": efficiency_ledger(cells),
@@ -753,19 +854,14 @@ def _check_output_binding(plan_path: Path, expected: str, output: Path) -> None:
 def reconcile_study(plan_path: Path, expected_sha256: str, output: Path) -> dict[str, Any]:
     """Record interrupted attempts only after explicit VM recovery; never runs a VM."""
     plan_path, output = Path(os.path.abspath(plan_path)), Path(os.path.abspath(output))
-    plan, _ = _plan(plan_path, expected_sha256)
+    plan, spec = _plan(plan_path, expected_sha256)
     with _lock(output):
         _check_output_binding(plan_path, expected_sha256, output)
         for cell in plan["assignments"]:
             for path in _attempts(output, cell):
-                dispatch = _document(path / "dispatch.json")
-                if (
-                    dispatch.get("plan_sha256") != expected_sha256
-                    or dispatch.get("assignment") != cell
-                ):
-                    raise SkillEvalError("interrupted attempt binding differs")
+                _checked_dispatch(path, expected_sha256, cell, plan, spec)
                 if (path / "outcome.json").exists():
-                    if not _terminal(path, expected_sha256, cell)["cleanup_complete"]:
+                    if not _terminal(path, expected_sha256, cell, plan, spec)["cleanup_complete"]:
                         if not _clean_native(path / "native"):
                             raise SkillEvalError(
                                 "recover the native VM before reconciling the attempt"

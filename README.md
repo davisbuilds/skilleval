@@ -118,6 +118,8 @@ A completed run is an execution observation. A recorded judgment is an assessmen
 with an audit status. Neither is automatically a correctness claim. Small exposed
 controls and single pairs cannot rank skills; representative tasks, independent
 human audit, repeats, and uncertainty analysis are still required.
+Use the [measurement workflow](docs/project/MEASUREMENT.md) to ground acceptance
+in real work, map coverage and gaps, and validate graders before new comparisons.
 
 Imported code runs inside the guest. Credentials stay on the host behind the
 bounded inference gateway. Prompt restrictions are not command-level enforcement,

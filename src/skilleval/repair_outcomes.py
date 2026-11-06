@@ -239,6 +239,16 @@ def render_review(report: dict[str, Any]) -> str:
         "API-equivalent estimates are scenarios, not observed charges.",
         "",
     ]
+    if "acceptance_policy" in report:
+        lines += [f"Acceptance policy: {safe(report['acceptance_policy'])}.", ""]
+        for selected in report.get("acceptance_maps", []):
+            lines += [
+                f"{safe(selected['task_id'])}: "
+                + link("Declared acceptance map", selected["acceptance_map"])
+                + f"; SHA256 {safe(selected['acceptance_map_sha256'])}. "
+                "Semantic validity remains unassessed; mapped coverage is not a task verdict.",
+                "",
+            ]
     for cell in report["cells"]:
         arm = "OFF" if cell["arm"] == "absent" else "ON"
         lines += [f"## {safe(cell['task_id'])} — {arm}", ""]

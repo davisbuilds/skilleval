@@ -1,0 +1,446 @@
+{
+  "schema_version": 1,
+  "map_id": "completed-sessions-retrospective-v1",
+  "task": "TASK.json",
+  "task_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "package": "PACKAGE.json",
+  "package_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "purpose": "Make acceptance of the completed-session debugging repair inspectable independently of skill compliance or raw probe counts.",
+  "population": "Exposed development seed: maintenance of a TypeScript session-ingestion application. It does not represent all debugging work or all engineering skills.",
+  "selection_rationale": "A real repository behavior and affected consumers support a plausible everyday repair. Ordinary repository context already identifies compressed sessions, so the task primarily measures repair completeness and verification.",
+  "exposure_history": "Source, reference repairs, probe expectations and multiple ON/OFF outputs have been inspected. This retrospective design is not prespecified evidence for those runs or a new holdout.",
+  "authored_after_outcomes": true,
+  "requirements": [
+    {
+      "requirement_id": "recover-history",
+      "statement": "Recover completed sessions with their exact messages, identity and usage.",
+      "role": "core",
+      "criticality": "required",
+      "source_rationale": "Shared task brief, paragraphs 1-2; existing browser/import contracts in https://github.com/davisbuilds/agentmonitor/tree/5f681e21c8af7766bb21efe60d15bae33c4ac68b/src/import/codex.ts and src/watcher/index.ts.",
+      "mechanical": [
+        {
+          "probe_id": "first-compressed",
+          "pointer": "/direct"
+        },
+        {
+          "probe_id": "first-compressed",
+          "pointer": "/forced/state/browser"
+        },
+        {
+          "probe_id": "first-compressed",
+          "pointer": "/forced/state/messages"
+        },
+        {
+          "probe_id": "first-compressed",
+          "pointer": "/forced/state/usage"
+        }
+      ],
+      "semantic": [
+        {
+          "criterion": "task-contract",
+          "question": "Does completed-session recovery preserve actual message content and usage, including valid alternative implementations?"
+        }
+      ],
+      "gaps": []
+    },
+    {
+      "requirement_id": "preserve-transitions",
+      "statement": "Preserve logical history when session files change representation or gain final records.",
+      "role": "core",
+      "criticality": "required",
+      "source_rationale": "Shared task brief paragraph 2 explicitly requires preservation as files change; reconcileCodexRollout and watcher sync own the persisted state.",
+      "mechanical": [
+        {
+          "probe_id": "transition",
+          "pointer": "/transition_identity"
+        },
+        {
+          "probe_id": "transition",
+          "pointer": "/forced/state/messages"
+        },
+        {
+          "probe_id": "transition",
+          "pointer": "/forced/state/usage"
+        },
+        {
+          "probe_id": "both-forms",
+          "pointer": "/stages/0/state/messages"
+        },
+        {
+          "probe_id": "both-forms",
+          "pointer": "/stages/0/state/usage"
+        },
+        {
+          "probe_id": "both-forms",
+          "pointer": "/compressed_only/state/messages"
+        },
+        {
+          "probe_id": "both-forms",
+          "pointer": "/compressed_only/state/usage"
+        }
+      ],
+      "semantic": [
+        {
+          "criterion": "task-contract",
+          "question": "Does preservation also hold when an already cached archive is replaced by a shorter plain sibling and later becomes authoritative again?"
+        }
+      ],
+      "gaps": [
+        "The frozen six-probe worker does not exercise cached archive -> shorter plain -> unchanged archive under normal change detection. A supplemental replay found this defect after outcomes; it is not added to old scores.",
+        "Watcher event ordering and all live-service lifecycles are not covered by forced import/sync calls."
+      ]
+    },
+    {
+      "requirement_id": "idempotent-import",
+      "statement": "Repeated normal and forced operations do not duplicate or unnecessarily replace existing history rows.",
+      "role": "core",
+      "criticality": "required",
+      "source_rationale": "Shared task brief paragraph 2: repeated imports/syncs must not duplicate messages or usage; row identity is a concrete preservation check.",
+      "mechanical": [
+        {
+          "probe_id": "first-compressed",
+          "pointer": "/repeat_identity"
+        },
+        {
+          "probe_id": "first-compressed",
+          "pointer": "/forced_identity"
+        },
+        {
+          "probe_id": "first-compressed",
+          "pointer": "/repeat/state/messages"
+        },
+        {
+          "probe_id": "first-compressed",
+          "pointer": "/repeat/state/usage"
+        },
+        {
+          "probe_id": "transition",
+          "pointer": "/repeat_identity"
+        },
+        {
+          "probe_id": "transition",
+          "pointer": "/forced_identity"
+        },
+        {
+          "probe_id": "transition",
+          "pointer": "/repeat/state/messages"
+        },
+        {
+          "probe_id": "transition",
+          "pointer": "/repeat/state/usage"
+        },
+        {
+          "probe_id": "both-forms",
+          "pointer": "/repeat_identity"
+        },
+        {
+          "probe_id": "both-forms",
+          "pointer": "/forced_identity"
+        },
+        {
+          "probe_id": "both-forms",
+          "pointer": "/repeat/state/messages"
+        },
+        {
+          "probe_id": "both-forms",
+          "pointer": "/repeat/state/usage"
+        },
+        {
+          "probe_id": "plain-append",
+          "pointer": "/repeat_identity"
+        },
+        {
+          "probe_id": "plain-append",
+          "pointer": "/forced_identity"
+        },
+        {
+          "probe_id": "plain-append",
+          "pointer": "/repeat/state/messages"
+        },
+        {
+          "probe_id": "plain-append",
+          "pointer": "/repeat/state/usage"
+        }
+      ],
+      "semantic": [
+        {
+          "criterion": "task-contract",
+          "question": "Are repeated operations idempotent for realistic updates, not just the supplied final transcript?"
+        }
+      ],
+      "gaps": [
+        "Related repetition scenarios are correlated controls, not independent tasks."
+      ]
+    },
+    {
+      "requirement_id": "plain-file-behavior",
+      "statement": "Keep ordinary plain-file discovery, append and stored-history behavior working.",
+      "role": "regression",
+      "criticality": "required",
+      "source_rationale": "Shared task brief paragraph 2 explicitly preserves plain-file behavior; existing source supports plain Codex JSONL sessions.",
+      "mechanical": [
+        {
+          "probe_id": "plain-append",
+          "pointer": "/direct"
+        },
+        {
+          "probe_id": "plain-append",
+          "pointer": "/transition_identity"
+        },
+        {
+          "probe_id": "plain-append",
+          "pointer": "/forced/state/messages"
+        },
+        {
+          "probe_id": "plain-append",
+          "pointer": "/forced/state/usage"
+        }
+      ],
+      "semantic": [
+        {
+          "criterion": "scope-and-regressions",
+          "question": "Does the change preserve preexisting plain-file workflows relative to the untouched source?"
+        }
+      ],
+      "gaps": []
+    },
+    {
+      "requirement_id": "session-total-reader",
+      "statement": "Keep session-total verification useful when discovery includes archives.",
+      "role": "regression",
+      "criticality": "required",
+      "source_rationale": "Existing src/import/session-total-check.ts consumes shared discovery. Source-grounded preservation obligation, not a separate user-requested feature: adding archives must not displace previously checkable plain sessions.",
+      "mechanical": [
+        {
+          "probe_id": "first-compressed",
+          "pointer": "/forced/state/totals"
+        },
+        {
+          "probe_id": "transition",
+          "pointer": "/forced/state/totals"
+        },
+        {
+          "probe_id": "both-forms",
+          "pointer": "/forced/state/totals"
+        },
+        {
+          "probe_id": "plain-append",
+          "pointer": "/forced/state/totals"
+        }
+      ],
+      "semantic": [
+        {
+          "criterion": "scope-and-regressions",
+          "question": "Can newer archives consume the file limit and hide a previously checkable plain session? Compare against baseline."
+        }
+      ],
+      "gaps": [
+        "The frozen probes check per-session totals but not newer-archive displacement at limit=1; that regression was established with a separate diagnostic."
+      ]
+    },
+    {
+      "requirement_id": "project-name-repair",
+      "statement": "Keep project-name repair preview/apply and repeated application working for discovered sessions.",
+      "role": "regression",
+      "criticality": "required",
+      "source_rationale": "Existing src/import/project-repair.ts consumes shared Codex discovery. Preserve that consumer as discovery expands; do not demand a particular helper or patch shape.",
+      "mechanical": [
+        {
+          "probe_id": "first-compressed",
+          "pointer": "/project_repair"
+        },
+        {
+          "probe_id": "transition",
+          "pointer": "/project_repair"
+        },
+        {
+          "probe_id": "both-forms",
+          "pointer": "/project_repair"
+        },
+        {
+          "probe_id": "plain-append",
+          "pointer": "/project_repair"
+        }
+      ],
+      "semantic": [
+        {
+          "criterion": "scope-and-regressions",
+          "question": "Does project-name repair preserve its existing contract across discovered representations?"
+        }
+      ],
+      "gaps": [
+        "Whether archive extension support is required beyond avoiding existing-behavior regression remains a task-scope review question; the expectation is explicitly disclosed here."
+      ]
+    },
+    {
+      "requirement_id": "legacy-identity",
+      "statement": "Retain a stable filename-derived identity when session metadata is absent.",
+      "role": "regression",
+      "criticality": "required",
+      "source_rationale": "Existing parser/watcher fallback behavior derives identity from rollout filenames; compressed suffixes must not create a different logical session.",
+      "mechanical": [
+        {
+          "probe_id": "fallback-name",
+          "pointer": "/browser_ids"
+        },
+        {
+          "probe_id": "fallback-name",
+          "pointer": "/event_session_ids"
+        },
+        {
+          "probe_id": "fallback-name",
+          "pointer": "/messages"
+        },
+        {
+          "probe_id": "fallback-name",
+          "pointer": "/sync_result"
+        }
+      ],
+      "semantic": [
+        {
+          "criterion": "scope-and-regressions",
+          "question": "Is fallback identity stable and consistent between browser and import paths?"
+        }
+      ],
+      "gaps": []
+    },
+    {
+      "requirement_id": "corrupt-input",
+      "statement": "Report corrupt compressed input without creating fabricated history.",
+      "role": "core",
+      "criticality": "required",
+      "source_rationale": "Preservation requirement plus existing reader/sync error semantics; failed decoding must not be represented as successful empty history.",
+      "mechanical": [
+        {
+          "probe_id": "corrupt-compressed",
+          "pointer": "/read_raised"
+        },
+        {
+          "probe_id": "corrupt-compressed",
+          "pointer": "/sync_result"
+        },
+        {
+          "probe_id": "corrupt-compressed",
+          "pointer": "/browser_rows"
+        },
+        {
+          "probe_id": "corrupt-compressed",
+          "pointer": "/usage_rows"
+        }
+      ],
+      "semantic": [
+        {
+          "criterion": "task-contract",
+          "question": "Does a corrupt replacement preserve previously imported valid history as well as reporting failure?"
+        }
+      ],
+      "gaps": [
+        "The frozen corrupt-input probe starts with an empty database; replacement of previously valid history needs separate coverage."
+      ]
+    },
+    {
+      "requirement_id": "scope-and-data-isolation",
+      "statement": "Use supplied synthetic history and disposable stores, preserve input fixtures, and avoid unrelated changes.",
+      "role": "regression",
+      "criticality": "required",
+      "source_rationale": "Shared task brief paragraph 3 specifies copied application home, temporary database, source preservation and no installed-service/personal-store access.",
+      "mechanical": [],
+      "semantic": [
+        {
+          "criterion": "task-contract",
+          "question": "Do retained edits and application commands comply with the supplied-data and disposable-store constraints?"
+        }
+      ],
+      "gaps": [
+        "Finite command traces are not complete forensic proof of every access. Runtime qualification is separate from repair quality."
+      ]
+    },
+    {
+      "requirement_id": "verification-evidence",
+      "statement": "Support material verification and completion claims with usable evidence.",
+      "role": "evidence",
+      "criticality": "required",
+      "source_rationale": "Shared task brief asks for a patch with verification evidence; ordinary repository guidance defines its normal commands.",
+      "mechanical": [],
+      "semantic": [
+        {
+          "criterion": "verification-claims",
+          "question": "Which checks completed, what source did they exercise, and are failures candidate-caused or reproduced on baseline?"
+        }
+      ],
+      "gaps": [
+        "Current application-context-v2 packets omit null-output command completions and some legitimate combined readbacks containing application-home text.",
+        "Completion-only packet ordering cannot establish an immutable final-tree test when commands overlap source edits. Missing evidence remains unresolved."
+      ]
+    }
+  ],
+  "unmapped_probes": [],
+  "controls": [
+    {
+      "control_id": "baseline-and-reference",
+      "purpose": "Check defect sensitivity and valid repair acceptance in the actual environment.",
+      "requirement_ids": [
+        "recover-history",
+        "preserve-transitions",
+        "plain-file-behavior"
+      ],
+      "expected_discrimination": "Untouched source exposes missing compressed-history support; a reviewed correct repair restores required behavior and preserves plain files.",
+      "limitations": [
+        "Environment-suite matching alone does not validate task acceptance. Attach and audit exact relevant task-check evidence; a historical fix is not an exhaustive oracle."
+      ],
+      "evidence": null
+    },
+    {
+      "control_id": "plausible-incomplete-fix",
+      "purpose": "Reject discovery-only and reader-omission fixes.",
+      "requirement_ids": [
+        "recover-history",
+        "session-total-reader",
+        "project-name-repair"
+      ],
+      "expected_discrimination": "A superficially successful browser/import fix still fails the affected preservation requirements when dependent readers cannot decode discovered inputs.",
+      "limitations": [
+        "Use deliberate controls and retained examples without treating correlated variants as independent tasks."
+      ],
+      "evidence": null
+    },
+    {
+      "control_id": "sibling-cache-handover",
+      "purpose": "Close a demonstrated lifecycle coverage gap.",
+      "requirement_ids": [
+        "preserve-transitions",
+        "idempotent-import"
+      ],
+      "expected_discrimination": "Archive -> shorter plain -> unchanged archive restores archive messages/usage under ordinary change detection; a stale per-path cache must be detected.",
+      "limitations": [
+        "Supplemental after-outcome diagnostic; do not replace the original six-probe expectations. A new checker generation needs its own positive/negative controls."
+      ],
+      "evidence": null
+    },
+    {
+      "control_id": "packet-evidence-fidelity",
+      "purpose": "Check the full native-trace-to-judge-packet path.",
+      "requirement_ids": [
+        "verification-evidence"
+      ],
+      "expected_discrimination": "Successful outputless completions and legitimate application commands remain usable; harness/treatment-only information stays withheld; missing evidence stays unknown.",
+      "limitations": [
+        "Known packet omissions remain open. No further solver or judge experiments are authorized by preparing this map."
+      ],
+      "evidence": null
+    }
+  ],
+  "review_evidence": [],
+  "open_questions": [
+    "Independent task/domain review of requirement importance, ordinary-context sufficiency and the project-repair expectation remains pending.",
+    "Which distinct sampled tasks and task families reflect the intended users and skill scope? Convenience and previous ON wins cannot define the population.",
+    "Repair packet evidence loss and add separately qualified cache/replacement controls before further comparisons.",
+    "A statistical analysis plan still needs a minimum useful effect, task/repository sampling and enough independent cases; no fixed count of probes or repeats establishes reliability."
+  ],
+  "limitations": [
+    "This is an operator-only retrospective template. Replace placeholder paths/digests with exact existing task/package identities before preparation; keep it outside solver input.",
+    "Structural validity and hash-pinned attachments establish traceability, not independent review, semantic correctness or scored admission.",
+    "Generic semantic criteria do not independently resolve every mapped requirement. No requirement-quality aggregate or numeric weighting is implemented.",
+    "Raw task/check/judge records remain unchanged; supplemental findings and revised maps have distinct identities."
+  ]
+}

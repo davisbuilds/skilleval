@@ -188,6 +188,58 @@ separate qualification; `qa-only/` alone is not a faithful package. Emil's
 `prototype` also pauses for human variant selection, so it is not the first
 unattended candidate.
 
+## Debugging expansion shortlist
+
+Source-inspected on **2026-11-05**, before any treatment runs for these cases.
+Keep the complete pinned `diagnosing-bugs` package above as the common treatment.
+These are proposed development tasks, not captured, qualified or unexposed cases.
+Their difficulty is a hypothesis. Select ordinary and challenging work before
+looking at ON/OFF outcomes; two tasks from one repository remain clustered.
+
+| Proposed task | Independent outcome | Main preparation gap |
+| --- | --- | --- |
+| fetchmd: reject private hosts expressed as IPv4-mapped IPv6 | Apply the existing address policy consistently to URL literals, DNS answers and redirects while preserving allowed public addresses | Separate frozen dependencies; ordinary build/render-test coverage |
+| Promptfoo: negative sample counts unexpectedly return tests | No extra samples for nonpositive counts; preserve valid counts, input data and a real caller's behavior | Frozen npm workspace, native dependencies and ordinary checks |
+| Promptfoo: overlapping jobs change a shared tracing receiver | Stable first-start configuration, per-job policy, actual ingestion and recoverable concurrent start/stop/failure | Qualified local HTTP/store fixture and Node toolchain |
+| Dojo: valid quoted versions appear unknown in an installed-skill audit | Decode supported single-line scalars without changing drift/sync decisions or accepting malformed versions | Resolve repository-skill exposure; review terms before redistributing a capture |
+
+Start capture work with fetchmd, then the two Promptfoo cases. Keep the Dojo case
+as a reserve until its ordinary repository skill content can be characterized
+without weakening the single-skill comparison. Local source inspection does not
+require publishing captured code. No extra tasks have been run or selected for
+favorable skill results.
+
+Pinned source and reference repairs:
+
+- **fetchmd:** baseline [141cf8b](https://github.com/davisbuilds/fetchmd/tree/141cf8bcf015b23df06373e86bd9d36876efc53e),
+  repair [4214628](https://github.com/davisbuilds/fetchmd/commit/421462878829dd93b812845cb730474dd3c7670d).
+  Preserve the existing private-address contract in `docs/system/ARCHITECTURE.md`.
+  Use deterministic DNS/fetch seams and synthetic addresses; no contact with real
+  private services. Reject block-all-IPv6 and literal-only shortcuts. The Node
+  range permits the existing runtime, but pnpm 11.5.2 and this lockfile need their
+  own dependency image. Preserve the baseline's build-before-E2E prerequisite.
+- **Promptfoo sampling:** baseline [d68b07d](https://github.com/promptfoo/promptfoo/tree/d68b07d51b7a92c109f4e367efaa644ac2fed7c4),
+  repair [1a19309](https://github.com/promptfoo/promptfoo/commit/1a193092dd602e3d7732d87251d76a7f3a5e9381).
+  Inspect `src/util/generation.ts` and dataset-generation callers. This ordinary
+  repair may saturate quality; equal quality with different consumption remains
+  useful. Preserve root, utility and test guidance; use a fixed local dataset.
+- **Promptfoo tracing:** baseline [e8cef0e](https://github.com/promptfoo/promptfoo/tree/e8cef0e2bf9c4cc36316f193b4d28261d083458d),
+  repair [8f6b847](https://github.com/promptfoo/promptfoo/commit/8f6b847a48acab5a064edb1f849ff54b3e019530).
+  The ordinary tracing docs already promise startup-setting stability; retain
+  that context. Test real local requests and stored synthetic spans across
+  concurrent lifecycle transitions, not only mocked method counts. Both Promptfoo
+  snapshots need their Node 24.22.2/npm 11 environment and substantial workspace
+  dependencies qualified; the current AgentMonitor image is insufficient.
+- **Dojo:** baseline [0ef16c7](https://github.com/davisbuilds/dojo/tree/0ef16c71a454863269920d9b0b5eeb074bd931f3),
+  repair [d11a05d](https://github.com/davisbuilds/dojo/commit/d11a05dceec320dc45a3b2c4a7a3146b5676f00b).
+  Exercise the public audit command with disposable canonical/installed roots,
+  preserving Python 3.12 and the scalar-format contract. Include malformed inputs
+  and unchanged sync behavior. No installed personal skill tree belongs in input.
+
+Historical fixes and their added tests stay outside solver workspaces. Build
+independent checks that reject plausible incomplete repairs and accept alternate
+solutions, then demonstrate baseline/reference polarity before comparisons.
+
 ## Earlier development shortlist
 
 Shortlist dated **2026-10-28**, not a frozen task suite or launch authorization.

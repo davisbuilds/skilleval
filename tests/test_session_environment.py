@@ -75,6 +75,9 @@ def test_scratch_lane_retains_logs_and_reports_real_artifacts(tmp_path, monkeypa
     source.mkdir()
     (source / "package.json").write_text('{"name":"authored-fixture"}\n')
     (source / "frontend").mkdir()
+    fixture = source / "sample-history/codex-home/sessions"
+    fixture.mkdir(parents=True)
+    (fixture / "ordinary.jsonl").write_text('{"synthetic":true}\n')
     deps = tmp_path / "dependencies"
     (deps / ".bin").mkdir(parents=True)
     commands = tmp_path / "bin"
@@ -83,7 +86,11 @@ def test_scratch_lane_retains_logs_and_reports_real_artifacts(tmp_path, monkeypa
     pnpm.write_text(
         f"#!{sys.executable}\n"
         + """
-import pathlib, sys
+import os, pathlib, sys
+home = pathlib.Path(os.environ['CODEX_HOME'])
+assert not home.is_relative_to(pathlib.Path.cwd())
+assert (home / 'sessions/ordinary.jsonl').read_text() == '{"synthetic":true}\\n'
+(home / 'support-state').write_text('application support')
 if sys.argv[1] == 'frontend:test':
     import json
     target = next(value.split('=', 1)[1] for value in sys.argv if value.startswith('--outputFile='))
@@ -105,6 +112,14 @@ print('authored stderr', file=sys.stderr)
     before = worker.inventory(source)
     result = worker.run_lane("frontend-tests", source, deps)
     assert result["status"] == "passed"
+    assert result["application_home"] == {
+        "outside_source": True,
+        "copied_fixture_files": 1,
+        "fixture_changes": [],
+        "generated_support_entries": ["support-state"],
+        "source_fixture_unchanged": True,
+        "captured_fixture_unchanged": True,
+    }
     assert result["existing_source_changes"] == result["captured_source_changes"] == []
     assert result["generated_artifacts"]["paths"] == ["dist/artifact.js"]
     assert result["generated_artifacts"]["total_bytes"] == 17

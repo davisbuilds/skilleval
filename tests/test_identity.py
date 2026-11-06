@@ -1,10 +1,26 @@
 import os
+import shutil
 from pathlib import Path
 
 import pytest
 
+from skilleval import identity
 from skilleval.errors import SkillEvalError
 from skilleval.identity import file_digest, runtime_identity
+
+
+def test_source_identity_detects_changed_acceptance_validation(tmp_path, monkeypatch):
+    original = Path(identity.__file__).resolve().parents[2]
+    copied = tmp_path / "checkout"
+    for name in {*identity.SOURCES, "src/skilleval/acceptance.py"}:
+        target = copied / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(original / name, target)
+    monkeypatch.setattr(identity, "__file__", str(copied / "src/skilleval/identity.py"))
+    before = identity.source_identity()
+    validator = copied / "src/skilleval/acceptance.py"
+    validator.write_bytes(validator.read_bytes() + b"\n# changed acceptance validation\n")
+    assert identity.source_identity() != before
 
 
 def distribution(root: Path) -> Path:

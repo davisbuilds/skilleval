@@ -36,7 +36,7 @@ uv run skilleval study report study-plan.json --sha256 PLAN_SHA256 \
 Planning does not launch a VM or read credentials. It freezes prompt/task/skill
 identities, runtime and control-source fingerprints, image identity, native
 budgets, optional price schedule, retry limit, and expanded dispatch order. New
-schema-3 plans also freeze each task's `mode` (`review` or `repair`), the skill name
+schema-4 plans freeze each task's `mode` (`review` or `repair`), the skill name
 and each arm's exact invocation:
 
 - OFF (`absent`) receives the original task prompt without the selected skill.
@@ -58,6 +58,28 @@ in the [task package](TASKS.md). Optional package references bind the task to it
 baseline/reference environment-validation receipt; preparation and each dispatch
 check that receipt against current execution identity. Existing unpackaged plans
 remain readable and do not acquire validation retroactively.
+
+Schema-4 plans also freeze `acceptance_policy`. Select `mapped-acceptance-v1`
+for new repair/document comparisons and supply each task's `acceptance_map` and
+`acceptance_map_sha256`. Every task must then have a matching package, environment
+validation and [acceptance map](TASKS.md#operator-acceptance-maps). Preparation and
+every dispatch, including retries, verify map bindings, field routes and attachment
+bytes. A changed map or attachment requires a fresh preparation. These checks do
+not authenticate a reviewer or establish semantic validity.
+
+The default `legacy-unmapped` policy preserves existing unconfigured/review workflows
+and is explicit in new plans/reports; it cannot select map references. Plan versions
+1–3 retain their historical meanings and reject new acceptance fields. Maps never
+enter native prompts, snapshots, judgment packets or native-receipt expectations.
+Operator dispatch/report metadata retains the policy and selected path/digest.
+Readback, resume and reconciliation check dispatch metadata against the frozen
+plan. The Markdown comparison also displays the policy and map references, with
+validity explicitly unassessed.
+Historical reporting uses the frozen references without requiring the external map
+to remain readable; `inspect-acceptance` separately verifies its retained contents.
+Existing check acceptance and judgment selection semantics do not change.
+The review-mode development template selects `legacy-unmapped`; use packaged
+repair/document tasks to select the mapped policy.
 
 Task/repetition blocks are shuffled with the declared seed; each adjacent pair
 has randomly ordered absent and available arms. Execution is sequential.

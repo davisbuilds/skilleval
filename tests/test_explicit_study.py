@@ -22,7 +22,7 @@ def test_explicit_skill_request_reaches_actual_native_prompt(prepared: dict[str,
     }
     assert prompts["absent"] == plan["spec"]["tasks"][0]["prompt"]
     assert prompts["available"] == "Use $study-control for this task.\n\n" + prompts["absent"]
-    assert plan["schema_version"] == 3
+    assert plan["schema_version"] == 4
     assert plan["invocations"]["task"] == prompts
     assert result["invocation_policy"] == "explicit-use"
     assert result["cells"][0]["attempts"][0]["task_quality"] == "unassessed"
@@ -34,6 +34,7 @@ def test_legacy_plan_without_policy_is_still_natural_availability(
     path = prepared["plan_path"]
     plan = json.loads(path.read_text())
     plan["schema_version"] = 1
+    plan.pop("acceptance_policy")
     for task in plan["spec"]["tasks"]:
         task.pop("mode")
     for key in ("invocation_policy", "price_schedule"):
@@ -127,6 +128,7 @@ def test_schema_two_stays_review_only_with_explicit_invocation(prepared: dict[st
     path = prepared["plan_path"]
     plan = json.loads(path.read_text())
     plan["schema_version"] = 2
+    plan.pop("acceptance_policy")
     for task in plan["spec"]["tasks"]:
         task.pop("mode")
     raw = json.dumps(plan).encode()
