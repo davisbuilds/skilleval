@@ -40,7 +40,7 @@ MAX_REQUESTS = 128
 MAX_REQUEST_OBSERVATIONS = MAX_RECEIPTS - 4
 UPSTREAM_COMMIT = "39fec903f1e73bd3e8e3b15cacefbcce051bd1a6"
 UPSTREAM_SHA256 = "ed02f42cc52a22cfd16d49e3d639a27ce66de0b3bc3a9f41758c646bb26aed48"
-ADAPTED_SHA256 = "5159253383750db2583a51ea6789ff9e7cb897dfb7c73e2629293c84bd5ef5a0"
+ADAPTED_SHA256 = "245b93cf59a1d465a89be6aeeca388ad6dfedbf62e82b2147ed95fdb8498a4b6"
 
 
 class UpstreamResponse(Protocol):
@@ -507,7 +507,7 @@ def codex_provider_config(port: int, catalog_path: Path) -> str:
     return f'''model = "{MODEL}"
 model_provider = "local-gateway"
 model_reasoning_effort = "{EFFORT}"
-model_reasoning_summary = "none"
+model_reasoning_summary = "auto"
 model_catalog_json = {json.dumps(str(catalog_path))}
 model_auto_compact_token_limit = 1000000
 cli_auth_credentials_store = "ephemeral"

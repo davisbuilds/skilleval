@@ -88,11 +88,14 @@ shipped history. Private provenance stays outside public entries and issues.
   controls cannot establish reliability. Treatment metadata masking is not proven
   blinding. Observation workers share candidate imports; test adversarial output
   and independent perturbation sessions before claiming resistance to manipulation.
-- **Tool-evidence coverage and semantic replay:** `execution-context-v3` retains
+- **Broader tool-evidence coverage:** `execution-context-v3` retains
   outputless completions, ordinary application-home source text and observable
   command/file-edit chronology while preserving older packet policies. Audit the
-  corrected packets against retained raw traces across representative tasks, then
-  reassess judgments with explicit outcome selection before interpreting more pairs.
+  corrected packets against retained raw traces across additional representative
+  tasks. The completed-session development pair now has fresh investigative
+  assessments using corrected packets and supplementary observations; preserve
+  its original judgments and explicit new selections. This closes that replay,
+  not independent grader qualification.
   Text filters can still omit legitimate mixed commands or miss indirect treatment
   disclosure. Native file-change events omit arbitrary shell edits; chronology
   does not bind a command to final candidate bytes. Keep missing evidence unknown
@@ -180,11 +183,13 @@ shipped history. Private provenance stays outside public entries and issues.
   captures. Extend supported validation formats and environment profiles only
   when selected task families require them; preserve current source/history and
   expected-exception evidence when doing so.
-- **Completed-run storage collection:** extend the preview/apply retention path
-  to disposable checker, validation, and native tooling staging archives. Require
-  terminal recovery and runtime HOME absence, distinguish qualification tooling
-  still consumed by admission, and verify downstream readers. The current image
-  pruner does not cover these archives; manual cleanup is not automatic retention.
+- **Evidence archival and legacy relocation:** durable storage roots and guarded
+  staging cleanup are implemented; native rollouts are retained without automatic
+  expiry. Define audit-aware archive/expiry and backup/restore coverage before
+  adding evidence deletion. Older records embed absolute paths and no-follow
+  readers reject symlink aliases. Preserve real legacy evidence directories until
+  a versioned locator scheme can relocate them without rewriting frozen records.
+  Keep opaque reasoning separate from readable summaries in any trajectory audit.
 - **OCI portability:** attest media types/effective image policy before permitting
   registries other than explicit Docker Hub references in the pinned adapter.
 - **General task packages:** protected holdouts, exposure tracking, and

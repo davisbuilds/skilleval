@@ -1,6 +1,6 @@
 ---
 status: in-progress
-updated: 2026-11-05
+updated: 2026-11-06
 ---
 
 # Roadmap
@@ -38,6 +38,12 @@ independent semantic audit and scored-study admission
 remain pending. Development workflows can progress while those gates
 are open; they cannot become scored trials by relabeling their results.
 
+Run data now has a [durable storage layout](../system/STORAGE.md) outside
+implementation checkouts. Native runs retain guest-local session rollouts with
+explicit reasoning-summary coverage; guarded staging cleanup preserves replay
+evidence. Historical absolute locators remain in place until a supported
+relocation scheme exists. Backup and evidence-expiry policies remain open.
+
 The [source register](SOURCES.md) records adopted ideas and implementation:
 SkillsBench/Harbor packaging, Tessl fixtures and explicit variants,
 Anthropic/Engram assessment patterns, gstack's separation of validity and benefit,
@@ -49,9 +55,10 @@ and the adapted OpenBench gateway. External skills remain experimental inputs.
    define success and freeze an acceptance map under `mapped-acceptance-v1`.
    The retrospective completed-session map exposes uncovered lifecycle cases and
    grader evidence loss; it does not upgrade the original six-probe results.
-   Validate corrected packets and the supplementary lifecycle controls before
-   further model comparisons. Seek independent domain review of scope and brief sufficiency;
-   include a blind alternative implementation where useful. Preserve the
+   The corrected-packet audit and retained-pair semantic reassessment are complete
+   as development evidence. Before further comparisons, seek independent domain
+   review of scope and brief sufficiency. Include a blind alternative
+   implementation where useful. Preserve the
    qualified external-enforcement route and track its documented native wording
    limits. Use ordinary work briefs; review
    actual instructions, accessible files/history, skill resources and tool outputs
@@ -78,9 +85,17 @@ and the adapted OpenBench gateway. External skills remain experimental inputs.
    defects, and disagreements. `execution-context-v3` now retains outputless command
    completions, ordinary application-home source output and observable edit chronology.
    The supplementary lifecycle controls cover cached handover and reader limits
-   under a new task identity. Audit these instruments and reassess retained repairs
-   before interpreting more pairs; independent domain review remains pending.
-   Reuse retained solver artifacts in fresh evidence generations.
+   under a new task identity. Fresh investigative judgments now assess both
+   retained repairs with those observations, and a separate automated source audit
+   corroborates their concrete findings. The new report explicitly selects those
+   records while retaining earlier judgments and all judge invocation costs.
+   Both repairs miss history preservation; investigation also exposed a new
+   baseline-relative handover regression beyond the supplied checks. Supported
+   test outcomes remain distinct from contradicted broad completion claims.
+   Independent human/domain review remains pending; same-family agreement does
+   not establish reliability. Reuse retained solver artifacts in fresh evidence
+   generations, without counting related probes or overlapping criteria as
+   independent outcomes.
    Tiny authored label controls test the grader machinery; their difficulty does
    not define the task population. The earlier tiny-control human audit is no
    longer an active request or prerequisite after the task realignment; preserve

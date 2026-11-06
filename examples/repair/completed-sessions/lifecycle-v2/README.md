@@ -60,6 +60,22 @@ uv run --locked skilleval repair control /absolute/external/lifecycle-v2-task.js
   --output /absolute/external/lifecycle-v2-control
 ```
 
+For supplementary checks that will be selected in a native study report, collect
+from the **original retained native run** instead. A candidate snapshot alone
+does not establish native-attempt provenance:
+
+```sh
+uv run --locked skilleval repair collect /absolute/external/lifecycle-v2-task.json \
+  --task-sha256 NEW_TASK_DIGEST --run /absolute/external/original-native-run \
+  --output /absolute/external/lifecycle-v2-native-result
+```
+
+This verifies the shared input and task prompt, including the declared treatment
+wrapper when present, and retains the original native receipt. It does not rerun
+the solver. Check this new result in a fresh destination and use that result/check
+pair in the assessment and outcome selection. Preserve prior control results;
+never edit their provenance or reuse a check report bound to a different result.
+
 Only after freezing and qualifying the changed execution identity, run this
 credential-free application replay in the VM (never on the host):
 
@@ -81,3 +97,11 @@ full watcher-service event ordering (including unlink/debounce handover), other
 verification-tool readers, and the wider lifecycle space. The older corrupt-first
 probe does not cover preservation during replacement. These controls do not
 establish scored admission, judge reliability or a skill-effect estimate.
+
+The exact intermediate shorter-plain expectation is a fixture policy, not proof
+that the brief forbids retaining or merging longer history while both forms exist.
+Challenge that expectation with legitimate alternative repairs before using it as
+a general acceptance rule. The final restored-history observation can independently
+expose lost history after the plain sibling disappears. Likewise, distinguish
+preserving a previously checkable plain session at limit one from requiring every
+existing reader to support archives; the latter needs separate scope review.

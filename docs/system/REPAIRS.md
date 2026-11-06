@@ -202,9 +202,14 @@ retained raw trace when diagnosing a verification discrepancy.
 
 The [supplementary lifecycle controls](../../examples/repair/completed-sessions/lifecycle-v2/README.md)
 prepare a separate task identity for ordinary archive/plain cache handover and
-reader-limit behavior. Recollect retained candidates as explicitly labeled control
-artifacts before checking that generation. They do not change the original six
-probes or establish broader correctness from two additional observations.
+reader-limit behavior. A snapshot replay uses an explicitly labeled control
+artifact. To select supplementary checks in a native study report, use
+`repair collect` against the new task and the original retained native run, then check
+that fresh result. Collection enforces the original input and task prompt and
+retains the original native receipt; it does not create another solver attempt.
+Never relabel an existing control result or rewrite its check report to acquire
+native provenance. Neither route changes the original six probes or establishes
+broader correctness from two additional observations.
 
 The rubric separates `task-contract`, `scope-and-regressions` and
 `verification-claims`. Each permits `satisfied`, `violated` or `unresolved`, with

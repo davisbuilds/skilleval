@@ -198,13 +198,9 @@ Measure storage with allocated bytes as well as apparent file lengths. Sparse
 VM templates can have large logical capacities while occupying little disk;
 removing staging copies does not modify those runtime-bound templates.
 
-Other local storage needs a separate, scoped review. Duplicate downloads and
-scratch checkouts can be removed after verifying retained copies. Completed-run
-`checker-input.tar`, `validation-input.tar`, and native-run `tooling.tar` copies
-can be disposable, but only after checking the terminal recovery ticket, runtime
-HOME absence, and all evidence readers. Qualification `tooling.tar` archives are
-still rehashed by admission and must remain. `storage prune` does not remove these
-other archive types. Preserve source images, canonical inputs, artifacts, traces,
-judgments, failed-run evidence, and pending audits. Record the removed paths and
-verify retained records still load; do not treat an old directory name or a large
-apparent size as a deletion criterion.
+Completed-run checker, validation and native tooling archives have a separate
+`storage prune-staging` preview/apply path with producer and recovery checks.
+Qualification tooling remains required by admission. The [storage reference](STORAGE.md)
+owns durable locations, the exact staging allowlist, retained native rollouts,
+legacy paths, and source-checkout cleanup. Neither cleanup command expires
+canonical evidence, judgments, failed attempts or pending audits.

@@ -277,6 +277,7 @@ def test_vendor_bytes_and_fixed_native_configuration() -> None:
     config = tomllib.loads(codex_provider_config(8123, Path("/run/models.json")))
     assert config["model"] == "gpt-6.1-sol"
     assert config["model_reasoning_effort"] == "high"
+    assert config["model_reasoning_summary"] == "auto"
     assert config["model_catalog_json"] == "/run/models.json"
     provider = config["model_providers"][config["model_provider"]]
     assert provider == {
@@ -610,3 +611,53 @@ def test_receipt_flood_revokes_with_bounded_memory_and_no_extra_inference(short_
 def test_limits_are_bounded(changes: dict[str, object]) -> None:
     with pytest.raises(SkillEvalError):
         GatewayLimits(**cast(dict, changes))
+
+
+@pytest.mark.parametrize(
+    "optional_fields",
+    [
+        {"content": None, "encrypted_content": None},
+        {"content": None, "encrypted_content": "opaque-replay"},
+        {"encrypted_content": None},
+        {"encrypted_content": "opaque-replay"},
+    ],
+)
+def test_native_nullable_reasoning_replay_preserves_bytes_and_refuses_other_shapes(
+    short_root: Path, optional_fields: dict[str, object]
+) -> None:
+    auth = load_chatgpt_auth(write_auth(short_root, time.time() + 600))
+    seen: list[bytes] = []
+
+    def transport(body: bytes, _headers: dict[str, str], _timeout: float) -> Stream:
+        seen.append(body)
+        return Stream()
+
+    item = {
+        "type": "reasoning",
+        "id": "rs_native",
+        "summary": [{"type": "summary_text", "text": "Readable authored summary."}],
+        **optional_fields,
+    }
+    body = {**BODY, "input": [item]}
+    with broker_scope(auth, short_root / "b", limits=LIMITS, test_transport=transport) as broker:
+        assert request(broker.socket_path, body)[0] == 200
+        assert seen == [json.dumps(body).encode()]
+        for changed in (
+            {"content": []},
+            {"content": [{"type": "reasoning_text", "text": "unqualified content"}]},
+            {"content": {}},
+            {"content": ""},
+            {"content": False},
+            {"content": 0},
+            {"encrypted_content": []},
+            {"encrypted_content": {}},
+            {"encrypted_content": False},
+            {"encrypted_content": 0},
+            {"unknown_field": None},
+            {"summary": [{"type": "summary_text", "text": "text", "unknown_field": None}]},
+            {"summary": [{"type": "output_text", "text": "text"}]},
+            {"summary": None},
+        ):
+            denied = {**BODY, "input": [{**item, **changed}]}
+            assert request(broker.socket_path, denied)[0] == 400, changed
+        assert seen == [json.dumps(body).encode()]

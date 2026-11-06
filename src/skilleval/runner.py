@@ -647,6 +647,144 @@ def _member(archive: Path, name: str, maximum: int) -> bytes:
         return stream.read(maximum + 1)
 
 
+def _rollout_coverage(raw: bytes, thread_id: str | None, turn_id: str | None) -> dict[str, Any]:
+    """Describe retained native records, without interpreting encrypted bytes as text."""
+    result: dict[str, Any] = {
+        "records": 0,
+        "parse_error_count": 0,
+        "session_matches": 0,
+        "session_metadata_records": 0,
+        "turn_started": False,
+        "turn_terminal": False,
+        "response_items": 0,
+        "reasoning_items": 0,
+        "summary_characters": 0,
+        "content_characters": 0,
+        "encrypted_reasoning_items": 0,
+        "tool_calls": 0,
+        "tool_outputs": 0,
+        "assistant_messages": 0,
+    }
+    for line in raw.splitlines():
+        try:
+            record = json.loads(line)
+            if not isinstance(record, dict) or not isinstance(record.get("payload"), dict):
+                raise ValueError
+            payload = record["payload"]
+            kind = record.get("type")
+            if not isinstance(kind, str) or (
+                kind in {"event_msg", "response_item"} and not isinstance(payload.get("type"), str)
+            ):
+                raise ValueError
+            result["records"] += 1
+            if kind == "session_meta":
+                result["session_metadata_records"] += 1
+                result["session_matches"] += int(
+                    isinstance(thread_id, str) and payload.get("id") == thread_id
+                )
+            elif kind == "event_msg" and payload.get("turn_id") == turn_id and turn_id:
+                if payload.get("type") == "task_started":
+                    result["turn_started"] = True
+                elif payload.get("type") in {"task_complete", "turn_aborted"}:
+                    result["turn_terminal"] = True
+            elif kind == "response_item":
+                result["response_items"] += 1
+                item_type = payload.get("type")
+                if item_type == "reasoning":
+                    result["reasoning_items"] += 1
+                    for key in ("summary", "content"):
+                        parts = payload.get(key)
+                        if parts is None:
+                            parts = []
+                        if not isinstance(parts, list):
+                            raise ValueError
+                        for part in parts:
+                            if not isinstance(part, dict) or not isinstance(part.get("text"), str):
+                                raise ValueError
+                            result[key + "_characters"] += len(part["text"])
+                    if payload.get("encrypted_content"):
+                        if not isinstance(payload["encrypted_content"], str):
+                            raise ValueError
+                        result["encrypted_reasoning_items"] += 1
+                elif item_type in {"function_call", "custom_tool_call", "local_shell_call"}:
+                    result["tool_calls"] += 1
+                elif item_type in {"function_call_output", "custom_tool_call_output"}:
+                    result["tool_outputs"] += 1
+                elif (
+                    item_type in {"message", "agent_message"} and payload.get("role") == "assistant"
+                ):
+                    result["assistant_messages"] += 1
+        except (ValueError, UnicodeError, RecursionError):
+            result["parse_error_count"] += 1
+    if raw and not raw.endswith(b"\n"):
+        result["parse_error_count"] += 1
+    result["readable_summary_observed"] = result["summary_characters"] > 0
+    result["readable_content_observed"] = result["content_characters"] > 0
+    result["status"] = (
+        "retained"
+        if result["parse_error_count"] == 0
+        and result["session_matches"] == 1
+        and result["session_metadata_records"] == 1
+        and result["turn_started"]
+        and result["turn_terminal"]
+        else "incomplete"
+    )
+    return result
+
+
+def native_rollouts(
+    archive: Path, manifest: dict[str, Any], protocol: dict[str, Any], maximum: int
+) -> dict[str, Any]:
+    """Inspect VM-local rollout JSONL inside a validated archive; never extract it.
+
+    This reports capture coverage, not reasoning truth, task quality, or a trusted
+    guest provenance claim. Legacy results need not carry this new policy field.
+    """
+    entries = [
+        entry
+        for entry in manifest["entries"]
+        if (entry["path"].startswith("codex-home/sessions/") and entry["path"].endswith(".jsonl"))
+    ]
+    files: list[dict[str, Any]] = []
+    retained = 0
+    # One tar traversal: rescanning the full archive for every rollout would
+    # multiply the byte budget by the (up to 10,000) member-count budget.
+    wanted = {entry["path"]: entry for entry in entries}
+    with tarfile.open(archive, "r:") as source:
+        for info in source:
+            entry = wanted.get(info.name)
+            if entry is None:
+                continue
+            stream = source.extractfile(info)
+            if stream is None or not info.isfile() or info.size > maximum:
+                raise SkillEvalError("native rollout member unavailable or too large")
+            raw = stream.read(maximum + 1)
+            if len(raw) != entry["size"] or hashlib.sha256(raw).hexdigest() != entry["sha256"]:
+                raise SkillEvalError("native rollout changed after artifact validation")
+            coverage = _rollout_coverage(raw, protocol.get("thread_id"), protocol.get("turn_id"))
+            primary = coverage["status"] == "retained"
+            retained += primary
+            if primary:
+                files.insert(0, {**entry, "coverage": coverage})
+                del files[64:]
+            elif len(files) < 64:
+                files.append({**entry, "coverage": coverage})
+    status = "retained" if retained == 1 else "missing" if not entries else "incomplete"
+    return {
+        "schema_version": 1,
+        "policy": app_server.CAPTURE_POLICY,
+        "status": status,
+        "archive": "artifacts.tar",
+        "file_count": len(entries),
+        "files": files,
+        "files_omitted": len(entries) - len(files),
+        "primary_thread_id": protocol.get("thread_id"),
+        "primary_turn_id": protocol.get("turn_id"),
+        "app_server": protocol.get("reasoning"),
+        "basis": "guest-authored native JSONL; metadata/turn identity and capture coverage",
+    }
+
+
 def _copy_artifacts(session: Lifecycle, destination: Path, maximum: int) -> dict[str, Any]:
     # Bound writes made by the host copy client, before inspecting hostile bytes.
     # This trusted controller fragment never imports or executes guest artifacts.
@@ -792,6 +930,8 @@ def run_native(
         "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
         "model": MODEL,
         "effort": EFFORT,
+        "capture_policy": app_server.CAPTURE_POLICY,
+        "reasoning_summary_requested": "auto",
         "gateway_limits": asdict(limits),
         "native_timeout_seconds": native_timeout_seconds,
         "gateway_budget": {
@@ -844,6 +984,15 @@ def run_native(
         if synthetic_transport is not None:
             _exclusive(output / f"request-{record['index']}.json", raw)
         try:
+            body = json.loads(raw)
+            reasoning = body.get("reasoning", {}) if isinstance(body, dict) else {}
+            record["reasoning_summary"] = (
+                reasoning.get("summary", "omitted")
+                if isinstance(reasoning, dict)
+                and reasoning.get("summary", "omitted")
+                in {"auto", "concise", "detailed", "none", "omitted"}
+                else "invalid"
+            )
             record["context"] = context_guard.request_context(raw)
             context_guard.check_request_context(
                 record["context"],
@@ -1092,6 +1241,9 @@ def run_native(
             parsed["harness"] = "codex-app-server-jsonrpc-v2"
             parsed["adapter"] = "app-server-v2-to-canonical-v1"
             protocol = process.get("protocol", {})
+            report["native_rollouts"] = native_rollouts(
+                archive, artifact_manifest, protocol, max_artifact_bytes
+            )
             if (
                 protocol.get("complete") is not True
                 or process.get("pipe_drain_incomplete")
@@ -1152,6 +1304,7 @@ def run_native(
                 and process.get("output_limit_reached") is False
                 and process.get("protocol", {}).get("complete") is True
                 and process.get("protocol", {}).get("permissions_confirmed") is True
+                and report["native_rollouts"]["status"] == "retained"
                 and solver_boundary.valid_receipt(process.get("boundary"))
                 and process["boundary"]["native_returncode"] == 0
                 and parsed["execution_status"] == "completed"

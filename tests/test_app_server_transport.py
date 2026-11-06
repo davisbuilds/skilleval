@@ -37,9 +37,9 @@ assert read() == {'method':'initialized'}
 request = read()
 assert request['method'] == 'thread/start'
 assert request['params']['approvalPolicy'] == 'never'
-assert request['params']['ephemeral'] is True
+assert request['params']['ephemeral'] is False
 assert request['params']['cwd'] == str(root)
-send({'id':request['id'], 'result':{'thread':{'id':'thread-1', 'ephemeral':True},
+send({'id':request['id'], 'result':{'thread':{'id':'thread-1', 'ephemeral':False},
     'approvalPolicy':'never', 'sandbox':{'type':'readOnly','networkAccess':False}}})
 request = read()
 assert request['method'] == 'turn/start'

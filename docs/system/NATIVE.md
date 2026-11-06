@@ -19,7 +19,7 @@ rubric; [TASKS.md](TASKS.md) owns their preparation, grading, and readable repor
 ## Inputs and boundaries
 
 The production adapter runs `codex app-server` over stdio inside the solver
-boundary. A controller outside that boundary initializes a fresh ephemeral thread,
+boundary. A controller outside that boundary initializes a fresh persistent VM-local thread,
 then starts one turn with approvals disabled and
 `externalSandbox` / `networkAccess: restricted`. The controller requires Codex's
 effective-settings notification to confirm that policy. The VM and solver
@@ -40,6 +40,14 @@ Final text comes from a successful, matched terminal exchange. Missing replies,
 malformed records, unexpected approval requests, output limits and incomplete
 drains prevent completion. The process deadline terminates the namespace;
 turn-interrupt acknowledgments are not used as proof of termination.
+
+Native capture policy `native-rollout-summary-v1` retains the isolated guest
+`codex-home/sessions/**/*.jsonl` files inside `artifacts.tar`. The generated config
+requests `model_reasoning_summary = "auto"`; the actual request parameter and
+readable-summary coverage are recorded separately. This changes future runs,
+not historical ephemeral sessions. Readable summaries are provider output and
+may be absent; encrypted reasoning is not readable reasoning. See
+[storage and rollout retention](STORAGE.md#native-rollouts).
 
 Usage uses the latest matched cumulative snapshot, never the sum of snapshots;
 missing telemetry stays unknown. [ACCOUNTING.md](ACCOUNTING.md) owns provenance
