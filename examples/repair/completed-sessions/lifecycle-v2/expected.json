@@ -1,0 +1,243 @@
+[
+  {
+    "probe_id": "cached-sibling-handover",
+    "expected": {
+      "initial": {
+        "browser_ids": [
+          "rollout-2026-10-07T09-00-00-019f2000-abcd-7000-8000-000000000021"
+        ],
+        "messages": [
+          {
+            "ordinal": 0,
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "Inspect the invoice export for duplicate line items."
+              }
+            ]
+          },
+          {
+            "ordinal": 1,
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "The draft export has two repeated line items."
+              }
+            ]
+          },
+          {
+            "ordinal": 2,
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "Remove the duplicates and report the retained total."
+              }
+            ]
+          },
+          {
+            "ordinal": 3,
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "The export retains twelve unique line items."
+              }
+            ]
+          }
+        ],
+        "usage": [
+          {
+            "tokens_in": 600,
+            "cache_read_tokens": 200,
+            "tokens_out": 40,
+            "response_id": "demo-9-a"
+          },
+          {
+            "tokens_in": 250,
+            "cache_read_tokens": 100,
+            "tokens_out": 30,
+            "response_id": "demo-9-b"
+          }
+        ]
+      },
+      "shortened": {
+        "browser_ids": [
+          "rollout-2026-10-07T09-00-00-019f2000-abcd-7000-8000-000000000021"
+        ],
+        "messages": [
+          {
+            "ordinal": 0,
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "Inspect the invoice export for duplicate line items."
+              }
+            ]
+          },
+          {
+            "ordinal": 1,
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "The draft export has two repeated line items."
+              }
+            ]
+          }
+        ],
+        "usage": [
+          {
+            "tokens_in": 600,
+            "cache_read_tokens": 200,
+            "tokens_out": 40,
+            "response_id": "demo-9-a"
+          }
+        ]
+      },
+      "restored": {
+        "browser_ids": [
+          "rollout-2026-10-07T09-00-00-019f2000-abcd-7000-8000-000000000021"
+        ],
+        "messages": [
+          {
+            "ordinal": 0,
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "Inspect the invoice export for duplicate line items."
+              }
+            ]
+          },
+          {
+            "ordinal": 1,
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "The draft export has two repeated line items."
+              }
+            ]
+          },
+          {
+            "ordinal": 2,
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "Remove the duplicates and report the retained total."
+              }
+            ]
+          },
+          {
+            "ordinal": 3,
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "The export retains twelve unique line items."
+              }
+            ]
+          }
+        ],
+        "usage": [
+          {
+            "tokens_in": 600,
+            "cache_read_tokens": 200,
+            "tokens_out": 40,
+            "response_id": "demo-9-a"
+          },
+          {
+            "tokens_in": 250,
+            "cache_read_tokens": 100,
+            "tokens_out": 30,
+            "response_id": "demo-9-b"
+          }
+        ]
+      },
+      "repeated": {
+        "browser_ids": [
+          "rollout-2026-10-07T09-00-00-019f2000-abcd-7000-8000-000000000021"
+        ],
+        "messages": [
+          {
+            "ordinal": 0,
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "Inspect the invoice export for duplicate line items."
+              }
+            ]
+          },
+          {
+            "ordinal": 1,
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "The draft export has two repeated line items."
+              }
+            ]
+          },
+          {
+            "ordinal": 2,
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "Remove the duplicates and report the retained total."
+              }
+            ]
+          },
+          {
+            "ordinal": 3,
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "The export retains twelve unique line items."
+              }
+            ]
+          }
+        ],
+        "usage": [
+          {
+            "tokens_in": 600,
+            "cache_read_tokens": 200,
+            "tokens_out": 40,
+            "response_id": "demo-9-a"
+          },
+          {
+            "tokens_in": 250,
+            "cache_read_tokens": 100,
+            "tokens_out": 30,
+            "response_id": "demo-9-b"
+          }
+        ]
+      },
+      "archive_unchanged": true
+    }
+  },
+  {
+    "probe_id": "reader-limit",
+    "expected": {
+      "limit1": {
+        "session_count": 1,
+        "checked_count": 1,
+        "distinct_sessions": 1,
+        "values_match_fixture": true
+      },
+      "limit2": {
+        "session_count": 2,
+        "checked_count": 2,
+        "distinct_sessions": 2,
+        "values_match_fixture": true
+      }
+    }
+  }
+]

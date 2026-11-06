@@ -258,3 +258,7 @@ Keep the map and its evidence outside all solver captures. A structurally valid 
 with coverage gaps remains incomplete measurement evidence. The
 [measurement workflow](../../../docs/project/MEASUREMENT.md) describes the remaining
 control, reviewer and sampling work before further comparisons.
+
+The [generation-2 lifecycle controls](lifecycle-v2/README.md) supplement this fixture
+with normal cached archive/plain handover and reader-limit observations. They use
+a new task identity and preserve all original six-probe bytes and outcomes.
