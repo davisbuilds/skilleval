@@ -24,7 +24,7 @@ INITIALIZED = {
 THREAD = {
     "id": 2,
     "result": {
-        "thread": {"id": "thread-1", "ephemeral": True, "turns": []},
+        "thread": {"id": "thread-1", "ephemeral": False, "turns": []},
         "model": "configured-model",
         "modelProvider": "local-gateway",
         "approvalPolicy": "never",
@@ -126,7 +126,7 @@ def test_handshake_inherits_frozen_config_and_sets_only_native_permissions() -> 
                 "cwd": "/workspace/task",
                 "sandbox": "read-only",
                 "approvalPolicy": "never",
-                "ephemeral": True,
+                "ephemeral": False,
             },
         },
     ]
@@ -431,7 +431,7 @@ def test_unknown_unrelated_notifications_are_ignored() -> None:
 @pytest.mark.parametrize(
     "changed",
     [
-        {"thread": {"id": "thread-1", "ephemeral": False}},
+        {"thread": {"id": "thread-1", "ephemeral": True}},
         {"approvalPolicy": "onRequest"},
         {"sandbox": {"type": "dangerFullAccess"}},
     ],
@@ -469,3 +469,38 @@ def test_input_evidence_is_not_mutated_or_aliased_by_canonicalization() -> None:
     finish(session, items=[COMMAND])
     assert session.complete
     assert session.events[-2]["item"]["command"] == "python -m pytest"
+
+
+def test_reasoning_coverage_distinguishes_completed_text_and_streamed_summaries() -> None:
+    session = ready()
+    item(session, {"id": "r", "type": "reasoning", "summary": [], "content": []})
+    assert session.reasoning_coverage["completed_items"] == 1
+    assert session.reasoning_coverage["readable_summary_observed"] is False
+    session.receive(
+        note(
+            "item/reasoning/summaryTextDelta",
+            turnId="turn-1",
+            itemId="r",
+            summaryIndex=0,
+            delta="Visible summary.",
+        )
+    )
+    item(
+        session, {"id": "r2", "type": "reasoning", "summary": ["Completed summary."], "content": []}
+    )
+    coverage = session.reasoning_coverage
+    assert coverage["completed_items"] == 2
+    assert coverage["summary_characters"] == len("Completed summary.")
+    assert coverage["readable_summary_observed"] is True
+    assert coverage["readable_content_observed"] is False
+    assert coverage["delta_characters"]["summary_characters"] == len("Visible summary.")
+
+
+@pytest.mark.parametrize("field,value", [("summary", "bad"), ("content", [5])])
+def test_malformed_readable_reasoning_is_retained_as_protocol_failure(
+    field: str, value: Any
+) -> None:
+    session = ready()
+    with pytest.raises(ValueError, match="array of strings"):
+        item(session, {"id": "r", "type": "reasoning", "summary": [], "content": [], field: value})
+    assert session.errors and not session.complete

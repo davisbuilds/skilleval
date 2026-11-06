@@ -162,12 +162,17 @@ host/path and certificate validation are fixed. Redirects and non-SSE responses
 are rejected without exposing upstream errors. Stream cancellation, deadline,
 request limits, and receipt failure fail closed.
 
-The host validator has one explicit adaptation from the pinned upstream source:
+The host validator has two explicit adaptations from the pinned upstream source:
 `output_text` may retain `annotations: []` and `logprobs: []`. The native DTO
 [deliberately preserves those empty arrays](https://github.com/openai/codex/blob/6aaac694803004a63c6f393d153c96d22521a6b9/codex-rs/protocol/src/models.rs#L898).
 They remain forbidden on `input_text`; nonempty, null, and unknown metadata
 remain rejected. Validation preserves the actual request bytes and history.
-No additional reasoning-field compatibility is implied.
+Reasoning replay also admits `content: null` and `encrypted_content: null`,
+matching the pinned native DTO's [optional-field serialization](https://github.com/openai/codex/blob/6aaac694803004a63c6f393d153c96d22521a6b9/codex-rs/protocol/src/models.rs#L1095).
+The existing string-valued encrypted replay remains accepted. Non-null reasoning
+`content` (including empty arrays), unknown fields, and malformed summary parts
+remain rejected. This compatibility preserves original request bytes; it neither
+adds raw reasoning replay nor treats encrypted content as readable summaries.
 
 The longer [native runner](NATIVE.md) retains bounded field/type-only diagnostics
 for rejected histories. These diagnostics contain no prompt or encrypted values;
@@ -263,9 +268,9 @@ The gateway implementation was copied from
 The original upstream SHA-256 is
 `ed02f42cc52a22cfd16d49e3d639a27ce66de0b3bc3a9f41758c646bb26aed48`.
 The adapted host-validator SHA-256 is
-`5159253383750db2583a51ea6789ff9e7cb897dfb7c73e2629293c84bd5ef5a0`.
+`245b93cf59a1d465a89be6aeeca388ad6dfedbf62e82b2147ed95fdb8498a4b6`.
 The adjacent `openbench_gateway.patch` and `openbench_gateway.provenance.json`
-record the complete narrow adaptation and its source. Reports separately hash
+record the complete narrow adaptations and their sources. Reports separately hash
 the host vendor module and the guest relay module: an image can retain the
 original guest relay because that component does not validate request bodies.
 The adjacent `src/skilleval/_vendor/OPENBENCH_LICENSE` preserves Matthew Lam's

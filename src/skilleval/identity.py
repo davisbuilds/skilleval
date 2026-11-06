@@ -50,6 +50,7 @@ SOURCES = (
     "src/skilleval/judge.py",
     "src/skilleval/treatments.py",
     "scripts/qualify-native.py",
+    "scripts/qualify-rollout.py",
     "scripts/qualify-context.py",
     "scripts/qualify-solver.py",
     "scripts/qualify-lifecycle.py",

@@ -89,7 +89,8 @@ elif args[:2]==['machine','exec']:
   fault=scenario.get('fault')
   process={'returncode':0,'timed_out':False,'codex_version':'codex-cli 0.164.0',
    'pipe_drain_incomplete':False,'output_limit_reached':False,
-   'protocol':{'transport':'stdio-jsonrpc','complete':True,'permissions_confirmed':True},
+   'protocol':{'transport':'stdio-jsonrpc','complete':True,'permissions_confirmed':True,
+    'thread_id':'synthetic','turn_id':'turn-synthetic'},
    'boundary':{'schema_version':1,'profile':'solver-isolated-v1','status':'ready',
     'uid':61000,'gid':61000,'groups':[],'no_new_privs':True,'capabilities_cleared':True,
     'transport_filter':'vsock-deny-v1','seccomp':True,
@@ -118,6 +119,19 @@ elif args[:2]==['machine','exec']:
   if scenario.get('complete_usage') and fault!='timed-out':
    events[-1]['usage']={'input_tokens':3,'cached_input_tokens':1,'output_tokens':2}
   raw='\n'.join(json.dumps(e) for e in events).encode()
+  rollout=[{'type':'session_meta','payload':{'id':'synthetic'}},
+   {'type':'event_msg','payload':{'type':'task_started','turn_id':'turn-synthetic'}},
+   {'type':'response_item','payload':{'type':'reasoning',
+    'summary':[{'type':'summary_text','text':'Readable authored summary.'}],
+    'encrypted_content':'opaque ciphertext'}},
+   {'type':'response_item','payload':{'type':'function_call','name':'exec_command'}},
+   {'type':'response_item','payload':{'type':'function_call_output','output':'authored'}},
+   {'type':'event_msg','payload':{'type':'task_complete','turn_id':'turn-synthetic'}}]
+  if fault=='rollout-incomplete':rollout.pop()
+  if fault=='rollout-mismatch':rollout[0]['payload']['id']='other-thread'
+  if fault!='rollout-missing':
+   entries['codex-home/sessions/2026/11/06/rollout-synthetic.jsonl']=(
+    ('\n'.join(json.dumps(e) for e in rollout)+'\n').encode(),0o600)
   entries['evidence/events.jsonl']=(raw,0o600)
   entries['evidence/app-server-rpc.jsonl']=(b'{"method":"synthetic/retained"}\n',0o600)
   entries['evidence/app-server-input.jsonl']=(b'{"method":"initialize","id":1}\n',0o600)
@@ -674,6 +688,7 @@ def test_host_broker_observer_keeps_hashes_without_raw_values(
             "input_bytes": len(secret),
             **runner.protocol_shape(secret),
             "context": runner.context_guard.request_context(secret),
+            "reasoning_summary": "omitted",
         }
     ]
     assert b"PRIVATE_TASK_VALUE" not in (tmp_path / "run/native-run.json").read_bytes()
@@ -846,3 +861,61 @@ def test_native_cli_artifact_budget_reaches_bounded_runner(
     else:
         assert "invalid native workload" in captured.err
         assert not output.exists()
+
+
+def test_native_run_requires_retained_rollout_and_reports_readable_coverage(
+    tmp_path: Path, route: dict[str, Any]
+) -> None:
+    report = invoke(tmp_path, route, "rollout-missing")
+    assert report["status"] == "failed"
+    assert report["native_rollouts"]["status"] == "missing"
+    assert report["native_rollouts"]["files"] == []
+
+
+def test_retained_rollout_has_identity_and_independent_readable_summary_coverage(
+    tmp_path: Path, route: dict[str, Any]
+) -> None:
+    report = invoke(tmp_path, route)
+    assert report["status"] == "completed", report.get("error")
+    rollouts = report["native_rollouts"]
+    assert rollouts["status"] == "retained"
+    assert rollouts["primary_thread_id"] == "synthetic"
+    retained = rollouts["files"][0]
+    assert len(retained["sha256"]) == 64 and retained["size"] > 0
+    coverage = retained["coverage"]
+    assert coverage["session_matches"] == 1
+    assert coverage["turn_started"] and coverage["turn_terminal"]
+    assert coverage["readable_summary_observed"] is True
+    assert coverage["readable_content_observed"] is False
+    assert coverage["encrypted_reasoning_items"] == 1
+    assert coverage["tool_calls"] == coverage["tool_outputs"] == 1
+
+
+@pytest.mark.parametrize("fault", ["rollout-incomplete", "rollout-mismatch"])
+def test_incomplete_or_wrong_thread_rollout_cannot_qualify_capture(
+    tmp_path: Path, route: dict[str, Any], fault: str
+) -> None:
+    report = invoke(tmp_path, route, fault)
+    assert report["status"] == "failed"
+    assert report["native_rollouts"]["status"] == "incomplete"
+    assert report["native_rollouts"]["files"][0]["size"] > 0
+
+
+def test_encrypted_reasoning_alone_does_not_claim_readable_summary() -> None:
+    records = [
+        {"type": "session_meta", "payload": {"id": "t"}},
+        {"type": "event_msg", "payload": {"type": "task_started", "turn_id": "u"}},
+        {
+            "type": "response_item",
+            "payload": {"type": "reasoning", "summary": [], "encrypted_content": "opaque"},
+        },
+        {"type": "event_msg", "payload": {"type": "task_complete", "turn_id": "u"}},
+    ]
+    raw = b"".join(json.dumps(record).encode() + b"\n" for record in records)
+    coverage = runner._rollout_coverage(raw, "t", "u")
+    assert coverage["status"] == "retained"
+    assert coverage["encrypted_reasoning_items"] == 1
+    assert coverage["readable_summary_observed"] is False
+    assert coverage["readable_content_observed"] is False
+    broken = runner._rollout_coverage(raw + b"{", "t", "u")
+    assert broken["status"] == "incomplete" and broken["parse_error_count"] == 2

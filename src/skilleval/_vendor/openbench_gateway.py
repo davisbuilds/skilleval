@@ -512,7 +512,7 @@ def validate_body(raw: bytes, config: GatewayConfig) -> dict:
             elif kind == "reasoning":
                 _keys(
                     item,
-                    {"type", "id", "summary", "encrypted_content", "status"},
+                    {"type", "id", "summary", "content", "encrypted_content", "status"},
                     {"type", "summary"},
                 )
                 if not isinstance(item["summary"], list):
@@ -522,7 +522,11 @@ def validate_body(raw: bytes, config: GatewayConfig) -> dict:
                     if part["type"] != "summary_text":
                         raise ValueError("unsupported summary")
                     _string(part["text"])
-                if "encrypted_content" in item:
+                # Codex 0.164.0 serializes absent optional reasoning fields as
+                # null in replay. Admit that exact empty shape, not raw content.
+                if item.get("content") is not None:
+                    raise ValueError("non-null reasoning content is forbidden")
+                if item.get("encrypted_content") is not None:
                     _string(item["encrypted_content"])
             else:
                 raise ValueError("hosted input and references are forbidden")

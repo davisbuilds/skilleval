@@ -9,7 +9,8 @@ import re
 from typing import Any
 
 ADAPTER_NAME = "codex-app-server-jsonrpc"
-ADAPTER_VERSION = 1
+ADAPTER_VERSION = 2
+CAPTURE_POLICY = "native-rollout-summary-v1"
 CODEX_PROTOCOL_VERSION = "0.164.0"
 _SANDBOX = {"type": "externalSandbox", "networkAccess": "restricted"}
 _COUNTERS = (
@@ -58,7 +59,7 @@ def _fields(value: Any) -> Any:
 
 
 class Session:
-    """Drive initialize, an ephemeral thread, and one externally sandboxed turn."""
+    """Drive initialize, a VM-local persisted thread, and one externally sandboxed turn."""
 
     def __init__(self, prompt: str, work: str) -> None:
         self.prompt = prompt
@@ -67,8 +68,11 @@ class Session:
         self.errors: list[str] = []
         self.terminal = False
         self.permissions_confirmed = False
+        self.persistence_confirmed = False
         self.thread_id: str | None = None
         self.turn_id: str | None = None
+        self.rollout_path: str | None = None
+        self.reasoning_deltas = {"summary_characters": 0, "content_characters": 0}
         self._pending: int | None = None
         self._started = False
         self._turn_requested = False
@@ -93,6 +97,25 @@ class Session:
     @property
     def final_text(self) -> str:
         return self._final if self.complete else ""
+
+    @property
+    def reasoning_coverage(self) -> dict[str, Any]:
+        items = [item for item in self._items.values() if item["type"] == "reasoning"]
+        summary = sum(len(text) for item in items for text in item["summary"])
+        content = sum(len(text) for item in items for text in item["content"])
+        return {
+            "completed_items": len(items),
+            "summary_characters": summary,
+            "content_characters": content,
+            "delta_characters": dict(self.reasoning_deltas),
+            "readable_summary_observed": bool(
+                summary or self.reasoning_deltas["summary_characters"]
+            ),
+            "readable_content_observed": bool(
+                content or self.reasoning_deltas["content_characters"]
+            ),
+            "basis": "app-server items and deltas; encrypted content is separate",
+        }
 
     def start(self) -> list[dict[str, Any]]:
         if self._started:
@@ -154,17 +177,21 @@ class Session:
                         "cwd": self.work,
                         "sandbox": "read-only",
                         "approvalPolicy": "never",
-                        "ephemeral": True,
+                        "ephemeral": False,
                     },
                 },
             ]
         if request_id == 2:
             thread = _object(result.get("thread"), "thread/start.thread")
             self.thread_id = _text(thread.get("id"), "thread id")
+            path = thread.get("path")
+            if path is not None:
+                self.rollout_path = _text(path, "thread rollout path")
             if self._announced_thread not in (None, self.thread_id):
                 raise ValueError("thread/start response scope mismatch")
-            if thread.get("ephemeral") is not True:
-                raise ValueError("thread/start did not confirm an ephemeral thread")
+            if thread.get("ephemeral") is not False:
+                raise ValueError("thread/start did not confirm a VM-local persisted thread")
+            self.persistence_confirmed = True
             if result.get("approvalPolicy") != "never":
                 raise ValueError("thread/start approval policy mismatch")
             if result.get("sandbox") != {"type": "readOnly", "networkAccess": False}:
@@ -252,6 +279,16 @@ class Session:
         )
         if self.terminal:
             raise ValueError("relevant notification arrived after terminal turn")
+        if method in {"item/reasoning/summaryTextDelta", "item/reasoning/textDelta"}:
+            delta = params.get("delta")
+            if not isinstance(delta, str):
+                raise ValueError("reasoning delta must be a string")
+            key = (
+                "summary_characters"
+                if method.endswith("summaryTextDelta")
+                else "content_characters"
+            )
+            self.reasoning_deltas[key] += len(delta)
         if method == "thread/settings/updated":
             settings = _object(params.get("threadSettings"), "thread settings")
             if (
@@ -302,6 +339,12 @@ class Session:
                 raise ValueError("agent message text must be a string")
             if item.get("phase") is not None and not isinstance(item["phase"], str):
                 raise ValueError("agent message phase must be a string or null")
+        elif kind == "reasoning":
+            for key in ("summary", "content"):
+                if not isinstance(item.get(key), list) or any(
+                    not isinstance(part, str) for part in item[key]
+                ):
+                    raise ValueError(f"reasoning {key} must be an array of strings")
         elif kind in {"commandExecution", "fileChange"}:
             status = _text(item.get("status"), "item status")
             allowed = {"completed", "failed", "declined"}

@@ -185,6 +185,9 @@ def test_rejected_request_diagnostic_records_shapes_without_values(probe: dict[s
             {
                 "type": "reasoning",
                 "summary": [],
+                # A known protocol key forbidden on this item type. Null
+                # content is now supported; this still exercises key diagnostics.
+                "role": "assistant",
                 "content": [
                     {
                         "type": "reasoning_text",
@@ -203,7 +206,7 @@ def test_rejected_request_diagnostic_records_shapes_without_values(probe: dict[s
     assert secret not in serialized and "gpt-6.1-sol" not in serialized
     assert len(serialized.encode()) <= 16384
     sites = [site for site in diagnostic["frames"] if site["function"] == "_keys"]
-    assert any(site.get("extra_keys") == ["content"] for site in sites)
+    assert any(site.get("extra_keys") == ["role"] for site in sites)
     assert diagnostic["input_items"][0]["type"] == "reasoning"
     assert diagnostic["input_items"][0]["content_items"][0]["type"] == "reasoning_text"
 
