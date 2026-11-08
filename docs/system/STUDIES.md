@@ -5,6 +5,11 @@ independent grader audit remains pending. It never grants scored admission or
 converts an execution status into a correctness score. Judge reliability controls and native
 assessment recording remain separate workflows.
 
+For a specification followed by fresh vanilla implementation, use the bounded
+[handoff workflow](HANDOFFS.md). It binds an explicitly selected writer artifact
+to its original baseline and records stage and combined consumption separately
+from semantic quality and judge overhead.
+
 New plans default to explicit-use ON/OFF. Schema-1 plans retain natural availability;
 schema-2 plans retain their declared invocation policy. Both older versions remain
 review-only. Native usage normalization, optional conditional

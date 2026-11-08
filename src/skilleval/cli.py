@@ -17,6 +17,7 @@ from skilleval.accounting import PriceSchedule
 from skilleval.calibration import CalibrationResult
 from skilleval.contracts import Assessment, Attempt, Experiment, Record, Task
 from skilleval.errors import SkillEvalError
+from skilleval.handoff import HandoffReportSpec, SpecHandoffSpec
 from skilleval.judge import AgenticCalibrationResult, AgenticReviewResult
 from skilleval.reliability import ReliabilityObservations, ReliabilitySuite
 from skilleval.repair import RepairSpec
@@ -52,6 +53,8 @@ RECORDS: dict[str, type[Record]] = {
     "document-assessment": DocumentAssessment,
     "task-package-spec": TaskPackageSpec,
     "acceptance-map-spec": AcceptanceMapSpec,
+    "spec-handoff-spec": SpecHandoffSpec,
+    "handoff-report-spec": HandoffReportSpec,
 }
 
 
@@ -301,6 +304,21 @@ def parser() -> argparse.ArgumentParser:
     package_validate.add_argument("--sha256", required=True)
     package_validate.add_argument("--runtime", type=Path, required=True)
     package_validate.add_argument("--output", type=Path, required=True)
+    handoff = commands.add_parser("handoff", help="Freeze a spec for fresh vanilla implementation")
+    handoff_commands = handoff.add_subparsers(dest="operation", required=True)
+    handoff_prepare = handoff_commands.add_parser(
+        "prepare", help="Select exact retained spec bytes"
+    )
+    handoff_prepare.add_argument("spec", type=Path)
+    handoff_prepare.add_argument("--output", type=Path, required=True)
+    for action in ("verify", "check-implementation"):
+        operation = handoff_commands.add_parser(action)
+        operation.add_argument("handoff", type=Path)
+        operation.add_argument("--sha256", required=True, help="Retained handoff digest")
+        if action == "check-implementation":
+            operation.add_argument("--run", type=Path, required=True)
+    handoff_report = handoff_commands.add_parser("report", help="Replay selected stage consumption")
+    handoff_report.add_argument("spec", type=Path)
     repair = commands.add_parser(
         "repair", aliases=["artifact"], help="Collect file artifacts and run offline checks"
     )
@@ -396,6 +414,25 @@ def write_new_json(path: Path, value: object) -> None:
 
 
 def dispatch(args: argparse.Namespace) -> dict[str, Any]:
+    if args.command == "handoff":
+        from skilleval.handoff import (
+            check_implementation,
+            load_handoff,
+            prepare_handoff,
+            report_handoff,
+        )
+
+        if args.operation == "prepare":
+            return prepare_handoff(
+                SpecHandoffSpec.model_validate_json(json.dumps(read_json(args.spec))), args.output
+            )
+        if args.operation == "verify":
+            return {"status": "verified", **load_handoff(args.handoff, args.sha256)}
+        if args.operation == "check-implementation":
+            return check_implementation(args.handoff, args.sha256, args.run)
+        return report_handoff(
+            HandoffReportSpec.model_validate_json(json.dumps(read_json(args.spec)))
+        )
     if args.command == "task-package":
         from skilleval.task_package import prepare_package, validate_environment
 

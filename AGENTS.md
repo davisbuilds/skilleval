@@ -22,6 +22,8 @@ interfaces. Do not load every reference for a small change.
   context exclusions, synthetic history and operator-only provenance.
 - [STUDIES.md](docs/system/STUDIES.md), [ACCOUNTING.md](docs/system/ACCOUNTING.md):
   paired plans, attempts, reporting, and usage/cost/time semantics.
+- [HANDOFFS.md](docs/system/HANDOFFS.md): exact specification selection, fresh
+  vanilla implementation inputs, linked stage consumption and question handling.
 - [STORAGE.md](docs/system/STORAGE.md): durable data roots, native rollouts, staging
   cleanup, and legacy path preservation.
 - [ENVIRONMENT.md](docs/system/ENVIRONMENT.md), [GATEWAY.md](docs/system/GATEWAY.md),
