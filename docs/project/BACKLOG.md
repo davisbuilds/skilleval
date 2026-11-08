@@ -14,6 +14,16 @@ shipped history. Private provenance stays outside public entries and issues.
 
 ## Open
 
+- **Specification quality and downstream usefulness:** select a bounded,
+  outstanding maintainer feature for the routine `write-spec` pilot. Existing
+  document grading covers factual support, limitations, usefulness and clarity;
+  it does not yet supply a validated spec-specific rubric or a linked handoff to
+  implementation. Bind each generated spec to a fresh vanilla implementation,
+  preserve ordinary context and question-handling policy across arms, and grade
+  both stages against independently established needs. Record omissions,
+  unsupported assumptions, scope, clarification/rework, stage consumption and
+  combined cost. Validate the frozen task environment before dispatch; retain
+  original evidence separately from any later real contribution.
 - **Acceptance validity before more comparisons:** operator maps now freeze
   declared source rationale, probe-field and semantic routes, controls, exposure
   and gaps. They do not establish that those requirements are correct or complete.
@@ -40,8 +50,8 @@ shipped history. Private provenance stays outside public entries and issues.
   to select concrete debugging, implementation, review, UI, performance or QA
   work that maintainers actually delegate, then freeze separate evaluation cases.
   The [debugging expansion shortlist](PILOT-CANDIDATES.md#debugging-expansion-shortlist)
-  identifies four source-inspected candidates across three repositories. Qualify
-  the next capture, starting with fetchmd address validation; Promptfoo needs a
+  identifies four source-inspected candidates across three repositories. Defer
+  those captures while preparing the workflow-skill pilot; Promptfoo needs a
   separate dependency image and Dojo remains a reserve. Establish each task brief,
   skill fit and independent outcomes before capture. These candidates are not yet
   validated tasks. The repair adapter, source capture and polarity controls are

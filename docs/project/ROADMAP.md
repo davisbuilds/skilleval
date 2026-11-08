@@ -1,6 +1,6 @@
 ---
 status: in-progress
-updated: 2026-11-06
+updated: 2026-11-08
 ---
 
 # Roadmap
@@ -49,7 +49,20 @@ SkillsBench/Harbor packaging, Tessl fixtures and explicit variants,
 Anthropic/Engram assessment patterns, gstack's separation of validity and benefit,
 and the adapted OpenBench gateway. External skills remain experimental inputs.
 
-## Now: valid acceptance, useful tasks and independent judgment audit
+## Now: a useful workflow-skill task and independent judgment audit
+
+The next development pilot targets a routine `write-spec` task selected from
+outstanding maintainer work. Choose a bounded feature that needs a contract and
+could become a useful contribution. Freeze its repository and ordinary context,
+qualify the VM environment, and compare explicit skill ON/OFF specifications.
+Follow each spec with a fresh, otherwise equivalent vanilla implementer to assess
+the handoff against the original request. This keeps the treatment in the spec
+stage while exposing downstream quality, clarification, rework and total cost.
+The task, spec-specific grader and linked-stage recording still need preparation;
+existing document support does not establish their validity. Debugging expansion
+is deferred while this pilot is prepared; retained repairs remain development
+evidence. The [candidate register](PILOT-CANDIDATES.md#current-selection-direction)
+owns selection and exclusions.
 
 1. **Validate acceptance before new comparisons.** Use ordinary work records to
    define success and freeze an acceptance map under `mapped-acceptance-v1`.
@@ -75,9 +88,9 @@ and the adapted OpenBench gateway. External skills remain experimental inputs.
    Its revised disposable application home is qualified; ordinary test exceptions
    and task-specific audit limits remain. The
    [debugging expansion shortlist](PILOT-CANDIDATES.md#debugging-expansion-shortlist)
-   proposes fetchmd address validation next, followed by separately qualified
-   Promptfoo cases, with Dojo reserved. These source-inspected candidates still
-   need capture and executable validation.
+   retains fetchmd and Promptfoo candidates for later consideration, with Dojo
+   reserved. They are not the next selected task and still need capture and
+   executable validation.
    Preserve selection reasons and exclusions. Do not retain
    only vanilla failures or wins for the skill.
 3. **Audit representative judgments with corrected evidence.** Review actual

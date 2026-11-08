@@ -2,7 +2,17 @@
 
 ## Current selection direction
 
-As of **2026-10-30**, prioritize ordinary engineering work using skills from
+As of **2026-11-08**, prioritize a routine `write-spec` comparison on outstanding
+maintainer work that deserves a specification and could yield a useful contribution.
+Inspect the backlog against current source before selecting a bounded feature;
+an entry alone does not prove the work is still missing or needs a new spec.
+Freeze the source and ordinary context, qualify isolated execution, and assess
+both the specifications and their implementation by fresh vanilla agents. Keep
+the selected skill in the spec stage and record the complete handoff and costs.
+The task and its acceptance criteria remain to be selected and validated.
+
+Debugging expansion is deferred. The broader engineering source priorities from
+**2026-10-30** remain
 [Addy Osmani](https://github.com/addyosmani/agent-skills),
 [Matt Pocock](https://github.com/mattpocock/skills),
 [Emil Kowalski](https://github.com/emilkowalski/skills),
@@ -33,6 +43,35 @@ a weak fit for a design skill, and C's source collection is now deferred for
 expansion. Ordinary tasks may be straightforward for a capable baseline; equal
 quality with different consumption is still informative. Select cases before
 seeing treatment outcomes, not only cases where vanilla fails.
+
+## Workflow-skill backlog candidates
+
+Source inspection on **2026-11-08** recommends the operational-metrics console
+view in [AgentMonitor's backlog](https://github.com/davisbuilds/agentmonitor/blob/0dd253129d143b5811224a0f80554a64eb3f4da0/docs/project/BACKLOG.md#operational-metrics-ui-surface-follow-up-to-the-shipped-ingestion).
+At that revision, operational metrics have API and CLI readers but no frontend
+consumer. The backlog's older claim that operators must use the API by hand is
+stale; the missing console view is still real.
+
+A bounded read-only view would make existing consolidation outcomes and skipped
+work visible without changing ingestion, storage, provider configuration or
+usage accounting. The interface still needs decisions about placement, filters,
+refresh, unknown attributes, and empty/error/stale states. Those are meaningful
+specification questions; neither an inferred health score nor a particular layout
+is a predetermined answer. Ground acceptance in the maintainer's intended use and
+existing API semantics before dispatch.
+
+The existing isolated SQLite and real-app browser fixtures make this a plausible
+routine task. Its pinned Node/pnpm/native dependencies and supported Chrome still
+need VM qualification; no private session database or provider credentials belong
+in the capture. This is a recommendation, not a frozen task or a validated grader.
+Retain the ordinary source and guidance in both arms and pass the generated spec,
+original request and same repository baseline to each fresh implementer.
+
+[Dojo's version-aware skill-listing backlog](https://github.com/davisbuilds/dojo/blob/979b42a7366d4331ad65dd85f59b90b4efdb6737/docs/project/BACKLOG.md#installupdate-workflows-should-understand-skill-versions)
+also contains useful specification work, but its normal source includes the
+`write-spec` package. Defer it for this first comparison rather than deleting
+ordinary source to create an apparently clean OFF condition. A later experiment
+could explicitly study invocation when the skill is already available in-repo.
 
 ## Single-skill development candidates
 
@@ -203,11 +242,13 @@ looking at ON/OFF outcomes; two tasks from one repository remain clustered.
 | Promptfoo: overlapping jobs change a shared tracing receiver | Stable first-start configuration, per-job policy, actual ingestion and recoverable concurrent start/stop/failure | Qualified local HTTP/store fixture and Node toolchain |
 | Dojo: valid quoted versions appear unknown in an installed-skill audit | Decode supported single-line scalars without changing drift/sync decisions or accepting malformed versions | Resolve repository-skill exposure; review terms before redistributing a capture |
 
-Start capture work with fetchmd, then the two Promptfoo cases. Keep the Dojo case
-as a reserve until its ordinary repository skill content can be characterized
-without weakening the single-skill comparison. Local source inspection does not
-require publishing captured code. No extra tasks have been run or selected for
-favorable skill results.
+This historical shortlist is deferred behind the workflow-skill pilot. Source
+review on **2026-11-08** classified fetchmd as a small repair with useful
+verification edges; no solver trials established its difficulty or skill benefit.
+Keep the Dojo case as a reserve until its ordinary repository skill content can
+be characterized without weakening the single-skill comparison. Local source
+inspection does not require publishing captured code. No extra tasks have been
+run or selected for favorable skill results.
 
 Pinned source and reference repairs:
 

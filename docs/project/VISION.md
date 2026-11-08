@@ -1,10 +1,11 @@
 # Vision
 
-Skilleval should answer a practical question: on realistic tasks where a skill is
-relevant, how does explicitly using it change a capable agent's task quality,
-outcomes, token consumption, cost and time compared with the same agent without
-it? Its first audience is people choosing, maintaining or evaluating skills for
-work they actually delegate.
+Skilleval should answer a practical question: whether a skill consistently improves
+the decisions, artifacts, and working habits of an already-capable agent, and
+whether that improvement pays for its overhead. Compare explicit skill use with
+the same agent without it on realistic, relevant work, measuring task quality and
+outcomes alongside token consumption, cost and time. Its first audience is people
+choosing, maintaining or evaluating skills for work they actually delegate.
 
 This is a standalone evaluator for independently supplied skills from any source.
 No particular skill collection is privileged, and comparing an adaptation with
@@ -16,8 +17,10 @@ Start with a single independently usable skill, preserving its own references,
 scripts, assets and required resources. Prefer packages that can be evaluated
 faithfully without other skills or a larger orchestration workflow. If a package
 requires that broader workflow, defer it rather than removing required behavior
-and calling the result an evaluation of the original skill. Multi-skill and
-workflow comparisons come later as separately declared treatments.
+and calling the result an evaluation of the original skill. A single workflow
+skill can be evaluated through its artifact and that artifact's downstream use.
+Declare which stage receives the skill and keep downstream capabilities comparable.
+Multi-skill and broader workflow treatments come later as separate comparisons.
 
 The unit of work is a reproducible task with an explicit environment and evidence
 contract. The unit of comparison is a matched experiment with a vanilla baseline,
@@ -58,12 +61,29 @@ separately where relevant; difficulty alone is not relevance. Support the task
 and grader adapters required by selected skills rather than forcing every task
 into a review report.
 
+Workflow skills may improve requirements, scope decisions, verification, or
+handoffs even when both agents can implement the underlying feature. Observe
+those behaviors in retained work, and judge their usefulness against the user's
+need. Following the skill's procedure, producing more documentation, or matching
+its template is not sufficient evidence of improvement. When a spec or plan is
+the deliverable, assess both the artifact and the resulting work where practical;
+judge implementation against the original need and repository contracts rather
+than allowing a generated artifact to redefine success.
+
+Prefer outstanding maintainer work that can yield a useful contribution. Freeze
+the source, ordinary context, dependencies and acceptance contract before running
+each arm in an isolated environment. Preserve that experimental baseline when a
+candidate later becomes a real contribution: review, integration adjustments and
+publication happen separately and cannot rewrite the recorded result.
+
 Quality and efficiency are joint outcomes. Report task-specific quality, accepted
 outcomes, failure rates, token categories, cost and elapsed time separately, with
 paired differences and uncertainty. Include skill loading and subsequent context
 overhead in task-agent usage. Keep evaluation/judge spend separate; retain failures
 and retry costs under the declared attempt policy. An early cheap failure is not
 an efficiency win, and higher quality at higher cost is an explicit tradeoff.
+For linked stages, retain stage-level consumption and the combined cost of
+producing and using the artifact, including clarification and rework.
 
 Validate usage semantics at the observed harness/provider version before summing
 or pricing them; cached tokens, per-turn observations and totals can overlap.
