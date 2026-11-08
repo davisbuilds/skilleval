@@ -8,6 +8,10 @@
     {
       "path": "docs/archive/specs",
       "reason": "Withhold archived specification exemplars equally from both arms of the specification-writing pilot"
+    },
+    {
+      "path": "docs/archive/plans",
+      "reason": "Withhold archived plans that repeat specification-workflow conventions equally from both arms"
     }
   ]
 }

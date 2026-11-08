@@ -14,17 +14,25 @@ shipped history. Private provenance stays outside public entries and issues.
 
 ## Open
 
-- **Specification quality and downstream usefulness:** qualify the selected
-  [operational-metrics brief](../../examples/document/operational-metrics/README.md)
-  and its declared source exclusions for the routine `write-spec` pilot. Existing
-  document grading covers factual support, limitations, usefulness and clarity;
-  it does not yet supply a validated spec-specific rubric or a linked handoff to
-  implementation. Bind each generated spec to a fresh vanilla implementation,
-  preserve the same selected context and question-handling policy across arms, and grade
-  both stages against independently established needs. Record omissions,
-  unsupported assumptions, scope, clarification/rework, stage consumption and
-  combined cost. Validate the frozen task environment before dispatch; retain
-  original evidence separately from any later real contribution.
+- **Interactive clarification:** the first specification pilot delegates bounded
+  product choices and runs each stage without live Q&A. Add a bounded conversation
+  loop when selected tasks need requirements elicitation: explicit needs-input vs
+  completed-artifact states, constrained owner answers separate from the judge,
+  consistent information access across arms, full-thread usage and total budgets,
+  retained reply identities and interruption evidence. A question-only response
+  is incomplete work; classify a missing requirement separately from unnecessary
+  deferral before changing the brief. Never improve only one arm mid-run.
+- **Specification quality and downstream usefulness:** the selected
+  [operational-metrics pilot](../../examples/document/operational-metrics/README.md)
+  now has source exclusions, a specification rubric, authored alternatives/defects,
+  an acceptance map template and exact artifact handoffs with linked consumption.
+  Independent semantic reliability remains unestablished. Audit actual generated
+  specifications and disagreements against the original need, including truthful
+  blockers, unsupported choices and incomplete delivery. Exercise downstream
+  feature checks against each implemented UI, preserving valid alternative
+  designs; the existing-console smoke and authored downstream contract are not
+  feature coverage. Keep failed attempts and stage costs visible, and retain
+  experiment evidence separately from any later real contribution.
 - **Acceptance validity before more comparisons:** operator maps now freeze
   declared source rationale, probe-field and semantic routes, controls, exposure
   and gaps. They do not establish that those requirements are correct or complete.

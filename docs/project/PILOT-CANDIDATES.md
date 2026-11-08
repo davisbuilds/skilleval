@@ -9,8 +9,10 @@ an entry alone does not prove the work is still missing or needs a new spec.
 Freeze the source and ordinary context, qualify isolated execution, and assess
 both the specifications and their implementation by fresh vanilla agents. Keep
 the selected skill in the spec stage and record the complete handoff and costs.
-The operational-metrics brief is selected; its task package and acceptance
-criteria still need preparation and validation.
+The operational-metrics brief is selected. Preparation now includes a task/package
+workflow, specification criteria and authored controls, and exact handoffs to
+fresh vanilla implementers. Live task qualification and independent semantic
+validity remain separate evidence requirements.
 
 Debugging expansion is deferred. The broader engineering source priorities from
 **2026-10-30** remain
@@ -62,15 +64,18 @@ is a predetermined answer. Ground acceptance in the maintainer's intended use an
 existing API semantics before dispatch.
 
 The existing isolated SQLite and real-app browser fixtures make this a plausible
-routine task. Its pinned Node/pnpm/native dependencies and supported Chrome still
-need VM qualification; no private session database or provider credentials belong
-in the capture. The accepted [shared brief and source-selection policy](../../examples/document/operational-metrics/README.md)
-withhold existing and archived spec directories equally from both arms while
-retaining ordinary source and agent guidance. Archived plans remain a declared
-source of related workflow examples under that policy. Source capture is prepared;
-the task package, clarification policy, linked handoff and validated grader are
-still outstanding. Pass the generated spec, original request and same selected
-repository baseline to each fresh implementer.
+routine task. The refreshed dependency/browser image now matches six reviewed
+VM lanes, including real console navigation and metrics API controls. The
+[environment record](../../examples/document/operational-metrics/environment/README.md)
+retains one baseline root-test failure and five skips. No private session database
+or provider credentials belong in the capture. The accepted
+[shared brief and source-selection policy](../../examples/document/operational-metrics/README.md)
+withhold existing/archived specs and archived plans equally from both arms while
+retaining ordinary source and agent guidance. The brief requests one self-contained
+spec and delegates bounded product choices; live Q&A is deferred. Task packaging,
+authored grading controls and linked handoff are implemented, without claiming
+independent grader validity. Pass the exact generated spec, original request and
+same selected repository baseline to each fresh implementer.
 
 [Dojo's version-aware skill-listing backlog](https://github.com/davisbuilds/dojo/blob/979b42a7366d4331ad65dd85f59b90b4efdb6737/docs/project/BACKLOG.md#installupdate-workflows-should-understand-skill-versions)
 also contains useful specification work, but its normal source includes the

@@ -4,4 +4,4 @@ I want to understand whether Codex memory processing has reported activity recen
 
 Use the operational data and read API already available. Keep this to a read-only console feature; changes to ingestion, storage, provider configuration, or usage accounting are outside this task.
 
-Inspect the existing application and decide what information and interactions would make this useful within the current console. Save the specification under docs/specs/ so another engineer can implement it. Don't implement the feature yet. Ask me if a product decision is needed to finish the specification.
+Inspect the existing application and decide what information and interactions would make this useful within the current console. Save a self-contained specification in one Markdown file under docs/specs/ so another engineer can implement it. Don't implement the feature yet. Use your judgment for product choices not prescribed here, following the existing application conventions.

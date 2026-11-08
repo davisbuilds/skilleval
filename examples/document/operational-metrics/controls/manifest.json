@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "scope": "exposed-authored-development-controls",
+  "source_revision": "0dd253129d143b5811224a0f80554a64eb3f4da0",
+  "source_url": "https://github.com/davisbuilds/agentmonitor",
+  "rubric_profile": "specification-v1",
+  "independent_audit": "required-pending",
+  "observed_judge_results": null,
+  "placement": "For each control, copy only that candidate's bytes to an arbitrary Markdown path beneath docs/specs in a fresh ordinary source capture. Keep this manifest, other controls, labels, acceptance map and downstream contract outside every solver capture.",
+  "cases": [
+    {
+      "case_id": "table-first",
+      "candidate": "table-first.md",
+      "delivery_kind": "completed-specification",
+      "expected_observation": {"candidate_found": true, "artifacts_readable": true},
+      "expected": {"factual-support": "satisfied", "relevant-limits": "satisfied", "audience-usefulness": "satisfied", "clarity-and-action": "satisfied"},
+      "rationale": "Monitor table with explicit 24-hour window and manual refresh, full group distinctions, faithful counts/times and empty/error/cap qualification. No skill-specific format is necessary."
+    },
+    {
+      "case_id": "summary-first",
+      "candidate": "summary-first.markdown",
+      "delivery_kind": "completed-specification",
+      "expected_observation": {"candidate_found": true, "artifacts_readable": true},
+      "expected": {"factual-support": "satisfied", "relevant-limits": "satisfied", "audience-usefulness": "satisfied", "clarity-and-action": "satisfied"},
+      "rationale": "Analytics summary/detail with 7-day default, window shortcuts and normal deep-link conventions. This different layout, window and prose organization still meets the same user need and repository contracts."
+    },
+    {
+      "case_id": "misleading-counts",
+      "candidate": "misleading-counts.md",
+      "delivery_kind": "completed-but-defective-specification",
+      "expected_observation": {"candidate_found": true, "artifacts_readable": true},
+      "expected": {"factual-support": "violated", "relevant-limits": "violated", "audience-usefulness": "violated", "clarity-and-action": "satisfied"},
+      "rationale": "The plan is explicit but would present stored points as completed jobs, values as unique sessions, their quotient as exact success, and last_seen as fetch time. It merges distinct groups and promises complete totals despite the cap. The semantic defects are not missing headings or readability."
+    },
+    {
+      "case_id": "absence-means-healthy",
+      "candidate": "absence-means-healthy.md",
+      "delivery_kind": "completed-but-defective-specification",
+      "expected_observation": {"candidate_found": true, "artifacts_readable": true},
+      "expected": {"factual-support": "violated", "relevant-limits": "violated", "audience-usefulness": "violated", "clarity-and-action": "satisfied"},
+      "rationale": "An otherwise concrete read-only design falsely treats empty and failed reads as guarantees of memory health and no skips. Missing or unavailable observations do not establish either claim."
+    },
+    {
+      "case_id": "questions-only",
+      "candidate": "questions-only.md",
+      "delivery_kind": "questions-without-completed-specification",
+      "expected_observation": {"candidate_found": true, "artifacts_readable": true},
+      "expected": {"factual-support": "satisfied", "relevant-limits": "satisfied", "audience-usefulness": "violated", "clarity-and-action": "violated"},
+      "rationale": "The API and scope statements are accurate and absence is appropriately qualified. The requested noninteractive deliverable is still absent: routine choices, chosen behavior and acceptance conditions are left as questions."
+    },
+    {
+      "case_id": "blocked",
+      "candidate": "blocked.md",
+      "delivery_kind": "truthful-blocked-note",
+      "expected_observation": {"candidate_found": true, "artifacts_readable": true},
+      "expected": {"factual-support": "satisfied", "relevant-limits": "satisfied", "audience-usefulness": "violated", "clarity-and-action": "violated"},
+      "rationale": "In the control capture only this note is added and source remains unchanged, supporting the narrow truthful scope claims. A truthful stop does not become a completed implementable specification. Actual missing evidence should remain unresolved instead of copying these labels blindly."
+    },
+    {
+      "case_id": "incomplete",
+      "candidate": "incomplete.md",
+      "delivery_kind": "unfinished-outline",
+      "expected_observation": {"candidate_found": true, "artifacts_readable": true},
+      "expected": {"factual-support": "satisfied", "relevant-limits": "violated", "audience-usefulness": "violated", "clarity-and-action": "violated"},
+      "rationale": "The short existing-API/scope statements are supportable, but the outlined panel lacks consequential metric meanings, uncertainty handling, selected behavior and acceptance checks. This is a semantic omission, not a short-document penalty."
+    },
+    {
+      "case_id": "missing",
+      "candidate": null,
+      "delivery_kind": "no-artifact",
+      "expected_observation": {"candidate_found": false, "artifacts_readable": false},
+      "expected": {"factual-support": "unresolved", "relevant-limits": "unresolved", "audience-usefulness": "violated", "clarity-and-action": "violated"},
+      "rationale": "With a valid ordinary source capture and known-positive worker control, no document is delivered at the requested location. There are no candidate factual/qualification claims to assess. This is distinct from a missing or unusable check execution."
+    }
+  ],
+  "limitations": [
+    "Labels and rationales were authored by the task developer. No independent human audit, runtime qualification, model calibration or holdout status is claimed.",
+    "Control cases are related and exposed; do not count them as independent specification tasks or skill-effect samples. Record real disagreements per criterion and preserve unresolved results.",
+    "Semantic defect controls deliberately share the positive mechanical result. Passing the worker cannot be used as a completed-spec or content-quality verdict.",
+    "clarity-and-action may remain satisfied for an explicit defective design while factual-support, relevant-limits and audience-usefulness reject its substance. Criterion-level reasoning and independent review must resolve disagreement; no aggregate score erases these distinctions.",
+    "The missing control presumes a successful worker execution and intact source. A crashed worker, unavailable source or truncated evidence is execution/evidence failure, not observed no-artifact delivery."
+  ]
+}

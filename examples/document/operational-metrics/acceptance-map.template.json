@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "map_id": "operational-metrics-specification-development-v1",
+  "task": "TASK.json",
+  "task_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "package": "PACKAGE.json",
+  "package_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "purpose": "Assess whether a completed specification lets a fresh engineer build the requested read-only console view, independently of write-spec procedure or resemblance to an authored draft.",
+  "population": "One exposed, authored development task grounded in a real AgentMonitor backlog item; not a representative sample of specification work.",
+  "selection_rationale": "The user need and shipped read API leave genuine frontend product choices while bounding backend scope. An implementation handoff can test whether the resulting specification is usable. This case was selected before this pilot's writer or implementer runs, not as a vanilla-failure or skill-win case.",
+  "exposure_history": "Task authors inspected the pinned public source, source-exclusion policy, existing skill and related document contracts. The alternatives and deliberately defective controls are authored development examples, not holdouts or independently validated labels. Record any further exposure and exact review evidence when freezing a real map.",
+  "authored_after_outcomes": false,
+  "requirements": [
+    {
+      "requirement_id": "completed-deliverable",
+      "statement": "Deliver an actual completed, self-contained specification in one Markdown file under docs/specs; a list of questions, blocked note or unfinished outline is not that artifact.",
+      "role": "core",
+      "criticality": "required",
+      "source_rationale": "Original work request requires a self-contained specification in one Markdown file saved under docs/specs for another engineer. Existing repository references remain available to the implementer; additional generated documents do not. The approved pilot is noninteractive: agents resolve routine frontend decisions with explicit reasonable choices rather than ending with questions.",
+      "mechanical": [
+        {"probe_id": "spec-artifact", "pointer": "/candidate_found"},
+        {"probe_id": "spec-artifact", "pointer": "/artifacts_readable"}
+      ],
+      "semantic": [
+        {"criterion": "audience-usefulness", "question": "Does the delivered document choose enough behavior for a fresh implementer to complete the actual user need, rather than only posing questions or promising future work?"},
+        {"criterion": "clarity-and-action", "question": "Is a completed implementable specification delivered at the requested location, with observable acceptance conditions? Do not use headings, template, length, filename preference or a lexical completion detector as the answer key."}
+      ],
+      "gaps": ["The worker observes only readable nonempty Markdown, not completion. Semantic review must distinguish truthful blockers, unfinished prose, questions and actual specifications; missing evidence can remain unresolved."]
+    },
+    {
+      "requirement_id": "reported-recency",
+      "statement": "Specify how an operator can determine whether Codex memory processing has reported activity recently.",
+      "role": "core",
+      "criticality": "required",
+      "source_rationale": "Original request's recent-activity question; pinned AgentMonitor docs/project/BACKLOG.md operational-metrics UI item; src/db/v2-queries.ts OperationalMetricQuery and getOperationalMetricSummary at 0dd253129d143b5811224a0f80554a64eb3f4da0.",
+      "mechanical": [],
+      "semantic": [
+        {"criterion": "audience-usefulness", "question": "Can the operator interpret recentness from the specified query scope/time and last reported activity, rather than confusing request refresh time with metric event time? Any justified window and placement are acceptable."},
+        {"criterion": "factual-support", "question": "Does the proposed read use GET /api/v2/metrics and supported query semantics? last_seen is the maximum normalized event time, using client timestamp with created-at fallback, not a live-process heartbeat."}
+      ],
+      "gaps": ["No browser feature is implemented or exercised by the document worker; downstream verification is separate."]
+    },
+    {
+      "requirement_id": "outcomes-and-skips",
+      "statement": "Specify a useful way to inspect reported outcomes, including rate-limit skips, without hiding or inventing states.",
+      "role": "core",
+      "criticality": "required",
+      "source_rationale": "Original request asks which outcomes are reported and whether work is skipped because of rate limits. Pinned src/db/v2-queries.ts groups full attrs; tests/cli-ops-metrics.test.ts and tests/otel-metrics-store.test.ts distinguish state=succeeded and state=skipped_rate_limit.",
+      "mechanical": [],
+      "semantic": [
+        {"criterion": "audience-usefulness", "question": "Will an operator discover rate-limit skips and inspect other reported outcomes with meaningful metric/attribute context? A table, summary plus detail, cards or another coherent current-console design may satisfy this."},
+        {"criterion": "factual-support", "question": "Does the design preserve the meaning of distinct metric_name/full-attrs groups and tolerate null or unfamiliar attributes/states rather than treating known states as exhaustive?"}
+      ],
+      "gaps": []
+    },
+    {
+      "requirement_id": "metric-semantics",
+      "statement": "Communicate counts, value sums and time without promoting aggregates into unsupported job/session counts, success rates, complete totals or health guarantees.",
+      "role": "core",
+      "criticality": "required",
+      "source_rationale": "Pinned src/db/v2-queries.ts defines occurrences=COUNT(*), total_value=SUM(value), last_seen=MAX(event time), one row per metric_name and full attrs; default 200/max 500 groups ordered by last_seen, no total-count or pagination metadata. tests/otel-metrics-store.test.ts covers cap and time normalization.",
+      "mechanical": [],
+      "semantic": [
+        {"criterion": "factual-support", "question": "Are proposed labels and derivations supported by actual API fields? In particular can occurrences differ from total_value, and are neither inherently unique sessions or completed jobs?"},
+        {"criterion": "relevant-limits", "question": "Does the specification avoid misleading population claims from limited rows, absent reports or read failures? Qualifications may be concise and do not require a particular limitations section."}
+      ],
+      "gaps": []
+    },
+    {
+      "requirement_id": "implementable-interactions",
+      "statement": "Choose coherent current-console behavior for reaching the view, reading its scope, refreshing data and interpreting loading, empty, error and stale responses.",
+      "role": "core",
+      "criticality": "required",
+      "source_rationale": "Original request delegates information and interactions to the agent and asks for an implementable spec. Pinned frontend/AGENTS.md, frontend/src/lib/api/client.ts and existing stores/components establish the Svelte console conventions; reliability states are an operator-added consequence of making a read view useful, not a preferred layout.",
+      "mechanical": [],
+      "semantic": [
+        {"criterion": "audience-usefulness", "question": "Are the selected placement, scope and refresh behavior coherent enough to implement using ordinary repo conventions? Do unresolved choices or misleading inherited project/agent filters prevent the operator from answering the need?"},
+        {"criterion": "clarity-and-action", "question": "Are important loading/empty/failure/recovery semantics clear, including whether retained data is stale? Accept manual refresh or justified polling, any useful window, and routine implementer judgment; do not require all possible controls."}
+      ],
+      "gaps": ["Accessibility and responsive integration are ordinary console obligations; a document review cannot establish actual rendered behavior or complete existing-console regression coverage."]
+    },
+    {
+      "requirement_id": "read-only-scope",
+      "statement": "Keep the specification to a read-only frontend consumer of shipped operational data/API and preserve ingestion, storage, provider configuration and usage accounting.",
+      "role": "regression",
+      "criticality": "required",
+      "source_rationale": "Original request explicitly excludes ingestion/storage/provider/usage changes. Pinned docs/system/FEATURES.md and tests/otel-metrics-store.test.ts state operational metrics carry no tokens/cost and never enter activity or usage totals. The backlog identifies a frontend consumer.",
+      "mechanical": [],
+      "semantic": [
+        {"criterion": "relevant-limits", "question": "Does the proposed design remain a read-only operational view using existing capabilities, without requiring out-of-scope backend, provider, settings, ingestion or accounting changes?"},
+        {"criterion": "clarity-and-action", "question": "Is the deliverable a specification rather than implementation? Inspect retained edits and artifact scope observations; do not take the solver's completion statement alone as proof."}
+      ],
+      "gaps": ["Artifact collection separately retains out-of-scope changes. Worker artifact presence is not a repository-scope or effective-runtime authority proof."]
+    },
+    {
+      "requirement_id": "verifiable-handoff",
+      "statement": "Give the next engineer observable conditions for validating the requested outcome and consequential limitations, without pretending verification already happened.",
+      "role": "evidence",
+      "criticality": "required",
+      "source_rationale": "Original request asks for a specification another engineer can implement. Pinned frontend/AGENTS.md supplies frontend test/build entry points. The approved pilot hands each generated spec to a fresh vanilla implementer; implementability is separately observed, not assumed from document length.",
+      "mechanical": [],
+      "semantic": [
+        {"criterion": "clarity-and-action", "question": "Can an engineer tell whether the implemented view answers recent activity/outcomes/rate-limit skips, respects API meanings, and handles empty/error responses? Concrete observable conditions can be prose, examples or tests; no skill-specific format is required."},
+        {"criterion": "factual-support", "question": "Are any claims of tests, validation or completed implementation supported by retained evidence and accurately scoped? A writer need not implement the feature or claim it was tested."}
+      ],
+      "gaps": ["Downstream implementation must be assessed against the original work request and repository contracts, not promoted to correct merely because it obeys the generated spec. controls/downstream-contract.json is authored observation planning, not implemented executable coverage."]
+    }
+  ],
+  "unmapped_probes": [],
+  "controls": [
+    {
+      "control_id": "valid-alternatives",
+      "purpose": "Permit substantively different implementable specifications without a hidden preferred console layout, headings or refresh policy.",
+      "requirement_ids": ["completed-deliverable", "reported-recency", "outcomes-and-skips", "metric-semantics", "implementable-interactions", "read-only-scope", "verifiable-handoff"],
+      "expected_discrimination": "Both table-first Monitor/manual-refresh and summary-first Analytics/manual-refresh authored drafts can satisfy the four semantic criteria despite different organization, windows, file suffixes and interaction details.",
+      "limitations": ["Authored development alternatives; independent domain review and executed judge discrimination are pending. They are not an exhaustive catalog of valid designs."],
+      "evidence": null
+    },
+    {
+      "control_id": "misleading-counts-and-health",
+      "purpose": "Require semantic rejection of plausible wrong claims that pass mechanical artifact checks.",
+      "requirement_ids": ["reported-recency", "outcomes-and-skips", "metric-semantics", "implementable-interactions"],
+      "expected_discrimination": "misleading-counts.md and absence-means-healthy.md have readable artifacts but violate factual-support/relevant-limits through unsupported counts, group/time meanings, complete-population claims or empty/error health guarantees.",
+      "limitations": ["The document worker intentionally cannot distinguish these defects. Retain criterion-level authored expectations, real judge disagreements and unresolved judgments; no calibration has been executed."],
+      "evidence": null
+    },
+    {
+      "control_id": "incomplete-delivery",
+      "purpose": "Distinguish delivered specifications from questions, blocked notes, unfinished outlines and no artifact without lexical heuristics.",
+      "requirement_ids": ["completed-deliverable", "implementable-interactions", "verifiable-handoff"],
+      "expected_discrimination": "questions-only.md, blocked.md and incomplete.md remain readable files but fail completed-spec usefulness/action. No artifact fails the presence observation. Truthful incomplete delivery is not automatically a false factual claim; missing evidence remains unresolved.",
+      "limitations": ["Expected distinctions are semantic author judgments, not independent truth. No filename, TODO token, heading or question-mark detector is used to determine completion."],
+      "evidence": null
+    }
+  ],
+  "review_evidence": [],
+  "open_questions": [
+    "Independent task-domain and grader audit of this acceptance argument and the authored semantic labels remain pending; local automated review is development evidence only.",
+    "Freeze real task/package/assessment identities, retained control evidence and environment qualification before dispatch. This file is a placeholder template, not an admitted study map.",
+    "Downstream browser/API checks must be implemented and exercised against known-positive and misleading/incomplete controls inside the actual VM before executable feature acceptance can be claimed."
+  ],
+  "limitations": [
+    "Operator-only new-generation template. Keep the acceptance map, controls, labels and assessments outside writer and implementer solver inputs. Supply only the chosen generated specification as the linked handoff, alongside ordinary task context.",
+    "Current source grounding is the public AgentMonitor revision 0dd253129d143b5811224a0f80554a64eb3f4da0. docs/specs, docs/archive/specs and docs/archive/plans are excluded equally from solver source: six spec/baseline/placeholder entries plus eight archived plans, fourteen tracked entries total. No hidden spec establishes preferred output structure.",
+    "The mechanical worker accepts arbitrary readable nonempty UTF-8 Markdown under docs/specs; its 1 MiB per-file and 128-file resource ceilings are collection limits, not quality or length targets.",
+    "The specification-v1 rubric reuses the existing document criterion IDs with specification-specific versioned prose. Existing document-v1 packets and judgments remain unchanged.",
+    "Structural validation, reproducibility, controls authored by the task developer and attached review prose do not establish independent semantic validity, scored admission, representativeness or skill effectiveness. No numeric utility aggregate is defined."
+  ]
+}

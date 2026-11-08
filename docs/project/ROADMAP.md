@@ -53,14 +53,19 @@ and the adapted OpenBench gateway. External skills remain experimental inputs.
 
 The next development pilot targets a routine `write-spec` task for the selected
 [operational-metrics console feature](../../examples/document/operational-metrics/README.md).
-Its shared brief and selective source capture are prepared; prior specification
-directories are deliberately withheld from both arms. Freeze the remaining task contract,
-qualify the VM environment, and compare explicit skill ON/OFF specifications.
+Its shared brief delegates bounded product choices without live Q&A and requests
+one self-contained Markdown spec. Historical specifications and plans are
+deliberately withheld from both arms. The task, acceptance map and two-cell
+development plan are frozen. The selected baseline matches six reviewed VM lanes,
+including browser interaction, with one known root-test failure and five skips
+retained explicitly. Next, compare explicit skill ON/OFF specifications.
 Follow each spec with a fresh, otherwise equivalent vanilla implementer to assess
 the handoff against the original request. This keeps the treatment in the spec
-stage while exposing downstream quality, clarification, rework and total cost.
-The task, spec-specific grader and linked-stage recording still need preparation;
-existing document support does not establish their validity. Debugging expansion
+stage while exposing downstream quality, omissions, rework and total cost.
+Specification-specific rubrics, authored controls and
+[linked-stage recording](../system/HANDOFFS.md) are implemented; structural checks
+and automated review do not establish semantic reliability. Interactive
+clarification is backlogged. Debugging expansion
 is deferred while this pilot is prepared; retained repairs remain development
 evidence. The [candidate register](PILOT-CANDIDATES.md#current-selection-direction)
 owns selection and exclusions.
