@@ -51,9 +51,10 @@ and the adapted OpenBench gateway. External skills remain experimental inputs.
 
 ## Now: a useful workflow-skill task and independent judgment audit
 
-The next development pilot targets a routine `write-spec` task selected from
-outstanding maintainer work. Choose a bounded feature that needs a contract and
-could become a useful contribution. Freeze its repository and ordinary context,
+The next development pilot targets a routine `write-spec` task for the selected
+[operational-metrics console feature](../../examples/document/operational-metrics/README.md).
+Its shared brief and selective source capture are prepared; prior specification
+directories are deliberately withheld from both arms. Freeze the remaining task contract,
 qualify the VM environment, and compare explicit skill ON/OFF specifications.
 Follow each spec with a fresh, otherwise equivalent vanilla implementer to assess
 the handoff against the original request. This keeps the treatment in the spec

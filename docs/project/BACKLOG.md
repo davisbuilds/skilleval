@@ -14,12 +14,13 @@ shipped history. Private provenance stays outside public entries and issues.
 
 ## Open
 
-- **Specification quality and downstream usefulness:** select a bounded,
-  outstanding maintainer feature for the routine `write-spec` pilot. Existing
+- **Specification quality and downstream usefulness:** qualify the selected
+  [operational-metrics brief](../../examples/document/operational-metrics/README.md)
+  and its declared source exclusions for the routine `write-spec` pilot. Existing
   document grading covers factual support, limitations, usefulness and clarity;
   it does not yet supply a validated spec-specific rubric or a linked handoff to
   implementation. Bind each generated spec to a fresh vanilla implementation,
-  preserve ordinary context and question-handling policy across arms, and grade
+  preserve the same selected context and question-handling policy across arms, and grade
   both stages against independently established needs. Record omissions,
   unsupported assumptions, scope, clarification/rework, stage consumption and
   combined cost. Validate the frozen task environment before dispatch; retain

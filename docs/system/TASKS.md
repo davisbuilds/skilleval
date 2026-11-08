@@ -7,6 +7,11 @@ independent implementation informed by SkillsBench/Harbor task packaging,
 Tessl fixtures, and the evidence/assessment patterns in [SOURCES](../project/SOURCES.md).
 No upstream runner is required.
 
+For Git-derived inputs, [source capture](SOURCE-CAPTURE.md) freezes a full commit
+revision with optional declared context exclusions, a new one-commit baseline,
+and operator-only provenance. This is an input preparation step; it does not
+package a task, validate its VM environment, or establish task quality.
+
 ## Operator acceptance maps
 
 [Measurement design](../project/MEASUREMENT.md) owns how requirements and task

@@ -35,6 +35,14 @@ helpers change capabilities, declare that package treatment rather than attribut
 its whole effect to prose. Record consultation failures without discarding them.
 Natural discovery and selection are a later, separately identified experiment.
 
+Task-specific context exclusions are an explicit intervention, not the default
+meaning of vanilla. When prior artifacts are deliberately withheld, freeze the
+same selection for both arms and retain the removed-file inventory, reasons and
+source identity outside solver input. Prevent retrieval through imported Git
+history, retain ordinary project instructions, and qualify the resulting task.
+Interpret results within that selected context; withholding examples does not
+establish that a model lacks familiarity with their conventions.
+
 Operator machine state is outside the experimental input. Host parent-directory
 and global instructions, personal skills, memories, plugins, hooks, configuration,
 shell state and prior sessions must not enter either arm. The captured task

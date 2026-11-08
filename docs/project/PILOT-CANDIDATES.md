@@ -9,7 +9,8 @@ an entry alone does not prove the work is still missing or needs a new spec.
 Freeze the source and ordinary context, qualify isolated execution, and assess
 both the specifications and their implementation by fresh vanilla agents. Keep
 the selected skill in the spec stage and record the complete handoff and costs.
-The task and its acceptance criteria remain to be selected and validated.
+The operational-metrics brief is selected; its task package and acceptance
+criteria still need preparation and validation.
 
 Debugging expansion is deferred. The broader engineering source priorities from
 **2026-10-30** remain
@@ -46,7 +47,7 @@ seeing treatment outcomes, not only cases where vanilla fails.
 
 ## Workflow-skill backlog candidates
 
-Source inspection on **2026-11-08** recommends the operational-metrics console
+Source inspection on **2026-11-08** selected the operational-metrics console
 view in [AgentMonitor's backlog](https://github.com/davisbuilds/agentmonitor/blob/0dd253129d143b5811224a0f80554a64eb3f4da0/docs/project/BACKLOG.md#operational-metrics-ui-surface-follow-up-to-the-shipped-ingestion).
 At that revision, operational metrics have API and CLI readers but no frontend
 consumer. The backlog's older claim that operators must use the API by hand is
@@ -63,9 +64,13 @@ existing API semantics before dispatch.
 The existing isolated SQLite and real-app browser fixtures make this a plausible
 routine task. Its pinned Node/pnpm/native dependencies and supported Chrome still
 need VM qualification; no private session database or provider credentials belong
-in the capture. This is a recommendation, not a frozen task or a validated grader.
-Retain the ordinary source and guidance in both arms and pass the generated spec,
-original request and same repository baseline to each fresh implementer.
+in the capture. The accepted [shared brief and source-selection policy](../../examples/document/operational-metrics/README.md)
+withhold existing and archived spec directories equally from both arms while
+retaining ordinary source and agent guidance. Archived plans remain a declared
+source of related workflow examples under that policy. Source capture is prepared;
+the task package, clarification policy, linked handoff and validated grader are
+still outstanding. Pass the generated spec, original request and same selected
+repository baseline to each fresh implementer.
 
 [Dojo's version-aware skill-listing backlog](https://github.com/davisbuilds/dojo/blob/979b42a7366d4331ad65dd85f59b90b4efdb6737/docs/project/BACKLOG.md#installupdate-workflows-should-understand-skill-versions)
 also contains useful specification work, but its normal source includes the
