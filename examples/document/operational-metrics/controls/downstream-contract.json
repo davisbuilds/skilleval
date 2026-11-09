@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "scope": "operator-only-authored-observation-plan",
+  "implemented_executable_coverage": false,
+  "independent_audit": "required-pending",
+  "source_revision": "0dd253129d143b5811224a0f80554a64eb3f4da0",
+  "authority": "Judge the vanilla implementer's final candidate against the original request, this pinned repository's contracts and accepted scope. The generated spec is an input whose omissions or wrong claims may explain downstream defects; it is not a substitute acceptance oracle. Never give this file or its labels to a writer or implementer.",
+  "valid_alternatives": [
+    "Monitor section, Analytics sub-view or another justified existing-console integration; no fixed route, component filename, table/cards layout or exact label wording is required.",
+    "Any explicit useful recency window; manual refresh, on-entry fetch or justified polling can work when displayed data and failures remain interpretable.",
+    "Full attribute rows or summaries with faithful inspectable detail; no invented state whitelist, success percentage or overall health score is required."
+  ],
+  "api_fixture": {
+    "metrics": [
+      {"metric_name": "codex.memory.startup", "attrs": {"state": "succeeded", "phase": "one"}, "occurrences": 2, "total_value": 9, "last_seen": "2026-11-07 12:00:00"},
+      {"metric_name": "codex.memory.startup", "attrs": {"state": "succeeded", "phase": "two"}, "occurrences": 1, "total_value": 4, "last_seen": "2026-11-07 11:58:00"},
+      {"metric_name": "codex.memory.startup", "attrs": {"state": "skipped_rate_limit"}, "occurrences": 3, "total_value": 8, "last_seen": "2026-11-07 11:59:00"},
+      {"metric_name": "codex.memory.followup", "attrs": {"state": "future_state", "flag": true}, "occurrences": 1, "total_value": 5, "last_seen": "2026-11-07 11:57:00"},
+      {"metric_name": "codex.memory.other", "attrs": null, "occurrences": 1, "total_value": 2, "last_seen": "2026-11-07 11:56:00"}
+    ]
+  },
+  "required_observations": [
+    {
+      "observation_id": "reachable-read-consumer",
+      "surface": "Built /app/ console in a disposable VM browser, API network observation and retained final source diff",
+      "check": "Reach the chosen view by its console affordance and navigate away/back. Capture the actual metrics read request and rendered results.",
+      "expected": "GET /api/v2/metrics is consumed with supported filters appropriate to the view's displayed scope, e.g. name_prefix=codex.memory. and agent=codex. Actual rendered content answers the user's need; a helper or unused component alone is insufficient. Unsupported project/date_to filters cannot imply scoped results.",
+      "source_rationale": "Original request and src/api/v2/router.ts /metrics; frontend/AGENTS.md canonical console."
+    },
+    {
+      "observation_id": "outcome-and-measure-fidelity",
+      "surface": "Browser with api_fixture response, screenshot or accessible content and network readback",
+      "check": "Inspect succeeded phase=one, succeeded phase=two, skipped_rate_limit, unknown state and null attrs; distinguish 2 stored points from value sum 9 and distinguish last event time from an independently fixed fetch time.",
+      "expected": "Rate-limit skips are discoverable; full distinct groups remain inspectable; unknown/null attributes do not crash or disappear. Point counts and values are not presented as unique sessions or exact job executions, and no unsupported denominator or health guarantee is synthesized.",
+      "source_rationale": "Original outcome/skip/recency questions; src/db/v2-queries.ts aggregation and timestamp semantics."
+    },
+    {
+      "observation_id": "recency-and-refresh",
+      "surface": "Browser, controllable clock and request/response recorder",
+      "check": "Observe the chosen initial window, trigger the available refresh/range interaction and return a changed response with later event time. If range changes permit overlapping reads, complete an older request after the newer one.",
+      "expected": "Displayed query scope, data and refresh state agree with actual supported requests. UTC since/last_seen semantics are preserved. Fresh data replaces old data; an older response cannot misrepresent the current scope. No particular cadence, duration or URL key is required.",
+      "source_rationale": "Useful recent activity in original request; supported since lower-bound query; ordinary console request-state behavior."
+    },
+    {
+      "observation_id": "empty-error-recovery",
+      "surface": "Browser with deferred, empty, rejected and recovered API responses",
+      "check": "Exercise initial loading, metrics:[], initial read failure, refresh failure after successful data, then successful retry.",
+      "expected": "Loading/empty/error are distinguishable. Empty means no matching reports; errors remain errors. Any retained rows are visibly stale/last-known. Recovery updates data and clears the error. Neither absence nor failure proves memory healthy, broken, disabled or free of rate-limit skips.",
+      "source_rationale": "API reports stored observations, not exporter completeness or process health. Reliable interpretation is needed for original user questions."
+    },
+    {
+      "observation_id": "bounded-results",
+      "surface": "Browser and API recorder with limit-sized grouped response",
+      "check": "Return the requested cap of distinct groups (default 200, maximum 500) and inspect any headings, totals, ratios, empty-state inferences and details.",
+      "expected": "The UI does not imply an uncapped population or complete history. It communicates the relevant returned-slice limitation when needed; no pagination/total-count capability is invented. A simple faithful group listing is an acceptable alternative to headline totals.",
+      "source_rationale": "getOperationalMetricSummary caps group rows and returns no truncation flag, cursor or population total."
+    },
+    {
+      "observation_id": "scope-and-console-regression",
+      "surface": "Final source diff, actual API requests, disposable store before/after and existing console paths",
+      "check": "Inspect mutations/dependency changes and route integration; compare seeded operational rows and ordinary activity/usage outputs before/after view interactions. Check keyboard access and a narrow viewport.",
+      "expected": "Read-only frontend feature with no ingestion, storage schema, provider configuration or usage-accounting changes. Operational reads do not alter stores or contribute tokens/cost/activity. Existing console navigation/content remains usable and controls/data remain reachable. Do not demand unrelated broad refactors or fixed component filenames.",
+      "source_rationale": "Explicit scope exclusions; docs/system/FEATURES.md operational segregation; frontend/AGENTS.md design/system integration."
+    }
+  ],
+  "suggested_existing_checks": [
+    "pnpm frontend:test",
+    "pnpm frontend:build",
+    "Relevant existing API/query tests including tests/otel-metrics-store.test.ts and tests/cli-ops-metrics.test.ts inside the VM; preserve baseline failures/skips separately."
+  ],
+  "qualification_controls": [
+    "A known-positive reachable consumer must render the fixture and issue a recorded read before absence of writes or absence of skips is interpreted.",
+    "A deliberate count/value swap or empty-means-healthy rendering should fail semantic outcome checks; an unused helper-only implementation should fail the browser consumer path.",
+    "Exercise both authored viable design approaches or another independently reviewed alternate design before assuming selectors/expectations permit alternatives.",
+    "Run all new machinery through the actual frozen VM/solver boundary and retain immutable logs/readbacks before relying on it; this JSON file itself executes nothing."
+  ],
+  "limitations": [
+    "This is an authored plan for executable/semantic observations, not an implemented feature grader or observed test result. Parent task/environment qualification still owns actual machinery and runtime checks.",
+    "Do not award implementation correctness for following the generated specification when it contradicts the original need. Preserve spec defects, implementation defects, execution failures and unresolved attribution separately.",
+    "Browser fixtures establish rendering/interaction behavior against a controlled API response; separately verify the actual shipped endpoint/query contract and built-path wiring. Neither alone proves all production ingestion behavior.",
+    "No host execution of imported AgentMonitor code, VM launch or model call is authorized by this artifact."
+  ]
+}

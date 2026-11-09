@@ -7,6 +7,11 @@ independent implementation informed by SkillsBench/Harbor task packaging,
 Tessl fixtures, and the evidence/assessment patterns in [SOURCES](../project/SOURCES.md).
 No upstream runner is required.
 
+For Git-derived inputs, [source capture](SOURCE-CAPTURE.md) freezes a full commit
+revision with optional declared context exclusions, a new one-commit baseline,
+and operator-only provenance. This is an input preparation step; it does not
+package a task, validate its VM environment, or establish task quality.
+
 ## Operator acceptance maps
 
 [Measurement design](../project/MEASUREMENT.md) owns how requirements and task
@@ -126,6 +131,17 @@ The four criteria are factual support, relevant limitations, audience usefulness
 and clarity/action. Each permits satisfied, violated, or unresolved; every resolved
 judgment needs evidence citations. Different valid drafts may pass. Skill procedure,
 style keywords and similarity to a preferred draft are not answer keys.
+
+New specification tasks select `rubric_profile: "specification-v1"`. This keeps
+the four criterion IDs while using specification-specific language about grounded
+choices, implementability and observable acceptance, with versioned
+`specification-agentic-v1` or `specification-static-v1` packets. The omitted/default
+`document-v1` profile preserves existing document packets byte for byte. The
+[operational-metrics example](../../examples/document/operational-metrics/README.md)
+includes valid alternatives and defective controls; authored labels are development
+evidence, not independent grader audit. A readable file is only a structural
+observation. [Handoffs](HANDOFFS.md) bind exact generated artifacts to later
+implementation without treating presence as semantic success.
 
 Document judges use the existing investigative/static policies, masked treatment
 metadata and append-only recording. The collector retains its existing

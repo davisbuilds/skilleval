@@ -1,6 +1,6 @@
 ---
 status: in-progress
-updated: 2026-11-06
+updated: 2026-11-08
 ---
 
 # Roadmap
@@ -49,7 +49,26 @@ SkillsBench/Harbor packaging, Tessl fixtures and explicit variants,
 Anthropic/Engram assessment patterns, gstack's separation of validity and benefit,
 and the adapted OpenBench gateway. External skills remain experimental inputs.
 
-## Now: valid acceptance, useful tasks and independent judgment audit
+## Now: a useful workflow-skill task and independent judgment audit
+
+The next development pilot targets a routine `write-spec` task for the selected
+[operational-metrics console feature](../../examples/document/operational-metrics/README.md).
+Its shared brief delegates bounded product choices without live Q&A and requests
+one self-contained Markdown spec. Historical specifications and plans are
+deliberately withheld from both arms. The task, acceptance map and two-cell
+development plan are frozen. The selected baseline matches six reviewed VM lanes,
+including browser interaction, with one known root-test failure and five skips
+retained explicitly. Next, compare explicit skill ON/OFF specifications.
+Follow each spec with a fresh, otherwise equivalent vanilla implementer to assess
+the handoff against the original request. This keeps the treatment in the spec
+stage while exposing downstream quality, omissions, rework and total cost.
+Specification-specific rubrics, authored controls and
+[linked-stage recording](../system/HANDOFFS.md) are implemented; structural checks
+and automated review do not establish semantic reliability. Interactive
+clarification is backlogged. Debugging expansion
+is deferred while this pilot is prepared; retained repairs remain development
+evidence. The [candidate register](PILOT-CANDIDATES.md#current-selection-direction)
+owns selection and exclusions.
 
 1. **Validate acceptance before new comparisons.** Use ordinary work records to
    define success and freeze an acceptance map under `mapped-acceptance-v1`.
@@ -75,9 +94,9 @@ and the adapted OpenBench gateway. External skills remain experimental inputs.
    Its revised disposable application home is qualified; ordinary test exceptions
    and task-specific audit limits remain. The
    [debugging expansion shortlist](PILOT-CANDIDATES.md#debugging-expansion-shortlist)
-   proposes fetchmd address validation next, followed by separately qualified
-   Promptfoo cases, with Dojo reserved. These source-inspected candidates still
-   need capture and executable validation.
+   retains fetchmd and Promptfoo candidates for later consideration, with Dojo
+   reserved. They are not the next selected task and still need capture and
+   executable validation.
    Preserve selection reasons and exclusions. Do not retain
    only vanilla failures or wins for the skill.
 3. **Audit representative judgments with corrected evidence.** Review actual

@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from skilleval import __version__
 from skilleval.acceptance import AcceptanceMapSpec
@@ -17,6 +17,7 @@ from skilleval.accounting import PriceSchedule
 from skilleval.calibration import CalibrationResult
 from skilleval.contracts import Assessment, Attempt, Experiment, Record, Task
 from skilleval.errors import SkillEvalError
+from skilleval.handoff import HandoffReportSpec, SpecHandoffSpec
 from skilleval.judge import AgenticCalibrationResult, AgenticReviewResult
 from skilleval.reliability import ReliabilityObservations, ReliabilitySuite
 from skilleval.repair import RepairSpec
@@ -52,6 +53,8 @@ RECORDS: dict[str, type[Record]] = {
     "document-assessment": DocumentAssessment,
     "task-package-spec": TaskPackageSpec,
     "acceptance-map-spec": AcceptanceMapSpec,
+    "spec-handoff-spec": SpecHandoffSpec,
+    "handoff-report-spec": HandoffReportSpec,
 }
 
 
@@ -62,6 +65,15 @@ def parser() -> argparse.ArgumentParser:
     capture = commands.add_parser("capture", help="Copy and inventory an explicit evidence tree")
     capture.add_argument("source", type=Path)
     capture.add_argument("--output", type=Path, required=True)
+    source = commands.add_parser("source", help="Capture pinned source without upstream history")
+    source_commands = source.add_subparsers(dest="operation", required=True)
+    source_capture = source_commands.add_parser(
+        "capture", help="Freeze a Git revision with declared context exclusions"
+    )
+    source_capture.add_argument("source", type=Path)
+    source_capture.add_argument("--revision", required=True, help="Full source commit object ID")
+    source_capture.add_argument("--exclusions", type=Path, help="Explicit source-exclusions policy")
+    source_capture.add_argument("--output", type=Path, required=True, help="Fresh output directory")
     importer = commands.add_parser("import-review", help="Import one historical review case")
     importer.add_argument("source", type=Path)
     importer.add_argument("--case", required=True)
@@ -71,9 +83,9 @@ def parser() -> argparse.ArgumentParser:
         command.add_argument("bundle", type=Path)
         command.add_argument("--sha256", help="Expected manifest identity retained separately")
     schema = commands.add_parser("schema", help="Print a versioned record's JSON Schema")
-    schema.add_argument("kind", choices=RECORDS)
+    schema.add_argument("kind", choices=(*RECORDS, "source-exclusions"))
     validate = commands.add_parser("validate", help="Validate record structure, not its truth")
-    validate.add_argument("kind", choices=RECORDS)
+    validate.add_argument("kind", choices=(*RECORDS, "source-exclusions"))
     validate.add_argument("file", type=Path)
     review = commands.add_parser("review", help="Prepare evidence or record an assessment")
     review_commands = review.add_subparsers(dest="operation", required=True)
@@ -292,6 +304,21 @@ def parser() -> argparse.ArgumentParser:
     package_validate.add_argument("--sha256", required=True)
     package_validate.add_argument("--runtime", type=Path, required=True)
     package_validate.add_argument("--output", type=Path, required=True)
+    handoff = commands.add_parser("handoff", help="Freeze a spec for fresh vanilla implementation")
+    handoff_commands = handoff.add_subparsers(dest="operation", required=True)
+    handoff_prepare = handoff_commands.add_parser(
+        "prepare", help="Select exact retained spec bytes"
+    )
+    handoff_prepare.add_argument("spec", type=Path)
+    handoff_prepare.add_argument("--output", type=Path, required=True)
+    for action in ("verify", "check-implementation"):
+        operation = handoff_commands.add_parser(action)
+        operation.add_argument("handoff", type=Path)
+        operation.add_argument("--sha256", required=True, help="Retained handoff digest")
+        if action == "check-implementation":
+            operation.add_argument("--run", type=Path, required=True)
+    handoff_report = handoff_commands.add_parser("report", help="Replay selected stage consumption")
+    handoff_report.add_argument("spec", type=Path)
     repair = commands.add_parser(
         "repair", aliases=["artifact"], help="Collect file artifacts and run offline checks"
     )
@@ -387,6 +414,25 @@ def write_new_json(path: Path, value: object) -> None:
 
 
 def dispatch(args: argparse.Namespace) -> dict[str, Any]:
+    if args.command == "handoff":
+        from skilleval.handoff import (
+            check_implementation,
+            load_handoff,
+            prepare_handoff,
+            report_handoff,
+        )
+
+        if args.operation == "prepare":
+            return prepare_handoff(
+                SpecHandoffSpec.model_validate_json(json.dumps(read_json(args.spec))), args.output
+            )
+        if args.operation == "verify":
+            return {"status": "verified", **load_handoff(args.handoff, args.sha256)}
+        if args.operation == "check-implementation":
+            return check_implementation(args.handoff, args.sha256, args.run)
+        return report_handoff(
+            HandoffReportSpec.model_validate_json(json.dumps(read_json(args.spec)))
+        )
     if args.command == "task-package":
         from skilleval.task_package import prepare_package, validate_environment
 
@@ -572,11 +618,27 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
             source_url=args.source_url,
             source_revision=args.source_revision,
         )
-    if args.command == "schema":
-        return RECORDS[args.kind].model_json_schema()
-    if args.command == "validate":
+    if args.command == "source":
+        from skilleval.source_capture import SourceExclusions, capture_source
+
+        exclusions = (
+            SourceExclusions.model_validate_json(json.dumps(read_json(args.exclusions)))
+            if args.exclusions is not None
+            else None
+        )
+        return capture_source(args.source, args.revision, args.output, exclusions=exclusions)
+    if args.command in ("schema", "validate"):
+        record_type: type[BaseModel]
+        if args.kind == "source-exclusions":
+            from skilleval.source_capture import SourceExclusions
+
+            record_type = SourceExclusions
+        else:
+            record_type = RECORDS[args.kind]
+        if args.command == "schema":
+            return record_type.model_json_schema()
         document = read_json(args.file)
-        record = RECORDS[args.kind].model_validate_json(json.dumps(document))
+        record = record_type.model_validate_json(json.dumps(document))
         return {"status": "valid-structure", "record": record.model_dump(mode="json")}
     if args.command in ("capture", "import-review", "verify", "inspect"):
         from skilleval.evidence import import_review, snapshot, verify

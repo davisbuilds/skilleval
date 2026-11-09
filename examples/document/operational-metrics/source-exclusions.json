@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "exclude": [
+    {
+      "path": "docs/specs",
+      "reason": "Withhold existing specification context equally from both arms of the specification-writing pilot"
+    },
+    {
+      "path": "docs/archive/specs",
+      "reason": "Withhold archived specification exemplars equally from both arms of the specification-writing pilot"
+    },
+    {
+      "path": "docs/archive/plans",
+      "reason": "Withhold archived plans that repeat specification-workflow conventions equally from both arms"
+    }
+  ]
+}

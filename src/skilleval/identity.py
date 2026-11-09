@@ -21,6 +21,7 @@ SOURCES = (
     "src/skilleval/lifecycle.py",
     "src/skilleval/retention.py",
     "src/skilleval/study.py",
+    "src/skilleval/handoff.py",
     "src/skilleval/acceptance.py",
     "src/skilleval/accounting.py",
     "src/skilleval/efficiency.py",

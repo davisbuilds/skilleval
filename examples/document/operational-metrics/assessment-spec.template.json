@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "assessment_kind": "document",
+  "rubric_profile": "specification-v1",
+  "task": "TASK.json",
+  "task_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "result": "RESULT",
+  "result_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "checks": [
+    {
+      "task": "TASK.json",
+      "task_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "result": "RESULT",
+      "result_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "report": "CHECK/repair-check.json",
+      "report_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "investigation": true,
+  "tool_evidence_policy": "execution-context-v3",
+  "limitations": [
+    "Replace every placeholder with exact retained identities in a fresh external operator file. This template and authored controls are not solver input.",
+    "Assess the specification against the original request and pinned repository source, including legitimate alternate designs. Mechanical artifact presence does not establish semantic completion.",
+    "Development assessment only. Authored controls and local review do not establish independent human audit, judge reliability or skill effectiveness. Downstream implementation is a separate outcome."
+  ]
+}
