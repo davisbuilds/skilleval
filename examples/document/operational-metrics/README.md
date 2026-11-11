@@ -154,15 +154,25 @@ the four broad categories. Authored labels and their rationales stay outside
 packets; comparison must preserve disagreements and unresolved judgments. The
 authored-control provenance has no model attempt or native writer transcript.
 
+Development judgments recorded for all eight controls cover all seven requirements
+and four broad criteria. Both positive specifications satisfy every requirement;
+the intended metric/health defects and incomplete delivery are distinguished.
+Five authored-label disagreements remain visible across overlapping broad criteria,
+interaction completeness and missing-output semantics. A separate source review
+also questioned interaction and scope labels. One failed original invocation and
+its fresh retry remain separate. These observations support further development,
+not independent semantic reliability or a skill-effect estimate.
+
 The [downstream contract](controls/downstream-contract.json) preserves the
 original need as authority for UI/API and regression assessment. Its
 [executable observer](downstream/README.md) drives the actual built console with
 an operator-reviewed affordance plan, controlled responses, raw DOM/accessibility
 and network evidence, screenshots, store/API comparisons and source inventories.
-Two authored integrations and three defect mutations support guest qualification.
-Implemented machinery still requires frozen-boundary qualification and semantic
-calibration; it does not award correctness by lexical checks or by following a
-flawed generated spec. No ON/OFF outcomes have been established by this
+Two authored integrations and three defect mutations now have
+[maintainer-observed guest and semantic controls](downstream/README.md#qualification-controls).
+Changed machinery still requires fresh qualification; it does not award
+correctness by lexical checks or by following a flawed generated spec.
+No ON/OFF outcomes have been established by this
 preparation. Use a new generation when requirements, prompts or graders change.
 
 

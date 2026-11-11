@@ -122,7 +122,7 @@
     "No host execution of imported AgentMonitor code, VM launch or model call is authorized by this artifact."
   ],
   "guest_qualification": "development-controls-observed-2026-11-11",
-  "semantic_calibration": "required-pending",
+  "semantic_calibration": "development-controls-recorded-2026-11-11-independent-audit-pending",
   "executable_entry_points": {
     "packaging": "../downstream/prepare.py:lane_argv",
     "guest_runner": "../downstream/validate.py",

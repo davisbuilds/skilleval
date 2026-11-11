@@ -163,7 +163,13 @@ Semantic calibration remains separate from completed browser execution. An early
 judge found a real stale-range defect in both intended positive layouts: old
 wider-window rows remained under a new narrower heading. Corrected controls and
 the loaded-wide-to-narrow observation preserve that failure as an earlier
-generation; they do not retroactively turn it into a pass. Even successful controls
+generation; they do not retroactively turn it into a pass. Fresh investigative
+Sol/high judgments satisfied all six requirements for each corrected alternative
+and rejected the count/value swap, false-health inference and unwired component
+on their declared target requirements. All 15 prespecified expectation cells
+matched; they are related authored expectations, not an accuracy estimate. The
+earlier failures and a rejected malformed judgment remain retained. Independent
+semantic audit remains pending. Even successful controls
 cover only these sampled consumer paths; they do not establish complete UI
 accessibility, all polling schedules, adversarial candidate resistance, external
 ingestion fidelity or a skill-effect estimate.
