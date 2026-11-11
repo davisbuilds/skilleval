@@ -86,6 +86,53 @@ internal helper cannot satisfy the consumer-read check.
 | Bounded results | Fixture returns the actual requested limit (default 200, maximum 500) distinct groups | Response and raw DOM/ARIA/HTML headings/details. Judge checks slice completeness/denominator claims; no fixed warning sentence is required. |
 | Scope and console regression | Source inventory/diff reference, all same-origin browser methods, every SQLite table fingerprint, activity/usage APIs before/after, narrow viewport, 16 real Tab presses and declared keyboard activation | Source changes/dependency triage, store/API changes, focus and layout snapshots. These are supporting controls, not complete accessibility or production-ingestion coverage. |
 
+### Action generations and fixture projection
+
+Each declared action/release interval owns a read generation, not a fixed number
+of HTTP requests. All its metrics requests, including concurrent prefix/latest
+queries and sequential companions, must complete or fail and then remain quiet
+for 150 ms before a settled snapshot. Arrival/completion waits retain the existing
+five-second deadline. Initial loading holds the whole generation; the race
+releases the newer generation in full before reactivating and releasing the
+older generation, including its later sequential companions. A canceled route
+remains recorded. Errors and changed fixtures belong to explicit action phases,
+so a second request in the initial load cannot consume the refresh failure.
+`read_generations` and network records bind phase, generation and request ordinal.
+A request arriving after a generation's quiet bound makes the observation
+incomplete. These are controlled arrival intervals, not authenticated
+application-internal transaction identities; unrelated polling or delayed work
+can require a separately reviewed observation design.
+
+Intercepted fixtures honor the actual `name_prefix`, `agent`, UTC `since` and
+`limit` query, sorting by event time before applying the ordinary cap. The
+fixture's authored aggregate groups model co-timed contributing points in a
+synthetic Codex scope. Counts and value sums remain independent, and attribute
+groups remain distinct. A latest query with `limit=1` gets at most one group;
+a different prefix cannot receive duplicate rows from the first prefix. The
+wider-only rate-limit group is projected through the actual query lower bound,
+not supplied merely because an action is called wide. The aggregate fixture
+contains no contributing-session data: a `session_id` query is explicitly
+unsupported unless that metadata was authored, and the observer marks that
+fixture scenario incomplete rather than fabricating an API rejection or empty
+result. These synthetic assumptions do not qualify real per-point filtering;
+the separately seeded actual endpoint remains the API control.
+
+The deterministic regressions are
+`uv run pytest tests/test_operational_metrics_batches.py tests/test_operational_metrics_downstream.py`. Before using a
+changed observer on real outcomes, freeze fresh packages and run the existing
+single-request positive control plus an explicitly authored four-request
+positive control through the same guest route. The four-request variant should
+await two windowed prefix queries and two unwindowed `limit=1` companions in each
+load, preserving the ordinary version guard, error recovery and source fixture
+semantics. Seed generated root/frontend dependency caches in that control to
+exercise the scratch projection too. Retain the exact control patch/driver and
+all ten scenario outputs. Inspect full-generation loading, phase-specific
+failure/recovery, actual scope projections, newer-before-older release and
+canceled routes; require completed cleanup and exact retained exports before
+interpreting actual candidates. Old qualification evidence remains unchanged
+and does not qualify these new observer bytes. No model judge is needed merely
+to qualify this transport repair; semantic audit remains separate.
+
 Read responses complete before their resulting snapshot. Snapshots wait for a
 150-ms quiet DOM interval, bounded at two seconds, retaining which bound fired;
 that rendering bound is observation timing, not a product-correctness assertion.

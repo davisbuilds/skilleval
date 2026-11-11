@@ -7,7 +7,7 @@ import { once } from 'node:events';
 import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
-import { regressionRoutes, fixtureResponse, retainScreenshot, rangeTransitionBinding } from './scenarios.mjs';
+import { regressionRoutes, fixtureResponse, retainScreenshot, rangeTransitionBinding, ReadGenerations } from './scenarios.mjs';
 
 assert.equal(process.platform, 'linux', 'guest Linux required');
 assert.equal(process.getuid(), 61000, 'solver UID required');
@@ -37,9 +37,12 @@ const observation = { schema_version: 1, kind: 'operational-metrics-consumer-obs
   semantic_verdict: 'unassessed', uid: process.getuid(), browser: null,
   browser_clock_utc: '2026-11-07T12:05:00Z',
   screenshot_policy: 'initial-fixture-empty-narrow-only-v1',
+  read_generation_policy: 'action-release-arrival-quiet-v1',
+  fixture_projection: { agent: 'synthetic Codex scope', point_times: 'co-timed contributions at each authored group last_seen',
+    session_scope: 'unsupported without explicit contributing-session metadata; real endpoint evidence is separate' },
   fixture_contract_sha256: digest(fs.readFileSync(contractPath)), driver_sha256: digest(fs.readFileSync(driverPath)),
   scenarios: [], page_errors: [], blocked_origins: [], api: {}, store: {}, errors: [] };
-let network = [], pending = [], scenarioName = '', sequence = 0;
+let network = [], scenarioName = '', sequence = 0;
 const scopes = new Set(['name_prefix', 'agent', 'since', 'session_id', 'limit']);
 const limit = 256 * 1024;
 function locator(page, target) {
@@ -141,154 +144,163 @@ try {
     await page.clock.setFixedTime(new Date('2026-11-07T12:05:00Z'));
     page.on('pageerror', error => observation.page_errors.push({ scenario: mode, message: error.message }));
     const requests = [];
+    const generations = new ReadGenerations();
+    const deferred = new Map();
+    const initial = generations.begin('initial', { deferred: mode === 'loading' || mode === 'race' });
     const requestRecords = new Map();
     page.on('requestfailed', request => {
       const row = requestRecords.get(request);
-      if (row) row.failure = request.failure();
-      network.push({ event: 'requestfailed', scenario: mode, url: request.url(), failure: request.failure() });
+      if (row) generations.complete(row, request.failure() || { errorText: 'requestfailed' });
+      network.push({ event: 'requestfailed', scenario: mode, request_ordinal: row?.ordinal,
+        generation: row?.generation, phase: row?.phase, url: request.url(), failure: request.failure() });
     });
     const inflight = [];
     page.on('response', response => {
       if (new URL(response.url()).pathname !== '/api/v2/metrics') return;
       const task = (async () => {
-        const row = { scenario: mode, url: response.url(), status: response.status() };
+        const requestRow = requestRecords.get(response.request());
+        const row = { scenario: mode, request_ordinal: requestRow?.ordinal, generation: requestRow?.generation,
+          phase: requestRow?.phase, url: response.url(), status: response.status() };
         try { row.body = await response.json(); } catch (error) { row.error = error.message; }
         network.push({ event: 'response', ...row });
-        const requestRow = requestRecords.get(response.request());
-        if (requestRow) requestRow.completed = true;
+        if (requestRow) generations.complete(requestRow);
       })();
       inflight.push(task);
     });
     await context.route('**/*', async route => {
       const request = route.request(), url = new URL(request.url());
       if (url.origin !== base) { observation.blocked_origins.push(url.origin); await route.abort('blockedbyclient'); return; }
-      network.push({ event: 'request', scenario: mode, method: request.method(), url: request.url(),
-        post_data: request.postData(), resource_type: request.resourceType() });
+      const networkRow = { event: 'request', scenario: mode, method: request.method(), url: request.url(),
+        post_data: request.postData(), resource_type: request.resourceType() };
+      network.push(networkRow);
       if (url.pathname !== '/api/v2/metrics') return route.continue();
       const requestRow = { ordinal: requests.length + 1, method: request.method(),
         query: Object.fromEntries(url.searchParams), url: request.url() };
       requests.push(requestRow);
       requestRecords.set(request, requestRow);
+      const generation = generations.record(requestRow);
+      Object.assign(networkRow, { request_ordinal: requestRow.ordinal, generation: generation.id, phase: generation.phase });
       if (mode === 'real') return route.continue();
-      if (mode === 'loading' || mode === 'race' ||
-          (mode === 'range-transition' && requests.length === 3)) {
-        pending.push(route); return;
+      if (generation.deferred) {
+        deferred.set(requestRow, route);
+        generations.defer(requestRow, () => supply(route, requestRow, generation));
+        return;
       }
-      const supplied = fixtureResponse(contract.api_fixture.metrics, mode, request.url(), requests.length, 0, rangeTransition.windows);
-      network.push({ event: 'fixture', scenario: mode, request: request.url(), ...supplied });
-      await route.fulfill({ status: supplied.status, json: supplied.body });
+      await supply(route, requestRow, generation);
     });
-    const release = async (index, revision, allowCanceled = false, supplied = null) => {
-      const route = pending.splice(index, 1)[0];
-      assert.ok(route, 'requested deferred read did not occur');
-      const { status, body } = supplied || fixtureResponse(contract.api_fixture.metrics, 'deferred', route.request().url(), 1, revision);
-      network.push({ event: 'fixture', scenario: mode, request: route.request().url(), status, body });
+    const supply = async (route, row, generation) => {
+      deferred.delete(row);
+      const supplied = fixtureResponse(contract.api_fixture.metrics, mode,
+        route.request().url(), generation.phase, { revision: generation.revision, rangeWindows: rangeTransition.windows });
+      if (supplied.supported === false) {
+        (scenario.fixture_scope_errors ||= []).push({ request: route.request().url(), reason: supplied.reason });
+        network.push({ event: 'fixture-unsupported', scenario: mode, generation: generation.id, request_ordinal: row.ordinal,
+          request: route.request().url(), reason: supplied.reason });
+        await route.abort('blockedbyclient');
+        return;
+      }
+      const { status, body } = supplied;
+      network.push({ event: 'fixture', scenario: mode, generation: generation.id, phase: generation.phase, request_ordinal: row.ordinal,
+        request: route.request().url(), status, body });
       try { await route.fulfill({ status, json: body }); }
       catch (error) {
-        if (!allowCanceled || !route.request().failure()) throw error;
-        network.push({ event: 'deferred-read-canceled', scenario: mode, request: route.request().url(),
-          failure: route.request().failure(), detail: error.message });
+        const failure = row.failure || route.request().failure();
+        if (!failure) throw error;
+        network.push({ event: 'deferred-read-canceled', scenario: mode, generation: generation.id, request_ordinal: row.ordinal,
+          request: route.request().url(), failure, detail: error.message });
       }
     };
-    const waitForRead = async count => {
-      const end = Date.now() + 5000;
-      while (Date.now() < end) {
-        if (requests.length > count && (requests[count].completed || requests[count].failure)) return;
-        await page.waitForTimeout(25);
-      }
-      throw new Error('consumer read did not complete within observation deadline');
-    };
-    const interactRead = async steps => {
-      const count = requests.length;
+    // Releasing a whole generation opens automatic fulfillment for its later
+    // sequential companions before waiting for all responses and quiet arrivals.
+    const release = (generation, revision = 0) => generations.release(generation, revision);
+    const interactRead = async (phase, steps, requireRequests = true) => {
+      const generation = generations.begin(phase);
       await actions(page, steps);
-      await waitForRead(count);
+      await generations.wait(generation, { requireRequests });
+      return generation;
     };
     try {
       await page.goto(`${base}/app/`, { waitUntil: 'domcontentloaded' });
       await actions(page, driver.enter);
       await page.waitForFunction(() => document.readyState === 'complete');
-      // Read arrival is part of the wiring check, rather than a helper call.
-      const deadline = Date.now() + 5000;
-      while (!requests.length && Date.now() < deadline) await page.waitForTimeout(25);
-      assert.ok(requests.length, 'no consumer metrics read reached the actual console');
+      // Arrival and completion cover every request, including sequential
+      // companions, until the declared quiet interval. No fixed fan-out count.
       if (mode === 'loading') {
+        await generations.wait(initial, { pending: true });
         scenario.snapshots.push(await snapshot(page, 'pending'));
-        await release(0, 0);
-        await waitForRead(0);
+        await release(initial);
       } else if (mode === 'race') {
-        // Optional only when a design has range changes that can overlap.
         if (!driver.range?.length) { scenario.status = 'not-applicable'; scenario.reason = 'no range interaction declared; semantic review must verify applicability'; continue; }
+        await generations.wait(initial, { pending: true });
+        const newer = generations.begin('newer-first', { deferred: true });
         await actions(page, driver.range);
-        const end = Date.now() + 5000;
-        while (pending.length < 2 && Date.now() < end) await page.waitForTimeout(25);
-        assert.ok(pending.length >= 2, 'range interaction did not issue an overlapping read');
-        const newerIndex = requests.length - 1;
-        await release(pending.length - 1, 1);
-        await waitForRead(newerIndex);
+        await generations.wait(newer, { pending: true });
+        await release(newer, 1);
         scenario.snapshots.push(await snapshot(page, 'newer-first'));
-        await release(0, 0, true);
-        await waitForRead(0);
+        await release(initial);
       } else {
-        await waitForRead(0);
+        await generations.wait(initial);
       }
       scenario.snapshots.push(await snapshot(page, 'initial'));
-      await actions(page, driver.inspect);
-      if (driver.inspect?.length) scenario.snapshots.push(await snapshot(page, 'detail'));
+      if (driver.inspect?.length) {
+        await interactRead('detail', driver.inspect, false);
+        scenario.snapshots.push(await snapshot(page, 'detail'));
+      }
       if (mode === 'initial-error') {
-        await interactRead(driver.retry || driver.refresh);
+        await interactRead('initial-recovered', driver.retry || driver.refresh);
         scenario.snapshots.push(await snapshot(page, 'initial-recovered'));
       }
       if (mode === 'fixture') {
-        await interactRead(driver.refresh);
+        await interactRead('refreshed', driver.refresh);
         scenario.snapshots.push(await snapshot(page, 'refreshed'));
       }
       if (mode === 'refresh-error-recovery') {
         for (const label of ['refresh-failed', 'recovered']) {
-          await interactRead(label === 'recovered' ? (driver.retry || driver.refresh) : driver.refresh);
+          await interactRead(label, label === 'recovered' ? (driver.retry || driver.refresh) : driver.refresh);
           scenario.snapshots.push(await snapshot(page, label));
         }
       }
       if (mode === 'range-transition') {
-        await interactRead(driver.range);
+        await interactRead('wide-loaded', driver.range);
         scenario.snapshots.push(await snapshot(page, 'wide-loaded'));
-        const count = requests.length;
+        const narrow = generations.begin('narrow-failed', { deferred: true });
         await actions(page, driver.range_return);
-        const end = Date.now() + 5000;
-        while (!pending.length && Date.now() < end) await page.waitForTimeout(25);
-        assert.ok(pending.length, 'narrow range interaction did not issue a deferred read');
+        await generations.wait(narrow, { pending: true });
         scenario.snapshots.push(await snapshot(page, 'narrow-pending'));
-        const failure = fixtureResponse(contract.api_fixture.metrics, mode, pending[0].request().url(), 3);
-        await release(0, 0, false, failure);
-        await waitForRead(count);
+        await release(narrow);
         scenario.snapshots.push(await snapshot(page, 'narrow-failed'));
-        await interactRead(driver.retry || driver.refresh);
+        await interactRead('narrow-recovered', driver.retry || driver.refresh);
         scenario.snapshots.push(await snapshot(page, 'narrow-recovered'));
       }
       if (mode === 'fixture' || mode === 'real') {
-        await actions(page, driver.away);
+        await interactRead('away', driver.away, false);
         scenario.snapshots.push(await snapshot(page, 'away'));
-        await actions(page, driver.return);
+        await interactRead('returned', driver.return, false);
         scenario.snapshots.push(await snapshot(page, 'returned'));
       }
       if (mode === 'narrow-keyboard') {
         for (let n = 0; n < 16; n++) { await page.keyboard.press('Tab'); scenario.snapshots.push(await snapshot(page, `tab-${n}`)); }
         if (driver.keyboard?.length) {
-          await interactRead(driver.keyboard);
+          await interactRead('keyboard-operated', driver.keyboard);
           scenario.keyboard_activation = 'consumer-read-observed';
           scenario.snapshots.push(await snapshot(page, 'keyboard-operated'));
         } else {
           scenario.keyboard_activation = 'not-configured';
         }
       }
+      assert.ok(!scenario.fixture_scope_errors?.length, 'unsupported fixture scope; this observation cannot establish product behavior');
+      assert.ok(generations.generations.every(item => item.lateRequests === 0), 'metrics requests arrived after their generation quiet bound; observation incomplete');
       scenario.status = 'observed';
     } catch (error) { scenario.error = error.stack;
       try { scenario.snapshots.push(await snapshot(page, 'failure')); } catch (capture) { scenario.capture_error = capture.message; }
     }
     finally {
       scenario.requests = requests;
+      scenario.read_generations = generations.describe();
       scenario.query_diagnostics = requests.map(row => ({ method_is_get: row.method === 'GET',
         unsupported_keys: Object.keys(row.query).filter(key => !scopes.has(key)) }));
-      for (const route of pending.splice(0)) await route.abort().catch(() => {});
+      for (const route of deferred.values()) await route.abort().catch(() => {});
+      deferred.clear();
       await Promise.allSettled(inflight);
       await context.close(); context = undefined;
     }

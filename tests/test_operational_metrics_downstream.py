@@ -278,16 +278,17 @@ import { regressionRoutes, fixtureResponse, retainScreenshot }
 const rows = [{metric_name:'codex.memory.startup',attrs:{state:'succeeded'},
   occurrences:2,total_value:9,last_seen:'2026-11-07 12:00:00'}];
 const url = 'http://localhost/api/v2/metrics?limit=200';
-const response = (mode,n) => fixtureResponse(rows,mode,url,n);
+const response = (mode,phase) => fixtureResponse(rows,mode,url,phase);
 console.log(JSON.stringify({routes:regressionRoutes,
   screenshots:['fixture','empty','narrow-keyboard','real','loading','race'].flatMap(mode =>
     ['initial','failure','refreshed','pending'].filter(label => retainScreenshot(mode,label))
       .map(label => mode+'/'+label)),
-  initialFailure:response('initial-error',1), initialRecovery:response('initial-error',2),
-  initial:response('fixture',1), refreshed:response('fixture',2),
-  priorGood:response('refresh-error-recovery',1),
-  refreshFailed:response('refresh-error-recovery',2),
-  refreshRecovered:response('refresh-error-recovery',3),
+  initialFailure:response('initial-error','initial'),
+  initialRecovery:response('initial-error','initial-recovered'),
+  initial:response('fixture','initial'), refreshed:response('fixture','refreshed'),
+  priorGood:response('refresh-error-recovery','initial'),
+  refreshFailed:response('refresh-error-recovery','refresh-failed'),
+  refreshRecovered:response('refresh-error-recovery','recovered'),
   bounded:fixtureResponse(rows,'bounded',url),
   maximum:fixtureResponse(rows,'bounded','http://localhost/api/v2/metrics?limit=900')}));
 """
@@ -341,12 +342,12 @@ import { fixtureResponse, rangeTransitionBinding }
   from './examples/document/operational-metrics/downstream/scenarios.mjs';
 const metrics = [{metric_name:'codex.memory.startup',attrs:{state:'succeeded'},
   occurrences:2,total_value:9,last_seen:'2026-11-07 12:00:00'}];
-const read = ordinal => fixtureResponse(metrics,'range-transition',
-  'http://localhost/api/v2/metrics?limit=200',ordinal,0,{wide_hours:168,narrow_hours:24});
+const read = phase => fixtureResponse(metrics,'range-transition',
+  'http://localhost/api/v2/metrics?limit=200',phase,{rangeWindows:{wide_hours:168,narrow_hours:24}});
 const alternate = fixtureResponse(metrics,'range-transition',
-  'http://localhost/api/v2/metrics?limit=200',2,0,{wide_hours:6,narrow_hours:1});
+  'http://localhost/api/v2/metrics?limit=200','wide-loaded',{rangeWindows:{wide_hours:6,narrow_hours:1}});
 const base = {range:[{}],range_return:[{}]};
-console.log(JSON.stringify({initial:read(1),wide:read(2),failed:read(3),recovered:read(4),
+console.log(JSON.stringify({initial:read('initial'),wide:read('wide-loaded'),failed:read('narrow-failed'),recovered:read('narrow-recovered'),
   alternate, missingPair:rangeTransitionBinding({range:[{}]}),
   missingBounds:rangeTransitionBinding(base),
   reversed:rangeTransitionBinding({...base,range_windows:{wide_hours:1,narrow_hours:6}}),
