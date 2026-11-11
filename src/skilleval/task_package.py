@@ -127,6 +127,8 @@ def prepare_package(spec: TaskPackageSpec, output: Path) -> dict[str, Any]:
     }
     if task.editable_directories:
         summary["output_directories"] = list(task.editable_directories)
+    if task.edit_scope == "repository":
+        summary["edit_scope"] = task.edit_scope
     return summary
 
 

@@ -97,11 +97,10 @@ def test_preparation_cannot_overwrite_or_leak_into_solver_input(helper, task, ro
         helper.prepare_contract(*args, tmp_path / "fresh")
 
 
-def test_generated_build_and_test_files_are_retained_but_sibling_directory_is_rejected(
-    prepared, tmp_path
-):
+def test_generated_files_and_unprescribed_directories_are_retained(prepared, tmp_path):
     ref = prepared["task"]
     contract = repair.load_task(Path(ref["path"]), ref["sha256"])
+    assert contract.edit_scope == "repository"
     candidate = tmp_path / "generated-source"
     repair._write(candidate, repair._inputs(contract))
     generated = {
@@ -141,11 +140,11 @@ def test_generated_build_and_test_files_are_retained_but_sibling_directory_is_re
         captured["manifest_sha256"],
         tmp_path / "unlisted-result",
     )
-    assert result["status"] == "invalid-scope"
+    assert result["status"] == "collected"
     record = json.loads((Path(result["path"]) / "repair-result.json").read_bytes())
-    assert record["out_of_scope"] == ["dist-extra/output.js"]
-    with pytest.raises(SkillEvalError, match="outside the frozen scope"):
-        repair.result_files(contract, ref["sha256"], Path(result["path"]), result["sha256"])
+    assert "dist-extra/output.js" in record["changed_paths"]
+    assert record["task_quality"] == "unassessed"
+    repair.result_files(contract, ref["sha256"], Path(result["path"]), result["sha256"])
 
 
 def test_observation_package_binds_candidate_and_retains_nonoracle_status(

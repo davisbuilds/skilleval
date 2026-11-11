@@ -18,10 +18,17 @@ SPEC_BYTES = b"# Export archived records\r\n\r\nInclude all completed records.\r
 
 @pytest.fixture
 def writer_factory(tmp_path: Path, route: dict[str, Any]):
-    def make(*, files=None, baseline_files=None, fault=""):
+    def make(*, files=None, baseline_files=None, fault="", spec_path=SPEC_PATH):
         root = tmp_path / ("writer-" + str(len(list(tmp_path.glob("writer-*")))))
         root.mkdir()
-        return _writer(root, route, files=files, baseline_files=baseline_files, fault=fault)
+        return _writer(
+            root,
+            route,
+            files=files,
+            baseline_files=baseline_files,
+            fault=fault,
+            spec_path=spec_path,
+        )
 
     return make
 
@@ -32,7 +39,13 @@ def writer(writer_factory):
 
 
 def _writer(
-    tmp_path: Path, route: dict[str, Any], *, files=None, baseline_files=None, fault=""
+    tmp_path: Path,
+    route: dict[str, Any],
+    *,
+    files=None,
+    baseline_files=None,
+    fault="",
+    spec_path=SPEC_PATH,
 ) -> dict[str, Any]:
     source = tmp_path / "source"
     source.mkdir()
@@ -51,7 +64,7 @@ def _writer(
                 "complete_usage": True,
                 "repair_files": files
                 if files is not None
-                else {SPEC_PATH: SPEC_BYTES.decode(), "code.py": "writer change\n"},
+                else {spec_path: SPEC_BYTES.decode(), "code.py": "writer change\n"},
             }
         )
     )
@@ -64,7 +77,7 @@ def _writer(
         input_bundle=str(baseline),
         input_sha256=captured["manifest_sha256"],
         prompt="Write a specification for exporting completed records.",
-        editable_paths=(SPEC_PATH, "code.py"),
+        editable_paths=(spec_path, "code.py"),
         editable_directories=("docs/specs",),
         worker=str(worker),
         worker_sha256=file_digest(worker),
@@ -83,7 +96,7 @@ def _writer(
         task_sha256=prepared["sha256"],
         result=str(result),
         result_sha256=collected["sha256"],
-        spec_path=SPEC_PATH,
+        spec_path=spec_path,
         spec_sha256=hashlib.sha256(SPEC_BYTES).hexdigest(),
     )
     return {
@@ -173,12 +186,27 @@ def test_empty_markdown_is_not_a_spec_artifact(writer_factory, tmp_path, raw):
 
 
 @pytest.mark.parametrize(
-    "name", ["final.txt", "docs/feature.md", "docs/specs/x.txt", "docs/specs/../x.md"]
+    "name", ["final.txt", "docs/specs/x.txt", "docs/specs/../x.md", "/feature.md", ".git/spec.md"]
 )
-def test_selection_requires_explicit_markdown_in_allowed_spec_directory(writer, name):
+def test_selection_requires_safe_repository_relative_markdown(writer, name):
     value = {**writer["spec"].model_dump(mode="json"), "spec_path": name}
-    with pytest.raises((ValueError, SkillEvalError), match=r"docs/specs|unsafe"):
+    with pytest.raises((ValueError, SkillEvalError), match=r"Markdown|unsafe"):
         handoff.SpecHandoffSpec.model_validate_json(json.dumps(value))
+
+
+@pytest.mark.parametrize("name", ["FEATURE.md", "docs/feature.md", "design/feature.markdown"])
+def test_handoff_uses_explicit_markdown_at_repository_chosen_location(
+    writer_factory, tmp_path, name
+):
+    attempt = writer_factory(spec_path=name)
+    output = tmp_path / "handoff"
+    prepared = handoff.prepare_handoff(attempt["spec"], output)
+    value = handoff.load_handoff(output, prepared["sha256"])
+    assert value["lineage"]["spec_sha256"] == hashlib.sha256(SPEC_BYTES).hexdigest()
+    assert (output / "input" / name).read_bytes() == SPEC_BYTES
+    assert prepared["prompt"].startswith(
+        f"Implement the feature described in the specification at {name}."
+    )
 
 
 def test_selection_requires_the_explicit_artifact_digest(writer, tmp_path):

@@ -119,7 +119,7 @@ def test_worker_protocol_uses_requested_observation_and_rejects_unknown_check(tm
     assert "unknown operational-metrics document check" in failed.stderr
 
 
-def test_prepared_task_allows_spec_and_backlog_but_rejects_code_edits(task, tmp_path):
+def test_prepared_task_retains_incidental_and_code_edits_for_semantic_review(task, tmp_path):
     module_spec = importlib.util.spec_from_file_location(
         "operational_metrics_task_preparation", EXAMPLE / "prepare_task.py"
     )
@@ -134,6 +134,7 @@ def test_prepared_task_allows_spec_and_backlog_but_rejects_code_edits(task, tmp_
         baseline, captured["manifest_sha256"], tmp_path / "document-task.json"
     )
     spec = repair.load_task(Path(prepared["path"]), prepared["sha256"])
+    assert spec.edit_scope == "repository"
     candidate = tmp_path / "document-candidate"
     repair._write(candidate, repair._inputs(spec))
     document = candidate / "docs/specs/metrics-view.md"
@@ -163,11 +164,11 @@ def test_prepared_task_allows_spec_and_backlog_but_rejects_code_edits(task, tmp_
         snapshot["manifest_sha256"],
         tmp_path / "code-result",
     )
-    assert result["status"] == "invalid-scope"
+    assert result["status"] == "collected"
     record = json.loads((tmp_path / "code-result/repair-result.json").read_bytes())
-    assert record["out_of_scope"] == ["code.py"]
-    with pytest.raises(SkillEvalError, match="outside the frozen scope"):
-        repair.result_files(spec, prepared["sha256"], tmp_path / "code-result", result["sha256"])
+    assert "code.py" in record["changed_paths"]
+    assert record["task_quality"] == "unassessed"
+    repair.result_files(spec, prepared["sha256"], tmp_path / "code-result", result["sha256"])
 
 
 def test_operator_acceptance_template_binds_real_task_routes_without_execution(

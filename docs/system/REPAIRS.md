@@ -17,7 +17,19 @@ The initial patch adapter accepts portable ASCII paths containing letters, digit
 and `_./@+-`; spaces and other encodings are unsupported. Preparation checks all
 retained source paths, including unchanged context, before a native attempt.
 
-Optional `editable_directories` permits additions, edits and deletions below
+For exploratory work, select `edit_scope: "repository"` to retain ordinary
+additions, edits and deletions anywhere in the captured repository. No path
+allowlist is needed. Scope compliance remains a semantic question against the
+original brief: a collected artifact is not an approved change. This lets the
+judge inspect incidental documentation, new helpers and generated build files
+without requiring the operator to predict their filenames. It does not expand
+VM access or expose host files. Safe paths, link rejection, Git/cache metadata
+and capture-manifest exclusions, and collection resource limits still apply.
+
+Omitted `edit_scope` retains the legacy `declared-paths` behavior and serialized
+bytes. Choose that scope when a task genuinely requires a fixed editable surface.
+Its `editable_paths` must remain nonempty. Optional `editable_directories` permits
+additions, edits and deletions below
 declared directories without prescribing helper or test filenames. Both collection
 and readback enforce the same path-ancestor rule: `src` includes `src/new.ts`,
 not `src-other/new.ts` or replacement of `src` itself with a file. Directory grants
@@ -72,8 +84,11 @@ without attributes or filters and compares separate trees. It uses isolated
 settings and does not execute imported code or consume candidate Git configuration.
 The candidate snapshot owns exact bytes; the patch is a review artifact.
 
-Out-of-scope edits are retained as `invalid-scope` and cannot be checked as an
-eligible result; the CLI exits 1. Original inputs and earlier results remain
+Changes outside the frozen collection scope are retained as `invalid-scope` and
+cannot be checked as an eligible result; the CLI exits 1. Repository scope keeps
+ordinary edits eligible for observation, including changes that may violate the
+requested feature scope; semantic assessment must evaluate those changes.
+Original inputs and earlier results remain
 unchanged. Source, checker or contract drift requires a new preparation; results are never overwritten.
 
 `repair control TASK --task-sha256 ... --candidate SNAPSHOT --candidate-sha256 ...

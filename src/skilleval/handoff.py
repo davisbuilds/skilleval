@@ -44,11 +44,10 @@ class SpecHandoffSpec(Record):
         name = PurePosixPath(value)
         if (
             _safe_path(value) != value
-            or not value.startswith("docs/specs/")
             or name.suffix.lower() not in {".md", ".markdown"}
             or repair._directory_metadata(value)
         ):
-            raise ValueError("selected spec must be Markdown below docs/specs")
+            raise ValueError("selected spec must be safe repository-relative Markdown")
         return value
 
 

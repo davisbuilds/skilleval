@@ -65,14 +65,15 @@ uv run python examples/document/operational-metrics/prepare_task.py \
 ```
 
 The helper trusts the operator's selected capture and freezes the common prompt,
-`docs/specs/` output grant, the exact `docs/project/BACKLOG.md` path and a byte-pinned
-worker outside solver input. The backlog allowance accommodates an ordinary spec
-link/status update required by repository guidance; it does not permit unrelated
-code edits or replace the specification deliverable. Arbitrary nonempty UTF-8
+repository-wide collection scope and a byte-pinned worker outside solver input.
+All ordinary edits remain inspectable, including documentation updates and
+changes outside the requested work. The brief still asks for a specification
+without implementation; semantic assessment judges that boundary. Arbitrary nonempty UTF-8
 `.md` and `.markdown` filenames under `docs/specs/` are accepted. The worker observes
 readability and presence; it cannot decide whether prose is complete or correct.
 Question-only, blocked and unfinished files deliberately pass that structural
-check and still require semantic assessment. Out-of-scope edits remain visible.
+check and still require semantic assessment. Collection eligibility is not scope
+approval or a quality verdict.
 
 Earlier frozen tasks retain their original scope and results. Any post-outcome
 diagnostic recollection needs new task, package and acceptance-map identities,
@@ -208,12 +209,11 @@ uv run python examples/document/operational-metrics/prepare_implementation.py pr
   --output /path/to/fresh-implementation-contract
 ```
 
-The generated repair-family task permits retaining ordinary source changes for
-review, including out-of-scope backend changes. It also retains generated files
-under `dist/`, `node_modules/`, `playwright-report/` and `test-results/`, even when
-those directories were absent from the baseline. Unlisted new root directories
-remain outside the collection grant. Collection permission does not approve a
-change's scope, and generated files remain part of the exact candidate and patch.
+The generated repair-family task selects repository-wide collection for ordinary
+source changes, including out-of-scope backend edits, newly chosen root files or
+directories, and generated build/test files. Collection permission does not
+approve a change's scope, and generated files remain part of the exact candidate
+and patch. Historical tasks retain their narrower path grants unchanged.
 Its six semantic requirements come from the original need
 and repository contracts. The generated spec remains input, not an answer key.
 The small `source-present` worker establishes only availability of key source

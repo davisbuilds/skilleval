@@ -48,26 +48,19 @@ def prepare_contract(
     """Prepare a repair-family task + original-need map; no quality judgment."""
     original = task_package.load_package(source_package, source_package_sha256)
     source_task = repair.load_task(Path(original.task), original.task_sha256)
-    _, files = runner._snapshot_files(input_bundle, input_sha256)
+    runner._snapshot_files(input_bundle, input_sha256)
     output = output.absolute()
     if output.resolve().is_relative_to(input_bundle.resolve()):
         raise SkillEvalError("implementation preparation must stay outside solver input")
     output.mkdir(parents=True, exist_ok=False)
     worker = output / "source-worker.py"
     worker.write_text(WORKER)
-    names = [name for name, _, _ in files if not repair.ignored(name)]
     task = repair.RepairSpec(
         task_id="operational-metrics-implementation-development",
         input_bundle=str(input_bundle.absolute()),
         input_sha256=input_sha256,
         prompt=prompt,
-        editable_paths=tuple(name for name in names if "/" not in name),
-        editable_directories=tuple(
-            sorted(
-                {name.split("/")[0] for name in names if "/" in name}
-                | {"dist", "node_modules", "playwright-report", "test-results"}
-            )
-        ),
+        edit_scope="repository",
         worker=str(worker),
         worker_sha256=file_digest(worker),
         probes=(
