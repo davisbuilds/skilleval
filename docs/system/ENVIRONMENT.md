@@ -156,6 +156,34 @@ and cache directory again. Inspect the retained ticket and filesystem first;
 progress observers must stop with their controller. A recreated empty namespace
 does not mean the deleted VM survived, and still needs scoped cleanup.
 
+## Launch verification and timings
+
+Each `Lifecycle.prepare` inventories the runtime and control source once, then
+verifies the source image while copying it into private staging. It retains the
+source image identity. `Lifecycle.create` independently rechecks the staged image
+immediately before invoking the runtime, and captures a fresh execution identity.
+There is no persistent verification cache. A preparation error removes only the
+output and runtime HOME created by that call; preexisting paths remain untouched.
+After a create attempt, the durable recovery ticket owns cleanup as above.
+
+New lifecycle tickets include optional `timings_seconds` in monotonic wall seconds:
+
+| Field | Scope |
+| --- | --- |
+| `prepare_identity` | Runtime, host and control-source inventory |
+| `prepare_image_copy_verify` | Source image verification and staging copy |
+| `prepare_total` | Complete prepare through initial durable registration |
+| `create_identity` | Fresh inventory before create |
+| `create_image_verify` | Independent staged image verification |
+| `create_total` | Complete create, including runtime probes, VM create/start and known-present inventory |
+
+Components are included in their respective totals; do not add them to the totals.
+Totals exclude the final write of timing metadata. A reached create phase records
+its duration even if it fails; an unreached phase is absent. Failed preparation
+leaves no ticket. Legacy tickets and other paths using `Lifecycle.register`
+directly need not contain these fields. Missing timings are unknown, never zero.
+These diagnostics do not change agent-time or task-quality measurements.
+
 ## Image retention
 
 Keep each reusable source image outside run output directories, preferably in a

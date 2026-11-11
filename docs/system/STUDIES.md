@@ -175,6 +175,23 @@ identical frozen schedules. Missing values stay null. The legacy whole-attempt
 elapsed difference includes infrastructure work; guest agent time and host stage
 timings are separate observations, not interchangeable durations.
 
+New `dispatch.json` records include optional `preflight_timings_seconds`:
+`identity` measures a fresh runtime/control-source inventory, `inputs` measures
+frozen input and selected environment-receipt validation, and `admission` appears
+only when an admission seal is selected. `total` includes those phases and the
+skill-name binding check. These are monotonic wall seconds; components are nested
+inside the total. Plan decoding, dispatch-record publication and native execution
+are outside this scope. A refused preflight does not publish an attempt record.
+Legacy attempts without the field remain readable; missing timings are unknown.
+
+Preparation and each dispatch reuse one fresh identity across the selected
+validation cases. This reuse ends with the operation: retries, lifecycle create
+and recovery still take fresh inventories. Dispatch checks existing environment
+receipts; it does not rerun their task suites. Preflight diagnostics remain
+separate from solver efficiency and the existing whole-attempt elapsed time.
+See [launch timings](ENVIRONMENT.md#launch-verification-and-timings) for the
+subsequent VM setup phases.
+
 The operational ledger includes every recorded attempt, including failures,
 unfinished attempts and retries. It reports known subtotals and unknown counts;
 an incomplete subtotal is not a total. Different schedules remain separate, and

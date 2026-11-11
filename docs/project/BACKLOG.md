@@ -20,12 +20,13 @@ shipped history. Private provenance stays outside public entries and issues.
   needs human input, prior investigation and relevant evidence; save responses
   separately from original judgments. Artifact comparison remains optional.
   Calibration sampling is a separate opt-in workflow, not default homework.
-- **Faster preflight:** remove duplicate image hashing within a launch and reuse
-  one fresh runtime identity within each dispatch check. Add phase timings to
-  distinguish verification, copying and VM creation. Then narrow readiness
-  invalidation to relevant execution dependencies so reporting changes do not
-  require repeating task suites. Preserve fresh isolation, launched-byte
-  verification, cleanup and historical receipt semantics; measure savings.
+- **Readiness reuse:** narrow readiness invalidation to relevant execution
+  dependencies so reporting changes do not require repeating task suites. Use
+  the retained dispatch/lifecycle phase timings to select further optimizations;
+  reducing duplicate archive reads alone need not dominate launch latency.
+  Preserve fresh isolation, launched-byte verification, cleanup and historical
+  receipt semantics. Dependency-scoped reuse needs positive and changed-input
+  controls before it can replace the current broad source fingerprint.
 - **Interactive clarification:** the first specification pilot delegates bounded
   product choices and runs each stage without live Q&A. Add a bounded conversation
   loop when selected tasks need requirements elicitation: explicit needs-input vs

@@ -1,6 +1,7 @@
 """Study contracts with the real local runner and synthetic child-process runtime."""
 
 import json
+import math
 from pathlib import Path
 from typing import Any
 
@@ -74,7 +75,23 @@ def test_frozen_matrix_has_exact_matched_cells_and_declared_budgets(
     assert study._matrix(study.StudySpec.model_validate_json(json.dumps(plan["spec"]))) == cells
 
 
-def test_real_runner_pair_and_idempotent_resume(prepared: dict[str, Any]) -> None:
+@pytest.mark.parametrize("record_preflight_timings", [True, False])
+def test_real_runner_pair_and_idempotent_resume(
+    prepared: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+    record_preflight_timings: bool,
+) -> None:
+    if not record_preflight_timings:
+        publish = study._new
+
+        def legacy_dispatch(path: Path, value: dict[str, Any]) -> str:
+            if path.name == "dispatch.json":
+                value = {
+                    key: item for key, item in value.items() if key != "preflight_timings_seconds"
+                }
+            return publish(path, value)
+
+        monkeypatch.setattr(study, "_new", legacy_dispatch)
     result = study.run_study(**prepared, development=True)
     assert result["status"] == "complete"
     assert result["planned_cells"] == result["primary_completed_cells"] == 2
@@ -82,6 +99,15 @@ def test_real_runner_pair_and_idempotent_resume(prepared: dict[str, Any]) -> Non
     assert result["pairs"][0]["task_quality_difference"] is None
     assert result["human_audit"] == "required-pending" and not result["scored_admitted"]
     assert all(len(c["attempts"]) == 1 for c in result["cells"])
+    for cell in result["cells"]:
+        dispatch = json.loads((Path(cell["attempts"][0]["path"]) / "dispatch.json").read_text())
+        if not record_preflight_timings:
+            assert "preflight_timings_seconds" not in dispatch
+            continue
+        timings = dispatch["preflight_timings_seconds"]
+        assert set(timings) == {"identity", "inputs", "total"}
+        assert all(math.isfinite(value) and value >= 0 for value in timings.values())
+        assert timings["total"] >= timings["identity"] + timings["inputs"]
     assert study.run_study(**prepared, development=True) == result
 
 
@@ -142,7 +168,8 @@ def test_native_study_requires_solver_profile_from_selected_task_validation(
             "environment": package.environment.model_copy(update={"required_paths": ("code.py",)})
         }
     )
-    validation = {"cases": [{"identity": study.snapshot_identity(spec.runtime)}]}
+    identity = study.snapshot_identity(spec.runtime)
+    validation = {"cases": [{"identity": identity}, {"identity": identity}]}
     monkeypatch.setattr(task_package, "checked_validation", lambda *args: (package, validation))
     with pytest.raises(SkillEvalError, match="solver-isolated-v1 task validation"):
         study._check_inputs(spec)
@@ -151,7 +178,42 @@ def test_native_study_requires_solver_profile_from_selected_task_validation(
             "environment": package.environment.model_copy(update={"profile": "solver-isolated-v1"})
         }
     )
+    # Two selected cases must share one fresh inventory for this operation.
+    snapshot = study.snapshot_identity
+    inventories = []
+
+    def observed_snapshot(runtime: str) -> dict[str, Any]:
+        observed = snapshot(runtime)
+        inventories.append(observed)
+        return observed
+
+    monkeypatch.setattr(study, "snapshot_identity", observed_snapshot)
     assert study._check_inputs(spec) == study._image_archive(Path(spec.image), spec.image_sha256)
+    assert inventories == [identity]
+
+    inventories.clear()
+    destination = prepared["plan_path"].with_name("packaged-plan.json")
+    study.prepare_study(spec, destination)
+    assert inventories == [identity]
+    selected_plan = json.loads(destination.read_text())
+    inventories.clear()
+    assert study._dispatch_check(selected_plan, spec) is None
+    assert inventories == [identity]
+
+    # Every selected receipt still has to match; operation-local reuse cannot
+    # make a mismatched validation pass.
+    validation["cases"][1] = {"identity": {}}
+    with pytest.raises(SkillEvalError, match="validated task package or execution route"):
+        study._dispatch_check(selected_plan, spec)
+    validation["cases"][1] = {"identity": identity}
+
+    # A later attempt inventories again instead of reusing the previous result.
+    runtime = Path(spec.runtime)
+    runtime.write_text(runtime.read_text() + "\n# changed runtime\n")
+    inventories.clear()
+    with pytest.raises(SkillEvalError, match="execution identity changed"):
+        study._dispatch_check(selected_plan, spec)
+    assert len(inventories) == 1 and inventories[0] != identity
 
 
 def test_changed_plan_or_source_cannot_dispatch(prepared: dict[str, Any]) -> None:
