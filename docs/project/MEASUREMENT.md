@@ -123,6 +123,23 @@ attached review file establishes provenance only; it is not authenticated indepe
 approval. Existing [reliability](../system/RELIABILITY.md) and
 [calibration](../system/CALIBRATION.md) evidence retain their stated limits.
 
+## Human involvement
+
+Routine evaluation should proceed through judges and bounded agent follow-up.
+Investigate factual uncertainty with retained evidence, source inspection or a
+targeted check; use another judge when an independent interpretation is likely
+to resolve a consequential disagreement. Missing evidence may remain a qualified
+unknown without creating a human task. Accept alternative valid solutions when
+the brief delegates those choices.
+
+Escalate only material questions that still require owner intent, unavailable
+domain knowledge or unresolved interpretation. State the precise question, what
+was already checked, why automation cannot settle it, and what the answer changes.
+Keep artifact browsing optional and attach relevant excerpts directly. Optional
+calibration sampling is separate from this exception queue; it does not become
+routine approval homework or a gate on exploratory runs. Stronger reliability
+claims still require the independent support described above.
+
 ## Plan comparisons before dispatch
 
 For an explicit-use effect estimate, define the effect of assigning the skill across

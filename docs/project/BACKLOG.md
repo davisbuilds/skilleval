@@ -14,6 +14,18 @@ shipped history. Private provenance stays outside public entries and issues.
 
 ## Open
 
+- **Review exception inbox:** provide a local browser interface over selected
+  retained results, with concise automated conclusions, agent-resolvable follow-ups
+  and only material residual questions for the operator. Show why each question
+  needs human input, prior investigation and relevant evidence; save responses
+  separately from original judgments. Artifact comparison remains optional.
+  Calibration sampling is a separate opt-in workflow, not default homework.
+- **Faster preflight:** remove duplicate image hashing within a launch and reuse
+  one fresh runtime identity within each dispatch check. Add phase timings to
+  distinguish verification, copying and VM creation. Then narrow readiness
+  invalidation to relevant execution dependencies so reporting changes do not
+  require repeating task suites. Preserve fresh isolation, launched-byte
+  verification, cleanup and historical receipt semantics; measure savings.
 - **Interactive clarification:** the first specification pilot delegates bounded
   product choices and runs each stage without live Q&A. Add a bounded conversation
   loop when selected tasks need requirements elicitation: explicit needs-input vs
@@ -238,4 +250,4 @@ shipped history. Private provenance stays outside public entries and issues.
   its phase needs it. Pin and inspect that revision's license/NOTICE and tests
   before copying, adapting, or declaring it as a dependency. A research influence
   is not an adopted implementation.
-- **Later:** natural-discovery comparisons, pi support, TypeScript review UI.
+- **Later:** natural-discovery comparisons and pi support.

@@ -166,10 +166,16 @@ Scored dispatch requires both applicable full-workload environment evidence and
 independently supported grader reliability. A bounded runtime seal, parseable
 judgment, model agreement, or successful skill read cannot satisfy those gates.
 
+The next operator-facing work is a local review exception inbox and faster
+preflight, detailed in the [backlog](BACKLOG.md). Automated assessment and targeted
+follow-up should settle routine questions; human involvement focuses on material
+residual ambiguity. A results summary should remain useful when no human action
+is required. Measure and remove redundant verification before broadening caches
+or weakening runtime boundaries.
+
 ## Later
 
-Expand to multi-skill/workflow treatments, natural discovery, the pi harness, and
-a TypeScript evidence/review UI when the evaluation workflow demonstrates a need.
+Expand to multi-skill/workflow treatments, natural discovery and the pi harness.
 Protected holdouts, additional task families, and automation follow the same
 evidence and accounting contracts.
 A universal leaderboard and automatic skill optimization are outside the initial
