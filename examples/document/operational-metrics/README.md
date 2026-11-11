@@ -65,11 +65,19 @@ uv run python examples/document/operational-metrics/prepare_task.py \
 ```
 
 The helper trusts the operator's selected capture and freezes the common prompt,
-`docs/specs/` output grant and a byte-pinned worker outside solver input. Arbitrary
-nonempty UTF-8 `.md` and `.markdown` filenames are accepted. The worker observes
+`docs/specs/` output grant, the exact `docs/project/BACKLOG.md` path and a byte-pinned
+worker outside solver input. The backlog allowance accommodates an ordinary spec
+link/status update required by repository guidance; it does not permit unrelated
+code edits or replace the specification deliverable. Arbitrary nonempty UTF-8
+`.md` and `.markdown` filenames under `docs/specs/` are accepted. The worker observes
 readability and presence; it cannot decide whether prose is complete or correct.
 Question-only, blocked and unfinished files deliberately pass that structural
 check and still require semantic assessment. Out-of-scope edits remain visible.
+
+Earlier frozen tasks retain their original scope and results. Any post-outcome
+diagnostic recollection needs new task, package and acceptance-map identities,
+applied equally to both arms with unchanged candidate bytes and explicit
+post-outcome provenance. It does not retroactively qualify the original results.
 
 Build the [opt-in image](../../../environments/operational-metrics/README.md) with
 the pinned source's exact manifests and Chrome for Testing. The

@@ -11,7 +11,7 @@ from test_repair import task as task
 from test_runner import route as route
 from test_task_package import package_spec
 
-from skilleval import acceptance, repair, task_package
+from skilleval import acceptance, evidence, repair, task_package
 from skilleval.errors import SkillEvalError
 from skilleval.identity import file_digest
 from skilleval.repair_assessment import DOCUMENT_CRITERIA, parse_spec
@@ -117,6 +117,57 @@ def test_worker_protocol_uses_requested_observation_and_rejects_unknown_check(tm
     )
     assert failed.returncode != 0
     assert "unknown operational-metrics document check" in failed.stderr
+
+
+def test_prepared_task_allows_spec_and_backlog_but_rejects_code_edits(task, tmp_path):
+    module_spec = importlib.util.spec_from_file_location(
+        "operational_metrics_task_preparation", EXAMPLE / "prepare_task.py"
+    )
+    helper = importlib.util.module_from_spec(module_spec)
+    module_spec.loader.exec_module(helper)
+    backlog = task["source"] / "docs/project/BACKLOG.md"
+    backlog.parent.mkdir(parents=True)
+    backlog.write_text("Operational metrics UI: implementation pending.\n")
+    baseline = tmp_path / "document-baseline"
+    captured = evidence.snapshot(task["source"], baseline)
+    prepared = helper.prepare(
+        baseline, captured["manifest_sha256"], tmp_path / "document-task.json"
+    )
+    spec = repair.load_task(Path(prepared["path"]), prepared["sha256"])
+    candidate = tmp_path / "document-candidate"
+    repair._write(candidate, repair._inputs(spec))
+    document = candidate / "docs/specs/metrics-view.md"
+    document.parent.mkdir(parents=True)
+    document.write_text("# Operational metrics\n\nA proposed read-only console view.\n")
+    (candidate / "docs/project/BACKLOG.md").write_text(
+        "Operational metrics UI: [specified](../specs/metrics-view.md); implementation pending.\n"
+    )
+    snapshot = evidence.snapshot(candidate, tmp_path / "allowed-candidate")
+    result = repair.collect_control(
+        Path(prepared["path"]),
+        prepared["sha256"],
+        tmp_path / "allowed-candidate",
+        snapshot["manifest_sha256"],
+        tmp_path / "allowed-result",
+    )
+    assert result["status"] == "collected"
+    assert result["changed_paths"] == ["docs/project/BACKLOG.md", "docs/specs/metrics-view.md"]
+    repair.result_files(spec, prepared["sha256"], tmp_path / "allowed-result", result["sha256"])
+
+    (candidate / "code.py").write_text("unrelated = True\n")
+    snapshot = evidence.snapshot(candidate, tmp_path / "code-candidate")
+    result = repair.collect_control(
+        Path(prepared["path"]),
+        prepared["sha256"],
+        tmp_path / "code-candidate",
+        snapshot["manifest_sha256"],
+        tmp_path / "code-result",
+    )
+    assert result["status"] == "invalid-scope"
+    record = json.loads((tmp_path / "code-result/repair-result.json").read_bytes())
+    assert record["out_of_scope"] == ["code.py"]
+    with pytest.raises(SkillEvalError, match="outside the frozen scope"):
+        repair.result_files(spec, prepared["sha256"], tmp_path / "code-result", result["sha256"])
 
 
 def test_operator_acceptance_template_binds_real_task_routes_without_execution(

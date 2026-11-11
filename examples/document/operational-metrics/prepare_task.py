@@ -36,7 +36,7 @@ def prepare(input_bundle: Path, input_sha256: str, output: Path) -> dict:
                 input_sha256=input_sha256,
                 prompt=(EXAMPLE / "prompt.txt").read_text(),
                 # The directory grant permits any chosen document filename.
-                editable_paths=("docs/specs/operational-metrics.md",),
+                editable_paths=("docs/specs/operational-metrics.md", "docs/project/BACKLOG.md"),
                 editable_directories=("docs/specs",),
                 worker=str(worker),
                 worker_sha256=digest,
