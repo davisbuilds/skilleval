@@ -15,13 +15,12 @@ from skilleval.errors import SkillEvalError
 from skilleval.gateway import EFFORT, MAX_REQUESTS, MODEL
 from skilleval.identity import object_digest
 from skilleval.repair_assessment import (
-    DocumentAssessment,
-    DocumentAssessmentSpec,
-    RepairAssessment,
+    AssessmentResult,
     RepairAssessmentSpec,
     _assessment_result,
     _normalize,
     _outside_sources,
+    assessment_model,
     packet,
 )
 
@@ -58,8 +57,9 @@ def _budget(timeout_seconds: int, max_requests: int) -> dict[str, int]:
 
 def _citations(value: dict[str, Any]) -> list[tuple[str, dict[str, Any]]]:
     return [
-        (f"/judgments/{index}/{field}/{number}", citation)
-        for index, item in enumerate(value["judgments"])
+        (f"/{group}/{index}/{field}/{number}", citation)
+        for group in ("judgments", "requirement_judgments")
+        for index, item in enumerate(value.get(group, []))
         for field in ("citations", "artifact_citations")
         for number, citation in enumerate(item.get(field, []))
     ]
@@ -84,7 +84,7 @@ def _eligible(spec: RepairAssessmentSpec, prepared: Path, run: Path) -> _Context
     judge._native_policy(receipt, retained, payloads, digest, spec.investigation)
     if receipt["status"] != "completed":
         raise SkillEvalError("citation correction requires completed original judge execution")
-    model = DocumentAssessment if isinstance(spec, DocumentAssessmentSpec) else RepairAssessment
+    model = assessment_model(spec)
     model.model_validate_json(retained["final.txt"])
     value = evidence._parse_json(retained["final.txt"])
     # First establish every non-range constraint with known safe line bounds.
@@ -241,7 +241,7 @@ def validated_correction(
     correction_packet: Path,
     correction_run: Path,
 ) -> tuple[
-    RepairAssessment | DocumentAssessment,
+    AssessmentResult,
     dict[str, Any],
     dict[str, bytes],
     dict[str, bytes],

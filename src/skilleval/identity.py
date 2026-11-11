@@ -29,6 +29,7 @@ SOURCES = (
     "src/skilleval/repair_check.py",
     "src/skilleval/repair_guest.py",
     "src/skilleval/repair_assessment.py",
+    "src/skilleval/assessment_observations.py",
     "src/skilleval/citation_correction.py",
     "src/skilleval/repair_outcomes.py",
     "src/skilleval/task_package.py",

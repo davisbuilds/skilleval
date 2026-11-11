@@ -174,9 +174,10 @@ def attach_outcomes(
             }
             from skilleval.study import _document
 
-            semantic["judgments"] = _document(Path(entry.assessment.path) / "result.json")[
-                "judgments"
-            ]
+            selected_result = _document(Path(entry.assessment.path) / "result.json")
+            semantic["judgments"] = selected_result["judgments"]
+            if "requirement_judgments" in selected_result:
+                semantic["requirement_judgments"] = selected_result["requirement_judgments"]
             judge_usage = _judge_consumption(Path(entry.assessment.path), record)
         rows[(entry.cell_id, entry.attempt)] = {
             "artifact_path": entry.checks[0].result,
@@ -309,6 +310,36 @@ def render_review(report: dict[str, Any]) -> str:
                     f"- **{safe(judgment['criterion'])}: {safe(judgment['verdict'])}.** "
                     + safe(judgment["reasoning"])
                 ]
+            if "requirements" in semantic:
+                requirements = semantic["requirements"]
+                lines += [
+                    "",
+                    f"Requirement coverage: {safe(requirements['judged_count'])}/"
+                    f"{safe(requirements['expected_count'])} judged; "
+                    f"{safe(requirements['status'])}.",
+                    "Missing requirements: "
+                    + (", ".join(safe(x) for x in requirements["missing"]) or "none")
+                    + ".",
+                    "Unresolved requirements: "
+                    + (", ".join(safe(x) for x in requirements["unresolved"]) or "none")
+                    + ".",
+                    "",
+                ]
+                for judgment in semantic.get("requirement_judgments", []):
+                    citations = [
+                        f"{safe(c['path'])}:{safe(c['line_start'])}-{safe(c['line_end'])}"
+                        for c in (
+                            *judgment.get("citations", []),
+                            *judgment.get("artifact_citations", []),
+                        )
+                    ]
+                    lines += [
+                        f"- **{safe(judgment['requirement_id'])}: {safe(judgment['verdict'])}.** "
+                        + safe(judgment["reasoning"])
+                        + " Evidence: "
+                        + ("; ".join(citations) or "none supplied")
+                        + "."
+                    ]
             lines += ["", "Selected judge consumption (separate from task usage):", ""]
             consumption = outcome.get("judge_consumption") or {}
             judge_usage = consumption.get("usage_accounting") or {}
