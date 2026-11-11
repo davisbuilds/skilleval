@@ -63,11 +63,12 @@ absolute locators when retiring implementation worktrees.
   establish that boundary. Preserve faithful upstream skill bytes and old evidence.
   Native commands use the unprivileged solver boundary; do not bypass it to make
   a task pass. Qualify required tools and image contents through that same route.
-- Before new repair/document comparisons, freeze an operator acceptance map and
-  select `mapped-acceptance-v1`. Ground requirements in the work request and repo
-  contracts; record coverage gaps, exposure and review evidence. Keep maps outside
-  solver input. Structural validation or attached review prose does not establish
-  independent validity. Preserve legacy/unmapped runs without retroactive approval.
+- Support exploratory development runs from an original work brief, faithful repo
+  context and declared provisional criteria/gaps. Use `mapped-acceptance-v1` when
+  criteria are ready for a frozen operator acceptance map; keep maps outside solver
+  input. Independent grader audit and prespecified effect-estimation design gate
+  scored or general effectiveness claims, not each exploratory pair. Preserve earlier
+  evidence and label post-outcome changes; never treat map validation as approval.
 - Grade outcomes independently of the skill's instructions. Preserve alternative
   valid solutions, novel findings, failures, disagreements, and unresolved verdicts.
   Scored correctness requires independent grader audit and applicable admission.
@@ -77,6 +78,10 @@ absolute locators when retiring implementation worktrees.
 - Validate actual task environments, including ordinary context, tests, required
   history, tools, identity, failures, and skips. Matching declared exceptions is
   not a clean suite. Isolation needs effective controls with known-positive cases.
+  Reuse relevant checks and retained evidence when their inputs and boundaries
+  still apply; add controls for consequential gaps or changed behavior. Collection
+  scope should accommodate ordinary repository work; judge requested feature scope
+  separately from which files can be retained.
 - Run imported code only inside the VM. Runtime/model work is explicitly opt-in;
   never hide it in ordinary imports, tests, or setup. Keep credentials on the host.
 - Keep runtime, image, catalog, and execution source stable while a VM is active;

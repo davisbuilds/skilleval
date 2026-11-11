@@ -61,9 +61,11 @@ including browser interaction, with one known root-test failure and five skips
 retained explicitly. The first pair produced two specifications and two downstream
 candidates through fresh vanilla implementers. One implementer reached the frozen
 request cap; its failed invocation and retained artifact remain separate facts.
-Both candidates have retained observations from all ten browser scenarios. Next, audit the specifications,
-implementation evidence and judgments against the original request, then qualify
-representative request budgets before another comparison. Treatment stays in the
+Both candidates have retained observations from all ten browser scenarios. Next,
+inspect the specifications, implementation evidence and judgments against the
+original request, and use the simplified collection and stage-budget policies for
+further exploratory work. Freeze new inputs and budgets equally across arms;
+retain the original cap failure. Treatment stays in the
 spec stage while downstream quality, omissions, rework and consumption remain visible.
 Specification-specific rubrics, explicit requirement-level verdicts, authored
 specification and implementation controls, retained browser/API observations and
@@ -77,14 +79,16 @@ is deferred while this pilot is audited; retained repairs remain development
 evidence. The [candidate register](PILOT-CANDIDATES.md#current-selection-direction)
 owns selection and exclusions.
 
-1. **Validate acceptance before new comparisons.** Use ordinary work records to
-   define success and freeze an acceptance map under `mapped-acceptance-v1`.
+1. **Develop useful acceptance criteria through ordinary work.** Exploratory pairs
+   can start from an original brief, faithful context and provisional criteria/gaps.
+   Use `mapped-acceptance-v1` when those criteria are ready to freeze.
    The retrospective completed-session map exposes uncovered lifecycle cases and
    grader evidence loss; it does not upgrade the original six-probe results.
    The corrected-packet audit and retained-pair semantic reassessment are complete
-   as development evidence. Before further comparisons, seek independent domain
-   review of scope and brief sufficiency. Include a blind alternative
-   implementation where useful. Preserve the
+   as development evidence. Seek independent domain review of scope and brief
+   sufficiency before scored or general effectiveness claims; exploratory work can
+   continue with those limits declared. Include a blind alternative implementation
+   where it resolves a consequential uncertainty. Preserve the
    qualified external-enforcement route and track its documented native wording
    limits. Use ordinary work briefs; review
    actual instructions, accessible files/history, skill resources and tool outputs
@@ -126,16 +130,17 @@ owns selection and exclusions.
    not define the task population. The earlier tiny-control human audit is no
    longer an active request or prerequisite after the task realignment; preserve
    its historical records and build new audits around the selected real tasks.
-4. **Close task-specific environment gaps.** Revalidate the selected tasks under
-   the unprivileged solver profile and required tools. Before interpreting new
-   ON/OFF pairs, verify the
-   actual harness context excludes operator instructions and machine state, with
-   contamination canaries and working positive controls. Keep baseline failures,
+4. **Close task-specific environment gaps.** Use the unprivileged solver profile
+   and required tools. Reuse applicable environment and context evidence, and
+   revalidate changed boundaries or consequential gaps. Verify the actual harness
+   context excludes operator instructions and machine state, with contamination
+   canaries and working positive controls. Keep baseline failures,
    skipped lanes, unsupported platforms, and artifact-budget limits explicit.
    Capture corrections do not upgrade earlier attempts.
 
-Task design and judgment audit can progress alongside isolation; new comparisons
-depend on both useful acceptance coverage and the visibility boundary. Add an
+Task design, exploratory comparisons and judgment audit can progress together.
+Preserve the visibility boundary and report acceptance gaps without treating an
+exploratory pair as an audited effect estimate. Add an
 adapter when the selected task requires it, rather than expanding harnesses or
 infrastructure in advance.
 Maintain the public foundation and [hosted checks](GIT_HISTORY_POLICY.md) as this

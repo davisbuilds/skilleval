@@ -5,6 +5,15 @@ would justify a comparison. [Task packages](../system/TASKS.md) own the executab
 interfaces; [studies](../system/STUDIES.md) own dispatch and accounting. An
 acceptance map records a measurement argument. It cannot certify its own validity.
 
+Exploratory development is supported work. Start with the original brief, faithful
+repository context, provisional success criteria and known gaps; run useful paired
+work and inspect what it produces. A formal acceptance map and independent grader
+audit need not precede every exploratory pair. Use `mapped-acceptance-v1` when the
+criteria are ready to freeze. Retain all attempts, keep ordinary context and
+capabilities comparable, and label revisions made after seeing outcomes. The controller remains
+development-only. Scored or general effectiveness claims require independently
+supported grading and a prespecified comparison design suited to that claim.
+
 ## Start with the decision and the work
 
 State the decision before collecting tasks: for a pinned skill, model and harness,
@@ -79,6 +88,9 @@ relevance or completeness. [Wallach et al.](https://proceedings.mlr.press/v267/w
 
 ## Validate the task and the grader
 
+Reuse relevant checks and retained control evidence when their inputs and boundaries
+still apply. Add or repeat controls for changed behavior, missing evidence or a
+consequential uncertainty; a fresh calibration exercise is not required per run.
 Use the actual production paths and frozen environment for behavioral controls.
 Exercise the original defect, reviewed positive/alternative repairs, plausible
 incomplete repairs, regressions and unresolved cases. Where useful, perturb one
@@ -87,8 +99,9 @@ across equivalent inputs. Such related controls challenge an instrument; they do
 not become independent tasks. Record expected discrimination separately from the
 observed evidence and preserve unsuccessful controls.
 
-An independent task-domain reviewer should assess brief sufficiency, scope and
-acceptance conditions. A particularly strong check is an independent implementation
+Before relying on a grader for scored or general effectiveness claims, obtain
+independent task-domain review of brief sufficiency, scope and acceptance conditions.
+A particularly strong check is an independent implementation
 from ordinary task context without seeing the reference solution. SWE-Bench Pro V2
 describes this check for repaired instructions. Its specific choice to retain tests
 is not a rule to preserve a defective skilleval verifier: correct defects in a new
@@ -112,8 +125,10 @@ approval. Existing [reliability](../system/RELIABILITY.md) and
 
 ## Plan comparisons before dispatch
 
-For explicit-use comparisons, estimate the effect of assigning the skill across
-the declared tasks. Do not discard ON attempts because consultation was not observed.
+For an explicit-use effect estimate, define the effect of assigning the skill across
+the declared tasks. Exploratory pairs can report descriptive observations while
+that design is developing. Do not discard ON attempts because consultation was
+not observed.
 Pin the skill closure, ordinary context, model/harness/environment, budgets,
 first-attempt/retry rules, primary outcomes, exclusions and stopping rule. Preserve
 all attempts, failures and unknown consumption. Skill/context overhead belongs in
@@ -164,19 +179,21 @@ the fixtures and original acceptance contract remain fixed. The observer records
 states and side effects; the semantic judge decides what they establish. An
 observer failure is not automatically a feature failure. A generated specification
 guides the implementer but cannot redefine the downstream acceptance contract.
-Legacy/unmapped workflows remain available for compatibility and are labeled as such;
-new repair/document comparisons should use the mapped policy. Raw result selection,
+Unmapped development workflows remain available and are labeled as such; select the
+mapped policy when criteria are ready to freeze. Raw result selection,
 mechanical acceptance and legacy judge packets retain their existing semantics.
 
 The completed-session development pair now has audited v3 packet readback,
 supplementary lifecycle observations, fresh investigative judgments and explicit
 outcome selection. Its separate automated source audit is not independent human
-validation. Before the next substantive comparison, review task scope, legitimate
-alternative repairs and remaining mapped gaps with independent domain judgment.
+validation. Independent domain review of task scope, legitimate alternative repairs
+and remaining mapped gaps is still needed before relying on that grader for scored
+or general effectiveness claims; exploratory comparisons can proceed with those
+limits declared.
 Keep supported test reports separate from broad completion claims contradicted by
 behavior: the latter can overlap the task-contract verdict and must not be counted
 as an additional independent defect. Methodology
 metadata and retrospective maps do not lift those limits. Independent grader
 qualification and a defensible held-out
-population remain prerequisites for scored skill-effect claims; engineering work and
-offline contract tests can proceed without restarting model experiments.
+population remain prerequisites for scored skill-effect claims. Engineering work,
+offline checks and exploratory model runs can proceed while those questions are open.

@@ -35,14 +35,8 @@ shipped history. Private provenance stays outside public entries and issues.
   establish independent reliability or complete feature coverage. Keep failed
   attempts and stage costs visible, and retain
   experiment evidence separately from any later real contribution.
-- **Representative request budgets:** the first specification pilot's downstream
-  implementation reached its frozen 32-request cap before the 30-minute deadline.
-  Its artifact remains assessable, but the invocation is failed. Before another
-  comparison, qualify request budgets on representative stage workloads and freeze
-  them equally across arms alongside time limits. Never extend only one arm after
-  seeing its outcome; preserve this attempt when selecting a new plan.
-- **Acceptance validity before more comparisons:** operator maps now freeze
-  declared source rationale, probe-field and semantic routes, controls, exposure
+- **Acceptance validity for scored or general effectiveness claims:** operator maps
+  freeze declared source rationale, probe-field and semantic routes, controls, exposure
   and gaps. They do not establish that those requirements are correct or complete.
   Independently review the completed-session map's scope against ordinary work
   records and the corrected packets/lifecycle controls; retain the remaining gaps
@@ -50,16 +44,17 @@ shipped history. Private provenance stays outside public entries and issues.
   plausible partial fixes and legitimate alternatives to challenge the grader;
   include independent implementation from the brief where useful. Preserve the
   map's retrospective status and original outcomes. [Measurement design](MEASUREMENT.md)
-  owns this procedure. Do not resume comparisons merely because a map validates.
+  owns this procedure. Exploratory development can proceed with provisional
+  criteria and declared gaps; map validation does not establish grader validity.
 - **Native capability description and task presentation:** the app-server adapter
   declares restricted networking with external enforcement. Codex 0.164.0 still
   renders generic full-filesystem-access prose for that policy; track upstream
   support for describing external boundaries without overriding native prompts.
   Qualify each changed harness identity. The [solver boundary](../system/TASK-PRESENTATION.md)
   now separates controller files/processes and denies management transport;
-  this does not sanitize task, skill or Git-history content. Review those inputs
-  before new comparisons. The historical review exporter needs a neutral
-  presentation path without rewriting pinned captures. New images need runtime
+  this does not sanitize task, skill or Git-history content. Review changed inputs
+  and reuse applicable context controls. The historical review exporter needs a
+  neutral presentation path without rewriting pinned captures. New images need runtime
   tree checks and required-tool controls; io_uring-only tasks are outside the
   current profile.
 - **Skill-relevant task population:** use the current
