@@ -57,8 +57,8 @@ developed the instrument. The evaluation population must now follow each selecte
 skill's intended work and plausible contribution. Choose meaningful tasks and
 independent outcome criteria before looking at treatment results; do not turn
 skill instructions into a checklist that rewards their own use. Small authored
-grader controls are sanity checks, not representative task evidence. Task selection must
-describe the target population, repository and language mix, difficulty, natural
+grader controls are sanity checks, not representative task evidence. General
+effectiveness claims need a task population with declared repository and language mix, difficulty, natural
 versus seeded defects, and exposure history. A convenient case collection alone
 does not establish representativeness.
 
