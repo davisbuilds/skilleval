@@ -97,6 +97,57 @@ def test_preparation_cannot_overwrite_or_leak_into_solver_input(helper, task, ro
         helper.prepare_contract(*args, tmp_path / "fresh")
 
 
+def test_generated_build_and_test_files_are_retained_but_sibling_directory_is_rejected(
+    prepared, tmp_path
+):
+    ref = prepared["task"]
+    contract = repair.load_task(Path(ref["path"]), ref["sha256"])
+    candidate = tmp_path / "generated-source"
+    repair._write(candidate, repair._inputs(contract))
+    generated = {
+        "dist/index.js": b"export const built = true;\n",
+        "node_modules/.vite/results.json": b'{"cached": true}\n',
+        "playwright-report/index.html": b"<html>Retained test report</html>\n",
+        "test-results/.last-run.json": b'{"status": "passed"}\n',
+    }
+    for name, raw in generated.items():
+        path = candidate / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(raw)
+    captured = evidence.snapshot(candidate, tmp_path / "generated-candidate")
+    result = repair.collect_control(
+        Path(ref["path"]),
+        ref["sha256"],
+        tmp_path / "generated-candidate",
+        captured["manifest_sha256"],
+        tmp_path / "generated-result",
+    )
+    assert result["status"] == "collected"
+    record, files = repair.result_files(
+        contract, ref["sha256"], Path(result["path"]), result["sha256"]
+    )
+    assert record["candidate_sha256"] == captured["manifest_sha256"]
+    retained = {name: raw for name, raw, _ in files}
+    assert {name: retained[name] for name in generated} == generated
+
+    unrelated = candidate / "dist-extra/output.js"
+    unrelated.parent.mkdir()
+    unrelated.write_text("unlisted sibling directory\n")
+    captured = evidence.snapshot(candidate, tmp_path / "unlisted-candidate")
+    result = repair.collect_control(
+        Path(ref["path"]),
+        ref["sha256"],
+        tmp_path / "unlisted-candidate",
+        captured["manifest_sha256"],
+        tmp_path / "unlisted-result",
+    )
+    assert result["status"] == "invalid-scope"
+    record = json.loads((Path(result["path"]) / "repair-result.json").read_bytes())
+    assert record["out_of_scope"] == ["dist-extra/output.js"]
+    with pytest.raises(SkillEvalError, match="outside the frozen scope"):
+        repair.result_files(contract, ref["sha256"], Path(result["path"]), result["sha256"])
+
+
 def test_observation_package_binds_candidate_and_retains_nonoracle_status(
     helper, prepared, task, tmp_path, monkeypatch
 ):

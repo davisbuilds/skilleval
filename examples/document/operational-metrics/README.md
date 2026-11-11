@@ -197,8 +197,12 @@ uv run python examples/document/operational-metrics/prepare_implementation.py pr
 ```
 
 The generated repair-family task permits retaining ordinary source changes for
-review, including out-of-scope backend changes; collection permission does not
-approve their scope. Its six semantic requirements come from the original need
+review, including out-of-scope backend changes. It also retains generated files
+under `dist/`, `node_modules/`, `playwright-report/` and `test-results/`, even when
+those directories were absent from the baseline. Unlisted new root directories
+remain outside the collection grant. Collection permission does not approve a
+change's scope, and generated files remain part of the exact candidate and patch.
+Its six semantic requirements come from the original need
 and repository contracts. The generated spec remains input, not an answer key.
 The small `source-present` worker establishes only availability of key source
 files. Use the normal native collection and `repair check` route for its evidence.

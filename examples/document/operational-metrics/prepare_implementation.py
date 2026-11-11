@@ -62,7 +62,12 @@ def prepare_contract(
         input_sha256=input_sha256,
         prompt=prompt,
         editable_paths=tuple(name for name in names if "/" not in name),
-        editable_directories=tuple(sorted({name.split("/")[0] for name in names if "/" in name})),
+        editable_directories=tuple(
+            sorted(
+                {name.split("/")[0] for name in names if "/" in name}
+                | {"dist", "node_modules", "playwright-report", "test-results"}
+            )
+        ),
         worker=str(worker),
         worker_sha256=file_digest(worker),
         probes=(
