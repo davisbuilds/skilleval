@@ -25,6 +25,26 @@ frozen patched Chrome launcher. Application homes/database are synthetic and
 outside source, provider credentials are removed, and foreign browser origins
 are blocked. The VM still owns the actual network/solver boundary.
 
+### Scratch dependency projection
+
+The observer omits candidate `node_modules` directories and links only from its
+disposable scratch copy, then projects the frozen qualified image dependencies
+into the root and frontend dependency directories. Generated caches remain in
+the canonical candidate. Every omitted directory, regular-file hash/size/executable flag
+and symlink target is retained in `scratch-projection.json`, with an inventory
+hash, rationale and qualified dependency location; the observation summary pins
+that receipt by hash. Links are inventoried without following their targets.
+An oversized receipt causes an explicit incomplete observation/export rather
+than truncating the inventory.
+
+This projection grants no permission for dependency edits. The unchanged parent
+repair artifact's `changes.patch` and `source/candidate` remain authoritative for
+source review, including omitted dependency bytes; dependency manifest changes
+remain flagged for review. The baseline environment lanes retain their existing
+dependency checks. Host regression coverage uses authored files and fake tools:
+`uv run pytest tests/test_operational_metrics_projection.py`; imported candidate
+build and browser qualification still require a fresh guest generation.
+
 The driver specifies real affordances as ordered actions; it has no expected
 text or quality assertions. Supported actions are `click`, `select`, `focus`, `press` and
 `wait`; targets use exact accessible `role` and `name`, while `press` uses `key`

@@ -94,6 +94,57 @@ def digest(data):
     return hashlib.sha256(data).hexdigest()
 
 
+def scratch_projection(source, dependencies):
+    """Describe excluded support state without following links or editing source."""
+    omitted, roots = {}, []
+
+    def record(path):
+        name = path.relative_to(source).as_posix()
+        if path.is_symlink():
+            omitted[name] = {"symlink": os.readlink(path)}
+        elif path.is_dir():
+            omitted[name] = {"directory": True}
+            for child in sorted(path.iterdir()):
+                record(child)
+        elif path.is_file():
+            data = path.read_bytes()
+            omitted[name] = {
+                "sha256": digest(data),
+                "size": len(data),
+                "executable": bool(path.stat().st_mode & 0o111),
+            }
+        else:
+            raise ValueError("omitted dependency inventory contains a nonregular file")
+
+    for directory, dirs, files in os.walk(source, followlinks=False):
+        path = Path(directory) / "node_modules"
+        if "node_modules" in [*dirs, *files] and (path.is_dir() or path.is_symlink()):
+            roots.append(path.relative_to(source).as_posix())
+            record(path)
+            dirs[:] = [name for name in dirs if name != "node_modules"]
+    return {
+        "schema_version": 1,
+        "rationale": "Exclude candidate node_modules support state only from the scratch build; "
+        "project dependencies from the frozen qualified image instead.",
+        "omitted_dependency_roots": sorted(roots),
+        "omitted_dependency_inventory": omitted,
+        "omitted_dependency_inventory_sha256": digest(json.dumps(omitted, sort_keys=True).encode()),
+        "qualified_dependency_directory": str(dependencies),
+        "dependency_edit_authorization": "none; source review required",
+        "candidate_review_authority": "unchanged parent repair artifact changes.patch and "
+        "source/candidate; this receipt does not replace raw candidate review",
+    }
+
+
+def omit_scratch_dependencies(directory, names):
+    path = Path(directory) / "node_modules"
+    return (
+        {"node_modules"}
+        if "node_modules" in names and (path.is_dir() or path.is_symlink())
+        else set()
+    )
+
+
 def evidence_manifest(directory):
     rows = []
     for item in sorted(directory.rglob("*")):
@@ -132,10 +183,18 @@ def run(source, baseline, dependencies, output, assets, environment, timeout=570
         (output / name).write_bytes(data)
     deadline = time.monotonic() + timeout
     try:
+        projection = json.dumps(scratch_projection(source, dependencies), indent=2).encode()
+        (output / "scratch-projection.json").write_bytes(projection)
+        result["scratch_projection"] = {
+            "path": "scratch-projection.json",
+            "sha256": digest(projection),
+        }
+        if len(projection) > MAX_MEMBER_BYTES:
+            raise ValueError("scratch dependency projection receipt exceeds evidence member budget")
         with tempfile.TemporaryDirectory(prefix="operational-metrics-downstream-") as temporary:
             root = Path(temporary)
             project = root / "projects/task"
-            shutil.copytree(source, project, symlinks=True)
+            shutil.copytree(source, project, symlinks=True, ignore=omit_scratch_dependencies)
             environment.bridge_dependencies(project, dependencies)
             env = environment.application_environment(root)
             commands = [
