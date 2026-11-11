@@ -40,6 +40,11 @@ Final text comes from a successful, matched terminal exchange. Missing replies,
 malformed records, unexpected approval requests, output limits and incomplete
 drains prevent completion. The process deadline terminates the namespace;
 turn-interrupt acknowledgments are not used as proof of termination.
+An app-server error notification with `willRetry: true` is retained as a
+canonical warning while the turn remains active. Completion still requires the
+matched successful terminal exchange; nonretryable errors remain fatal. Raw RPC
+preserves the original retry notification and its details. This follows the
+[app-server error contract](https://learn.chatgpt.com/docs/app-server#errors).
 
 Native capture policy `native-rollout-summary-v1` retains the isolated guest
 `codex-home/sessions/**/*.jsonl` files inside `artifacts.tar`. The generated config
@@ -353,9 +358,14 @@ inventory. The process record includes complete context inventories and is read
 up to the smaller of the run's artifact budget and the 32 MiB full-audit ceiling.
 Overall audit and compact-receipt limits still apply; overflow remains partial
 evidence, not successful recording. Complete command outputs stay in the raw events/archive; compact
-metadata exposes hashes, counts and explicit sample omissions. Completion requires the observed process, native
-turn, provider requests, solver setup/namespace teardown and cleanup to agree;
-it leaves task quality unassessed. The trusted boundary receipt records identity,
+metadata exposes hashes, counts and explicit sample omissions. Completion requires the observed process, matched native
+turn, solver setup/namespace teardown and cleanup to agree, plus at least one
+host-observed provider response completed with HTTP 200. A recovered provider
+request failure does not override a successfully completed native turn;
+`provider_complete` still records whether every provider request completed.
+The full request ledger remains required for independent usage reconciliation:
+an interrupted request leaves usage incomplete and cost unknown. Completion
+leaves task quality unassessed. The trusted boundary receipt records identity,
 privilege removal and timings. Agent time starts after namespace setup and ends
 when native PID 1 is reaped; launcher time is retained separately. Collection
 does not proceed when namespace termination is unconfirmed.

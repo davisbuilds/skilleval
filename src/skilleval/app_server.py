@@ -317,7 +317,13 @@ class Session:
             error = _object(params.get("error"), "error notification")
             if type(params.get("willRetry")) is not bool:
                 raise ValueError("error.willRetry must be boolean")
-            self._record_error(_text(error.get("message"), "error message"))
+            message = _text(error.get("message"), "error message")
+            if params["willRetry"]:
+                # Retry notifications leave this turn active. Retain the
+                # diagnostic while requiring explicit terminal success below.
+                self.events.append({"type": "warning", "message": message, "will_retry": True})
+            else:
+                self._record_error(message)
         return []
 
     def _counters(self, value: Any) -> dict[str, int]:
