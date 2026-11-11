@@ -9,7 +9,6 @@ extracted on the host. Ordinary checks never call this entry point.
 from __future__ import annotations
 
 import hashlib
-import io
 import json
 import math
 import os
@@ -24,7 +23,14 @@ from dataclasses import asdict
 from pathlib import Path, PurePosixPath
 from typing import Any, Literal
 
-from skilleval import app_server, context_guard, evidence, guest_runner, solver_boundary
+from skilleval import (
+    app_server,
+    context_guard,
+    evidence,
+    guest_runner,
+    native_process,
+    solver_boundary,
+)
 from skilleval._vendor import openbench_gateway as vendor
 from skilleval.accounting import normalize_codex_usage
 from skilleval.budgets import MIN_GATEWAY_HEADROOM_SECONDS, TASK_TIMEOUT_SECONDS, native_deadline
@@ -51,14 +57,17 @@ from skilleval.lifecycle import (
     successful,
 )
 from skilleval.qualification import _invoke
+from skilleval.task_transfer import _PREPARE_TASK_PROGRAM as _PREPARE_TASK_PROGRAM
+from skilleval.task_transfer import GUEST_ROOT as GUEST_ROOT
+from skilleval.task_transfer import GUEST_TOOLING as GUEST_TOOLING
+from skilleval.task_transfer import GUEST_WORK as GUEST_WORK
+from skilleval.task_transfer import NATIVE_PAX_PATH_BYTES as NATIVE_PAX_PATH_BYTES
+from skilleval.task_transfer import _snapshot_files as _snapshot_files
+from skilleval.task_transfer import _tar as _tar
+from skilleval.task_transfer import preparation_argv as preparation_argv
 
 CATALOG_SHA256 = "943ca7fe1d19ed019054158303f0dbbd80b3bef43b3aa425a71aa7cb3fb52c2b"
 DEFAULT_LIMITS = native_limits(TASK_TIMEOUT_SECONDS)
-# /run is a 64 MiB tmpfs in the qualified guest. Repository archives, native
-# logs and output collection need guest disk capacity, outside the task tree.
-GUEST_ROOT = "/var/tmp/native"
-GUEST_TOOLING = "/var/tmp/skilleval-tooling.tar"
-GUEST_WORK = "/workspace/task"
 MAX_ARTIFACT_BYTES = 256 * 1024 * 1024
 MAX_ARTIFACT_FILES = 10_000
 MAX_NATIVE_AUDIT_BYTES = evidence.MAX_FILE_BYTES
@@ -73,33 +82,6 @@ with tempfile.TemporaryDirectory(prefix='skilleval-version-') as home:
     sys.stderr.buffer.write(result.stderr)
     sys.exit(result.returncode)
 """
-
-_PREPARE_TASK_PROGRAM = """
-import os,pathlib,stat,sys,tarfile
-archive,task,native=map(pathlib.Path,sys.argv[1:])
-for target in (task,native):
-    if any(parent.is_symlink() for parent in target.parents):
-        raise ValueError('guest preparation ancestors must be real directories')
-    if os.path.lexists(target):
-        if not stat.S_ISDIR(target.lstat().st_mode) or any(target.iterdir()):
-            raise ValueError('guest preparation requires an empty real directory')
-    elif not target.parent.is_dir():
-        raise ValueError('guest preparation requires an existing parent')
-for target in (task,native):
-    target.mkdir(mode=0o700,exist_ok=True)
-    target.chmod(0o700)
-with tarfile.open(archive) as source:
-    for member in source:
-        if not member.isfile() or not member.name.startswith(('task/','native/')):
-            raise ValueError('unsupported guest preparation archive member')
-        source.extract(member,task.parent if member.name.startswith('task/') else native.parent,
-                       filter='data')
-"""
-
-
-def preparation_argv(archive: Path, task: Path, native: Path) -> list[str]:
-    """Exact trusted guest bootstrap; arguments are paths, never shell text."""
-    return ["python3", "-c", _PREPARE_TASK_PROGRAM, str(archive), str(task), str(native)]
 
 
 def protocol_shape(raw: bytes) -> dict[str, Any]:
@@ -471,46 +453,6 @@ def snapshot_digest(bundle: Path) -> str:
     with evidence._directory(bundle) as root:
         raw, _ = evidence._read_file(root, "manifest.json", evidence.MAX_MANIFEST_BYTES)
     return hashlib.sha256(raw).hexdigest()
-
-
-def _snapshot_files(
-    bundle: Path, expected: str
-) -> tuple[dict[str, Any], list[tuple[str, bytes, bool]]]:
-    manifest = evidence.verify(bundle, expected)
-    if manifest["kind"] != "snapshot":
-        raise SkillEvalError("native input must be a source-only generic snapshot")
-    expected_files = {entry["path"]: entry for entry in manifest["files"]}
-    files = []
-    with evidence._directory(bundle) as root:
-        for name, data, executable in evidence._walk(root):
-            if name == "manifest.json":
-                continue
-            entry = expected_files.get(name)
-            if (
-                entry is None
-                or entry["size"] != len(data)
-                or entry["sha256"] != hashlib.sha256(data).hexdigest()
-                or entry["executable"] != executable
-            ):
-                raise SkillEvalError("native source changed before copy")
-            files.append((name, data, executable))
-    if {name for name, _, _ in files} != set(expected_files):
-        raise SkillEvalError("native source inventory changed before copy")
-    return manifest, files
-
-
-def _tar(path: Path, entries: list[tuple[str, bytes, bool]]) -> None:
-    if any(guest_runner._pax_path_size(name) > NATIVE_PAX_PATH_BYTES for name, _, _ in entries):
-        raise SkillEvalError("task transfer path exceeds native PAX metadata limit")
-    with tarfile.open(path, "x", format=tarfile.PAX_FORMAT) as target:
-        for name, data, executable in entries:
-            info = tarfile.TarInfo(name)
-            info.size, info.mode = len(data), 0o755 if executable else 0o644
-            target.addfile(info, io.BytesIO(data))
-    path.chmod(0o600)
-
-
-NATIVE_PAX_PATH_BYTES = 4096
 
 
 def _native_pax_path(payload: bytes) -> str:
@@ -1087,6 +1029,7 @@ def run_native(
             ("native/config.toml", config.encode(), False),
             ("native/prompt.txt", prompt.encode(), False),
             ("native/runner.py", Path(guest_runner.__file__).read_bytes(), False),
+            ("native/native_process.py", Path(native_process.__file__).read_bytes(), False),
             ("native/app_server.py", Path(app_server.__file__).read_bytes(), False),
             ("native/context_guard.py", Path(context_guard.__file__).read_bytes(), False),
             ("native/solver_boundary.py", Path(solver_boundary.__file__).read_bytes(), False),

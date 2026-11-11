@@ -179,7 +179,12 @@ def _invocations(spec: StudySpec, skill_name: str) -> dict[str, dict[str, str]]:
     }
 
 
-def _check_inputs(spec: StudySpec, *, identity: dict[str, Any] | None = None) -> dict[str, Any]:
+def _check_inputs(
+    spec: StudySpec,
+    *,
+    identity: dict[str, Any] | None = None,
+    readiness: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     for task in spec.tasks:
         manifest = evidence.verify(Path(task.input_bundle), task.input_sha256)
         if manifest["kind"] != "snapshot":
@@ -187,7 +192,11 @@ def _check_inputs(spec: StudySpec, *, identity: dict[str, Any] | None = None) ->
         check_task_baseline(Path(task.input_bundle))
         if task.package is not None:
             from skilleval.repair import load_task
-            from skilleval.task_package import checked_validation
+            from skilleval.task_package import (
+                check_environment_identity,
+                checked_validation,
+                readiness_selection,
+            )
 
             assert task.package_sha256 and task.environment_validation
             assert task.environment_validation_sha256
@@ -207,9 +216,13 @@ def _check_inputs(spec: StudySpec, *, identity: dict[str, Any] | None = None) ->
                 or artifact.input_sha256 != task.input_sha256
                 or artifact.prompt != task.prompt
                 or package.environment.image_sha256 != spec.image_sha256
-                or any(c["identity"] != identity for c in validation["cases"])
             ):
                 raise SkillEvalError("study differs from validated task package or execution route")
+            check_environment_identity(validation, package.environment.profile, identity)
+            if readiness is not None and validation.get("schema_version") == 2:
+                readiness[task.task_id] = readiness_selection(
+                    package, task.package_sha256, validation
+                )
             if task.acceptance_map is not None:
                 from skilleval.acceptance import load_acceptance
 
@@ -247,7 +260,8 @@ def prepare_study(spec: StudySpec, destination: Path) -> dict[str, Any]:
                 task[key] = os.path.abspath(task[key])
     spec = StudySpec.model_validate_json(json.dumps(data))
     identity = snapshot_identity(spec.runtime)
-    image = _check_inputs(spec, identity=identity)
+    readiness: dict[str, Any] = {}
+    image = _check_inputs(spec, identity=identity, readiness=readiness)
     destination = Path(os.path.abspath(destination))
     _outside_inputs(spec, destination)
     skill_manifest, _ = _verified_skill(Path(spec.skill_bundle), spec.skill_sha256)
@@ -265,6 +279,8 @@ def prepare_study(spec: StudySpec, destination: Path) -> dict[str, Any]:
         "skill_name": skill_name,
         "invocations": _invocations(spec, skill_name),
     }
+    if readiness:
+        value["environment_readiness"] = readiness
     digest = _new(destination, value)
     cells = len(value["assignments"])
     return {
@@ -362,7 +378,10 @@ def _dispatch_check(
     if identity != plan["identity"]:
         raise SkillEvalError("study inputs or execution identity changed; prepare a new plan")
     inputs_started = time.monotonic()
-    image = _check_inputs(spec, identity=identity)
+    readiness: dict[str, Any] = {}
+    image = _check_inputs(spec, identity=identity, readiness=readiness)
+    if readiness != plan.get("environment_readiness", {}):
+        raise SkillEvalError("study environment readiness selection differs from frozen plan")
     timings["inputs"] = time.monotonic() - inputs_started
     if image != plan["image"]:
         raise SkillEvalError("study inputs or execution identity changed; prepare a new plan")
@@ -840,6 +859,11 @@ def report_study(plan_path: Path, expected_sha256: str, output: Path) -> dict[st
         "cells": cells,
         "pairs": paired,
         "efficiency_ledger": efficiency_ledger(cells),
+        **(
+            {"environment_readiness": plan["environment_readiness"]}
+            if "environment_readiness" in plan
+            else {}
+        ),
         "pair_coverage": {
             "planned": len(paired),
             "harness_comparable": sum(pair["harness_comparable"] for pair in paired),

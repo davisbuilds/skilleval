@@ -203,7 +203,7 @@ def test_native_study_requires_solver_profile_from_selected_task_validation(
     # Every selected receipt still has to match; operation-local reuse cannot
     # make a mismatched validation pass.
     validation["cases"][1] = {"identity": {}}
-    with pytest.raises(SkillEvalError, match="validated task package or execution route"):
+    with pytest.raises(SkillEvalError, match="environment execution identity changed"):
         study._dispatch_check(selected_plan, spec)
     validation["cases"][1] = {"identity": identity}
 

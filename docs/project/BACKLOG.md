@@ -20,13 +20,12 @@ shipped history. Private provenance stays outside public entries and issues.
   needs human input, prior investigation and relevant evidence; save responses
   separately from original judgments. Artifact comparison remains optional.
   Calibration sampling is a separate opt-in workflow, not default homework.
-- **Readiness reuse:** narrow readiness invalidation to relevant execution
-  dependencies so reporting changes do not require repeating task suites. Use
-  the retained dispatch/lifecycle phase timings to select further optimizations;
-  reducing duplicate archive reads alone need not dominate launch latency.
-  Preserve fresh isolation, launched-byte verification, cleanup and historical
-  receipt semantics. Dependency-scoped reuse needs positive and changed-input
-  controls before it can replace the current broad source fingerprint.
+- **Remaining readiness precision:** whole-module execution fingerprints still
+  couple task suites to unrelated changes within shared lifecycle, qualification
+  and evidence modules. Revisit further extraction when retained phase timings
+  and repeat-validation causes show material cost. Preserve fresh isolation,
+  launched-byte verification, cleanup and original receipts when narrowing the
+  remaining footprint.
 - **Interactive clarification:** the first specification pilot delegates bounded
   product choices and runs each stage without live Q&A. Add a bounded conversation
   loop when selected tasks need requirements elicitation: explicit needs-input vs

@@ -15,7 +15,7 @@ from test_task_package import package_spec, solver_process
 from skilleval import repair, task_package
 from skilleval.assessment_observations import AssessmentObservationSource, observation_payloads
 from skilleval.errors import SkillEvalError
-from skilleval.identity import file_digest
+from skilleval.identity import environment_identity, file_digest, object_digest, snapshot_identity
 
 
 def archive(files):
@@ -176,3 +176,96 @@ def test_consistent_wrong_image_in_retained_rows_still_violates_package(observed
     ref = ref.model_copy(update={"report_sha256": file_digest(Path(ref.report))})
     with pytest.raises(SkillEvalError, match="image"):
         payloads((ref, *observed[1:]))
+
+
+def version_two(observed, route):
+    """Add the explicit v2 provenance contract without changing observed execution."""
+    ref, *rest = observed
+    report = json.loads(Path(ref.report).read_text())
+    package = task_package.load_package(Path(ref.package), ref.package_sha256)
+    contract = task_package.execution_contract(package)
+    row = report["cases"][0]
+    row["identity"] = snapshot_identity(str(route["runtime"]))
+    row["readiness_identity"] = environment_identity(row["identity"], package.environment.profile)
+    directory = rest[1]
+    (directory / "validation.json").write_text(json.dumps(row))
+    recovery_path = directory / "recovery.json"
+    recovery = json.loads(recovery_path.read_text())
+    recovery["identity"] = row["identity"]
+    recovery_path.write_text(json.dumps(recovery))
+    report.update(
+        schema_version=2,
+        package=ref.package,
+        execution_contract=contract,
+        execution_contract_sha256=object_digest(contract),
+    )
+    Path(ref.report).write_text(json.dumps(report))
+    return (ref.model_copy(update={"report_sha256": file_digest(Path(ref.report))}), *rest)
+
+
+def test_v2_unexpected_observation_replays_without_live_readiness(observed, route):
+    expected = payloads(observed)
+    selected = version_two(observed, route)
+    # Neither a changed live runtime nor a retired checker alters retained observations.
+    Path(route["runtime"]).write_text("changed runtime must never execute")
+    Path(selected[1]["spec"].worker).unlink()
+    assert payloads(selected) == expected
+
+
+@pytest.mark.parametrize("binding", ["package", "contract", "contract_digest"])
+def test_v2_observation_rejects_changed_original_package_or_execution_contract(
+    observed, route, binding
+):
+    selected = version_two(observed, route)
+    assert payloads(selected)
+    ref, *rest = selected
+    report = json.loads(Path(ref.report).read_text())
+    if binding == "package":
+        report["package"] = str(Path(ref.package).with_name("foreign-package.json"))
+    elif binding == "contract":
+        report["execution_contract"] = {"image_sha256": "f" * 64}
+        report["execution_contract_sha256"] = object_digest(report["execution_contract"])
+    else:
+        report["execution_contract_sha256"] = "f" * 64
+    Path(ref.report).write_text(json.dumps(report))
+    ref = ref.model_copy(update={"report_sha256": file_digest(Path(ref.report))})
+    with pytest.raises(SkillEvalError, match=r"observation.*binding"):
+        payloads((ref, *rest))
+
+
+@pytest.mark.parametrize("proof", ["missing", "changed", "incomplete_source"])
+def test_v2_observation_requires_original_captured_readiness_proof(observed, route, proof):
+    selected = version_two(observed, route)
+    assert payloads(selected)
+    ref, task, directory, raw = selected
+    report = json.loads(Path(ref.report).read_text())
+    row = report["cases"][0]
+    if proof == "missing":
+        del row["readiness_identity"]
+    elif proof == "changed":
+        row["readiness_identity"]["runtime"] = {"changed": True}
+    else:
+        row["identity"]["sources"] = {}
+        recovery_path = directory / "recovery.json"
+        recovery = json.loads(recovery_path.read_text())
+        recovery["identity"] = row["identity"]
+        recovery_path.write_text(json.dumps(recovery))
+    (directory / "validation.json").write_text(json.dumps(row))
+    Path(ref.report).write_text(json.dumps(report))
+    ref = ref.model_copy(update={"report_sha256": file_digest(Path(ref.report))})
+    with pytest.raises(SkillEvalError):
+        payloads((ref, task, directory, raw))
+
+
+def test_v2_raw_observation_export_survives_changed_host_interpretation(
+    observed, route, monkeypatch
+):
+    selected = version_two(observed, route)
+    expected = payloads(selected)
+    original = task_package.observations
+
+    def changed_interpretation(lane, process):
+        return {"updated_parser": original(lane, process)}
+
+    monkeypatch.setattr(task_package, "observations", changed_interpretation)
+    assert payloads(selected) == expected

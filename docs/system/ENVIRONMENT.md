@@ -9,8 +9,9 @@ assemble and check the required evidence.
 The [native development runner](NATIVE.md) shares this lifecycle and records its
 own complete workload evidence. `native qualify` never consumes a bounded seal
 as permission for scored work, and successful reviews or judges do not expand
-that seal's scope. Source changes invalidate prior receipts; preserve those
-generations and qualify the changed route with fresh outputs.
+that seal's scope. Admission and active lifecycle recovery retain exact full-source
+identity checks. Completed task-environment evidence has the narrower reuse
+contract below; preserve every original evidence generation.
 
 ## Identity and invalidation
 
@@ -36,6 +37,44 @@ changes relative to a retained digest; they are not signatures or proof against
 an operator who can replace both evidence and its expected digest. These opt-in
 controls currently require the complete source checkout and unpacked runtime.
 They do not claim installed-wheel or cross-host runtime qualification.
+
+## Completed task-environment readiness
+
+Schema-2 [task validation](TASKS.md#readiness-reuse-and-invalidation) separates the
+conditions executed in the VM from current host interpretation. Its execution
+contract binds image and frozen case identities, execution profile, ordered
+cases/lanes, case IDs/roles, lane IDs, argv and deadlines. Each case retains both
+the full original identity and a named `task-environment-v1` readiness projection
+covering the runtime/host, controller Python implementation/version, and applicable
+execution sources.
+
+`ENVIRONMENT_SOURCES` in `identity.py` owns the common source footprint:
+`task_environment.py` executes the validation route; `task_transfer.py` prepares
+and transfers frozen files; `task_validation_guest.py` supervises commands;
+`native_process.py` owns shared pipe collection and transfer-path bounds;
+`lifecycle.py`, `qualification.py` and `evidence.py` own VM configuration,
+launch/cleanup, image inspection and byte verification. `solver-isolated-v1` also
+binds `solver_boundary.py`, including identity, filesystem/dependency projection
+and namespace teardown. `native-root-v1` keeps its separate execution profile.
+These are conservative whole-module fingerprints: unrelated edits within a named
+module still require execution. There is no per-function semantic cache.
+
+Current parsers and expectations replay retained complete process evidence.
+Briefs, grader/edit scope, explanatory prose, pricing and native reporting or
+accounting do not change task-suite execution when the execution contract and
+applicable source footprint agree. The [invalidation decision table](TASKS.md#readiness-reuse-and-invalidation)
+owns the required rerun or replay. Original package bytes/digest remain required,
+but their retired grading dependencies need not remain live; the selected package
+and its inputs are fully validated. Original status and coverage disclosures stay
+visible alongside the selected expectations and disclosures.
+
+This reuse applies only to completed task-environment observations. Schema-1
+receipts retain exact original package/full-identity requirements and need one
+fresh schema-2 validation before using the narrower contract. Frozen study plans
+still bind their full execution identity and may need a new plan. Active VM
+cleanup/recovery and admission checks keep their existing full-identity guards.
+No age-based expiry or persistent cache is introduced, and a reusable task receipt
+does not establish general environment support, task quality or scored admission.
 
 ## Task capture and baseline fidelity
 

@@ -106,16 +106,52 @@ workloads are supported. Coverage gaps remain in the report. A successful proces
 exit alone cannot validate an empty or skipped suite. Task-specific JSON probes
 must themselves use meaningful controls; a schema cannot establish their truth.
 
+### Readiness reuse and invalidation
+
+New validation receipts use schema version 2. They retain the original package
+locator and digest, full execution identity and observations, plus an
+`execution_contract` and its digest. Each case records a `readiness_identity`
+projected from its captured full identity. The execution contract binds image,
+execution profile, ordered cases and lanes, case IDs/roles and frozen input
+identities, lane IDs, argv and deadlines. The named execution-source footprint is
+owned by [environment identity](ENVIRONMENT.md#completed-task-environment-readiness).
+
+Current readback fully validates the selected package and its inputs, verifies
+the original package bytes against their retained digest, and replays the current
+parsers and expectations against saved process observations. It does not need the
+original package's historical grading worker to remain available. Original
+receipt bytes, status, gaps and limitations remain unchanged. A complete original
+`unexpected` observation can satisfy new expectations; incomplete execution,
+truncated output, task-file mutation, failed boundary setup/teardown or incomplete
+cleanup cannot support reuse. Matching declared failures or skips still retains
+those exceptions.
+
+| Change | Required action |
+| --- | --- |
+| Image, frozen case bytes, execution profile, or ordered case/lane IDs, roles, argv or deadlines | Run fresh environment validation and retain a new receipt. |
+| Runtime/host, controller Python implementation/version, or a source in the applicable execution footprint | Run fresh environment validation. The footprint conservatively hashes whole modules. |
+| Parser, expected exit status or expected observations | Replay current interpretation against complete retained process observations; execute again if those observations cannot establish the selected expectation. |
+| Brief, grading worker/probes, editable scope, lane purpose, setup prose, required-path declarations, gaps or limitations | Fully validate the selected package and replay retained observations. Unchanged execution conditions do not require a new VM suite. Preserve original and selected disclosures separately. |
+| Pricing, native accounting/capture, judge or report code outside the execution footprint | Reuse applicable schema-2 task observations. Prepare a new study plan when its full identity or inputs change; other qualification guards still apply. |
+| Schema-1 receipt with a different package or full identity | Retain the exact legacy binding. Run one fresh schema-2 validation to use the narrower reuse contract; never rewrite or upgrade the old receipt. |
+
 For a packaged study task, supply `package`, `package_sha256`,
 `environment_validation`, and `environment_validation_sha256` together. Preparation
-and every dispatch recheck captured inputs, commands/observations, cleanup, image,
-runtime/source identity, and the shared prompt. Missing or mismatched validation
-prevents dispatch. Existing unpackaged development plans remain readable. The
-packaged native route requires `solver-isolated-v1` validation; historical root
-packages need a new explicit profile and validation generation. The
-native writable-file mode is still named `repair` in study records for wire
-compatibility; logical task family lives in the package. No package grants scored
-admission.
+and every dispatch recheck selected inputs, replayed observations, cleanup, image,
+applicable readiness identity and the shared prompt. New study plans and reports
+retain an `environment_readiness` summary with original/current package digests,
+original status and disclosures, selected disclosures and the current matched
+expectation status. The original validation report remains unchanged.
+
+Frozen study plans still require their exact full execution identity; source
+changes can require a cheap new plan while task-suite observations remain reusable.
+There is no age-based expiry or persistent verification cache. Existing schema-1
+validation receipts keep their exact package/full-identity rule, and unpackaged
+development plans remain readable. The packaged native route requires
+`solver-isolated-v1`; historical root validation cannot qualify that solver.
+The native writable-file mode remains `repair` for wire compatibility; logical
+task family lives in the package. Readiness reuse grants no scored admission or
+broader environment coverage.
 
 ## Grade the artifact independently
 
