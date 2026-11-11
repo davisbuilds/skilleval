@@ -22,7 +22,9 @@ from skilleval.repair_assessment import RepairAssessmentSpec, checked_report
 from skilleval.retention import prune_staging, prune_staging_runs
 
 
-def staging_run(root: Path, name: str) -> tuple[Path, Path, Path]:
+def staging_run(
+    root: Path, name: str, *, validation_schema_version: int = 1
+) -> tuple[Path, Path, Path]:
     output, _, recovery = completed_run(root)
     ticket = json.loads(recovery.read_bytes())
     ticket["identity"] = {"runtime": {"binary": str(root / "smolvm")}}
@@ -57,7 +59,11 @@ def staging_run(root: Path, name: str) -> tuple[Path, Path, Path]:
         evidence = output / "validation.json"
         (output.parent / "task-validation.json").write_text(
             json.dumps(
-                {"kind": "skilleval-task-validation", "schema_version": 1, "cases": [report]}
+                {
+                    "kind": "skilleval-task-validation",
+                    "schema_version": validation_schema_version,
+                    "cases": [report],
+                }
             )
         )
     else:
@@ -72,9 +78,21 @@ def staging_run(root: Path, name: str) -> tuple[Path, Path, Path]:
     return output, staging, evidence
 
 
-@pytest.mark.parametrize("name", ["checker-input.tar", "validation-input.tar", "tooling.tar"])
-def test_staging_preview_apply_repeat_preserves_all_evidence(tmp_path: Path, name: str) -> None:
-    output, staged, _ = staging_run(tmp_path, name)
+@pytest.mark.parametrize(
+    ("name", "validation_schema_version"),
+    [
+        ("checker-input.tar", 1),
+        ("validation-input.tar", 1),
+        ("validation-input.tar", 2),
+        ("tooling.tar", 1),
+    ],
+)
+def test_staging_preview_apply_repeat_preserves_all_evidence(
+    tmp_path: Path, name: str, validation_schema_version: int
+) -> None:
+    output, staged, _ = staging_run(
+        tmp_path, name, validation_schema_version=validation_schema_version
+    )
     for path in (output / "artifacts.tar", output / "runtime-state/unknown.tar"):
         path.write_bytes(b"retain me")
     original = {p: p.read_bytes() for p in tmp_path.rglob("*") if p.is_file() and p != staged}
@@ -93,7 +111,31 @@ def test_staging_preview_apply_repeat_preserves_all_evidence(tmp_path: Path, nam
     assert (output / "staging-retention.json").read_bytes() == receipt
 
 
-@pytest.mark.parametrize("name", ["checker-input.tar", "validation-input.tar", "tooling.tar"])
+@pytest.mark.parametrize("schema_version", [0, 3, True, "2", None, []])
+def test_validation_staging_retains_unknown_parent_schema(
+    tmp_path: Path, schema_version: Any
+) -> None:
+    output, staged, _ = staging_run(tmp_path, "validation-input.tar")
+    assert prune_staging(output)["status"] == "eligible"
+    parent = output.parent / "task-validation.json"
+    report = json.loads(parent.read_bytes())
+    report["schema_version"] = schema_version
+    parent.write_text(json.dumps(report))
+    original = staged.read_bytes()
+    result = prune_staging(output, apply=True)
+    assert result["status"] == "retained", result
+    assert staged.read_bytes() == original
+
+
+@pytest.mark.parametrize(
+    ("name", "validation_schema_version"),
+    [
+        ("checker-input.tar", 1),
+        ("validation-input.tar", 1),
+        ("validation-input.tar", 2),
+        ("tooling.tar", 1),
+    ],
+)
 @pytest.mark.parametrize(
     "fault",
     [
@@ -120,8 +162,12 @@ def test_staging_preview_apply_repeat_preserves_all_evidence(tmp_path: Path, nam
         "state_link",
     ],
 )
-def test_staging_refuses_unsafe_targets(tmp_path: Path, name: str, fault: str) -> None:
-    output, staged, producer = staging_run(tmp_path, name)
+def test_staging_refuses_unsafe_targets(
+    tmp_path: Path, name: str, validation_schema_version: int, fault: str
+) -> None:
+    output, staged, producer = staging_run(
+        tmp_path, name, validation_schema_version=validation_schema_version
+    )
     recovery = output / "recovery.json"
     ticket = json.loads(recovery.read_bytes())
     report = json.loads(producer.read_bytes())
@@ -182,6 +228,36 @@ def test_staging_refuses_unsafe_targets(tmp_path: Path, name: str, fault: str) -
     assert staged.exists()
     if original is not None:
         assert staged.read_bytes() == original
+
+
+@pytest.mark.parametrize(
+    "fault", ["missing_row", "different_row", "duplicate_row", "identity", "image"]
+)
+def test_schema_two_validation_staging_requires_parent_and_recovery_bindings(
+    tmp_path: Path, fault: str
+) -> None:
+    output, staged, producer = staging_run(
+        tmp_path, "validation-input.tar", validation_schema_version=2
+    )
+    assert prune_staging(output)["status"] == "eligible"
+    parent = output.parent / "task-validation.json"
+    envelope = json.loads(parent.read_bytes())
+    report = json.loads(producer.read_bytes())
+    if fault == "missing_row":
+        envelope["cases"] = []
+    elif fault == "different_row":
+        envelope["cases"] = [{**report, "case_id": "another-case"}]
+    elif fault == "duplicate_row":
+        envelope["cases"] = [report, report]
+    else:
+        report[fault] = {"changed": True}
+        producer.write_text(json.dumps(report))
+        envelope["cases"] = [report]
+    parent.write_text(json.dumps(envelope))
+    original = staged.read_bytes()
+    result = prune_staging(output, apply=True)
+    assert result["status"] == "retained", result
+    assert staged.read_bytes() == original
 
 
 def test_qualification_tooling_is_retained_even_beside_native_receipt(tmp_path: Path) -> None:
