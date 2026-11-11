@@ -17,6 +17,7 @@ from skilleval.accounting import PriceSchedule
 from skilleval.calibration import CalibrationResult
 from skilleval.contracts import Assessment, Attempt, Experiment, Record, Task
 from skilleval.errors import SkillEvalError
+from skilleval.gateway import NATIVE_REQUEST_BACKSTOP
 from skilleval.handoff import HandoffReportSpec, SpecHandoffSpec
 from skilleval.judge import AgenticCalibrationResult, AgenticReviewResult
 from skilleval.reliability import ReliabilityObservations, ReliabilitySuite
@@ -254,7 +255,12 @@ def parser() -> argparse.ArgumentParser:
         type=int,
         help="Native deadline (default/maximum: tasks 1800s, judges 900s)",
     )
-    native_run.add_argument("--max-requests", type=int, default=32)
+    native_run.add_argument(
+        "--max-requests",
+        type=int,
+        default=NATIVE_REQUEST_BACKSTOP,
+        help="Emergency admitted-request backstop (default/maximum: 1024)",
+    )
     native_run.add_argument("--max-artifact-bytes", type=int, default=64 * 1024 * 1024)
     native_run.add_argument("--max-artifact-files", type=int, default=10_000)
     native_run.add_argument("--skill-bundle", type=Path)

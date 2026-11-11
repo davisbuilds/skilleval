@@ -151,7 +151,7 @@ not qualified to conceal evaluation infrastructure. The earlier 56 context
 controls concern operator-state exclusion and matched skill exposure; they do not
 establish this property. Neutral wording alone does not close the gap.
 
-## Acceptance before new comparisons
+## Solver boundary acceptance
 
 Keep the controller, evaluator sources, staging archives, study records and grader
 artifacts outside the solver's readable namespace. Use a dedicated unprivileged
@@ -161,7 +161,9 @@ while both processes are root, or a prompt asking the agent not to look is
 insufficient. Preserve the inference transport and ordinary task capabilities;
 renaming an evaluation path does not establish separation.
 
-Verify on the actual native route, including subprocesses and indirect reads:
+Verify on the actual native route, including subprocesses and indirect reads.
+Reuse retained controls when their route and boundary inputs still apply; repeat
+them for changed boundaries or unresolved gaps:
 
 - The solver can read task source, ordinary instructions, required history,
   selected skill resources and dependency/tool files, and can edit/test the task.

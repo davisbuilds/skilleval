@@ -33,8 +33,10 @@ from skilleval.harnesses.codex import CODEX_BASELINE_VERSION
 CODEX_VERSION = CODEX_BASELINE_VERSION
 MODEL = "gpt-6.1-sol"
 EFFORT = "high"
-MAX_RECEIPTS = 256
-MAX_REQUESTS = 128
+MAX_REQUESTS = 1024
+NATIVE_REQUEST_BACKSTOP = 1024
+# Leave space for a refused attempt beyond every admitted request.
+MAX_RECEIPTS = 2 * MAX_REQUESTS + 4
 # Reserve ready/stopped plus one observer-cap diagnostic and HTTP refusal. The
 # receipt sink independently fails closed if other rejection traffic fills it.
 MAX_REQUEST_OBSERVATIONS = MAX_RECEIPTS - 4
@@ -226,7 +228,9 @@ class GatewayLimits:
                 raise SkillEvalError("invalid gateway deadline")
 
 
-def native_limits(deadline_seconds: int, *, max_requests: int = 32) -> GatewayLimits:
+def native_limits(
+    deadline_seconds: int, *, max_requests: int = NATIVE_REQUEST_BACKSTOP
+) -> GatewayLimits:
     """Bound streams by the native deadline and the existing five-minute ceiling."""
     return GatewayLimits(
         max_requests=max_requests,

@@ -25,6 +25,26 @@ frozen patched Chrome launcher. Application homes/database are synthetic and
 outside source, provider credentials are removed, and foreign browser origins
 are blocked. The VM still owns the actual network/solver boundary.
 
+### Scratch dependency projection
+
+The observer omits candidate `node_modules` directories and links only from its
+disposable scratch copy, then projects the frozen qualified image dependencies
+into the root and frontend dependency directories. Generated caches remain in
+the canonical candidate. Every omitted directory, regular-file hash/size/executable flag
+and symlink target is retained in `scratch-projection.json`, with an inventory
+hash, rationale and qualified dependency location; the observation summary pins
+that receipt by hash. Links are inventoried without following their targets.
+An oversized receipt causes an explicit incomplete observation/export rather
+than truncating the inventory.
+
+This projection grants no permission for dependency edits. The unchanged parent
+repair artifact's `changes.patch` and `source/candidate` remain authoritative for
+source review, including omitted dependency bytes; dependency manifest changes
+remain flagged for review. The baseline environment lanes retain their existing
+dependency checks. Host regression coverage uses authored files and fake tools:
+`uv run pytest tests/test_operational_metrics_projection.py`; imported candidate
+build and browser qualification still require a fresh guest generation.
+
 The driver specifies real affordances as ordered actions; it has no expected
 text or quality assertions. Supported actions are `click`, `select`, `focus`, `press` and
 `wait`; targets use exact accessible `role` and `name`, while `press` uses `key`
@@ -65,6 +85,53 @@ internal helper cannot satisfy the consumer-read check.
 | Empty, error, recovery | Deferred initial read, empty result, initial 503 then successful retry, refresh 503 after data then successful retry | Each state is captured independently. Judge distinguishes unknown/empty/error/stale/recovered meanings. |
 | Bounded results | Fixture returns the actual requested limit (default 200, maximum 500) distinct groups | Response and raw DOM/ARIA/HTML headings/details. Judge checks slice completeness/denominator claims; no fixed warning sentence is required. |
 | Scope and console regression | Source inventory/diff reference, all same-origin browser methods, every SQLite table fingerprint, activity/usage APIs before/after, narrow viewport, 16 real Tab presses and declared keyboard activation | Source changes/dependency triage, store/API changes, focus and layout snapshots. These are supporting controls, not complete accessibility or production-ingestion coverage. |
+
+### Action generations and fixture projection
+
+Each declared action/release interval owns a read generation, not a fixed number
+of HTTP requests. All its metrics requests, including concurrent prefix/latest
+queries and sequential companions, must complete or fail and then remain quiet
+for 150 ms before a settled snapshot. Arrival/completion waits retain the existing
+five-second deadline. Initial loading holds the whole generation; the race
+releases the newer generation in full before reactivating and releasing the
+older generation, including its later sequential companions. A canceled route
+remains recorded. Errors and changed fixtures belong to explicit action phases,
+so a second request in the initial load cannot consume the refresh failure.
+`read_generations` and network records bind phase, generation and request ordinal.
+A request arriving after a generation's quiet bound makes the observation
+incomplete. These are controlled arrival intervals, not authenticated
+application-internal transaction identities; unrelated polling or delayed work
+can require a separately reviewed observation design.
+
+Intercepted fixtures honor the actual `name_prefix`, `agent`, UTC `since` and
+`limit` query, sorting by event time before applying the ordinary cap. The
+fixture's authored aggregate groups model co-timed contributing points in a
+synthetic Codex scope. Counts and value sums remain independent, and attribute
+groups remain distinct. A latest query with `limit=1` gets at most one group;
+a different prefix cannot receive duplicate rows from the first prefix. The
+wider-only rate-limit group is projected through the actual query lower bound,
+not supplied merely because an action is called wide. The aggregate fixture
+contains no contributing-session data: a `session_id` query is explicitly
+unsupported unless that metadata was authored, and the observer marks that
+fixture scenario incomplete rather than fabricating an API rejection or empty
+result. These synthetic assumptions do not qualify real per-point filtering;
+the separately seeded actual endpoint remains the API control.
+
+The deterministic regressions are
+`uv run pytest tests/test_operational_metrics_batches.py tests/test_operational_metrics_downstream.py`. Before using a
+changed observer on real outcomes, freeze fresh packages and run the existing
+single-request positive control plus an explicitly authored four-request
+positive control through the same guest route. The four-request variant should
+await two windowed prefix queries and two unwindowed `limit=1` companions in each
+load, preserving the ordinary version guard, error recovery and source fixture
+semantics. Seed generated root/frontend dependency caches in that control to
+exercise the scratch projection too. Retain the exact control patch/driver and
+all ten scenario outputs. Inspect full-generation loading, phase-specific
+failure/recovery, actual scope projections, newer-before-older release and
+canceled routes; require completed cleanup and exact retained exports before
+interpreting actual candidates. Old qualification evidence remains unchanged
+and does not qualify these new observer bytes. No model judge is needed merely
+to qualify this transport repair; semantic audit remains separate.
 
 Read responses complete before their resulting snapshot. Snapshots wait for a
 150-ms quiet DOM interval, bounded at two seconds, retaining which bound fired;
@@ -114,6 +181,14 @@ store/API changes, errors, absent data and unsupported query keys remain raw
 facts for independent assessment. Observation failure and feature failure must
 remain separate.
 
+`build_changed_candidate_inputs` names supplied files changed by the scratch build.
+When nonempty, the worker remains `incomplete` even if all browser scenarios finish.
+Those observations describe the rebuilt application; they do not verify the exact
+supplied distribution assets. `candidate_source_changes` separately checks whether
+the canonical candidate itself changed. Inspect these fields alongside individual
+command completion and browser status, rather than treating a single status as a
+feature-quality verdict.
+
 ## Qualification controls
 
 `controls.py` creates operator-authored Svelte source patches in a **disposable
@@ -139,8 +214,8 @@ the two semantic mutations for their intended defect; the unwired control must
 show absent browser consumer reads. Authored controls are related development
 inputs, not holdouts or independent semantic audit.
 
-Before depending on this generation, retain reviewed raw envelopes and exact
-runtime/image/source/wrapper identities for all five. Freeze corrected wrapper
+Before depending on a new semantic calibration generation, retain reviewed raw
+envelopes and exact runtime/image/source/wrapper identities for all five. Freeze corrected wrapper
 bytes into a new generation after any failure. Run relevant ordinary frontend,
 API/query tests inside the same VM separately and preserve their baseline
 failures/skips. Host deterministic checks exercise authored fake executables,
@@ -151,13 +226,21 @@ uv run pytest tests/test_operational_metrics_downstream.py \
   tests/test_operational_metrics_controls.py
 ```
 
-Maintainer development runs on 2026-11-11 exercised all five controls through the
-frozen VM and solver profile. The four wired controls completed all ten browser
+Earlier maintainer development runs on 2026-11-11 exercised all five controls
+through the frozen VM and solver profile. The four wired controls completed all ten browser
 scenarios; the unwired control retained missing interactions and consumer reads,
 with working endpoint and wired-consumer positive controls. Stores and sampled
 regression APIs remained unchanged. Full receipts remain outside the public
 source tree; this is not an independently reproduced benchmark release. Requalify
 changed inputs, drivers, wrappers or execution identities before relying on them.
+
+The later action-generation and scratch-projection repair completed all ten
+scenarios for both single-request and four-request positive controls through the
+same VM route. Readback checked request counts, fixture prefix/limit projection,
+and unchanged stores and sampled APIs. Both actual pilot candidates then completed
+the ten scenarios with their reviewed drivers. These are new transport observations;
+the earlier five-control semantic judgments were not rerun or retroactively rebound
+to the repaired observer, and independent semantic audit remains pending.
 
 Semantic calibration remains separate from completed browser execution. An early
 judge found a real stale-range defect in both intended positive layouts: old

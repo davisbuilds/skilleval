@@ -115,6 +115,58 @@ def test_out_of_scope_control_is_retained_but_cannot_be_checked(task, tmp_path):
         repair.result_files(task["spec"], task["digest"], output, result["sha256"])
 
 
+def test_repository_scope_retains_unprescribed_files_for_semantic_review(task, tmp_path):
+    spec = task["spec"].model_copy(update={"edit_scope": "repository", "editable_paths": ()})
+    contract = tmp_path / "repository-task.json"
+    prepared = repair.prepare_repair(spec, contract)
+    loaded = repair.load_task(contract, prepared["sha256"])
+    source = task["source"]
+    (source / "README.md").write_text("ordinary documentation update\n")
+    (source / "code.py").unlink()
+    for name in ("new-config.json", "new-package/helper.py", "dist-extra/generated.js"):
+        target = source / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text("retained bytes, not host execution\n")
+    candidate = tmp_path / "repository-candidate"
+    captured = evidence.snapshot(source, candidate)
+    output = tmp_path / "repository-result"
+    result = repair.collect_control(
+        contract, prepared["sha256"], candidate, captured["manifest_sha256"], output
+    )
+    assert result["status"] == "collected"
+    record, files = repair.result_files(loaded, prepared["sha256"], output, result["sha256"])
+    assert record["changed_paths"] == [
+        "README.md",
+        "code.py",
+        "dist-extra/generated.js",
+        "new-config.json",
+        "new-package/helper.py",
+    ]
+    assert record["task_quality"] == "unassessed"
+    assert "code.py" not in {name for name, _, _ in files}
+    assert (task["base"] / "code.py").exists()
+    narrow = loaded.model_copy(
+        update={"edit_scope": "declared-paths", "editable_paths": ("code.py",)}
+    )
+    with pytest.raises(SkillEvalError, match="retained evidence"):
+        repair.result_files(narrow, prepared["sha256"], output, result["sha256"])
+
+
+def test_repository_scope_does_not_grant_capture_metadata(task, tmp_path):
+    spec = task["spec"].model_copy(update={"edit_scope": "repository"})
+    contract = tmp_path / "repository-task.json"
+    prepared = repair.prepare_repair(spec, contract)
+    metadata = task["source"] / "nested/manifest.json"
+    metadata.parent.mkdir()
+    metadata.write_text("{}")
+    candidate = tmp_path / "candidate"
+    captured = evidence.snapshot(task["source"], candidate)
+    result = repair.collect_control(
+        contract, prepared["sha256"], candidate, captured["manifest_sha256"], tmp_path / "result"
+    )
+    assert result["status"] == "invalid-scope"
+
+
 def test_editable_directories_allow_existing_new_and_removed_descendants(task, tmp_path):
     source = task["source"]
     (source / "src").mkdir()

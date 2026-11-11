@@ -65,11 +65,20 @@ uv run python examples/document/operational-metrics/prepare_task.py \
 ```
 
 The helper trusts the operator's selected capture and freezes the common prompt,
-`docs/specs/` output grant and a byte-pinned worker outside solver input. Arbitrary
-nonempty UTF-8 `.md` and `.markdown` filenames are accepted. The worker observes
+repository-wide collection scope and a byte-pinned worker outside solver input.
+All ordinary edits remain inspectable, including documentation updates and
+changes outside the requested work. The brief still asks for a specification
+without implementation; semantic assessment judges that boundary. Arbitrary nonempty UTF-8
+`.md` and `.markdown` filenames under `docs/specs/` are accepted. The worker observes
 readability and presence; it cannot decide whether prose is complete or correct.
 Question-only, blocked and unfinished files deliberately pass that structural
-check and still require semantic assessment. Out-of-scope edits remain visible.
+check and still require semantic assessment. Collection eligibility is not scope
+approval or a quality verdict.
+
+Earlier frozen tasks retain their original scope and results. Any post-outcome
+diagnostic recollection needs new task, package and acceptance-map identities,
+applied equally to both arms with unchanged candidate bytes and explicit
+post-outcome provenance. It does not retroactively qualify the original results.
 
 Build the [opt-in image](../../../environments/operational-metrics/README.md) with
 the pinned source's exact manifests and Chrome for Testing. The
@@ -102,7 +111,15 @@ fields. The actual source, image, runtime and execution fingerprints must match
 before a packaged study can dispatch.
 The [qualified baseline record](environment/README.md#qualified-development-baseline)
 documents the completed six-lane pass and its explicit test exceptions. A frozen
-two-cell development plan is prepared; the pilot itself has not run.
+two-cell development plan has now been exercised through specification writing and
+fresh vanilla implementation. The first development pair (2026-11-11) retained
+both candidates. One implementer stopped at the shared 32-request cap before its
+30-minute deadline.
+Both candidates completed all ten browser scenarios after the observer was qualified
+for multiple requests per action. One worker also records generated assets changed
+by its scratch rebuild; those observations concern rebuilt source, not an immutable
+pass for the supplied distribution files. Execution, artifact quality and independent
+audit remain separate; these observations do not establish a skill-effect estimate.
 
 ## Acceptance and judgment
 
@@ -172,8 +189,12 @@ Two authored integrations and three defect mutations now have
 [maintainer-observed guest and semantic controls](downstream/README.md#qualification-controls).
 Changed machinery still requires fresh qualification; it does not award
 correctness by lexical checks or by following a flawed generated spec.
-No ON/OFF outcomes have been established by this
-preparation. Use a new generation when requirements, prompts or graders change.
+The first pair required diagnostic collection amendments for an ordinary backlog
+link and generated build/test files. Original scope failures, native statuses and
+candidate bytes remain retained; new identities permit inspection without
+retroactively qualifying the original contract. Human review of the actual artifacts
+and judgments remains pending. Use a new generation when requirements, prompts or
+graders change, and preserve unknown normalized consumption for interrupted runs.
 
 
 ### Prepare and judge a downstream candidate
@@ -188,9 +209,12 @@ uv run python examples/document/operational-metrics/prepare_implementation.py pr
   --output /path/to/fresh-implementation-contract
 ```
 
-The generated repair-family task permits retaining ordinary source changes for
-review, including out-of-scope backend changes; collection permission does not
-approve their scope. Its six semantic requirements come from the original need
+The generated repair-family task selects repository-wide collection for ordinary
+source changes, including out-of-scope backend edits, newly chosen root files or
+directories, and generated build/test files. Collection permission does not
+approve a change's scope, and generated files remain part of the exact candidate
+and patch. Historical tasks retain their narrower path grants unchanged.
+Its six semantic requirements come from the original need
 and repository contracts. The generated spec remains input, not an answer key.
 The small `source-present` worker establishes only availability of key source
 files. Use the normal native collection and `repair check` route for its evidence.

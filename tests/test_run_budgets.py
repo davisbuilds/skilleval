@@ -55,7 +55,7 @@ def test_native_omitted_deadline_reaches_guest_and_supervisor(
     assert report["status"] == "completed", report.get("error")
     assert report["native_timeout_seconds"] == deadline
     assert report["gateway_limits"]["lifetime_seconds"] == deadline + 1020
-    assert report["gateway_limits"]["max_requests"] == 32
+    assert report["gateway_limits"]["max_requests"] == 1024
     assert report["gateway_limits"]["timeout_seconds"] == 300
     assert report["cleanup_complete"] and report["observed_absent"]
     # Inspect the exact archive delivered to the synthetic runtime, plus the
@@ -91,7 +91,7 @@ def test_explicit_short_deadline_and_minimum_gateway_headroom(
     assert report["status"] == "completed", report.get("error")
     assert report["native_timeout_seconds"] == 17
     assert report["gateway_limits"]["lifetime_seconds"] == (137 if explicit_limits else 1037)
-    assert report["gateway_limits"]["max_requests"] == (7 if explicit_limits else 32)
+    assert report["gateway_limits"]["max_requests"] == (7 if explicit_limits else 1024)
     assert report["gateway_limits"]["timeout_seconds"] == (2 if explicit_limits else 17)
 
 
@@ -163,12 +163,14 @@ def test_sufficient_auth_covers_full_task_lifetime(
 
 @pytest.mark.parametrize("mode,deadline", [("review", 1800), ("repair", 1800), ("judge", 900)])
 @pytest.mark.parametrize("override", [None, 23])
+@pytest.mark.parametrize("request_cap", [None, 7])
 def test_cli_selects_mode_budget_and_preserves_request_budget(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     mode: str,
     deadline: int,
     override: int | None,
+    request_cap: int | None,
 ) -> None:
     prompt = tmp_path / "prompt.txt"
     prompt.write_text("Inspect")
@@ -201,9 +203,9 @@ def test_cli_selects_mode_budget_and_preserves_request_budget(
         "auth",
         "--output",
         "output",
-        "--max-requests",
-        "7",
     ]
+    if request_cap is not None:
+        argv.extend(["--max-requests", str(request_cap)])
     if mode == "judge":
         argv.extend(["--judge-policy", "static"])
     if override is not None:
@@ -212,18 +214,20 @@ def test_cli_selects_mode_budget_and_preserves_request_budget(
     selected = deadline if override is None else override
     assert captured["native_timeout_seconds"] == selected
     assert captured["limits"].lifetime_seconds == selected + 1020
-    assert captured["limits"].max_requests == 7
+    assert captured["limits"].max_requests == (1024 if request_cap is None else request_cap)
 
 
 def test_new_study_freezes_and_dispatches_30_minute_default(prepared: dict[str, Any]) -> None:
     plan = json.loads(prepared["plan_path"].read_bytes())
     assert plan["spec"]["native_timeout_seconds"] == 1800
+    assert plan["spec"]["max_requests_per_attempt"] == 1024
     result = study.run_study(**prepared, development=True)
     assert result["status"] == "complete"
     for cell in result["cells"]:
         native = Path(cell["attempts"][0]["path"]) / "native/native-run.json"
         receipt = json.loads(native.read_bytes())
         assert receipt["native_timeout_seconds"] == 1800
+        assert receipt["gateway_limits"]["max_requests"] == 1024
         assert receipt["gateway_limits"]["lifetime_seconds"] == 2820
 
 

@@ -17,8 +17,10 @@ After collecting a native writer attempt, use `schema spec-handoff-spec` to
 select its task, collected result and separately retained digests, plus the
 repository-relative `spec_path` and exact `spec_sha256`. Selection is explicit:
 the preparer does not search for the newest attempt or choose the best document.
-The path must be a changed, nonempty UTF-8 `.md` or `.markdown` file under
-`docs/specs/`. Retain every attempt and explain any retry or selection separately.
+The path must be a safe repository-relative, changed, nonempty UTF-8 `.md` or
+`.markdown` file. The task brief defines its location; the operational-metrics
+pilot requests `docs/specs/`, but the generic handoff does not impose that layout.
+Retain every attempt and explain any retry or selection separately.
 
 ```sh
 uv run skilleval handoff prepare handoff-spec.json --output /path/to/fresh-handoff
@@ -47,8 +49,10 @@ Use the returned input identity and derived prompt through the existing native
 writable-file route. It asks for implementation, repository conventions,
 verification, and honest limitations, then provides the original writing brief
 as reference context. It does not ask the implementer to write another spec or
-promise live answers. The default task budget remains 30 minutes; use the same
-model, effort, native deadline and request cap recorded for the writer.
+promise live answers. The default task budget remains 30 minutes with a generous
+1,024-request emergency backstop for new runs; use the same model, effort, native
+deadline and request cap recorded for the writer. Existing frozen writer budgets
+remain unchanged.
 
 ```sh
 uv run skilleval handoff check-implementation /path/to/fresh-handoff \

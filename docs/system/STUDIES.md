@@ -64,17 +64,20 @@ baseline/reference environment-validation receipt; preparation and each dispatch
 check that receipt against current execution identity. Existing unpackaged plans
 remain readable and do not acquire validation retroactively.
 
-Schema-4 plans also freeze `acceptance_policy`. Select `mapped-acceptance-v1`
-for new repair/document comparisons and supply each task's `acceptance_map` and
-`acceptance_map_sha256`. Every task must then have a matching package, environment
-validation and [acceptance map](TASKS.md#operator-acceptance-maps). Preparation and
+Schema-4 plans also freeze `acceptance_policy`. Prefer `mapped-acceptance-v1`
+when repair/document acceptance criteria are ready to freeze, and supply each
+task's `acceptance_map` and `acceptance_map_sha256`. Every mapped task must have a
+matching package, environment validation and
+[acceptance map](TASKS.md#operator-acceptance-maps). Preparation and
 every dispatch, including retries, verify map bindings, field routes and attachment
 bytes. A changed map or attachment requires a fresh preparation. These checks do
 not authenticate a reviewer or establish semantic validity.
 
-The default `legacy-unmapped` policy preserves existing unconfigured/review workflows
-and is explicit in new plans/reports; it cannot select map references. Plan versions
-1–3 retain their historical meanings and reject new acceptance fields. Full maps
+The default `legacy-unmapped` policy also supports exploratory pairs with
+provisional criteria and declared coverage gaps. Its historical name does not
+prohibit new exploratory runs. It is explicit in new plans/reports and cannot
+select map references; exploratory execution does not establish assessed quality.
+Plan versions 1–3 retain their historical meanings and reject new acceptance fields. Full maps
 never enter task-agent prompts, snapshots or native-receipt expectations.
 A separately selected semantic assessment can export the versioned requirement
 allowlist to its judge packet; control labels and other operator metadata remain
@@ -123,9 +126,12 @@ the default does not upgrade their budget. Judge runs are separate and default
 to a 900-second deadline. Changed budgets require fresh plans and applicable
 environment evidence before another comparison.
 
-`max_requests_per_attempt` defaults to 32 and accepts an explicit value up to
-128. Existing plans retain their frozen values. Native request-budget diagnostics
-flow into the attempt summary: admitted provider calls, `request_limit`
+`max_requests_per_attempt` defaults to an explicit emergency backstop of 1,024
+and accepts values from 1 through 1,024. The 30-minute task deadline is the primary
+execution limit; the request cap is not a task-calibrated efficiency budget.
+Existing frozen plans retain explicit values and the historical missing-field
+interpretation of 32, without rewriting their bytes. Native request-budget
+diagnostics flow into the attempt summary: admitted provider calls, `request_limit`
 refusals, retained observation count and any observer-cap failure are separate.
 A configured quota stop does not become evidence of task correctness or skill
 benefit. Missing diagnostics in older receipts remain missing.
