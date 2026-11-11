@@ -18,10 +18,10 @@ SPEC_BYTES = b"# Export archived records\r\n\r\nInclude all completed records.\r
 
 @pytest.fixture
 def writer_factory(tmp_path: Path, route: dict[str, Any]):
-    def make(*, files=None, fault=""):
+    def make(*, files=None, baseline_files=None, fault=""):
         root = tmp_path / ("writer-" + str(len(list(tmp_path.glob("writer-*")))))
         root.mkdir()
-        return _writer(root, route, files=files, fault=fault)
+        return _writer(root, route, files=files, baseline_files=baseline_files, fault=fault)
 
     return make
 
@@ -31,13 +31,19 @@ def writer(writer_factory):
     return writer_factory()
 
 
-def _writer(tmp_path: Path, route: dict[str, Any], *, files=None, fault="") -> dict[str, Any]:
+def _writer(
+    tmp_path: Path, route: dict[str, Any], *, files=None, baseline_files=None, fault=""
+) -> dict[str, Any]:
     source = tmp_path / "source"
     source.mkdir()
     (source / ".git").mkdir()
     (source / ".git/HEAD").write_text("ref: refs/heads/main\n")
     (source / "AGENTS.md").write_text("Ordinary repository instructions.\n")
     (source / "code.py").write_text("raise RuntimeError('import only inside VM')\n")
+    for name, raw in (baseline_files or {}).items():
+        target = source / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(raw)
     (source / "scenario.json").write_text(
         json.dumps(
             {
@@ -128,6 +134,18 @@ def test_roundtrip_binds_lineage_and_uses_neutral_implementation_prompt(writer, 
         SPEC_PATH,
     }
     assert not any(name in prepared["prompt"] for name in ("native", "available", "absent"))
+
+
+def test_handoff_roundtrip_with_directory_and_file_prefix_collision(writer_factory, tmp_path):
+    attempt = writer_factory(baseline_files={"docs.md": b"# Repository documentation\n"})
+    output = tmp_path / "handoff"
+    prepared = handoff.prepare_handoff(attempt["spec"], output)
+
+    value = handoff.load_handoff(output, prepared["sha256"])
+
+    assert value["input_sha256"] == prepared["input_digest"]
+    assert (output / "input/docs.md").read_bytes() == b"# Repository documentation\n"
+    assert (output / "input" / SPEC_PATH).read_bytes() == SPEC_BYTES
 
 
 def test_question_only_final_text_is_not_a_selected_spec(writer_factory, tmp_path, route):

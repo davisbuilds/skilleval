@@ -247,7 +247,8 @@ def load_handoff(path: Path, digest: str) -> dict[str, Any]:
     ):
         raise SkillEvalError("handoff lineage, prompt or stage policy differs")
     _, files = runner._snapshot_files(path / "input", value["input_sha256"])
-    if files != _input_files(task, spec, selected):
+    # Snapshot traversal groups directories; compare globally sorted path/bytes/mode tuples.
+    if sorted(files) != _input_files(task, spec, selected):
         raise SkillEvalError("handoff input differs from original baseline plus selected spec")
     check_task_baseline(path / "input")
     return value
