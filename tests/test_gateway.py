@@ -551,6 +551,11 @@ def test_native_budget_allows_delayed_active_stream_but_still_enforces_deadline(
     auth = load_chatgpt_auth(write_auth(short_root, time.time() + 600))
     progress = b'data: {"type":"response.in_progress"}\n\n'
     streams = []
+    request_recorded = threading.Event()
+
+    def receipt(record: dict[str, object]) -> None:
+        if record.get("event") == "request":
+            request_recorded.set()
 
     class DelayedStream(Stream):
         def __init__(self) -> None:
@@ -575,9 +580,14 @@ def test_native_budget_allows_delayed_active_stream_but_still_enforces_deadline(
         return stream
 
     started = time.monotonic()
-    with broker_scope(auth, short_root / "b", limits=limits, test_transport=transport) as broker:
+    with broker_scope(
+        auth, short_root / "b", limits=limits, test_transport=transport, receipt=receipt
+    ) as broker:
         with relay_scope(broker.socket_path, limits=limits) as relay:
             status, body = request(broker.socket_path, port=relay.port)
+            # A truncated HTTP body can reach the client before the broker
+            # finalizes its outcome. Teardown would race that receipt with revocation.
+            assert request_recorded.wait(3), "broker did not record the request outcome"
         assert relay.clean
     assert broker.clean and streams[0].closed
     assert status == 200 and body.startswith(progress)
