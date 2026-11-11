@@ -110,7 +110,15 @@ fields. The actual source, image, runtime and execution fingerprints must match
 before a packaged study can dispatch.
 The [qualified baseline record](environment/README.md#qualified-development-baseline)
 documents the completed six-lane pass and its explicit test exceptions. A frozen
-two-cell development plan is prepared; the pilot itself has not run.
+two-cell development plan has now been exercised through specification writing and
+fresh vanilla implementation. The first development pair (2026-11-11) retained
+both candidates. One implementer stopped at the shared 32-request cap before its
+30-minute deadline.
+Both candidates completed all ten browser scenarios after the observer was qualified
+for multiple requests per action. One worker also records generated assets changed
+by its scratch rebuild; those observations concern rebuilt source, not an immutable
+pass for the supplied distribution files. Execution, artifact quality and independent
+audit remain separate; these observations do not establish a skill-effect estimate.
 
 ## Acceptance and judgment
 
@@ -180,8 +188,12 @@ Two authored integrations and three defect mutations now have
 [maintainer-observed guest and semantic controls](downstream/README.md#qualification-controls).
 Changed machinery still requires fresh qualification; it does not award
 correctness by lexical checks or by following a flawed generated spec.
-No ON/OFF outcomes have been established by this
-preparation. Use a new generation when requirements, prompts or graders change.
+The first pair required diagnostic collection amendments for an ordinary backlog
+link and generated build/test files. Original scope failures, native statuses and
+candidate bytes remain retained; new identities permit inspection without
+retroactively qualifying the original contract. Human review of the actual artifacts
+and judgments remains pending. Use a new generation when requirements, prompts or
+graders change, and preserve unknown normalized consumption for interrupted runs.
 
 
 ### Prepare and judge a downstream candidate

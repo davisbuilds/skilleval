@@ -29,12 +29,18 @@ shipped history. Private provenance stays outside public entries and issues.
   linked consumption and conditional dollar estimates.
   Independent semantic reliability remains unestablished. Audit actual generated
   specifications and disagreements against the original need, including truthful
-  blockers, unsupported choices and incomplete delivery. Exercise downstream
-  observations against each generated UI using its reviewed interaction driver,
-  preserving valid alternative designs. Authored-control discrimination does not
+  blockers, unsupported choices and incomplete delivery. Review the first pair's
+  retained downstream observations and requirement judgments, preserving valid
+  alternative designs. Authored-control discrimination does not
   establish independent reliability or complete feature coverage. Keep failed
   attempts and stage costs visible, and retain
   experiment evidence separately from any later real contribution.
+- **Representative request budgets:** the first specification pilot's downstream
+  implementation reached its frozen 32-request cap before the 30-minute deadline.
+  Its artifact remains assessable, but the invocation is failed. Before another
+  comparison, qualify request budgets on representative stage workloads and freeze
+  them equally across arms alongside time limits. Never extend only one arm after
+  seeing its outcome; preserve this attempt when selecting a new plan.
 - **Acceptance validity before more comparisons:** operator maps now freeze
   declared source rationale, probe-field and semantic routes, controls, exposure
   and gaps. They do not establish that those requirements are correct or complete.
@@ -146,6 +152,10 @@ shipped history. Private provenance stays outside public entries and issues.
   the conditional API-equivalent scenario; never infer observed charges from it.
   Expose completed-request provider subtotals when native accounting is interrupted;
   currently raw receipts retain them while the normalized report stays unknown.
+  The first specification pilot demonstrates this boundary: a request-cap failure
+  retains matching provider/native raw input and output totals while canonical
+  accounting remains incomplete. Keep diagnostic readback separate from normalized
+  totals until a supported failed-attempt accounting contract is verified.
   Distinguish incomplete provider observations from absent observations, and keep
   the unobserved remainder and missing cache partition unknown.
   Prespecify estimands, missing-data policy and repeated-run analysis, with

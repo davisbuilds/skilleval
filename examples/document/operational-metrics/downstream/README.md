@@ -181,6 +181,14 @@ store/API changes, errors, absent data and unsupported query keys remain raw
 facts for independent assessment. Observation failure and feature failure must
 remain separate.
 
+`build_changed_candidate_inputs` names supplied files changed by the scratch build.
+When nonempty, the worker remains `incomplete` even if all browser scenarios finish.
+Those observations describe the rebuilt application; they do not verify the exact
+supplied distribution assets. `candidate_source_changes` separately checks whether
+the canonical candidate itself changed. Inspect these fields alongside individual
+command completion and browser status, rather than treating a single status as a
+feature-quality verdict.
+
 ## Qualification controls
 
 `controls.py` creates operator-authored Svelte source patches in a **disposable
@@ -206,8 +214,8 @@ the two semantic mutations for their intended defect; the unwired control must
 show absent browser consumer reads. Authored controls are related development
 inputs, not holdouts or independent semantic audit.
 
-Before depending on this generation, retain reviewed raw envelopes and exact
-runtime/image/source/wrapper identities for all five. Freeze corrected wrapper
+Before depending on a new semantic calibration generation, retain reviewed raw
+envelopes and exact runtime/image/source/wrapper identities for all five. Freeze corrected wrapper
 bytes into a new generation after any failure. Run relevant ordinary frontend,
 API/query tests inside the same VM separately and preserve their baseline
 failures/skips. Host deterministic checks exercise authored fake executables,
@@ -218,13 +226,21 @@ uv run pytest tests/test_operational_metrics_downstream.py \
   tests/test_operational_metrics_controls.py
 ```
 
-Maintainer development runs on 2026-11-11 exercised all five controls through the
-frozen VM and solver profile. The four wired controls completed all ten browser
+Earlier maintainer development runs on 2026-11-11 exercised all five controls
+through the frozen VM and solver profile. The four wired controls completed all ten browser
 scenarios; the unwired control retained missing interactions and consumer reads,
 with working endpoint and wired-consumer positive controls. Stores and sampled
 regression APIs remained unchanged. Full receipts remain outside the public
 source tree; this is not an independently reproduced benchmark release. Requalify
 changed inputs, drivers, wrappers or execution identities before relying on them.
+
+The later action-generation and scratch-projection repair completed all ten
+scenarios for both single-request and four-request positive controls through the
+same VM route. Readback checked request counts, fixture prefix/limit projection,
+and unchanged stores and sampled APIs. Both actual pilot candidates then completed
+the ten scenarios with their reviewed drivers. These are new transport observations;
+the earlier five-control semantic judgments were not rerun or retroactively rebound
+to the repaired observer, and independent semantic audit remains pending.
 
 Semantic calibration remains separate from completed browser execution. An early
 judge found a real stale-range defect in both intended positive layouts: old

@@ -51,17 +51,20 @@ and the adapted OpenBench gateway. External skills remain experimental inputs.
 
 ## Now: a useful workflow-skill task and independent judgment audit
 
-The next development pilot targets a routine `write-spec` task for the selected
+The current development pilot uses a routine `write-spec` task for the selected
 [operational-metrics console feature](../../examples/document/operational-metrics/README.md).
 Its shared brief delegates bounded product choices without live Q&A and requests
 one self-contained Markdown spec. Historical specifications and plans are
 deliberately withheld from both arms. The task, acceptance map and two-cell
 development plan are frozen. The selected baseline matches six reviewed VM lanes,
 including browser interaction, with one known root-test failure and five skips
-retained explicitly. Next, compare explicit skill ON/OFF specifications.
-Follow each spec with a fresh, otherwise equivalent vanilla implementer to assess
-the handoff against the original request. This keeps the treatment in the spec
-stage while exposing downstream quality, omissions, rework and total cost.
+retained explicitly. The first pair produced two specifications and two downstream
+candidates through fresh vanilla implementers. One implementer reached the frozen
+request cap; its failed invocation and retained artifact remain separate facts.
+Both candidates have retained observations from all ten browser scenarios. Next, audit the specifications,
+implementation evidence and judgments against the original request, then qualify
+representative request budgets before another comparison. Treatment stays in the
+spec stage while downstream quality, omissions, rework and consumption remain visible.
 Specification-specific rubrics, explicit requirement-level verdicts, authored
 specification and implementation controls, retained browser/API observations and
 [linked-stage recording](../system/HANDOFFS.md) are implemented. The downstream
@@ -70,7 +73,7 @@ judge assesses the original need, not compliance with a generated spec. Frozen
 tokens and time, with missing usage left unknown. Structural checks and automated
 review do not establish semantic reliability. Interactive
 clarification is backlogged. Debugging expansion
-is deferred while this pilot is prepared; retained repairs remain development
+is deferred while this pilot is audited; retained repairs remain development
 evidence. The [candidate register](PILOT-CANDIDATES.md#current-selection-direction)
 owns selection and exclusions.
 
