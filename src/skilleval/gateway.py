@@ -227,10 +227,10 @@ class GatewayLimits:
 
 
 def native_limits(deadline_seconds: int, *, max_requests: int = 32) -> GatewayLimits:
-    """Cover bounded VM setup, the selected native deadline, and execution headroom."""
+    """Bound streams by the native deadline and the existing five-minute ceiling."""
     return GatewayLimits(
         max_requests=max_requests,
-        timeout_seconds=90,
+        timeout_seconds=min(deadline_seconds, 300),
         lifetime_seconds=GATEWAY_SETUP_ALLOWANCE_SECONDS
         + deadline_seconds
         + GATEWAY_HEADROOM_SECONDS,

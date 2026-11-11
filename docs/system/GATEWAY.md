@@ -92,6 +92,17 @@ retains its smaller defaults and request-level expiry checks. Native tasks defau
 to 1,800 seconds and judges to 900 seconds; their process deadlines, host
 supervision and cleanup remain separate from the gateway timer.
 
+Native task/judge requests use an absolute request deadline of the smaller of
+the selected native deadline and 300 seconds. Both the host broker and guest
+relay receive that same bound. It covers the whole request, including streaming;
+incoming bytes do not reset it. This permits longer responses than the earlier
+90-second native budget while retaining a finite request ceiling. The standalone
+gateway defaults and the authenticated runtime-control qualification's separate
+90-second request budget remain unchanged. Changed execution budgets require
+fresh plans and applicable environment evidence; earlier receipts keep their
+original observations. A response interrupted at the request deadline can still
+leave usage and cost unknown.
+
 The native CLI and study default remain 32 admitted requests; the gateway's
 standalone default remains four. Raising a declared budget creates a new frozen
 plan rather than changing an earlier attempt. Native request observation has a

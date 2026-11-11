@@ -1296,6 +1296,13 @@ def run_native(
                 for row in requests
             )
             report["provider_complete"] = provider_complete
+            # A native turn can recover from an interrupted provider stream.
+            # Require host-observed success, while the full ledger independently
+            # determines whether usage accounting is complete.
+            provider_response_completed = any(
+                row.get("outcome") == "complete" and row.get("upstream_status") == 200
+                for row in requests
+            )
             if (
                 successful(native)
                 and process.get("returncode") == 0
@@ -1311,7 +1318,7 @@ def run_native(
                 and not parsed["errors"]
                 and not parsed["parse_errors"]
                 and final.strip()
-                and provider_complete
+                and provider_response_completed
                 and process.get("context_preflight", {}).get("status") == "passed"
                 and process["context_preflight"].get("initial_codex_home")
                 == settings["expected_codex_home"]

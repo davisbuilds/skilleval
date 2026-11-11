@@ -13,6 +13,7 @@ import time
 import tomllib
 from collections.abc import Iterator
 from contextlib import suppress
+from dataclasses import replace
 from pathlib import Path
 from typing import cast
 
@@ -534,6 +535,63 @@ def test_scope_exit_cancels_active_stream_and_observes_cleanup(short_root: Path)
     assert closed.is_set() and not thread.is_alive()
     assert broker.clean is True
     assert any(row.get("outcome") == "revoked" for row in broker.receipts)
+
+
+@pytest.mark.parametrize("short_deadline", [False, True])
+def test_native_budget_allows_delayed_active_stream_but_still_enforces_deadline(
+    short_root: Path, short_deadline: bool
+) -> None:
+    # Scale the actual native policy to keep this real HTTP broker/relay check
+    # fast: the old 90s policy cuts off at 0.9s, the new 300s policy allows 3s.
+    # Four progress frames precede terminal usage at approximately 1.4 seconds.
+    limits = gateway.native_limits(900)
+    limits = replace(
+        limits, timeout_seconds=0.5 if short_deadline else limits.timeout_seconds / 100
+    )
+    auth = load_chatgpt_auth(write_auth(short_root, time.time() + 600))
+    progress = b'data: {"type":"response.in_progress"}\n\n'
+    streams = []
+
+    class DelayedStream(Stream):
+        def __init__(self) -> None:
+            super().__init__()
+            self.cancelled = threading.Event()
+            self.read_count = 0
+
+        def read(self, _size: int) -> bytes:
+            if self.read_count and self.cancelled.wait(0.35):
+                return b""
+            self.read_count += 1
+            return progress if self.read_count <= 4 else EVENT
+
+        def close(self) -> None:
+            self.cancelled.set()
+            super().close()
+
+    def transport(_body: bytes, _headers: dict[str, str], timeout: float) -> Stream:
+        assert timeout == limits.timeout_seconds
+        stream = DelayedStream()
+        streams.append(stream)
+        return stream
+
+    started = time.monotonic()
+    with broker_scope(auth, short_root / "b", limits=limits, test_transport=transport) as broker:
+        with relay_scope(broker.socket_path, limits=limits) as relay:
+            status, body = request(broker.socket_path, port=relay.port)
+        assert relay.clean
+    assert broker.clean and streams[0].closed
+    assert status == 200 and body.startswith(progress)
+    rows = [row for row in broker.receipts if row.get("event") == "request"]
+    assert len(rows) == 1
+    if short_deadline:
+        assert not body.endswith(EVENT)
+        assert rows[0]["outcome"] in {"timeout", "client_disconnected"}
+        assert rows[0]["usage"] == {}
+        assert time.monotonic() - started < 3
+    else:
+        assert body == progress * 4 + EVENT
+        assert rows[0]["outcome"] == "complete"
+        assert rows[0]["usage"] == {"input_tokens": 3, "output_tokens": 2, "total_tokens": 5}
 
 
 def test_startup_and_sink_errors_are_safe_and_remove_socket(short_root: Path) -> None:

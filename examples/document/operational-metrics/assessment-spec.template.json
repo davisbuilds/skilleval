@@ -22,5 +22,8 @@
     "Replace every placeholder with exact retained identities in a fresh external operator file. This template and authored controls are not solver input.",
     "Assess the specification against the original request and pinned repository source, including legitimate alternate designs. Mechanical artifact presence does not establish semantic completion.",
     "Development assessment only. Authored controls and local review do not establish independent human audit, judge reliability or skill effectiveness. Downstream implementation is a separate outcome."
-  ]
+  ],
+  "requirement_policy": "acceptance-requirements-v1",
+  "acceptance_map": "ACCEPTANCE-MAP.json",
+  "acceptance_map_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
 }

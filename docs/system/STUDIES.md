@@ -74,8 +74,11 @@ not authenticate a reviewer or establish semantic validity.
 
 The default `legacy-unmapped` policy preserves existing unconfigured/review workflows
 and is explicit in new plans/reports; it cannot select map references. Plan versions
-1–3 retain their historical meanings and reject new acceptance fields. Maps never
-enter native prompts, snapshots, judgment packets or native-receipt expectations.
+1–3 retain their historical meanings and reject new acceptance fields. Full maps
+never enter task-agent prompts, snapshots or native-receipt expectations.
+A separately selected semantic assessment can export the versioned requirement
+allowlist to its judge packet; control labels and other operator metadata remain
+withheld. See [requirement judgments](CALIBRATION.md#requirement-level-repair-and-document-judgments).
 Operator dispatch/report metadata retains the policy and selected path/digest.
 Readback, resume and reconciliation check dispatch metadata against the frozen
 plan. The Markdown comparison also displays the policy and map references, with

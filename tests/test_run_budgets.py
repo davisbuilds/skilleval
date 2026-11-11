@@ -4,6 +4,8 @@ import hashlib
 import json
 import tarfile
 import time
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -30,6 +32,13 @@ def test_native_omitted_deadline_reaches_guest_and_supervisor(
 ) -> None:
     delivered = {}
     original = Lifecycle.guest
+    original_broker = runner.broker_scope
+
+    @contextmanager
+    def inspect_broker(*args: Any, **kwargs: Any) -> Iterator[Any]:
+        delivered["broker_request_timeout"] = kwargs["limits"].timeout_seconds
+        with original_broker(*args, **kwargs) as handle:
+            yield handle
 
     def inspect_guest(session: Lifecycle, label: str, *args: Any, **kwargs: Any) -> dict[str, Any]:
         if label == "native_task":
@@ -40,16 +49,20 @@ def test_native_omitted_deadline_reaches_guest_and_supervisor(
         return original(session, label, *args, **kwargs)
 
     monkeypatch.setattr(Lifecycle, "guest", inspect_guest)
+    monkeypatch.setattr(runner, "broker_scope", inspect_broker)
     route.update(mode=mode, investigation=False if mode == "judge" else None)
     report = invoke(tmp_path, route)
     assert report["status"] == "completed", report.get("error")
     assert report["native_timeout_seconds"] == deadline
     assert report["gateway_limits"]["lifetime_seconds"] == deadline + 1020
     assert report["gateway_limits"]["max_requests"] == 32
+    assert report["gateway_limits"]["timeout_seconds"] == 300
     assert report["cleanup_complete"] and report["observed_absent"]
     # Inspect the exact archive delivered to the synthetic runtime, plus the
     # actual command persisted by the lifecycle supervisor.
     assert delivered["native_timeout_seconds"] == deadline
+    assert delivered["request_timeout_seconds"] == 300
+    assert delivered["broker_request_timeout"] == 300
     ticket = json.loads((tmp_path / "run/recovery.json").read_text())
     step = next(s for s in ticket["steps"] if s["label"] == "native_task")
     assert step["argv"][step["argv"].index("--timeout") + 1] == f"{deadline + 30}s"
@@ -79,6 +92,7 @@ def test_explicit_short_deadline_and_minimum_gateway_headroom(
     assert report["native_timeout_seconds"] == 17
     assert report["gateway_limits"]["lifetime_seconds"] == (137 if explicit_limits else 1037)
     assert report["gateway_limits"]["max_requests"] == (7 if explicit_limits else 32)
+    assert report["gateway_limits"]["timeout_seconds"] == (2 if explicit_limits else 17)
 
 
 @pytest.mark.parametrize(

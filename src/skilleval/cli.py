@@ -24,8 +24,10 @@ from skilleval.repair import RepairSpec
 from skilleval.repair_assessment import (
     DocumentAssessment,
     DocumentAssessmentSpec,
+    DocumentRequirementAssessment,
     RepairAssessment,
     RepairAssessmentSpec,
+    RepairRequirementAssessment,
     parse_spec,
 )
 from skilleval.repair_outcomes import RepairOutcomeSelection
@@ -51,6 +53,8 @@ RECORDS: dict[str, type[Record]] = {
     "artifact-spec": RepairSpec,
     "document-assessment-spec": DocumentAssessmentSpec,
     "document-assessment": DocumentAssessment,
+    "document-requirement-assessment": DocumentRequirementAssessment,
+    "repair-requirement-assessment": RepairRequirementAssessment,
     "task-package-spec": TaskPackageSpec,
     "acceptance-map-spec": AcceptanceMapSpec,
     "spec-handoff-spec": SpecHandoffSpec,

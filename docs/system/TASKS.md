@@ -143,6 +143,17 @@ evidence, not independent grader audit. A readable file is only a structural
 observation. [Handoffs](HANDOFFS.md) bind exact generated artifacts to later
 implementation without treating presence as semantic success.
 
+For explicit requirement coverage, add `requirement_policy:
+"acceptance-requirements-v1"`, `acceptance_map` and `acceptance_map_sha256` to the
+assessment spec. This opt-in projects only frozen requirement text, source
+rationale, semantic questions and gaps into the packet; controls and expected
+labels remain operator-only. The exact task and package family must match.
+The judge returns citation-backed per-requirement judgments alongside the four
+broad criteria. Reports preserve omitted and unresolved requirements separately;
+broad satisfaction alone is not requirement coverage. Repair assessments support
+the same policy with their three broad criteria. See the
+[requirement judgment contract and runnable route](CALIBRATION.md#requirement-level-repair-and-document-judgments).
+
 Document judges use the existing investigative/static policies, masked treatment
 metadata and append-only recording. The collector retains its existing
 `task/investigation/repair/` artifact namespace. Original repair schemas, rubric

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "scope": "operator-only-authored-observation-plan",
-  "implemented_executable_coverage": false,
+  "scope": "operator-only-authored-observation-contract",
+  "implemented_executable_coverage": true,
   "independent_audit": "required-pending",
   "source_revision": "0dd253129d143b5811224a0f80554a64eb3f4da0",
   "authority": "Judge the vanilla implementer's final candidate against the original request, this pinned repository's contracts and accepted scope. The generated spec is an input whose omissions or wrong claims may explain downstream defects; it is not a substitute acceptance oracle. Never give this file or its labels to a writer or implementer.",
@@ -12,11 +12,52 @@
   ],
   "api_fixture": {
     "metrics": [
-      {"metric_name": "codex.memory.startup", "attrs": {"state": "succeeded", "phase": "one"}, "occurrences": 2, "total_value": 9, "last_seen": "2026-11-07 12:00:00"},
-      {"metric_name": "codex.memory.startup", "attrs": {"state": "succeeded", "phase": "two"}, "occurrences": 1, "total_value": 4, "last_seen": "2026-11-07 11:58:00"},
-      {"metric_name": "codex.memory.startup", "attrs": {"state": "skipped_rate_limit"}, "occurrences": 3, "total_value": 8, "last_seen": "2026-11-07 11:59:00"},
-      {"metric_name": "codex.memory.followup", "attrs": {"state": "future_state", "flag": true}, "occurrences": 1, "total_value": 5, "last_seen": "2026-11-07 11:57:00"},
-      {"metric_name": "codex.memory.other", "attrs": null, "occurrences": 1, "total_value": 2, "last_seen": "2026-11-07 11:56:00"}
+      {
+        "metric_name": "codex.memory.startup",
+        "attrs": {
+          "state": "succeeded",
+          "phase": "one"
+        },
+        "occurrences": 2,
+        "total_value": 9,
+        "last_seen": "2026-11-07 12:00:00"
+      },
+      {
+        "metric_name": "codex.memory.startup",
+        "attrs": {
+          "state": "succeeded",
+          "phase": "two"
+        },
+        "occurrences": 1,
+        "total_value": 4,
+        "last_seen": "2026-11-07 11:58:00"
+      },
+      {
+        "metric_name": "codex.memory.startup",
+        "attrs": {
+          "state": "skipped_rate_limit"
+        },
+        "occurrences": 3,
+        "total_value": 8,
+        "last_seen": "2026-11-07 11:59:00"
+      },
+      {
+        "metric_name": "codex.memory.followup",
+        "attrs": {
+          "state": "future_state",
+          "flag": true
+        },
+        "occurrences": 1,
+        "total_value": 5,
+        "last_seen": "2026-11-07 11:57:00"
+      },
+      {
+        "metric_name": "codex.memory.other",
+        "attrs": null,
+        "occurrences": 1,
+        "total_value": 2,
+        "last_seen": "2026-11-07 11:56:00"
+      }
     ]
   },
   "required_observations": [
@@ -72,12 +113,21 @@
     "A known-positive reachable consumer must render the fixture and issue a recorded read before absence of writes or absence of skips is interpreted.",
     "A deliberate count/value swap or empty-means-healthy rendering should fail semantic outcome checks; an unused helper-only implementation should fail the browser consumer path.",
     "Exercise both authored viable design approaches or another independently reviewed alternate design before assuming selectors/expectations permit alternatives.",
-    "Run all new machinery through the actual frozen VM/solver boundary and retain immutable logs/readbacks before relying on it; this JSON file itself executes nothing."
+    "Run all new machinery through the actual frozen VM/solver boundary and retain immutable logs/readbacks before relying on it. Executable observer paths are named above; this JSON itself is a contract, not an observed result."
   ],
   "limitations": [
-    "This is an authored plan for executable/semantic observations, not an implemented feature grader or observed test result. Parent task/environment qualification still owns actual machinery and runtime checks.",
+    "Executable observation machinery is implemented; this contract does not establish guest qualification, semantic calibration or independent audit. Preserve that distinction until actual frozen-boundary runs and adjudication supply evidence.",
     "Do not award implementation correctness for following the generated specification when it contradicts the original need. Preserve spec defects, implementation defects, execution failures and unresolved attribution separately.",
     "Browser fixtures establish rendering/interaction behavior against a controlled API response; separately verify the actual shipped endpoint/query contract and built-path wiring. Neither alone proves all production ingestion behavior.",
     "No host execution of imported AgentMonitor code, VM launch or model call is authorized by this artifact."
-  ]
+  ],
+  "guest_qualification": "development-controls-observed-2026-11-11",
+  "semantic_calibration": "development-controls-recorded-2026-11-11-independent-audit-pending",
+  "executable_entry_points": {
+    "packaging": "../downstream/prepare.py:lane_argv",
+    "guest_runner": "../downstream/validate.py",
+    "browser_observer": "../downstream/observe.mjs",
+    "authored_implementation_controls": "../downstream/controls.py",
+    "reference": "../downstream/README.md"
+  }
 }

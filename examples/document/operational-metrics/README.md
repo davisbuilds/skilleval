@@ -120,9 +120,126 @@ and missing output. Labels are authored expectations, open to disagreement;
 automated review is development evidence, not human audit. Keep all control
 artifacts, labels and maps outside both solver stages.
 
-[Downstream observation planning](controls/downstream-contract.json) preserves
-the original need as authority for later UI/API and regression assessment.
-Those planned feature checks are not executable coverage. Inspect actual browser
-behavior and supported semantics after implementation; merely obeying a flawed
-generated spec is insufficient. No ON/OFF outcomes have been established by this
+Prepare all eight authored candidates against the same frozen ordinary baseline
+and acceptance map without inventing a writer attempt:
+
+```sh
+uv run python examples/document/operational-metrics/prepare_controls.py prepare \
+  --task /path/to/task.json --task-sha256 TASK_SHA256 \
+  --acceptance-map /path/to/acceptance.json --acceptance-map-sha256 MAP_SHA256 \
+  --runtime /path/to/smolvm --image /path/to/image.tar --image-sha256 IMAGE_SHA256 \
+  --output /path/to/fresh-controls
+```
+
+The returned `controls.json` pins the authored expectations before judgment and
+lists eight explicit `repair check` argument arrays. Run those guest checks only
+after freezing the execution source, runtime and image. Preparation itself runs
+no application code, worker, VM or model. The missing-output control deliberately
+has no document; its completed worker observation can fail the artifact probe.
+An incomplete check is an execution problem, not that control's expected result.
+
+After all checks complete, finalize into fresh native assessment packets:
+
+```sh
+uv run python examples/document/operational-metrics/prepare_controls.py finalize \
+  --prepared /path/to/fresh-controls/controls.json --prepared-sha256 CONTROLS_SHA256 \
+  --output /path/to/fresh-control-assessments
+```
+
+Finalization validates the real pinned check and cleanup receipts. It creates
+`assessment-spec.json`, `packet/` and `prepared-packet.json` per control for the
+ordinary native judge/record route. It does not call the judge. Packets use the
+versioned requirement policy and keep seven requirement judgments separate from
+the four broad categories. Authored labels and their rationales stay outside
+packets; comparison must preserve disagreements and unresolved judgments. The
+authored-control provenance has no model attempt or native writer transcript.
+
+Development judgments recorded for all eight controls cover all seven requirements
+and four broad criteria. Both positive specifications satisfy every requirement;
+the intended metric/health defects and incomplete delivery are distinguished.
+Five authored-label disagreements remain visible across overlapping broad criteria,
+interaction completeness and missing-output semantics. A separate source review
+also questioned interaction and scope labels. One failed original invocation and
+its fresh retry remain separate. These observations support further development,
+not independent semantic reliability or a skill-effect estimate.
+
+The [downstream contract](controls/downstream-contract.json) preserves the
+original need as authority for UI/API and regression assessment. Its
+[executable observer](downstream/README.md) drives the actual built console with
+an operator-reviewed affordance plan, controlled responses, raw DOM/accessibility
+and network evidence, screenshots, store/API comparisons and source inventories.
+Two authored integrations and three defect mutations now have
+[maintainer-observed guest and semantic controls](downstream/README.md#qualification-controls).
+Changed machinery still requires fresh qualification; it does not award
+correctness by lexical checks or by following a flawed generated spec.
+No ON/OFF outcomes have been established by this
 preparation. Use a new generation when requirements, prompts or graders change.
+
+
+### Prepare and judge a downstream candidate
+
+After selecting a writer artifact with `handoff prepare`, bind the implementation
+contract to that exact handoff and the original source package:
+
+```sh
+uv run python examples/document/operational-metrics/prepare_implementation.py prepare \
+  --handoff /path/to/handoff --handoff-sha256 HANDOFF_SHA256 \
+  --source-package /path/to/writer-package.json --source-package-sha256 PACKAGE_SHA256 \
+  --output /path/to/fresh-implementation-contract
+```
+
+The generated repair-family task permits retaining ordinary source changes for
+review, including out-of-scope backend changes; collection permission does not
+approve their scope. Its six semantic requirements come from the original need
+and repository contracts. The generated spec remains input, not an answer key.
+The small `source-present` worker establishes only availability of key source
+files. Use the normal native collection and `repair check` route for its evidence.
+
+Inspect the final candidate and write a neutral affordance driver as described in
+[the observer guide](downstream/README.md). Bind it before observation:
+
+```sh
+uv run python examples/document/operational-metrics/prepare_implementation.py observe \
+  --task /path/to/implementation/task.json --task-sha256 TASK_SHA256 \
+  --result /path/to/collected-result --result-sha256 RESULT_SHA256 \
+  --package /path/to/implementation/package.json --package-sha256 PACKAGE_SHA256 \
+  --driver /path/to/operator-driver.json --output /path/to/observation-package.json
+uv run skilleval task-package validate-environment /path/to/observation-package.json \
+  --sha256 OBSERVATION_PACKAGE_SHA256 --runtime /path/to/smolvm \
+  --output /path/to/fresh-observations
+```
+
+This observation package deliberately has no equality answer key for its dynamic
+browser envelope. Its `unexpected`/aggregate `incomplete` comparison status is
+not a feature verdict. Inspect retained process completion, bounded export,
+actual browser scenarios and cleanup separately. The package's `reference` case
+role is an existing schema slot for the candidate, not a reference-solution label.
+Do not use this package as a passing study environment-qualification receipt.
+
+Use `schema repair-assessment-spec` with the implementation task/result, its
+completed source check, exact implementation map and requirement policy. Add this
+pinned observation reference:
+
+```json
+{
+  "observations": [{
+    "package": "/path/to/observation-package.json",
+    "package_sha256": "OBSERVATION_PACKAGE_SHA256",
+    "report": "/path/to/fresh-observations/task-validation.json",
+    "report_sha256": "OBSERVATION_REPORT_SHA256",
+    "case_id": "candidate",
+    "lane_id": "browser-observation"
+  }]
+}
+```
+
+Assessment preparation verifies the package/task/candidate/image, raw lane bytes,
+recomputed observation and retained cleanup. It exports bounded decoded files to
+`case/observations/observation-001/artifacts/`, alongside original source, candidate
+and diff. Expected host values, control labels and treatment metadata are withheld.
+Failed or partial observations remain evidence limitations; the judge must not
+infer a missing feature merely from a broken driver. Run the ordinary investigative
+judge and record route. Retain per-requirement judgments and citations alongside
+broad repair criteria; no mechanical or semantic aggregate defines an automatic
+winner. Use the [dated pricing scenario](../../pricing/README.md) for explicit
+API-equivalent costs, with judge overhead separate from both task stages.

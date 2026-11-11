@@ -103,7 +103,7 @@
         {"criterion": "clarity-and-action", "question": "Can an engineer tell whether the implemented view answers recent activity/outcomes/rate-limit skips, respects API meanings, and handles empty/error responses? Concrete observable conditions can be prose, examples or tests; no skill-specific format is required."},
         {"criterion": "factual-support", "question": "Are any claims of tests, validation or completed implementation supported by retained evidence and accurately scoped? A writer need not implement the feature or claim it was tested."}
       ],
-      "gaps": ["Downstream implementation must be assessed against the original work request and repository contracts, not promoted to correct merely because it obeys the generated spec. controls/downstream-contract.json is authored observation planning, not implemented executable coverage."]
+      "gaps": ["Downstream implementation must be assessed against the original work request and repository contracts, not promoted to correct merely because it obeys the generated spec. The downstream observer retains executable browser/API evidence for a separate implementation assessment; its qualification and remaining coverage limits are documented in downstream/README.md."]
     }
   ],
   "unmapped_probes": [],
@@ -137,7 +137,7 @@
   "open_questions": [
     "Independent task-domain and grader audit of this acceptance argument and the authored semantic labels remain pending; local automated review is development evidence only.",
     "Freeze real task/package/assessment identities, retained control evidence and environment qualification before dispatch. This file is a placeholder template, not an admitted study map.",
-    "Downstream browser/API checks must be implemented and exercised against known-positive and misleading/incomplete controls inside the actual VM before executable feature acceptance can be claimed."
+    "Downstream browser/API observations must be exercised against known-positive and misleading/incomplete controls inside the actual VM, then semantically assessed before feature acceptance can be claimed."
   ],
   "limitations": [
     "Operator-only new-generation template. Keep the acceptance map, controls, labels and assessments outside writer and implementer solver inputs. Supply only the chosen generated specification as the linked handoff, alongside ordinary task context.",

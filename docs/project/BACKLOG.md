@@ -24,14 +24,16 @@ shipped history. Private provenance stays outside public entries and issues.
   deferral before changing the brief. Never improve only one arm mid-run.
 - **Specification quality and downstream usefulness:** the selected
   [operational-metrics pilot](../../examples/document/operational-metrics/README.md)
-  now has source exclusions, a specification rubric, authored alternatives/defects,
-  an acceptance map template and exact artifact handoffs with linked consumption.
+  now has source exclusions, requirement-level specification judgments, authored
+  alternatives/defects, browser/API observations, and exact artifact handoffs with
+  linked consumption and conditional dollar estimates.
   Independent semantic reliability remains unestablished. Audit actual generated
   specifications and disagreements against the original need, including truthful
   blockers, unsupported choices and incomplete delivery. Exercise downstream
-  feature checks against each implemented UI, preserving valid alternative
-  designs; the existing-console smoke and authored downstream contract are not
-  feature coverage. Keep failed attempts and stage costs visible, and retain
+  observations against each generated UI using its reviewed interaction driver,
+  preserving valid alternative designs. Authored-control discrimination does not
+  establish independent reliability or complete feature coverage. Keep failed
+  attempts and stage costs visible, and retain
   experiment evidence separately from any later real contribution.
 - **Acceptance validity before more comparisons:** operator maps now freeze
   declared source rationale, probe-field and semantic routes, controls, exposure
@@ -194,6 +196,14 @@ shipped history. Private provenance stays outside public entries and issues.
   remain open. Real runtime stop/delete failures and host reboot
   remain outside the live controls; local fault-injection tests cover the
   refusal/retry contract.
+- **Intermittent macOS subprocess teardown:** a development gate on 2026-11-11
+  hit `EPERM` in the timeout test's second process-group stop, after the first stop
+  had terminated the leader. The focused rerun, ten instrumented repetitions and
+  a subsequent full gate passed. The original process-group state was not
+  captured, so the cause remains unconfirmed. Capture owned group membership and
+  termination state on recurrence, then test whether redundant teardown can be
+  removed safely. Do not suppress permission errors or weaken descendant cleanup
+  based on successful reruns.
 - **Qualification packaging:** the opt-in controls, native runner and admission
   currently require the source checkout and share private package helpers.
   Stabilize those interfaces when supporting installed-wheel qualification,
