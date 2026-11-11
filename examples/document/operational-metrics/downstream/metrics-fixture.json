@@ -1,0 +1,13 @@
+{
+  "description": "Synthetic qualification only; no host sessions, provider identities, usage or costs.",
+  "since": "2026-11-07T12:00:00Z",
+  "rows": [
+    {"session_id":"fixture-memory-a","agent_type":"codex","metric_name":"codex.memory.startup","attrs":{"state":"succeeded"},"value":2,"temporality":"delta","client_timestamp":"2026-11-07T12:00:01Z"},
+    {"session_id":"fixture-memory-a","agent_type":"codex","metric_name":"codex.memory.startup","attrs":{"state":"succeeded"},"value":3,"temporality":"delta","client_timestamp":"2026-11-07T12:00:02Z"},
+    {"session_id":"fixture-memory-a","agent_type":"codex","metric_name":"codex.memory.startup","attrs":{"state":"skipped_rate_limit"},"value":4,"temporality":"delta","client_timestamp":"2026-11-07T12:00:03Z"},
+    {"session_id":"fixture-memory-b","agent_type":"codex","metric_name":"codex.memory.consolidation","attrs":{"outcome":"failed","reason":"synthetic"},"value":1,"temporality":"delta","client_timestamp":"2026-11-07T12:00:04Z"},
+    {"session_id":"fixture-memory-a","agent_type":"codex","metric_name":"codex.memory.startup","attrs":{"state":"old"},"value":10,"temporality":"delta","client_timestamp":"2026-11-06T12:00:00Z"},
+    {"session_id":"fixture-unrelated","agent_type":"claude","metric_name":"claude.retry","attrs":null,"value":7,"temporality":"delta","client_timestamp":"2026-11-07T12:00:05Z"},
+    {"session_id":"fixture-memory-b","agent_type":"codex","metric_name":"codex.memory.unknown","attrs":null,"value":1,"temporality":"delta","client_timestamp":"2026-11-07T12:00:06Z"}
+  ]
+}

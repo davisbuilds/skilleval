@@ -170,7 +170,9 @@ def test_assessment_template_selects_versioned_profile_and_downstream_plan_keeps
     assert spec.rubric_profile == "specification-v1"
     assert spec.tool_evidence_policy == "execution-context-v3"
     plan = json.loads((EXAMPLE / "controls/downstream-contract.json").read_text())
-    assert plan["implemented_executable_coverage"] is False
+    assert plan["implemented_executable_coverage"] is True
+    assert plan["guest_qualification"] == "required-pending-for-this-observer-generation"
+    assert plan["semantic_calibration"] == "required-pending"
     assert plan["independent_audit"] == "required-pending"
     assert len({row["observation_id"] for row in plan["required_observations"]}) == len(
         plan["required_observations"]

@@ -1,6 +1,6 @@
 ---
 status: in-progress
-updated: 2026-11-08
+updated: 2026-11-11
 ---
 
 # Roadmap
@@ -62,9 +62,13 @@ retained explicitly. Next, compare explicit skill ON/OFF specifications.
 Follow each spec with a fresh, otherwise equivalent vanilla implementer to assess
 the handoff against the original request. This keeps the treatment in the spec
 stage while exposing downstream quality, omissions, rework and total cost.
-Specification-specific rubrics, authored controls and
-[linked-stage recording](../system/HANDOFFS.md) are implemented; structural checks
-and automated review do not establish semantic reliability. Interactive
+Specification-specific rubrics, explicit requirement-level verdicts, authored
+specification and implementation controls, retained browser/API observations and
+[linked-stage recording](../system/HANDOFFS.md) are implemented. The downstream
+judge assesses the original need, not compliance with a generated spec. Frozen
+[API-equivalent price scenarios](../../examples/pricing/README.md) supplement
+tokens and time, with missing usage left unknown. Structural checks and automated
+review do not establish semantic reliability. Interactive
 clarification is backlogged. Debugging expansion
 is deferred while this pilot is prepared; retained repairs remain development
 evidence. The [candidate register](PILOT-CANDIDATES.md#current-selection-direction)

@@ -148,6 +148,22 @@ The implemented operator acceptance artifact pins task/package identities, valid
 probe IDs and JSON Pointers, records semantic routes and open gaps, and hashes optional
 control/review attachments. Mapped study plans recheck it before each dispatch.
 Its output always leaves semantic validity unassessed and scored admission false.
+
+An assessment can opt into requirement-level judgments through
+[`acceptance-requirements-v1`](../system/CALIBRATION.md#requirement-level-repair-and-document-judgments).
+The judge receives a limited projection of the frozen requirements alongside
+the original request and source; it must verify those claims rather than treat
+the map as ground truth. Reports expose missing and unresolved requirements
+separately from the broad rubric verdicts. Neither complete coverage nor agreement
+with authored labels supplies independent validity.
+
+The operational-metrics pilot combines source inspection with retained
+[browser/API observations](../../examples/document/operational-metrics/downstream/README.md).
+Each candidate gets a reviewed interaction driver for its actual design, while
+the fixtures and original acceptance contract remain fixed. The observer records
+states and side effects; the semantic judge decides what they establish. An
+observer failure is not automatically a feature failure. A generated specification
+guides the implementer but cannot redefine the downstream acceptance contract.
 Legacy/unmapped workflows remain available for compatibility and are labeled as such;
 new repair/document comparisons should use the mapped policy. Raw result selection,
 mechanical acceptance and legacy judge packets retain their existing semantics.
