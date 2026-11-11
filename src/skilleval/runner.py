@@ -378,6 +378,31 @@ def _publish_receipt(output: Path, report: dict[str, Any]) -> None:
         consultation["observation_count"] = len(observations)
         consultation["observations_omitted"] = max(0, len(observations) - 64)
         consultation["observations"] = observations[:64]
+    if len(_json(report)) > 4 * 1024 * 1024 and report.get("request_observations"):
+        # Growing histories repeat bulky context and protocol metadata. Keep the
+        # authoritative observations in the hash-bound audit and retain every
+        # request's identity, reasoning and skill-exposure diagnostics inline.
+        compact = []
+        for index, observation in enumerate(report["request_observations"]):
+            metadata = {
+                key: observation[key]
+                for key in ("context", "shape", "shape_limits", "request_structure")
+                if key in observation
+            }
+            raw = _json(metadata)
+            compact.append(
+                {
+                    **{key: value for key, value in observation.items() if key not in metadata},
+                    "metadata_audit": {
+                        "field": f"request_observations[{index}]",
+                        "fields": list(metadata),
+                        "bytes": len(raw),
+                        "sha256": hashlib.sha256(raw).hexdigest(),
+                    },
+                }
+            )
+        report["request_observations"] = compact
+        report["request_observations_compacted"] = True
     if len(audit) > MAX_NATIVE_AUDIT_BYTES or len(_json(report)) > 4 * 1024 * 1024:
         # Preserve oversized private evidence for the operator, but do not claim
         # a successful record that the append-only grader cannot retain.

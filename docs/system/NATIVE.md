@@ -74,6 +74,9 @@ Before dispatch, retained credentials must still cover the native deadline,
 60 seconds of headroom and a 30-second expiry margin. Expiry is also checked
 before each provider request. VM setup, collection and cleanup retain their
 individual bounds, so the native deadline is not total wall-clock time.
+New native runs use a 1,024-request emergency backstop, also the maximum accepted
+`--max-requests` value. Explicit smaller caps remain supported. The time limit is
+the primary execution bound; the request cap is not calibrated to task efficiency.
 Request budgets are independent: a run can exhaust its request allowance before
 its time budget. Longer deadlines do not imply complete usage after interruption.
 
@@ -356,7 +359,13 @@ Inspect the bounded `native-run.json` together with its hash-bound
 `native-audit.json`, `events.jsonl`, `final.txt`, retained prompt and artifact
 inventory. The process record includes complete context inventories and is read
 up to the smaller of the run's artifact budget and the 32 MiB full-audit ceiling.
-Overall audit and compact-receipt limits still apply; overflow remains partial
+The consumer receipt remains bounded to 4 MiB. If needed, its request ledger
+keeps every request identity and exposure diagnostic while moving bulky context
+and protocol metadata behind explicit `metadata_audit` references. The
+`request_observations_compacted` marker identifies that form; each reference names
+the full observation in `native-audit.json` and hashes its listed metadata fields.
+The authoritative audit retains all observations, including first and last skill
+exposures. Overall audit and compact-receipt limits still apply; overflow remains partial
 evidence, not successful recording. Complete command outputs stay in the raw events/archive; compact
 metadata exposes hashes, counts and explicit sample omissions. Completion requires the observed process, matched native
 turn, solver setup/namespace teardown and cleanup to agree, plus at least one

@@ -72,7 +72,7 @@ requires enough remaining validity for its request timeout plus 30 seconds at
 startup and checks again before each request. It never refreshes or writes the
 login cache. Authentication expiry and upstream 401 fail closed.
 
-`GatewayLimits` bounds admitted requests (maximum 128), concurrency (maximum 2),
+`GatewayLimits` bounds admitted requests (maximum 1,024), concurrency (maximum 2),
 body bytes (maximum 8 MiB), request deadline (maximum 300 seconds), and total
 service lifetime (maximum 2,820 seconds). Defaults are smaller. These are request
 and time bounds, not a token or monetary quota. The upstream implementation also
@@ -103,12 +103,14 @@ fresh plans and applicable environment evidence; earlier receipts keep their
 original observations. A response interrupted at the request deadline can still
 leave usage and cost unknown.
 
-The native CLI and study default remain 32 admitted requests; the gateway's
-standalone default remains four. Raising a declared budget creates a new frozen
-plan rather than changing an earlier attempt. Native request observation has a
-separate ceiling of 252 bodies because it also sees policy and budget refusals.
-All observations within that bound are retained. The 256-record receipt sink
-reserves capacity for ready/stopped, an observer-cap diagnostic and its HTTP
+The native CLI and new studies use an explicit 1,024-request emergency backstop;
+the gateway's standalone qualification default remains four. Task and judge time
+limits remain primary. Explicit smaller caps still apply, and existing frozen
+plans preserve explicit values or the historical missing-field value of 32.
+Changing a declared budget creates a new frozen plan rather than changing an
+earlier attempt. Native request observation has a separate ceiling of 2,048
+bodies because it also sees policy and budget refusals. All observations within
+that bound are retained. The 2,052-record receipt sink reserves capacity for ready/stopped, an observer-cap diagnostic and its HTTP
 refusal; other rejection traffic can still exhaust it and fail closed.
 A request after the admitted allowance receives the vendor's `429 request_limit`.
 Actual observer-cap exhaustion returns `503 request_observation_limit`; other
@@ -199,7 +201,7 @@ ordinary evidence policy. `test_transport` is an explicitly named in-process
 synthetic test seam; no URL, configuration file, or CLI option can redirect the
 production transport.
 
-The in-memory receipt log holds at most 256 records with scalar strings capped
+The in-memory receipt log holds at most 2,052 records with scalar strings capped
 at 256 characters. Exhausting that log fails closed and revokes the broker,
 including when rejected requests consume no inference budget. Receipt loss or
 overflow leaves cleanup status incomplete; callers must retain that partial
