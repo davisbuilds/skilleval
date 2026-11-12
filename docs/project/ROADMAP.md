@@ -172,7 +172,8 @@ routine questions; human involvement focuses on material residual ambiguity.
 A results summary should remain useful when no human action is required.
 Use [task-scoped readiness](../system/TASKS.md#readiness-reuse-and-invalidation)
 to reuse completed environment observations as briefs, grading criteria and
-reporting evolve. Changed execution conditions require fresh validation; current
+reporting evolve. Opt into independent lane validation to rerun only checks whose
+execution conditions changed, retaining the initial cost of a fresh VM per lane. Current
 parsers and expectations replay retained evidence. Frozen study plans still bind
 full identities. Use dispatch/lifecycle phase timings and observed invalidation
 causes to choose further launch optimizations without weakening runtime boundaries.

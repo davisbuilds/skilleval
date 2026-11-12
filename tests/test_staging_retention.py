@@ -11,6 +11,8 @@ from typing import Any
 import pytest
 from test_admission import evidence as evidence
 from test_admission import seal
+from test_assessment_observations import observed as observed
+from test_assessment_observations import version_three
 from test_repair import task as task
 from test_repair_assessment import assessment as assessment
 from test_retention import completed_run
@@ -258,6 +260,109 @@ def test_schema_two_validation_staging_requires_parent_and_recovery_bindings(
     result = prune_staging(output, apply=True)
     assert result["status"] == "retained", result
     assert staged.read_bytes() == original
+
+
+@pytest.fixture
+def lane_staging(observed, route):
+    selected = version_three(observed, route)
+    ref, _, output, _ = selected
+    # A complete leaf can be recovered and pruned even if aggregate publication
+    # never happened. Imported code and the real VM runtime remain unexecuted.
+    Path(ref.report).unlink()
+    state = output / "runtime-state"
+    state.mkdir()
+    staged = state / "validation-input.tar"
+    staged.write_bytes(b"disposable independent-lane input")
+    recovery = output / "recovery.json"
+    ticket = json.loads(recovery.read_bytes())
+    ticket.update(
+        schema_version=1,
+        runtime_state=str(state),
+        machine_name="independent-lane-test",
+        env=lifecycle._environment(state, Path(ticket["runtime_home"])),
+        steps=[
+            {
+                "label": label,
+                "argv": [ticket["identity"]["runtime"]["binary"], "machine", "ls", "--json"],
+                "returncode": 0,
+                "stdout": json.dumps(names),
+            }
+            for label, names in (
+                ("inventory_known_present", [{"name": "independent-lane-test"}]),
+                ("recovery_inventory_after", []),
+            )
+        ],
+    )
+    recovery.write_text(json.dumps(ticket))
+    return output, staged, output / "lane-execution.json"
+
+
+def test_lane_staging_cleanup_preserves_leaf_without_aggregate(lane_staging):
+    from skilleval import lane_readiness
+    from skilleval.identity import file_digest
+
+    output, staged, receipt = lane_staging
+    source = {"receipt": str(receipt), "sha256": file_digest(receipt)}
+    before = lane_readiness.read_execution(source)
+    originals = {p: p.read_bytes() for p in output.rglob("*") if p.is_file() and p != staged}
+    assert prune_staging(output)["status"] == "eligible"
+    assert staged.is_file()
+    result = prune_staging(output, apply=True)
+    assert result["status"] == "removed", result
+    assert not staged.exists()
+    assert all(p.read_bytes() == raw for p, raw in originals.items())
+    assert lane_readiness.read_execution(source) == before
+
+
+@pytest.mark.parametrize(
+    "fault",
+    ["envelope_missing", "envelope_link", "schema", "case", "raw", "identity", "image", "recovery"],
+)
+def test_lane_staging_refuses_unbound_or_incomplete_execution(lane_staging, fault):
+    output, staged, receipt = lane_staging
+    assert prune_staging(output)["status"] == "eligible"
+    envelope = json.loads(receipt.read_bytes())
+    if fault == "envelope_missing":
+        receipt.unlink()
+    elif fault == "envelope_link":
+        saved = receipt.with_suffix(".saved")
+        receipt.rename(saved)
+        receipt.symlink_to(saved)
+    elif fault in {"schema", "case"}:
+        if fault == "schema":
+            envelope["schema_version"] = 2
+        else:
+            envelope["case"]["case_id"] = "foreign-case"
+        receipt.write_text(json.dumps(envelope))
+    elif fault == "raw":
+        (output / "lane-browser.json").write_text("{}")
+    elif fault == "recovery":
+        (output / "recovery.json").unlink()
+    else:
+        report = json.loads((output / "validation.json").read_bytes())
+        report[fault] = {"changed": True}
+        envelope["case"] = report
+        (output / "validation.json").write_text(json.dumps(report))
+        receipt.write_text(json.dumps(envelope))
+    original = staged.read_bytes()
+    result = prune_staging(output, apply=True)
+    assert result["status"] == "retained", result
+    assert staged.read_bytes() == original
+
+
+def test_lane_staging_apply_rechecks_execution_envelope(lane_staging, monkeypatch):
+    output, staged, receipt = lane_staging
+    write = lifecycle._write
+
+    def change_after_intent(path, value):
+        write(path, value)
+        if value["status"] == "removing":
+            receipt.write_bytes(receipt.read_bytes() + b"\n")
+
+    monkeypatch.setattr(lifecycle, "_write", change_after_intent)
+    result = prune_staging(output, apply=True)
+    assert result["status"] == "retained", result
+    assert staged.is_file()
 
 
 def test_qualification_tooling_is_retained_even_beside_native_receipt(tmp_path: Path) -> None:

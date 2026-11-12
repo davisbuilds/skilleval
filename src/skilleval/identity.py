@@ -35,6 +35,8 @@ SOURCES = (
     "src/skilleval/repair_outcomes.py",
     "src/skilleval/task_package.py",
     "src/skilleval/task_environment.py",
+    "src/skilleval/lane_validation.py",
+    "src/skilleval/lane_readiness.py",
     "src/skilleval/task_transfer.py",
     "src/skilleval/native_process.py",
     "src/skilleval/task_validation_guest.py",
@@ -219,13 +221,19 @@ ENVIRONMENT_SOURCES = (
 SOLVER_ENVIRONMENT_SOURCES = ("src/skilleval/solver_boundary.py",)
 
 
-def environment_identity(captured: object, execution_profile: str) -> dict[str, Any]:
+def environment_identity(
+    captured: object, execution_profile: str, *, isolation: str = "case-v1"
+) -> dict[str, Any]:
     """Project recorded execution proof, never fill missing evidence from live files."""
     if execution_profile not in {"native-root-v1", "solver-isolated-v1"}:
         raise SkillEvalError("unknown environment identity execution profile")
+    if isolation not in {"case-v1", "lane-v1"}:
+        raise SkillEvalError("unknown validation isolation profile")
     names = ENVIRONMENT_SOURCES + (
         SOLVER_ENVIRONMENT_SOURCES if execution_profile == "solver-isolated-v1" else ()
     )
+    if isolation == "lane-v1":
+        names += ("src/skilleval/lane_validation.py",)
     if not isinstance(captured, dict) or not isinstance(captured.get("runtime"), dict):
         raise SkillEvalError("missing environment identity runtime proof")
     controller = captured.get("controller")
@@ -244,7 +252,7 @@ def environment_identity(captured: object, execution_profile: str) -> dict[str, 
         raise SkillEvalError("missing or invalid environment identity source proof")
     return {
         "schema_version": 1,
-        "profile": "task-environment-v1",
+        "profile": "task-environment-lanes-v1" if isolation == "lane-v1" else "task-environment-v1",
         "execution_profile": execution_profile,
         "runtime": captured["runtime"],
         "controller": controller,

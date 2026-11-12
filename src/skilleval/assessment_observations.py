@@ -99,6 +99,46 @@ def _archive_payloads(value: dict[str, Any]) -> dict[str, bytes]:
     return payloads
 
 
+def _read_selective_reference(
+    ref: AssessmentObservationSource, task_path: Path, task_digest: str, candidate_digest: str
+) -> tuple[Any, dict[str, Any]]:
+    from skilleval import lane_readiness, task_package
+
+    package, report = lane_readiness.read_report(Path(ref.report), ref.report_sha256)
+    if (
+        Path(report["package"]).resolve() != Path(ref.package).resolve()
+        or report["package_sha256"] != ref.package_sha256
+    ):
+        raise SkillEvalError("assessment observation package differs from selected report")
+    if (
+        Path(package.task).resolve() != task_path.resolve()
+        or package.task_sha256 != task_digest
+        or package.environment.profile != "solver-isolated-v1"
+    ):
+        raise SkillEvalError("assessment observation task or execution profile differs")
+    cases = [case for case in package.validation if case.case_id == ref.case_id]
+    if len(cases) != 1 or cases[0].input_sha256 != candidate_digest:
+        raise SkillEvalError("assessment observation belongs to another candidate")
+    case = cases[0]
+    lanes = [lane for lane in case.lanes if lane.lane_id == ref.lane_id]
+    if len(lanes) != 1:
+        raise SkillEvalError("assessment observation lane is missing")
+    row = next(row for row in report["cases"] if row["case_id"] == case.case_id)
+    selected = [item for item in row["lanes"] if item["lane_id"] == ref.lane_id]
+    if len(selected) != 1:
+        raise SkillEvalError("assessment observation lane is missing or duplicated")
+    observed = selected[0]["comparison"]
+    _, _, _, source = lane_readiness.read_execution(selected[0]["source"])
+    if source.get("cleanup_complete") is not True or not isinstance(observed.get("process"), dict):
+        raise SkillEvalError("assessment observation execution is incomplete")
+    process = observed["process"]
+    if process.get("argv") != list(lanes[0].argv) or not task_package._profile_matches(
+        process, package.environment.profile
+    ):
+        raise SkillEvalError("assessment observation differs from retained execution")
+    return lanes[0], process
+
+
 def _read_reference(
     ref: AssessmentObservationSource, task_path: Path, task_digest: str, candidate_digest: str
 ) -> tuple[Any, dict[str, Any]]:
@@ -111,6 +151,12 @@ def _read_reference(
     if hashlib.sha256(raw).hexdigest() != ref.report_sha256:
         raise SkillEvalError("assessment observation report digest differs")
     value = evidence._parse_json(raw)
+    if (
+        isinstance(value, dict)
+        and type(value.get("schema_version")) is int
+        and value["schema_version"] == 3
+    ):
+        return _read_selective_reference(ref, task_path, task_digest, candidate_digest)
     if not isinstance(value, dict) or value.get("schema_version") not in (1, 2):
         raise SkillEvalError("invalid assessment observation report binding")
     if value["schema_version"] == 1:

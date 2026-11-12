@@ -26,6 +26,11 @@ shipped history. Private provenance stays outside public entries and issues.
   and repeat-validation causes show material cost. Preserve fresh isolation,
   launched-byte verification, cleanup and original receipts when narrowing the
   remaining footprint.
+- **macOS process-group cleanup:** investigate intermittent `PermissionError`
+  from `os.killpg` in native timeout cleanup during parallel deterministic tests.
+  The affected timeout tests pass individually; do not suppress signal failures
+  or weaken descendant cleanup without a causal reproduction. This is separate
+  from the Linux guest namespace teardown and independent-lane readiness checks.
 - **Interactive clarification:** the first specification pilot delegates bounded
   product choices and runs each stage without live Q&A. Add a bounded conversation
   loop when selected tasks need requirements elicitation: explicit needs-input vs
