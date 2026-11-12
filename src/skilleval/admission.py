@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import math
 import os
 import re
 import runpy
@@ -52,11 +53,14 @@ def _pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
 
 
 def _json(raw: bytes | str) -> Any:
-    return json.loads(raw, object_pairs_hook=_pairs, parse_constant=lambda _: _invalid_number())
+    return json.loads(raw, object_pairs_hook=_pairs, parse_constant=_finite, parse_float=_finite)
 
 
-def _invalid_number() -> None:
-    raise SkillEvalError("environment admission refused: nonfinite JSON number")
+def _finite(text: str) -> float:
+    """Refuse NaN, Infinity, and literals such as 1e999 that overflow to infinity."""
+    number = float(text)
+    _require(math.isfinite(number), "nonfinite JSON number")
+    return number
 
 
 def _read(path: Path, limit: int = MAX_JSON) -> bytes:
