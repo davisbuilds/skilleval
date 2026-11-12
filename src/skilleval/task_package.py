@@ -14,7 +14,7 @@ from skilleval import evidence, repair, runner, solver_boundary
 from skilleval.contracts import Citation, Digest, Identifier, Record
 from skilleval.errors import SkillEvalError
 from skilleval.grading import _read_regular
-from skilleval.identity import object_digest
+from skilleval.identity import environment_identity, object_digest
 from skilleval.qualification import _image_archive
 
 # Two 1 MiB log streams can expand sixfold when encoded as JSON. A package
@@ -132,7 +132,8 @@ def prepare_package(spec: TaskPackageSpec, output: Path) -> dict[str, Any]:
     return summary
 
 
-def load_package(path: Path, digest: str) -> TaskPackageSpec:
+def read_package(path: Path, digest: str) -> TaskPackageSpec:
+    """Read original package bytes without requiring its retired grading dependencies."""
     raw = _read_regular(path, 4 * 1024 * 1024)
     if hashlib.sha256(raw).hexdigest() != digest:
         raise SkillEvalError("task package digest differs")
@@ -144,9 +145,38 @@ def load_package(path: Path, digest: str) -> TaskPackageSpec:
         or value["kind"] != "skilleval-task-package"
     ):
         raise SkillEvalError("unsupported task package")
-    spec = TaskPackageSpec.model_validate_json(json.dumps(value["spec"]))
+    return TaskPackageSpec.model_validate_json(json.dumps(value["spec"]))
+
+
+def load_package(path: Path, digest: str) -> TaskPackageSpec:
+    spec = read_package(path, digest)
     _inputs(spec)
     return spec
+
+
+def execution_contract(spec: TaskPackageSpec) -> dict[str, Any]:
+    """Bind executed conditions; expectations are replayed against retained observations."""
+    return {
+        "schema_version": 1,
+        "image_sha256": spec.environment.image_sha256,
+        "profile": spec.environment.profile,
+        "cases": [
+            {
+                "case_id": case.case_id,
+                "role": case.role,
+                "input_sha256": case.input_sha256,
+                "lanes": [
+                    {
+                        "lane_id": lane.lane_id,
+                        "argv": list(lane.argv),
+                        "timeout_seconds": lane.timeout_seconds,
+                    }
+                    for lane in case.lanes
+                ],
+            }
+            for case in spec.validation
+        ],
+    }
 
 
 def _outside(spec: TaskPackageSpec, output: Path) -> None:
@@ -253,162 +283,9 @@ def validate_environment(
     runtime: Path,
 ) -> dict[str, Any]:
     """Run declared baseline/reference commands only in disposable offline VMs."""
-    from skilleval import app_server, context_guard, guest_runner, task_validation_guest
-    from skilleval.lifecycle import Lifecycle, LifecycleInterruptedError, interrupt_scope
+    from skilleval.task_environment import validate_environment as execute
 
-    spec = load_package(package, digest)
-    _outside(spec, output)
-    if output.resolve().is_relative_to(runtime.resolve().parent):
-        raise SkillEvalError("validation output must be outside runtime inventory")
-    output.mkdir(mode=0o700, parents=True, exist_ok=False)
-    cases: list[dict[str, Any]] = []
-    for case in spec.validation:
-        row: dict[str, Any] = {
-            "case_id": case.case_id,
-            "role": case.role,
-            "input_sha256": case.input_sha256,
-            "status": "incomplete",
-            "lanes": [],
-        }
-        cases.append(row)
-        interrupted = False
-        with interrupt_scope():
-            session = Lifecycle.prepare(
-                output / case.case_id,
-                runtime,
-                Path(spec.environment.image_archive),
-                spec.environment.image_sha256,
-            )
-            row["identity"] = session.ticket["identity"]
-            row["image"] = session.ticket["image"]
-            try:
-                _, files = runner._snapshot_files(Path(case.input_bundle), case.input_sha256)
-                archive = Path(session.ticket["runtime_state"]) / "validation-input.tar"
-                tooling = [
-                    (
-                        "native/validation.py",
-                        Path(task_validation_guest.__file__).read_bytes(),
-                        False,
-                    ),
-                ]
-                if spec.environment.profile == "solver-isolated-v1":
-                    for name, module in (
-                        ("guest_runner.py", guest_runner),
-                        ("app_server.py", app_server),
-                        ("context_guard.py", context_guard),
-                        ("solver_boundary.py", solver_boundary),
-                    ):
-                        source = module.__file__
-                        if source is None:
-                            raise SkillEvalError("validation controller source unavailable")
-                        tooling.append(("native/" + name, Path(source).read_bytes(), False))
-                runner._tar(
-                    archive,
-                    [("task/" + n, b, x) for n, b, x in files] + tooling,
-                )
-                session.create()
-                runner._required(
-                    session.invoke(
-                        "copy_validation",
-                        [
-                            "machine",
-                            "cp",
-                            str(archive),
-                            session.machine + ":/var/tmp/validation.tar",
-                        ],
-                    ),
-                    "copy validation input",
-                )
-                runner._required(
-                    session.guest(
-                        "prepare_validation",
-                        runner.preparation_argv(
-                            Path("/var/tmp/validation.tar"),
-                            Path(runner.GUEST_WORK),
-                            Path(runner.GUEST_ROOT),
-                        ),
-                    ),
-                    "prepare validation input",
-                )
-                for lane in case.lanes:
-                    guest_report = runner.GUEST_ROOT + "/lane-" + lane.lane_id + ".json"
-                    response = session.guest(
-                        "lane-" + lane.lane_id,
-                        [
-                            "python3",
-                            "-I",
-                            runner.GUEST_ROOT + "/validation.py",
-                            json.dumps(
-                                {
-                                    "argv": lane.argv,
-                                    "timeout_seconds": lane.timeout_seconds,
-                                    "report_path": guest_report,
-                                    "profile": spec.environment.profile,
-                                }
-                            ),
-                        ],
-                        lane.timeout_seconds + 20,
-                    )
-                    runner._required(response, "environment validation supervisor")
-                    local_report = output / case.case_id / ("lane-" + lane.lane_id + ".json")
-                    runner._required(
-                        session.invoke(
-                            "collect-" + lane.lane_id,
-                            [
-                                "machine",
-                                "cp",
-                                session.machine + ":" + guest_report,
-                                str(local_report),
-                            ],
-                        ),
-                        "collect full validation observation",
-                    )
-                    process = read_lane(local_report)
-                    if not _profile_matches(process, spec.environment.profile):
-                        raise SkillEvalError("unexpected validation execution profile")
-                    row["lanes"].append(compare_lane(lane, process, spec.environment.profile))
-                row["status"] = (
-                    "matched"
-                    if all(r["status"] == "matched" for r in row["lanes"])
-                    else "unexpected"
-                )
-                load_package(package, digest)
-            except (
-                SkillEvalError,
-                OSError,
-                ValueError,
-                KeyError,
-                LifecycleInterruptedError,
-            ) as error:
-                row["error"] = (
-                    str(error) if isinstance(error, SkillEvalError) else type(error).__name__
-                )
-                row["status"] = "incomplete"
-                interrupted = isinstance(error, LifecycleInterruptedError)
-            finally:
-                ticket = session.cleanup()
-                row["cleanup_complete"] = ticket["cleanup_complete"]
-                if not ticket["cleanup_complete"]:
-                    row["status"] = "incomplete"
-                repair._publish(output / case.case_id / "validation.json", row)
-        if interrupted or not row["cleanup_complete"]:
-            break
-    report = {
-        "schema_version": 1,
-        "kind": "skilleval-task-validation",
-        "package_sha256": digest,
-        "family": spec.family,
-        "cases": cases,
-        "status": "matched"
-        if len(cases) == len(spec.validation) and all(c["status"] == "matched" for c in cases)
-        else "incomplete",
-        "coverage_gaps": list(spec.environment.coverage_gaps),
-        "limitations": list(spec.limitations),
-        "inference_requests": 0,
-        "scored_admitted": False,
-    }
-    repair._publish(output / "task-validation.json", report)
-    return report
+    return execute(package, digest, output, runtime=runtime)
 
 
 def checked_validation(
@@ -417,7 +294,7 @@ def checked_validation(
     report: Path,
     report_digest: str,
 ) -> tuple[TaskPackageSpec, dict[str, Any]]:
-    """Recompute selected validation, retaining exceptions rather than calling them green."""
+    """Replay selected expectations; return original evidence without rewriting it."""
     from skilleval.study import _clean_native
 
     spec = load_package(package, package_digest)
@@ -428,37 +305,126 @@ def checked_validation(
     if (
         not isinstance(value, dict)
         or value.get("kind") != "skilleval-task-validation"
-        or value.get("schema_version") != 1
-        or value.get("package_sha256") != package_digest
-        or value.get("status") != "matched"
+        or type(value.get("schema_version")) is not int
+        or value["schema_version"] not in {1, 2}
+    ):
+        raise SkillEvalError("unsupported task validation report")
+    scoped = value["schema_version"] == 2
+    original = spec
+    if scoped:
+        locator = value.get("package")
+        original_digest = value.get("package_sha256")
+        if (
+            not isinstance(locator, str)
+            or not Path(locator).is_absolute()
+            or not isinstance(original_digest, str)
+        ):
+            raise SkillEvalError("task validation original package binding missing")
+        original = read_package(Path(locator), original_digest)
+        contract = execution_contract(original)
+        if (
+            value.get("execution_contract") != contract
+            or value.get("execution_contract_sha256") != object_digest(contract)
+            or execution_contract(spec) != contract
+        ):
+            raise SkillEvalError("task environment execution contract changed; run new validation")
+    elif value.get("package_sha256") != package_digest or value.get("status") != "matched":
+        raise SkillEvalError("legacy task validation requires its exact original matched package")
+    if (
+        value.get("status") not in {"matched", "incomplete"}
         or value.get("scored_admitted") is not False
         or not isinstance(value.get("cases"), list)
-        or len(value["cases"]) != len(spec.validation)
-        or value.get("coverage_gaps") != list(spec.environment.coverage_gaps)
-        or value.get("limitations") != list(spec.limitations)
-        or value.get("family") != spec.family
+        or len(value["cases"]) != len(original.validation)
+        or value.get("coverage_gaps") != list(original.environment.coverage_gaps)
+        or value.get("limitations") != list(original.limitations)
+        or value.get("family") != original.family
         or value.get("inference_requests") != 0
     ):
         raise SkillEvalError("task validation is incomplete or belongs to another package")
-    for case, row in zip(spec.validation, value["cases"], strict=True):
+    for case, selected, row in zip(
+        original.validation, spec.validation, value["cases"], strict=True
+    ):
         directory = report.parent / case.case_id
         saved = evidence._parse_json(
             _read_regular(directory / "validation.json", MAX_VALIDATION_BYTES)
         )
         recovery = evidence._parse_json(_read_regular(directory / "recovery.json", 4 * 1024 * 1024))
         if (
-            row != saved
+            not isinstance(row, dict)
+            or not isinstance(recovery, dict)
+            or row != saved
             or row.get("case_id") != case.case_id
             or row.get("input_sha256") != case.input_sha256
-            or row.get("status") != "matched"
+            or row.get("status") not in ({"matched", "unexpected"} if scoped else {"matched"})
             or row.get("identity") != recovery.get("identity")
             or row.get("image") != recovery.get("image")
             or not _clean_native(directory)
-            or len(row.get("lanes", [])) != len(case.lanes)
+            or not isinstance(row.get("lanes"), list)
+            or len(row["lanes"]) != len(case.lanes)
         ):
             raise SkillEvalError("task validation case or cleanup binding differs")
-        for lane, observed in zip(case.lanes, row["lanes"], strict=True):
-            compared = compare_lane(lane, observed["process"], spec.environment.profile)
-            if compared != observed or compared["status"] != "matched":
+        if scoped and (
+            row.get("role") != case.role
+            or row.get("cleanup_complete") is not True
+            or not isinstance(row.get("image"), dict)
+            or row["image"].get("sha256") != original.environment.image_sha256
+            or row.get("readiness_identity")
+            != environment_identity(row.get("identity"), original.environment.profile)
+        ):
+            raise SkillEvalError("task validation environment identity or case binding differs")
+        for lane, selected_lane, observed in zip(
+            case.lanes, selected.lanes, row["lanes"], strict=True
+        ):
+            if not isinstance(observed, dict) or not isinstance(observed.get("process"), dict):
+                raise SkillEvalError("task validation observations missing")
+            process = observed["process"]
+            if scoped:
+                # Preserve the old interpretation. Its original expected fields
+                # and raw process binding remain checked; today's parser need not
+                # reproduce an obsolete interpretation to replay these same bytes.
+                if (
+                    read_lane(directory / ("lane-" + lane.lane_id + ".json")) != process
+                    or observed.get("lane_id") != lane.lane_id
+                    or observed.get("expected") != lane.expected
+                    or observed.get("expected_exit_code") != lane.expected_exit_code
+                ):
+                    raise SkillEvalError("task validation original observation binding differs")
+            elif compare_lane(lane, process, original.environment.profile) != observed:
                 raise SkillEvalError("task validation observations differ")
+            if (
+                compare_lane(selected_lane, process, spec.environment.profile)["status"]
+                != "matched"
+            ):
+                raise SkillEvalError(
+                    "task validation observations do not match selected expectations"
+                )
     return spec, value
+
+
+def check_environment_identity(
+    report: dict[str, Any], profile: str, current: dict[str, Any]
+) -> None:
+    """Reuse only completed evidence whose execution dependencies still agree."""
+    scoped = report.get("schema_version") == 2
+    expected = environment_identity(current, profile) if scoped else current
+    key = "readiness_identity" if scoped else "identity"
+    if any(case.get(key) != expected for case in report["cases"]):
+        raise SkillEvalError("task environment execution identity changed; run new validation")
+
+
+def readiness_selection(
+    spec: TaskPackageSpec, selected_digest: str, report: dict[str, Any]
+) -> dict[str, Any]:
+    """Keep original disclosures visible alongside this selection's interpretation."""
+    return {
+        "policy": "task-environment-v1",
+        "original_package": report["package"],
+        "original_package_sha256": report["package_sha256"],
+        "selected_package_sha256": selected_digest,
+        "original_status": report["status"],
+        "selected_expectations_status": "matched",
+        "original_coverage_gaps": report["coverage_gaps"],
+        "original_limitations": report["limitations"],
+        "selected_coverage_gaps": list(spec.environment.coverage_gaps),
+        "selected_limitations": list(spec.limitations),
+    }

@@ -179,7 +179,12 @@ def _invocations(spec: StudySpec, skill_name: str) -> dict[str, dict[str, str]]:
     }
 
 
-def _check_inputs(spec: StudySpec) -> dict[str, Any]:
+def _check_inputs(
+    spec: StudySpec,
+    *,
+    identity: dict[str, Any] | None = None,
+    readiness: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     for task in spec.tasks:
         manifest = evidence.verify(Path(task.input_bundle), task.input_sha256)
         if manifest["kind"] != "snapshot":
@@ -187,7 +192,11 @@ def _check_inputs(spec: StudySpec) -> dict[str, Any]:
         check_task_baseline(Path(task.input_bundle))
         if task.package is not None:
             from skilleval.repair import load_task
-            from skilleval.task_package import checked_validation
+            from skilleval.task_package import (
+                check_environment_identity,
+                checked_validation,
+                readiness_selection,
+            )
 
             assert task.package_sha256 and task.environment_validation
             assert task.environment_validation_sha256
@@ -200,16 +209,20 @@ def _check_inputs(spec: StudySpec) -> dict[str, Any]:
             if package.environment.profile != "solver-isolated-v1":
                 raise SkillEvalError("native study requires solver-isolated-v1 task validation")
             artifact = load_task(Path(package.task), package.task_sha256)
+            if identity is None:
+                identity = snapshot_identity(spec.runtime)
             if (
                 task.mode != "repair"
                 or artifact.input_sha256 != task.input_sha256
                 or artifact.prompt != task.prompt
                 or package.environment.image_sha256 != spec.image_sha256
-                or any(
-                    c["identity"] != snapshot_identity(spec.runtime) for c in validation["cases"]
-                )
             ):
                 raise SkillEvalError("study differs from validated task package or execution route")
+            check_environment_identity(validation, package.environment.profile, identity)
+            if readiness is not None and validation.get("schema_version") == 2:
+                readiness[task.task_id] = readiness_selection(
+                    package, task.package_sha256, validation
+                )
             if task.acceptance_map is not None:
                 from skilleval.acceptance import load_acceptance
 
@@ -246,8 +259,9 @@ def prepare_study(spec: StudySpec, destination: Path) -> dict[str, Any]:
             if task.get(key) is not None:
                 task[key] = os.path.abspath(task[key])
     spec = StudySpec.model_validate_json(json.dumps(data))
-    image = _check_inputs(spec)
     identity = snapshot_identity(spec.runtime)
+    readiness: dict[str, Any] = {}
+    image = _check_inputs(spec, identity=identity, readiness=readiness)
     destination = Path(os.path.abspath(destination))
     _outside_inputs(spec, destination)
     skill_manifest, _ = _verified_skill(Path(spec.skill_bundle), spec.skill_sha256)
@@ -265,6 +279,8 @@ def prepare_study(spec: StudySpec, destination: Path) -> dict[str, Any]:
         "skill_name": skill_name,
         "invocations": _invocations(spec, skill_name),
     }
+    if readiness:
+        value["environment_readiness"] = readiness
     digest = _new(destination, value)
     cells = len(value["assignments"])
     return {
@@ -346,16 +362,38 @@ def _plan(path: Path, expected: str) -> tuple[dict[str, Any], StudySpec]:
     return value, spec
 
 
-def _dispatch_check(plan: dict[str, Any], spec: StudySpec) -> dict[str, Any] | None:
-    if snapshot_identity(spec.runtime) != plan["identity"] or _check_inputs(spec) != plan["image"]:
+def _dispatch_check(
+    plan: dict[str, Any],
+    spec: StudySpec,
+    *,
+    timings: dict[str, float] | None = None,
+) -> dict[str, Any] | None:
+    # Reuse an inventory only inside this operation. Each attempt, lifecycle
+    # create, and recovery still captures its own fresh identity.
+    if timings is None:
+        timings = {}
+    started = time.monotonic()
+    identity = snapshot_identity(spec.runtime)
+    timings["identity"] = time.monotonic() - started
+    if identity != plan["identity"]:
+        raise SkillEvalError("study inputs or execution identity changed; prepare a new plan")
+    inputs_started = time.monotonic()
+    readiness: dict[str, Any] = {}
+    image = _check_inputs(spec, identity=identity, readiness=readiness)
+    if readiness != plan.get("environment_readiness", {}):
+        raise SkillEvalError("study environment readiness selection differs from frozen plan")
+    timings["inputs"] = time.monotonic() - inputs_started
+    if image != plan["image"]:
         raise SkillEvalError("study inputs or execution identity changed; prepare a new plan")
     if plan["schema_version"] >= 2:
         manifest, _ = _verified_skill(Path(spec.skill_bundle), spec.skill_sha256)
         if manifest["meta"]["skill_name"] != plan["skill_name"]:
             raise SkillEvalError("frozen skill invocation name differs from captured package")
     if spec.admission is None:
+        timings["total"] = time.monotonic() - started
         return None
     assert spec.admission_sha256 is not None
+    admission_started = time.monotonic()
     checked = check_admission(Path(spec.admission), spec.admission_sha256)
     seal = _document(Path(spec.admission))
     qualified_plan = _document(Path(seal["inputs"]["plan"]))
@@ -366,6 +404,8 @@ def _dispatch_check(plan: dict[str, Any], spec: StudySpec) -> dict[str, Any] | N
     ):
         raise SkillEvalError("admission does not cover this runtime/image/catalog route")
     # A bounded seal remains bounded; it is never promoted to task/grader admission.
+    timings["admission"] = time.monotonic() - admission_started
+    timings["total"] = time.monotonic() - started
     return checked
 
 
@@ -637,7 +677,8 @@ def run_study(
             while len(attempts) < spec.max_attempts_per_cell:
                 # Recheck before EACH dispatch, including retries, not just at planning.
                 _plan(plan_path, expected_sha256)
-                admission = _dispatch_check(plan, spec)
+                preflight_timings: dict[str, float] = {}
+                admission = _dispatch_check(plan, spec, timings=preflight_timings)
                 path = output / "attempts" / cell["cell_id"] / f"attempt-{len(attempts) + 1:03}"
                 task = tasks[cell["task_id"]]
                 prompt = (
@@ -668,6 +709,7 @@ def run_study(
                             "plan_sha256": expected_sha256,
                             "assignment": cell,
                             "admission": admission,
+                            "preflight_timings_seconds": preflight_timings,
                             "scope": "development-only",
                             "native_expected": expected,
                             **_acceptance_metadata(plan, spec, task),
@@ -817,6 +859,11 @@ def report_study(plan_path: Path, expected_sha256: str, output: Path) -> dict[st
         "cells": cells,
         "pairs": paired,
         "efficiency_ledger": efficiency_ledger(cells),
+        **(
+            {"environment_readiness": plan["environment_readiness"]}
+            if "environment_readiness" in plan
+            else {}
+        ),
         "pair_coverage": {
             "planned": len(paired),
             "harness_comparable": sum(pair["harness_comparable"] for pair in paired),

@@ -3,18 +3,22 @@
 from __future__ import annotations
 
 import json
+import os
+import shutil
 import signal
 import subprocess
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 import pytest
 from test_qualification import docker_archive
 
+from skilleval import lifecycle
 from skilleval.errors import SkillEvalError
 from skilleval.lifecycle import Lifecycle, inventory_names, recover
-from skilleval.qualification import _invoke
+from skilleval.qualification import MAX_IMAGE_BYTES, _invoke
 
 
 def runtime_at(root: Path) -> Path:
@@ -78,8 +82,178 @@ def test_image_copy_tamper_refused_before_create(tmp_path: Path) -> None:
         with pytest.raises(SkillEvalError, match=r"image|archive"):
             session.create()
         assert session.ticket["create_attempted"] is False
+        assert not (Path(session.ticket["runtime_state"]) / "calls.jsonl").exists()
     finally:
         session.cleanup()
+
+
+def test_prepare_verifies_while_copying_and_create_independently_rechecks_staged_bytes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checked: list[tuple[Path, Path | None]] = []
+    inspect = lifecycle._image_archive
+
+    def inspected(path: Path, expected: str, copy_to: Path | None = None) -> dict[str, Any]:
+        checked.append((path, copy_to))
+        return inspect(path, expected, copy_to)
+
+    monkeypatch.setattr(lifecycle, "_image_archive", inspected)
+    session = session_at(tmp_path)
+    source = tmp_path / "image/image.tar"
+    staged = Path(session.ticket["runtime_state"]) / "image.tar"
+    try:
+        assert checked == [(source, staged)]
+        assert session.ticket["image"] == inspect(source, session.ticket["image"]["sha256"])
+        assert source.read_bytes() == staged.read_bytes()
+        session.create()
+        assert checked == [(source, staged), (staged, None)]
+        timings = session.ticket["timings_seconds"]
+        for field in (
+            "prepare_total",
+            "prepare_identity",
+            "prepare_image_copy_verify",
+            "create_total",
+            "create_identity",
+            "create_image_verify",
+        ):
+            assert timings[field] >= 0
+        assert timings["prepare_total"] >= timings["prepare_image_copy_verify"]
+        assert timings["create_total"] >= timings["create_image_verify"]
+        saved = json.loads((session.output / "recovery.json").read_text())
+        assert saved["timings_seconds"] == timings
+    finally:
+        session.cleanup()
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [
+        "digest",
+        "format",
+        "symlink",
+        "fifo",
+        "oversized",
+        "mutated",
+        "copy",
+        "register",
+        "timing-write",
+        "interrupt",
+    ],
+)
+def test_prepare_failure_removes_only_owned_output_and_runtime_home(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure: str
+) -> None:
+    import hashlib
+
+    runtime = runtime_at(tmp_path / "runtime")
+    archive, digest = docker_archive(tmp_path / "image")
+    output = tmp_path / "parent/result"
+    output.parent.mkdir()
+    sentinel = output.parent / "keep"
+    sentinel.write_text("preexisting parent contents")
+    homes: list[Path] = []
+    allocate = lifecycle.tempfile.mkdtemp
+
+    def allocated(*args: Any, **kwargs: Any) -> str:
+        name = allocate(*args, **kwargs)
+        homes.append(Path(name))
+        return name
+
+    monkeypatch.setattr(lifecycle.tempfile, "mkdtemp", allocated)
+    if failure == "digest":
+        archive.write_bytes(b"changed image bytes")
+    elif failure == "format":
+        archive.write_bytes(b"not a Docker-save archive")
+        digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+    elif failure in ("symlink", "fifo", "oversized"):
+        archive.unlink()
+        if failure == "symlink":
+            target, _ = docker_archive(tmp_path / "other-image")
+            archive.symlink_to(target)
+        elif failure == "fifo":
+            os.mkfifo(archive)
+        else:
+            with archive.open("wb") as stream:
+                stream.truncate(MAX_IMAGE_BYTES + 1)
+    elif failure == "mutated":
+        from skilleval import qualification
+
+        inspect_contents = qualification._docker_save
+
+        def mutate_source(source: Any) -> dict[str, Any]:
+            details = inspect_contents(source)
+            with archive.open("r+b") as stream:
+                stream.write(b"changed after archive inspection")
+            return details
+
+        monkeypatch.setattr(qualification, "_docker_save", mutate_source)
+    elif failure in ("copy", "interrupt"):
+        inspect = lifecycle._image_archive
+
+        def failed_copy(path: Path, expected: str, copy_to: Path | None = None) -> dict[str, Any]:
+            if copy_to is not None:
+                copy_to.write_bytes(b"partial copy")
+                if failure == "interrupt":
+                    raise KeyboardInterrupt
+                raise OSError("copy write failed")
+            return inspect(path, expected, copy_to)
+
+        monkeypatch.setattr(lifecycle, "_image_archive", failed_copy)
+    else:
+        write = lifecycle._write
+        writes = 0
+
+        def failed_write(path: Path, value: dict[str, Any]) -> None:
+            nonlocal writes
+            writes += 1
+            if failure == "timing-write" and writes == 1:
+                write(path, value)
+                return
+            path.write_text("partial registration")
+            raise OSError("ticket write failed")
+
+        monkeypatch.setattr(lifecycle, "_write", failed_write)
+    expected_error = {
+        "digest": "digest changed or mismatched",
+        "format": "truncated Docker-save archive header",
+        "symlink": "cannot inspect regular Docker-save",
+        "fifo": "bounded regular file",
+        "oversized": "bounded regular file",
+        "mutated": "changed during inspection",
+        "copy": "copy write failed",
+        "register": "ticket write failed",
+        "timing-write": "ticket write failed",
+        "interrupt": None,
+    }[failure]
+    try:
+        with pytest.raises((SkillEvalError, OSError, KeyboardInterrupt), match=expected_error):
+            Lifecycle.prepare(output, runtime, archive, digest)
+        assert not output.exists()
+        assert all(not home.exists() for home in homes)
+        assert sentinel.read_text() == "preexisting parent contents"
+        assert archive.exists()
+        assert not list(output.parent.glob(".lifecycle-*"))
+    finally:
+        # Also clean up when this regression test runs against the old behavior.
+        for home in homes:
+            shutil.rmtree(home, ignore_errors=True)
+        shutil.rmtree(output, ignore_errors=True)
+
+
+@pytest.mark.parametrize("symlink", [False, True])
+def test_prepare_existing_output_is_preserved(tmp_path: Path, symlink: bool) -> None:
+    runtime = runtime_at(tmp_path / "runtime")
+    archive, digest = docker_archive(tmp_path / "image")
+    output = tmp_path / "result"
+    existing = tmp_path / "existing" if symlink else output
+    existing.mkdir()
+    if symlink:
+        output.symlink_to(existing, target_is_directory=True)
+    sentinel = existing / "keep"
+    sentinel.write_text("preexisting output")
+    with pytest.raises(FileExistsError):
+        Lifecycle.prepare(output, runtime, archive, digest)
+    assert sentinel.read_text() == "preexisting output"
 
 
 def test_new_machine_names_are_neutral_and_legacy_recovery_remains_readable(tmp_path: Path) -> None:
@@ -492,7 +666,6 @@ def test_reported_observer_shutdown_failure_downgrades_success(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     import runpy
-    from typing import Any
 
     probe = runpy.run_path(str(Path(__file__).parents[1] / "scripts" / "qualify-lifecycle.py"))
     function = probe["run"]

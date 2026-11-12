@@ -21,6 +21,7 @@ from skilleval import evidence
 from skilleval.contracts import Digest, Identifier, Record
 from skilleval.errors import SkillEvalError
 from skilleval.grading import _read_regular
+from skilleval.identity import environment_identity, object_digest
 
 MAX_ARCHIVE_BYTES = 700 * 1024
 MAX_UNPACKED_BYTES = 16 * 1024 * 1024
@@ -105,7 +106,27 @@ def _read_reference(
     from skilleval import task_package
     from skilleval.study import _clean_native
 
-    package = task_package.load_package(Path(ref.package), ref.package_sha256)
+    report = Path(ref.report).absolute()
+    raw = _read_regular(report, task_package.MAX_VALIDATION_BYTES)
+    if hashlib.sha256(raw).hexdigest() != ref.report_sha256:
+        raise SkillEvalError("assessment observation report digest differs")
+    value = evidence._parse_json(raw)
+    if not isinstance(value, dict) or value.get("schema_version") not in (1, 2):
+        raise SkillEvalError("invalid assessment observation report binding")
+    if value["schema_version"] == 1:
+        package = task_package.load_package(Path(ref.package), ref.package_sha256)
+    else:
+        package = task_package.read_package(Path(ref.package), ref.package_sha256)
+        original = value.get("package")
+        contract = value.get("execution_contract")
+        if (
+            not isinstance(original, str)
+            or not Path(original).is_absolute()
+            or Path(original).resolve() != Path(ref.package).resolve()
+            or contract != task_package.execution_contract(package)
+            or value.get("execution_contract_sha256") != object_digest(contract)
+        ):
+            raise SkillEvalError("invalid assessment observation execution contract binding")
     if (
         Path(package.task).resolve() != task_path.resolve()
         or package.task_sha256 != task_digest
@@ -120,15 +141,8 @@ def _read_reference(
     if len(lanes) != 1:
         raise SkillEvalError("assessment observation lane is missing")
     lane = lanes[0]
-    report = Path(ref.report).absolute()
-    raw = _read_regular(report, task_package.MAX_VALIDATION_BYTES)
-    if hashlib.sha256(raw).hexdigest() != ref.report_sha256:
-        raise SkillEvalError("assessment observation report digest differs")
-    value = evidence._parse_json(raw)
     if (
-        not isinstance(value, dict)
-        or value.get("schema_version") != 1
-        or value.get("kind") != "skilleval-task-validation"
+        value.get("kind") != "skilleval-task-validation"
         or value.get("package_sha256") != ref.package_sha256
         or value.get("family") != package.family
         or value.get("inference_requests") != 0
@@ -144,6 +158,10 @@ def _read_reference(
     if len(rows) != 1:
         raise SkillEvalError("assessment observation case missing or duplicated")
     row = rows[0]
+    if value["schema_version"] == 2 and row.get("readiness_identity") != environment_identity(
+        row.get("identity"), package.environment.profile
+    ):
+        raise SkillEvalError("invalid assessment observation readiness binding")
     if (
         not isinstance(row.get("image"), dict)
         or row["image"].get("sha256") != package.environment.image_sha256
@@ -179,7 +197,17 @@ def _read_reference(
         process != observed["process"]
         or process.get("argv") != list(lane.argv)
         or not task_package._profile_matches(process, package.environment.profile)
-        or task_package.compare_lane(lane, process, package.environment.profile) != observed
+        or (
+            value["schema_version"] == 1
+            and task_package.compare_lane(lane, process, package.environment.profile) != observed
+        )
+        or (
+            value["schema_version"] == 2
+            and (
+                observed.get("expected") != lane.expected
+                or observed.get("expected_exit_code") != lane.expected_exit_code
+            )
+        )
     ):
         raise SkillEvalError("assessment observation differs from retained execution")
     return lane, process

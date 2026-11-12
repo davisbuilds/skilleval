@@ -9,6 +9,7 @@ import hashlib
 import json
 import os
 import platform
+import re
 import shutil
 import stat
 from pathlib import Path
@@ -33,6 +34,9 @@ SOURCES = (
     "src/skilleval/citation_correction.py",
     "src/skilleval/repair_outcomes.py",
     "src/skilleval/task_package.py",
+    "src/skilleval/task_environment.py",
+    "src/skilleval/task_transfer.py",
+    "src/skilleval/native_process.py",
     "src/skilleval/task_validation_guest.py",
     "src/skilleval/reliability.py",
     "src/skilleval/calibration.py",
@@ -191,4 +195,58 @@ def source_identity() -> dict[str, str]:
 
 
 def snapshot_identity(runtime_binary: str) -> dict[str, Any]:
-    return {"runtime": runtime_identity(runtime_binary), "sources": source_identity()}
+    return {
+        "runtime": runtime_identity(runtime_binary),
+        "sources": source_identity(),
+        "controller": {
+            "implementation": platform.python_implementation(),
+            "version": platform.python_version(),
+        },
+    }
+
+
+# Execution dependencies for completed, credential-free task-environment evidence.
+# Host interpretation is replayed separately; model/grade/report code is not run.
+ENVIRONMENT_SOURCES = (
+    "src/skilleval/evidence.py",
+    "src/skilleval/lifecycle.py",
+    "src/skilleval/qualification.py",
+    "src/skilleval/task_environment.py",
+    "src/skilleval/task_transfer.py",
+    "src/skilleval/task_validation_guest.py",
+    "src/skilleval/native_process.py",
+)
+SOLVER_ENVIRONMENT_SOURCES = ("src/skilleval/solver_boundary.py",)
+
+
+def environment_identity(captured: object, execution_profile: str) -> dict[str, Any]:
+    """Project recorded execution proof, never fill missing evidence from live files."""
+    if execution_profile not in {"native-root-v1", "solver-isolated-v1"}:
+        raise SkillEvalError("unknown environment identity execution profile")
+    names = ENVIRONMENT_SOURCES + (
+        SOLVER_ENVIRONMENT_SOURCES if execution_profile == "solver-isolated-v1" else ()
+    )
+    if not isinstance(captured, dict) or not isinstance(captured.get("runtime"), dict):
+        raise SkillEvalError("missing environment identity runtime proof")
+    controller = captured.get("controller")
+    if (
+        not isinstance(controller, dict)
+        or set(controller) != {"implementation", "version"}
+        or any(not isinstance(value, str) or not value for value in controller.values())
+    ):
+        raise SkillEvalError("missing environment identity controller proof")
+    sources = captured.get("sources")
+    if not isinstance(sources, dict) or any(
+        not isinstance(sources.get(name), str)
+        or re.fullmatch(r"[a-f0-9]{64}", sources[name]) is None
+        for name in names
+    ):
+        raise SkillEvalError("missing or invalid environment identity source proof")
+    return {
+        "schema_version": 1,
+        "profile": "task-environment-v1",
+        "execution_profile": execution_profile,
+        "runtime": captured["runtime"],
+        "controller": controller,
+        "sources": {name: sources[name] for name in names},
+    }

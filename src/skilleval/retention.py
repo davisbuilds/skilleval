@@ -257,7 +257,8 @@ def _staging_evidence(output: Path, name: str) -> dict[str, bytes | None]:
             not isinstance(report, dict)
             or report.get("case_id") != output.name
             or not isinstance(parent, dict)
-            or parent.get("schema_version") != 1
+            or type(parent.get("schema_version")) is not int
+            or parent["schema_version"] not in {1, 2}
             or parent.get("kind") != "skilleval-task-validation"
             or not isinstance(parent.get("cases"), list)
             or sum(row == report for row in parent["cases"]) != 1

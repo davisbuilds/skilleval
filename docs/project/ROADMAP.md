@@ -166,12 +166,16 @@ Scored dispatch requires both applicable full-workload environment evidence and
 independently supported grader reliability. A bounded runtime seal, parseable
 judgment, model agreement, or successful skill read cannot satisfy those gates.
 
-The next operator-facing work is a local review exception inbox and faster
-preflight, detailed in the [backlog](BACKLOG.md). Automated assessment and targeted
-follow-up should settle routine questions; human involvement focuses on material
-residual ambiguity. A results summary should remain useful when no human action
-is required. Measure and remove redundant verification before broadening caches
-or weakening runtime boundaries.
+The next operator-facing work is a local review exception inbox, detailed in the
+[backlog](BACKLOG.md). Automated assessment and targeted follow-up should settle
+routine questions; human involvement focuses on material residual ambiguity.
+A results summary should remain useful when no human action is required.
+Use [task-scoped readiness](../system/TASKS.md#readiness-reuse-and-invalidation)
+to reuse completed environment observations as briefs, grading criteria and
+reporting evolve. Changed execution conditions require fresh validation; current
+parsers and expectations replay retained evidence. Frozen study plans still bind
+full identities. Use dispatch/lifecycle phase timings and observed invalidation
+causes to choose further launch optimizations without weakening runtime boundaries.
 
 ## Later
 
