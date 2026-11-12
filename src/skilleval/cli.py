@@ -313,7 +313,20 @@ def parser() -> argparse.ArgumentParser:
     package_validate.add_argument("package", type=Path)
     package_validate.add_argument("--sha256", required=True)
     package_validate.add_argument("--runtime", type=Path, required=True)
-    package_validate.add_argument("--output", type=Path, required=True)
+    package_validate.add_argument(
+        "--output", type=Path, help="New validation directory (required unless --dry-run)"
+    )
+    package_validate.add_argument(
+        "--reuse", type=Path, help="Pinned prior independent validation report"
+    )
+    package_validate.add_argument(
+        "--reuse-sha256", help="SHA-256 of --reuse report; both flags required together"
+    )
+    package_validate.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show independent checks to execute/reuse without creating files or VMs",
+    )
     handoff = commands.add_parser("handoff", help="Freeze a spec for fresh vanilla implementation")
     handoff_commands = handoff.add_subparsers(dest="operation", required=True)
     handoff_prepare = handoff_commands.add_parser(
@@ -469,7 +482,30 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
                 write_acceptance_review(acceptance_spec, args.review_output)
                 result["review_output"] = str(args.review_output.absolute())
             return result
-        return validate_environment(args.package, args.sha256, args.output, runtime=args.runtime)
+        if args.dry_run:
+            from skilleval.lane_readiness import plan_validation
+
+            _, lanes = plan_validation(
+                args.package, args.sha256, args.runtime, args.reuse, args.reuse_sha256
+            )
+            return {
+                "schema_version": 1,
+                "kind": "skilleval-task-validation-plan",
+                "package": str(args.package.absolute()),
+                "package_sha256": args.sha256,
+                "lanes": lanes,
+                "inference_requests": 0,
+            }
+        if args.output is None:
+            raise SkillEvalError("--output is required unless --dry-run is selected")
+        return validate_environment(
+            args.package,
+            args.sha256,
+            args.output,
+            runtime=args.runtime,
+            reuse=args.reuse,
+            reuse_sha256=args.reuse_sha256,
+        )
     if args.command in {"repair", "artifact"}:
         from skilleval.repair import collect_control, collect_repair, prepare_repair
         from skilleval.repair_check import check_repair

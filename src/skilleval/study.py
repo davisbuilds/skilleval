@@ -219,7 +219,7 @@ def _check_inputs(
             ):
                 raise SkillEvalError("study differs from validated task package or execution route")
             check_environment_identity(validation, package.environment.profile, identity)
-            if readiness is not None and validation.get("schema_version") == 2:
+            if readiness is not None and validation.get("schema_version") in {2, 3}:
                 readiness[task.task_id] = readiness_selection(
                     package, task.package_sha256, validation
                 )

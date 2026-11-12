@@ -59,6 +59,9 @@ class TaskEnvironment(Record):
     image_archive: str = Field(min_length=1)
     image_sha256: Digest
     profile: ExecutionProfile = "native-root-v1"
+    validation_isolation: Literal["case-v1", "lane-v1"] = Field(
+        default="case-v1", exclude_if=lambda value: value == "case-v1"
+    )
     setup: tuple[str, ...] = Field(min_length=1, max_length=32)
     required_paths: tuple[str, ...] = Field(min_length=1, max_length=100)
     coverage_gaps: tuple[str, ...] = Field(default=(), max_length=32)
@@ -156,7 +159,7 @@ def load_package(path: Path, digest: str) -> TaskPackageSpec:
 
 def execution_contract(spec: TaskPackageSpec) -> dict[str, Any]:
     """Bind executed conditions; expectations are replayed against retained observations."""
-    return {
+    contract = {
         "schema_version": 1,
         "image_sha256": spec.environment.image_sha256,
         "profile": spec.environment.profile,
@@ -177,6 +180,9 @@ def execution_contract(spec: TaskPackageSpec) -> dict[str, Any]:
             for case in spec.validation
         ],
     }
+    if spec.environment.validation_isolation != "case-v1":
+        contract["validation_isolation"] = spec.environment.validation_isolation
+    return contract
 
 
 def _outside(spec: TaskPackageSpec, output: Path) -> None:
@@ -281,10 +287,21 @@ def validate_environment(
     output: Path,
     *,
     runtime: Path,
+    reuse: Path | None = None,
+    reuse_sha256: str | None = None,
 ) -> dict[str, Any]:
     """Run declared baseline/reference commands only in disposable offline VMs."""
     from skilleval.task_environment import validate_environment as execute
 
+    spec = read_package(package, digest)
+    if spec.environment.validation_isolation == "lane-v1":
+        from skilleval.lane_validation import validate_environment as execute_lanes
+
+        return execute_lanes(
+            package, digest, output, runtime=runtime, reuse=reuse, reuse_sha256=reuse_sha256
+        )
+    if reuse is not None or reuse_sha256 is not None:
+        raise SkillEvalError("selective reuse requires validation_isolation lane-v1")
     return execute(package, digest, output, runtime=runtime)
 
 
@@ -306,9 +323,13 @@ def checked_validation(
         not isinstance(value, dict)
         or value.get("kind") != "skilleval-task-validation"
         or type(value.get("schema_version")) is not int
-        or value["schema_version"] not in {1, 2}
+        or value["schema_version"] not in {1, 2, 3}
     ):
         raise SkillEvalError("unsupported task validation report")
+    if value["schema_version"] == 3:
+        from skilleval.lane_readiness import checked_report
+
+        return spec, checked_report(spec, report, report_digest)
     scoped = value["schema_version"] == 2
     original = spec
     if scoped:
@@ -405,6 +426,15 @@ def check_environment_identity(
     report: dict[str, Any], profile: str, current: dict[str, Any]
 ) -> None:
     """Reuse only completed evidence whose execution dependencies still agree."""
+    if report.get("schema_version") == 3:
+        expected = environment_identity(current, profile, isolation="lane-v1")
+        if any(
+            lane.get("readiness_identity") != expected
+            for case in report["cases"]
+            for lane in case["lanes"]
+        ):
+            raise SkillEvalError("task environment execution identity changed; run new validation")
+        return
     scoped = report.get("schema_version") == 2
     expected = environment_identity(current, profile) if scoped else current
     key = "readiness_identity" if scoped else "identity"
@@ -416,6 +446,10 @@ def readiness_selection(
     spec: TaskPackageSpec, selected_digest: str, report: dict[str, Any]
 ) -> dict[str, Any]:
     """Keep original disclosures visible alongside this selection's interpretation."""
+    if report.get("schema_version") == 3:
+        from skilleval.lane_readiness import selection_summary
+
+        return selection_summary(spec, selected_digest, report)
     return {
         "policy": "task-environment-v1",
         "original_package": report["package"],

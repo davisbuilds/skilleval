@@ -40,10 +40,10 @@ They do not claim installed-wheel or cross-host runtime qualification.
 
 ## Completed task-environment readiness
 
-Schema-2 [task validation](TASKS.md#readiness-reuse-and-invalidation) separates the
+Schema-2/3 [task validation](TASKS.md#readiness-reuse-and-invalidation) separates the
 conditions executed in the VM from current host interpretation. Its execution
 contract binds image and frozen case identities, execution profile, ordered
-cases/lanes, case IDs/roles, lane IDs, argv and deadlines. Each case retains both
+cases/lanes, case IDs/roles, lane IDs, argv and deadlines. Each shared-case receipt retains both
 the full original identity and a named `task-environment-v1` readiness projection
 covering the runtime/host, controller Python implementation/version, and applicable
 execution sources.
@@ -58,6 +58,15 @@ binds `solver_boundary.py`, including identity, filesystem/dependency projection
 and namespace teardown. `native-root-v1` keeps its separate execution profile.
 These are conservative whole-module fingerprints: unrelated edits within a named
 module still require execution. There is no per-function semantic cache.
+
+Independent `lane-v1` execution uses a fresh lifecycle per check and the
+`task-environment-lanes-v1` projection, which additionally binds
+`lane_validation.py`. Schema-3 aggregates reference each original execution;
+there is no invented single full identity for a mixture of reused/new lanes.
+`lane_readiness.py` interprets and selects retained observations; current readers
+recheck its contracts instead of treating its source hash as a VM dependency.
+The shared-case executor refactor changes its whole-module fingerprint once;
+older evidence remains readable but requires fresh execution for current readiness.
 
 Current parsers and expectations replay retained complete process evidence.
 Briefs, grader/edit scope, explanatory prose, pricing and native reporting or

@@ -269,3 +269,176 @@ def test_v2_raw_observation_export_survives_changed_host_interpretation(
 
     monkeypatch.setattr(task_package, "observations", changed_interpretation)
     assert payloads(selected) == expected
+
+
+def version_three(observed, route, *, source_status="unexpected"):
+    from skilleval import lane_readiness
+
+    ref, task, old_directory, raw = version_two(observed, route)
+    spec = task_package.read_package(Path(ref.package), ref.package_sha256)
+    spec = spec.model_copy(
+        update={
+            "environment": spec.environment.model_copy(update={"validation_isolation": "lane-v1"})
+        }
+    )
+    package = task_package.prepare_package(spec, Path(ref.package).with_name("lane-package.json"))
+    ref = ref.model_copy(update={"package": package["path"], "package_sha256": package["sha256"]})
+    directory = old_directory.parent / "executions" / ref.case_id / ref.lane_id
+    directory.parent.mkdir(parents=True)
+    old_directory.rename(directory)
+    row = json.loads((directory / "validation.json").read_text())
+    row["status"] = source_status
+    row["readiness_identity"] = environment_identity(
+        row["identity"], spec.environment.profile, isolation="lane-v1"
+    )
+    (directory / "validation.json").write_text(json.dumps(row))
+    recovery_path = directory / "recovery.json"
+    recovery = json.loads(recovery_path.read_text())
+    recovery["output"] = str(directory)
+    recovery_path.write_text(json.dumps(recovery))
+    case = spec.validation[0]
+    receipt = directory / "lane-execution.json"
+    repair._publish(
+        receipt,
+        lane_readiness.execution_receipt(
+            spec, Path(ref.package), ref.package_sha256, case, case.lanes[0], row
+        ),
+    )
+    selected = [
+        {
+            "case_id": ref.case_id,
+            "lane_id": ref.lane_id,
+            "action": "execute",
+            "reason": "authored observation",
+            "source": {"receipt": str(receipt), "sha256": file_digest(receipt)},
+        }
+    ]
+    report = lane_readiness.validation_report(spec, Path(ref.package), ref.package_sha256, selected)
+    Path(ref.report).write_text(json.dumps(report))
+    return (
+        ref.model_copy(update={"report_sha256": file_digest(Path(ref.report))}),
+        task,
+        directory,
+        raw,
+    )
+
+
+def test_v3_unexpected_observation_exports_raw_evidence_without_live_readiness(observed, route):
+    expected = payloads(observed)
+    selected = version_three(observed, route)
+    Path(route["runtime"]).write_text("retained evidence must not execute")
+    Path(selected[1]["spec"].worker).unlink()
+    assert payloads(selected) == expected
+
+
+@pytest.mark.parametrize("binding", ["package", "package_digest", "process", "source_digest"])
+def test_v3_observation_rejects_changed_selection_bindings(observed, route, binding):
+    selected = version_three(observed, route)
+    assert payloads(selected)
+    ref, *rest = selected
+    report = json.loads(Path(ref.report).read_text())
+    lane = report["cases"][0]["lanes"][0]
+    if binding == "package":
+        ref = ref.model_copy(update={"package": str(Path(ref.package).with_name("foreign.json"))})
+    elif binding == "package_digest":
+        ref = ref.model_copy(update={"package_sha256": "f" * 64})
+    elif binding == "process":
+        lane["comparison"]["process"]["stdout"] = "{}"
+    else:
+        lane["source"]["sha256"] = "f" * 64
+    Path(ref.report).write_text(json.dumps(report))
+    ref = ref.model_copy(update={"report_sha256": file_digest(Path(ref.report))})
+    with pytest.raises(SkillEvalError):
+        payloads((ref, *rest))
+
+
+def test_v3_incomplete_source_with_raw_process_preserves_legacy_diagnostics(observed, route):
+    from skilleval import lane_readiness
+
+    legacy = version_two(observed, route)
+    ref, task, directory, raw = legacy
+    report = json.loads(Path(ref.report).read_text())
+    report["cases"][0]["status"] = "incomplete"
+    (directory / "validation.json").write_text(json.dumps(report["cases"][0]))
+    Path(ref.report).write_text(json.dumps(report))
+    ref = ref.model_copy(update={"report_sha256": file_digest(Path(ref.report))})
+    legacy = ref, task, directory, raw
+    expected = payloads(legacy)
+    selected = version_three(legacy, route, source_status="incomplete")
+    ref = selected[0]
+    _, report = lane_readiness.read_report(Path(ref.report), ref.report_sha256)
+    assert report["cases"][0]["lanes"][0]["comparison"]["status"] == "unexpected"
+    assert payloads(selected) == expected
+
+
+def test_v3_observation_requires_selected_candidate(observed, route):
+    selected = version_three(observed, route)
+    assert payloads(selected)
+    with pytest.raises(SkillEvalError, match="candidate"):
+        payloads(selected, candidate_digest="a" * 64)
+
+
+def changed_raw_observation(observed, route, fault):
+    selected = version_two(observed, route)
+    assert payloads(selected)
+    ref, task, directory, raw = selected
+    report = json.loads(Path(ref.report).read_text())
+    source = report["cases"][0]
+    process = source["lanes"][0]["process"]
+    if fault == "timeout":
+        process["timed_out"] = True
+    elif fault == "output_limit":
+        process["output_limit_reached"] = True
+    elif fault == "returncode":
+        process["returncode"] = None
+    elif fault == "profile":
+        process["profile"]["uid"] = 0
+    elif fault == "boundary":
+        process["boundary"]["namespace_reaped"] = False
+    elif fault == "argv":
+        process["argv"] = ["python3", "-c", "print('different command')"]
+    else:
+        process["stdout"] = "complete raw output that is not JSON"
+    (directory / "validation.json").write_text(json.dumps(source))
+    (directory / "lane-browser.json").write_text(json.dumps(process))
+    Path(ref.report).write_text(json.dumps(report))
+    ref = ref.model_copy(update={"report_sha256": file_digest(Path(ref.report))})
+    return ref, task, directory, raw
+
+
+@pytest.mark.parametrize("fault", ["timeout", "output_limit"])
+def test_v3_incomplete_diagnostics_preserve_legacy_projection_without_unpacking(
+    observed, route, fault
+):
+    legacy = changed_raw_observation(observed, route, fault)
+    expected = payloads(legacy)
+    selected = version_three(legacy, route)
+    exported = payloads(selected)
+    assert exported == expected
+    projection = json.loads(exported["case/observations/observation-001/observation.json"])
+    assert projection["execution_complete"] is False
+    assert not any("/artifacts/" in name for name in exported)
+
+
+@pytest.mark.parametrize("fault", ["returncode", "profile", "boundary", "argv"])
+def test_v3_raw_execution_binding_refusals_match_legacy(observed, route, fault):
+    legacy = changed_raw_observation(observed, route, fault)
+    with pytest.raises(SkillEvalError):
+        payloads(legacy)
+    selected = version_three(legacy, route)
+    with pytest.raises(SkillEvalError):
+        payloads(selected)
+
+
+def test_v3_parser_failure_exports_physically_complete_raw_evidence_like_legacy(observed, route):
+    legacy = changed_raw_observation(observed, route, "parser")
+    expected = payloads(legacy)
+    selected = version_three(legacy, route)
+    ref = selected[0]
+    report = json.loads(Path(ref.report).read_text())
+    assert report["cases"][0]["lanes"][0]["comparison"]["status"] == "incomplete"
+    exported = payloads(selected)
+    assert exported == expected
+    projection = json.loads(exported["case/observations/observation-001/observation.json"])
+    assert projection["execution_complete"] is True
+    assert projection["process"]["stdout"] == "complete raw output that is not JSON"

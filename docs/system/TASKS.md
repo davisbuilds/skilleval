@@ -78,7 +78,7 @@ uv run skilleval task-package validate-environment package.json \
 
 Preparation verifies captured context, task/image identities, unique lanes and
 baseline agreement. It launches no VM and executes no imported code. The explicit
-validation command starts a fresh offline VM per capture and retains full bounded
+validation command starts a fresh offline VM per capture by default and retains full bounded
 command observations, source changes, invocation profile and cleanup evidence.
 Select `solver-isolated-v1` to run commands through the native solver's
 unprivileged filesystem/process boundary, using fresh homes per lane. The legacy
@@ -108,7 +108,7 @@ must themselves use meaningful controls; a schema cannot establish their truth.
 
 ### Readiness reuse and invalidation
 
-New validation receipts use schema version 2. They retain the original package
+Shared-case validation receipts use schema version 2. They retain the original package
 locator and digest, full execution identity and observations, plus an
 `execution_contract` and its digest. Each case records a `readiness_identity`
 projected from its captured full identity. The execution contract binds image,
@@ -152,6 +152,49 @@ development plans remain readable. The packaged native route requires
 The native writable-file mode remains `repair` for wire compatibility; logical
 task family lives in the package. Readiness reuse grants no scored admission or
 broader environment coverage.
+
+### Reuse individual checks
+
+Set `environment.validation_isolation` to `lane-v1` to execute every lane in a
+fresh VM and produce a schema-3 report. The default `case-v1` keeps the shared
+workspace within each case. Fresh homes and source-byte checks alone do not make
+shared-case lanes independent: permissions, empty directories, ignored caches,
+Git index state and kernel resources can survive earlier commands. Existing
+schema-1/2 receipts cannot become independent lane evidence.
+
+```sh
+uv run skilleval task-package validate-environment package.json \
+  --sha256 PACKAGE_DIGEST --runtime /path/to/smolvm \
+  --reuse prior/task-validation.json --reuse-sha256 REPORT_DIGEST --dry-run
+uv run skilleval task-package validate-environment package.json \
+  --sha256 PACKAGE_DIGEST --runtime /path/to/smolvm \
+  --reuse prior/task-validation.json --reuse-sha256 REPORT_DIGEST --output next-validation
+```
+
+Both commands use the same planner; the preview creates no files or VMs. Omit
+both reuse flags to execute every lane. The caller names one pinned prior report;
+there is no hidden cache or automatic search. The first independent qualification
+pays for one VM startup per lane. Later validation executes only missing,
+incomplete or incompatible lanes, retaining direct references to the original
+`lane-execution.json` receipts for the others. Repeated reuse does not create a
+recursive report chain.
+
+Each lane binds its image, profile, case ID/role/input, lane ID, command and
+deadline plus the `task-environment-lanes-v1` execution fingerprint. Changing one
+command reruns that lane; changing one case input reruns that case's lanes.
+Reordering independent lanes does not require rerunning them. Image, runtime or
+applicable execution-code changes require all affected lanes again. Parser and
+expectation changes reinterpret the same raw observation; they do not force a
+new execution or silently turn an unresolved interpretation into readiness.
+Build/test sequences that need shared files belong in one lane.
+
+The aggregate records each lane's action, reason, original source, current
+comparison and execution completeness. Studies replay current expectations and
+identities; assessments resolve selected observations to their original producer.
+Original failures, gaps and limitations stay visible. Missing or tampered evidence
+is an error before execution, not a cache miss. Failed executions remain in new
+receipts; incomplete cleanup stops subsequent VMs. Input drift at final readback
+retains execution envelopes but prevents publication of an aggregate report.
 
 ## Grade the artifact independently
 

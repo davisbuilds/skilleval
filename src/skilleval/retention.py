@@ -252,18 +252,42 @@ def _staging_evidence(output: Path, name: str) -> dict[str, bytes | None]:
             raise SkillEvalError("unsupported checker staging producer")
     elif name == "validation-input.tar":
         report = read(output / "validation.json")
-        parent = read(output.parent / "task-validation.json")
-        if (
-            not isinstance(report, dict)
-            or report.get("case_id") != output.name
-            or not isinstance(parent, dict)
-            or type(parent.get("schema_version")) is not int
-            or parent["schema_version"] not in {1, 2}
-            or parent.get("kind") != "skilleval-task-validation"
-            or not isinstance(parent.get("cases"), list)
-            or sum(row == report for row in parent["cases"]) != 1
-        ):
-            raise SkillEvalError("unsupported validation staging producer")
+        with _directory(output) as directory:
+            try:
+                os.stat("lane-execution.json", dir_fd=directory, follow_symlinks=False)
+                lane_execution = True
+            except FileNotFoundError:
+                snapshots["lane-execution.json"] = None
+                lane_execution = False
+        if lane_execution:
+            from skilleval import lane_readiness
+
+            receipt = output / "lane-execution.json"
+            read(receipt)
+            raw_receipt = snapshots[receipt.name]
+            assert raw_receipt is not None
+            _, case, lane, recorded = lane_readiness.read_execution(
+                {"receipt": str(receipt), "sha256": hashlib.sha256(raw_receipt).hexdigest()}
+            )
+            if (
+                report != recorded
+                or case.case_id != output.parent.name
+                or lane.lane_id != output.name
+            ):
+                raise SkillEvalError("lane validation staging producer binding differs")
+        else:
+            parent = read(output.parent / "task-validation.json")
+            if (
+                not isinstance(report, dict)
+                or report.get("case_id") != output.name
+                or not isinstance(parent, dict)
+                or type(parent.get("schema_version")) is not int
+                or parent["schema_version"] not in {1, 2}
+                or parent.get("kind") != "skilleval-task-validation"
+                or not isinstance(parent.get("cases"), list)
+                or sum(row == report for row in parent["cases"]) != 1
+            ):
+                raise SkillEvalError("unsupported validation staging producer")
     else:
         report = read(output / "native-run.json")
         if (
