@@ -14,8 +14,46 @@ shipped history. Private provenance stays outside public entries and issues.
 
 ## Open
 
-- **Acceptance validity before more comparisons:** operator maps now freeze
-  declared source rationale, probe-field and semantic routes, controls, exposure
+- **Review exception inbox:** provide a local browser interface over selected
+  retained results, with concise automated conclusions, agent-resolvable follow-ups
+  and only material residual questions for the operator. Show why each question
+  needs human input, prior investigation and relevant evidence; save responses
+  separately from original judgments. Artifact comparison remains optional.
+  Calibration sampling is a separate opt-in workflow, not default homework.
+- **Remaining readiness precision:** whole-module execution fingerprints still
+  couple task suites to unrelated changes within shared lifecycle, qualification
+  and evidence modules. Revisit further extraction when retained phase timings
+  and repeat-validation causes show material cost. Preserve fresh isolation,
+  launched-byte verification, cleanup and original receipts when narrowing the
+  remaining footprint.
+- **macOS process-group cleanup:** investigate intermittent `PermissionError`
+  from `os.killpg` in native timeout cleanup during parallel deterministic tests.
+  The affected timeout tests pass individually; do not suppress signal failures
+  or weaken descendant cleanup without a causal reproduction. This is separate
+  from the Linux guest namespace teardown and independent-lane readiness checks.
+- **Interactive clarification:** the first specification pilot delegates bounded
+  product choices and runs each stage without live Q&A. Add a bounded conversation
+  loop when selected tasks need requirements elicitation: explicit needs-input vs
+  completed-artifact states, constrained owner answers separate from the judge,
+  consistent information access across arms, full-thread usage and total budgets,
+  retained reply identities and interruption evidence. A question-only response
+  is incomplete work; classify a missing requirement separately from unnecessary
+  deferral before changing the brief. Never improve only one arm mid-run.
+- **Specification quality and downstream usefulness:** the selected
+  [operational-metrics pilot](../../examples/document/operational-metrics/README.md)
+  now has source exclusions, requirement-level specification judgments, authored
+  alternatives/defects, browser/API observations, and exact artifact handoffs with
+  linked consumption and conditional dollar estimates.
+  Independent semantic reliability remains unestablished. Audit actual generated
+  specifications and disagreements against the original need, including truthful
+  blockers, unsupported choices and incomplete delivery. Review the first pair's
+  retained downstream observations and requirement judgments, preserving valid
+  alternative designs. Authored-control discrimination does not
+  establish independent reliability or complete feature coverage. Keep failed
+  attempts and stage costs visible, and retain
+  experiment evidence separately from any later real contribution.
+- **Acceptance validity for scored or general effectiveness claims:** operator maps
+  freeze declared source rationale, probe-field and semantic routes, controls, exposure
   and gaps. They do not establish that those requirements are correct or complete.
   Independently review the completed-session map's scope against ordinary work
   records and the corrected packets/lifecycle controls; retain the remaining gaps
@@ -23,16 +61,17 @@ shipped history. Private provenance stays outside public entries and issues.
   plausible partial fixes and legitimate alternatives to challenge the grader;
   include independent implementation from the brief where useful. Preserve the
   map's retrospective status and original outcomes. [Measurement design](MEASUREMENT.md)
-  owns this procedure. Do not resume comparisons merely because a map validates.
+  owns this procedure. Exploratory development can proceed with provisional
+  criteria and declared gaps; map validation does not establish grader validity.
 - **Native capability description and task presentation:** the app-server adapter
   declares restricted networking with external enforcement. Codex 0.164.0 still
   renders generic full-filesystem-access prose for that policy; track upstream
   support for describing external boundaries without overriding native prompts.
   Qualify each changed harness identity. The [solver boundary](../system/TASK-PRESENTATION.md)
   now separates controller files/processes and denies management transport;
-  this does not sanitize task, skill or Git-history content. Review those inputs
-  before new comparisons. The historical review exporter needs a neutral
-  presentation path without rewriting pinned captures. New images need runtime
+  this does not sanitize task, skill or Git-history content. Review changed inputs
+  and reuse applicable context controls. The historical review exporter needs a
+  neutral presentation path without rewriting pinned captures. New images need runtime
   tree checks and required-tool controls; io_uring-only tasks are outside the
   current profile.
 - **Skill-relevant task population:** use the current
@@ -40,8 +79,8 @@ shipped history. Private provenance stays outside public entries and issues.
   to select concrete debugging, implementation, review, UI, performance or QA
   work that maintainers actually delegate, then freeze separate evaluation cases.
   The [debugging expansion shortlist](PILOT-CANDIDATES.md#debugging-expansion-shortlist)
-  identifies four source-inspected candidates across three repositories. Qualify
-  the next capture, starting with fetchmd address validation; Promptfoo needs a
+  identifies four source-inspected candidates across three repositories. Defer
+  those captures while preparing the workflow-skill pilot; Promptfoo needs a
   separate dependency image and Dojo remains a reserve. Establish each task brief,
   skill fit and independent outcomes before capture. These candidates are not yet
   validated tasks. The repair adapter, source capture and polarity controls are
@@ -125,6 +164,10 @@ shipped history. Private provenance stays outside public entries and issues.
   the conditional API-equivalent scenario; never infer observed charges from it.
   Expose completed-request provider subtotals when native accounting is interrupted;
   currently raw receipts retain them while the normalized report stays unknown.
+  The first specification pilot demonstrates this boundary: a request-cap failure
+  retains matching provider/native raw input and output totals while canonical
+  accounting remains incomplete. Keep diagnostic readback separate from normalized
+  totals until a supported failed-attempt accounting contract is verified.
   Distinguish incomplete provider observations from absent observations, and keep
   the unobserved remainder and missing cache partition unknown.
   Prespecify estimands, missing-data policy and repeated-run analysis, with
@@ -175,6 +218,14 @@ shipped history. Private provenance stays outside public entries and issues.
   remain open. Real runtime stop/delete failures and host reboot
   remain outside the live controls; local fault-injection tests cover the
   refusal/retry contract.
+- **Intermittent macOS subprocess teardown:** a development gate on 2026-11-11
+  hit `EPERM` in the timeout test's second process-group stop, after the first stop
+  had terminated the leader. The focused rerun, ten instrumented repetitions and
+  a subsequent full gate passed. The original process-group state was not
+  captured, so the cause remains unconfirmed. Capture owned group membership and
+  termination state on recurrence, then test whether redundant teardown can be
+  removed safely. Do not suppress permission errors or weaken descendant cleanup
+  based on successful reruns.
 - **Qualification packaging:** the opt-in controls, native runner and admission
   currently require the source checkout and share private package helpers.
   Stabilize those interfaces when supporting installed-wheel qualification,
@@ -204,4 +255,4 @@ shipped history. Private provenance stays outside public entries and issues.
   its phase needs it. Pin and inspect that revision's license/NOTICE and tests
   before copying, adapting, or declaring it as a dependency. A research influence
   is not an adopted implementation.
-- **Later:** natural-discovery comparisons, pi support, TypeScript review UI.
+- **Later:** natural-discovery comparisons and pi support.

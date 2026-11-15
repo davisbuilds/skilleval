@@ -627,17 +627,28 @@ def test_guest_archive_refuses_symlink_collection_root(tmp_path: Path) -> None:
         guest_runner._archive(root, task, 1024 * 1024, 100)
 
 
+@pytest.mark.parametrize(
+    "responses",
+    [[], [("failed", 500)], [("timeout", 200)], [("complete", 500)]],
+)
 def test_provider_failure_never_completes(
-    tmp_path: Path, route: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path,
+    route: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+    responses: list[tuple[str, int]],
 ) -> None:
     @contextmanager
     def broker(auth: Any, directory: Path, **kwargs: Any) -> Iterator[Any]:
         directory.mkdir(mode=0o700)
+        kwargs["request_observer"](b'{"input": []}')
         try:
             yield SimpleNamespace(
                 socket_path=directory / "inference.sock",
                 clean=True,
-                receipts=[{"event": "request", "outcome": "failed", "upstream_status": 500}],
+                receipts=[
+                    {"event": "request", "outcome": outcome, "upstream_status": status}
+                    for outcome, status in responses
+                ],
             )
         finally:
             directory.rmdir()
@@ -646,6 +657,87 @@ def test_provider_failure_never_completes(
     report = invoke(tmp_path, route)
     assert report["status"] == "failed"
     assert report["provider_complete"] is False and report["cleanup_complete"]
+
+
+@pytest.mark.parametrize(
+    "fault,status", [("", "completed"), ("events-error", "failed"), ("timed-out", "timed-out")]
+)
+def test_recovered_provider_timeout_keeps_usage_and_cost_unknown(
+    tmp_path: Path,
+    route: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+    fault: str,
+    status: str,
+) -> None:
+    from datetime import date
+    from decimal import Decimal
+
+    from skilleval.accounting import PriceSchedule, estimate_api_equivalent_cost
+    from skilleval.judge import _run_files
+
+    receipts = [
+        {
+            "event": "request",
+            "request_id": 1,
+            "model": runner.MODEL,
+            "outcome": "timeout",
+            "upstream_status": 200,
+            "usage": {},
+        },
+        {
+            "event": "request",
+            "request_id": 2,
+            "model": runner.MODEL,
+            "outcome": "complete",
+            "upstream_status": 200,
+            "usage": {"input_tokens": 3, "output_tokens": 2, "total_tokens": 5},
+        },
+    ]
+
+    @contextmanager
+    def broker(auth: Any, directory: Path, **kwargs: Any) -> Iterator[Any]:
+        directory.mkdir(mode=0o700)
+        for _ in receipts:
+            kwargs["request_observer"](b'{"input": []}')
+        try:
+            yield SimpleNamespace(
+                socket_path=directory / "inference.sock", clean=True, receipts=receipts
+            )
+        finally:
+            directory.rmdir()
+
+    monkeypatch.setattr(runner, "broker_scope", broker)
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "scenario.json").write_text(json.dumps({"fault": fault, "complete_usage": True}))
+    frozen = tmp_path / "frozen"
+    captured = evidence.snapshot(source, frozen)
+    report = runner.run_native(
+        frozen, captured["manifest_sha256"], "Inspect the task.", tmp_path / "run", **route
+    )
+    assert report["status"] == status
+    assert report["provider_complete"] is False and report["cleanup_complete"]
+    assert report["request_count"] == 2
+    assert report["broker_receipts"] == receipts
+    usage = report["usage_accounting"]
+    assert usage["status"] == "incomplete"
+    assert usage["total_tokens"] is None
+    if status == "completed":
+        assert report["usage"] == {"input_tokens": 3, "cached_input_tokens": 1, "output_tokens": 2}
+        assert usage["provider_reconciliation"]["status"] == "incomplete"
+        assert usage["reasons"] == ["independent provider observations incomplete"]
+        verified, _retained, _artifacts = _run_files(tmp_path / "run", mode="review")
+        assert verified["status"] == "completed"
+    schedule = PriceSchedule(
+        model=runner.MODEL,
+        source_url="https://example.com/synthetic-pricing",
+        retrieved_on=date(2026, 10, 28),
+        input_per_million=Decimal("2"),
+        cached_input_per_million=Decimal("0.5"),
+        output_per_million=Decimal("8"),
+    )
+    cost = estimate_api_equivalent_cost(usage, schedule, model=runner.MODEL)
+    assert cost["status"] == "unknown" and cost["estimated_api_equivalent_usd"] is None
 
 
 def test_cleanup_failure_retains_ticket_and_namespace_until_recovered(

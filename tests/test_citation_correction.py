@@ -333,7 +333,7 @@ def test_correction_invocation_is_exact_and_budgeted(assessment, tmp_path, mutat
 
 
 @pytest.mark.parametrize(
-    "timeout,requests", [(0, 4), (901, 4), (True, 4), (180, 0), (180, 129), (180, True)]
+    "timeout,requests", [(0, 4), (901, 4), (True, 4), (180, 0), (180, 1025), (180, True)]
 )
 def test_declared_budget_is_finite_and_valid(assessment, tmp_path, timeout, requests):
     spec, _, run = original(assessment, tmp_path)

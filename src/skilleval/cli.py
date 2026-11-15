@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from skilleval import __version__
 from skilleval.acceptance import AcceptanceMapSpec
@@ -17,14 +17,18 @@ from skilleval.accounting import PriceSchedule
 from skilleval.calibration import CalibrationResult
 from skilleval.contracts import Assessment, Attempt, Experiment, Record, Task
 from skilleval.errors import SkillEvalError
+from skilleval.gateway import NATIVE_REQUEST_BACKSTOP
+from skilleval.handoff import HandoffReportSpec, SpecHandoffSpec
 from skilleval.judge import AgenticCalibrationResult, AgenticReviewResult
 from skilleval.reliability import ReliabilityObservations, ReliabilitySuite
 from skilleval.repair import RepairSpec
 from skilleval.repair_assessment import (
     DocumentAssessment,
     DocumentAssessmentSpec,
+    DocumentRequirementAssessment,
     RepairAssessment,
     RepairAssessmentSpec,
+    RepairRequirementAssessment,
     parse_spec,
 )
 from skilleval.repair_outcomes import RepairOutcomeSelection
@@ -50,8 +54,12 @@ RECORDS: dict[str, type[Record]] = {
     "artifact-spec": RepairSpec,
     "document-assessment-spec": DocumentAssessmentSpec,
     "document-assessment": DocumentAssessment,
+    "document-requirement-assessment": DocumentRequirementAssessment,
+    "repair-requirement-assessment": RepairRequirementAssessment,
     "task-package-spec": TaskPackageSpec,
     "acceptance-map-spec": AcceptanceMapSpec,
+    "spec-handoff-spec": SpecHandoffSpec,
+    "handoff-report-spec": HandoffReportSpec,
 }
 
 
@@ -62,6 +70,15 @@ def parser() -> argparse.ArgumentParser:
     capture = commands.add_parser("capture", help="Copy and inventory an explicit evidence tree")
     capture.add_argument("source", type=Path)
     capture.add_argument("--output", type=Path, required=True)
+    source = commands.add_parser("source", help="Capture pinned source without upstream history")
+    source_commands = source.add_subparsers(dest="operation", required=True)
+    source_capture = source_commands.add_parser(
+        "capture", help="Freeze a Git revision with declared context exclusions"
+    )
+    source_capture.add_argument("source", type=Path)
+    source_capture.add_argument("--revision", required=True, help="Full source commit object ID")
+    source_capture.add_argument("--exclusions", type=Path, help="Explicit source-exclusions policy")
+    source_capture.add_argument("--output", type=Path, required=True, help="Fresh output directory")
     importer = commands.add_parser("import-review", help="Import one historical review case")
     importer.add_argument("source", type=Path)
     importer.add_argument("--case", required=True)
@@ -71,9 +88,9 @@ def parser() -> argparse.ArgumentParser:
         command.add_argument("bundle", type=Path)
         command.add_argument("--sha256", help="Expected manifest identity retained separately")
     schema = commands.add_parser("schema", help="Print a versioned record's JSON Schema")
-    schema.add_argument("kind", choices=RECORDS)
+    schema.add_argument("kind", choices=(*RECORDS, "source-exclusions"))
     validate = commands.add_parser("validate", help="Validate record structure, not its truth")
-    validate.add_argument("kind", choices=RECORDS)
+    validate.add_argument("kind", choices=(*RECORDS, "source-exclusions"))
     validate.add_argument("file", type=Path)
     review = commands.add_parser("review", help="Prepare evidence or record an assessment")
     review_commands = review.add_subparsers(dest="operation", required=True)
@@ -238,7 +255,12 @@ def parser() -> argparse.ArgumentParser:
         type=int,
         help="Native deadline (default/maximum: tasks 1800s, judges 900s)",
     )
-    native_run.add_argument("--max-requests", type=int, default=32)
+    native_run.add_argument(
+        "--max-requests",
+        type=int,
+        default=NATIVE_REQUEST_BACKSTOP,
+        help="Emergency admitted-request backstop (default/maximum: 1024)",
+    )
     native_run.add_argument("--max-artifact-bytes", type=int, default=64 * 1024 * 1024)
     native_run.add_argument("--max-artifact-files", type=int, default=10_000)
     native_run.add_argument("--skill-bundle", type=Path)
@@ -291,7 +313,35 @@ def parser() -> argparse.ArgumentParser:
     package_validate.add_argument("package", type=Path)
     package_validate.add_argument("--sha256", required=True)
     package_validate.add_argument("--runtime", type=Path, required=True)
-    package_validate.add_argument("--output", type=Path, required=True)
+    package_validate.add_argument(
+        "--output", type=Path, help="New validation directory (required unless --dry-run)"
+    )
+    package_validate.add_argument(
+        "--reuse", type=Path, help="Pinned prior independent validation report"
+    )
+    package_validate.add_argument(
+        "--reuse-sha256", help="SHA-256 of --reuse report; both flags required together"
+    )
+    package_validate.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show independent checks to execute/reuse without creating files or VMs",
+    )
+    handoff = commands.add_parser("handoff", help="Freeze a spec for fresh vanilla implementation")
+    handoff_commands = handoff.add_subparsers(dest="operation", required=True)
+    handoff_prepare = handoff_commands.add_parser(
+        "prepare", help="Select exact retained spec bytes"
+    )
+    handoff_prepare.add_argument("spec", type=Path)
+    handoff_prepare.add_argument("--output", type=Path, required=True)
+    for action in ("verify", "check-implementation"):
+        operation = handoff_commands.add_parser(action)
+        operation.add_argument("handoff", type=Path)
+        operation.add_argument("--sha256", required=True, help="Retained handoff digest")
+        if action == "check-implementation":
+            operation.add_argument("--run", type=Path, required=True)
+    handoff_report = handoff_commands.add_parser("report", help="Replay selected stage consumption")
+    handoff_report.add_argument("spec", type=Path)
     repair = commands.add_parser(
         "repair", aliases=["artifact"], help="Collect file artifacts and run offline checks"
     )
@@ -387,6 +437,25 @@ def write_new_json(path: Path, value: object) -> None:
 
 
 def dispatch(args: argparse.Namespace) -> dict[str, Any]:
+    if args.command == "handoff":
+        from skilleval.handoff import (
+            check_implementation,
+            load_handoff,
+            prepare_handoff,
+            report_handoff,
+        )
+
+        if args.operation == "prepare":
+            return prepare_handoff(
+                SpecHandoffSpec.model_validate_json(json.dumps(read_json(args.spec))), args.output
+            )
+        if args.operation == "verify":
+            return {"status": "verified", **load_handoff(args.handoff, args.sha256)}
+        if args.operation == "check-implementation":
+            return check_implementation(args.handoff, args.sha256, args.run)
+        return report_handoff(
+            HandoffReportSpec.model_validate_json(json.dumps(read_json(args.spec)))
+        )
     if args.command == "task-package":
         from skilleval.task_package import prepare_package, validate_environment
 
@@ -413,7 +482,30 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
                 write_acceptance_review(acceptance_spec, args.review_output)
                 result["review_output"] = str(args.review_output.absolute())
             return result
-        return validate_environment(args.package, args.sha256, args.output, runtime=args.runtime)
+        if args.dry_run:
+            from skilleval.lane_readiness import plan_validation
+
+            _, lanes = plan_validation(
+                args.package, args.sha256, args.runtime, args.reuse, args.reuse_sha256
+            )
+            return {
+                "schema_version": 1,
+                "kind": "skilleval-task-validation-plan",
+                "package": str(args.package.absolute()),
+                "package_sha256": args.sha256,
+                "lanes": lanes,
+                "inference_requests": 0,
+            }
+        if args.output is None:
+            raise SkillEvalError("--output is required unless --dry-run is selected")
+        return validate_environment(
+            args.package,
+            args.sha256,
+            args.output,
+            runtime=args.runtime,
+            reuse=args.reuse,
+            reuse_sha256=args.reuse_sha256,
+        )
     if args.command in {"repair", "artifact"}:
         from skilleval.repair import collect_control, collect_repair, prepare_repair
         from skilleval.repair_check import check_repair
@@ -572,11 +664,27 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
             source_url=args.source_url,
             source_revision=args.source_revision,
         )
-    if args.command == "schema":
-        return RECORDS[args.kind].model_json_schema()
-    if args.command == "validate":
+    if args.command == "source":
+        from skilleval.source_capture import SourceExclusions, capture_source
+
+        exclusions = (
+            SourceExclusions.model_validate_json(json.dumps(read_json(args.exclusions)))
+            if args.exclusions is not None
+            else None
+        )
+        return capture_source(args.source, args.revision, args.output, exclusions=exclusions)
+    if args.command in ("schema", "validate"):
+        record_type: type[BaseModel]
+        if args.kind == "source-exclusions":
+            from skilleval.source_capture import SourceExclusions
+
+            record_type = SourceExclusions
+        else:
+            record_type = RECORDS[args.kind]
+        if args.command == "schema":
+            return record_type.model_json_schema()
         document = read_json(args.file)
-        record = RECORDS[args.kind].model_validate_json(json.dumps(document))
+        record = record_type.model_validate_json(json.dumps(document))
         return {"status": "valid-structure", "record": record.model_dump(mode="json")}
     if args.command in ("capture", "import-review", "verify", "inspect"):
         from skilleval.evidence import import_review, snapshot, verify

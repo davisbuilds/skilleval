@@ -139,6 +139,59 @@ earlier tiny-control audit was retired from the active roadmap on 2026-11-02
 when the task population was realigned. Preserve its original records; it is not
 a prerequisite for new engineering development runs or evidence for their grades.
 
+## Requirement-level repair and document judgments
+
+Broad rubric criteria do not establish coverage of each acceptance requirement.
+Opt in explicitly on a repair or document assessment specification:
+
+```json
+{
+  "requirement_policy": "acceptance-requirements-v1",
+  "acceptance_map": "/operator/frozen-acceptance.json",
+  "acceptance_map_sha256": "EXACT_FROZEN_MAP_DIGEST"
+}
+```
+
+These three fields must appear together. Preparation verifies the frozen map,
+package, task path and task digest, and the repair/document family. The map must
+belong to the task being assessed; a downstream implementation task needs its own
+correctly bound map. Existing `artifact prepare-assessment`, `capture`,
+`native qualify --mode judge` and `artifact record-assessment` commands provide
+the runnable route; follow [native preparation](NATIVE.md#prepare-freeze-run-and-record-a-calibration-judge).
+No separate
+model adapter or fabricated native receipt is needed.
+
+`case/requirements.json` contains a versioned allowlist: map/task/package digests
+and each requirement's ID, statement, role, criticality, source rationale, semantic
+questions and declared coverage gaps. Controls, expected answers, expected labels,
+review attachments, selection/exposure history, treatment and cost are withheld.
+This is a safe field projection, not a guarantee that arbitrary authored text
+cannot disclose cues. The judge treats projected prose as untrusted measurement
+claims and verifies it against original source and the request. A frozen map is
+neither an exhaustive answer key nor evidence of independent validity.
+
+Opt-in packets use `repair-requirements-*`, `document-requirements-*` or
+`specification-requirements-*` rubric versions ending in `agentic-v1` or `static-v1`.
+Their result contracts are available as `schema repair-requirement-assessment`
+and `schema document-requirement-assessment`. Results retain broad `judgments`,
+echo `acceptance_map_sha256`, and supply `requirement_judgments`, one entry per
+projected `requirement_id` with `verdict`, `reasoning`, `citations`, and optional
+`artifact_citations`. Verdicts remain satisfied, violated or unresolved. Resolved
+requirements need substantive original evidence, not just the map or solver's
+statement. Static packets cannot cite investigation artifacts. Unknown/duplicate
+IDs, wrong map identities and invalid retained citation paths/ranges are rejected.
+
+The append-only assessment report preserves explicit requirement verdicts,
+expected/judged counts, missing IDs and unresolved IDs. Missing entries are accepted
+as incomplete coverage; even satisfied broad criteria cannot promote them to a
+satisfied requirement summary. Complete coverage does not establish semantic
+validity, scored admission or skill effectiveness. Authored-control calibration
+must compare the actual retained judge output against operator-only expectations;
+fixture round trips establish contract behavior, not judge discrimination.
+
+Omitting the opt-in fields preserves legacy repair/document/specification packet
+and result schemas and bytes. Earlier assessments are not retroactively mapped.
+
 ## Offline result contract and recording
 
 `CalibrationResult.model_json_schema()` exposes the strict version-1 result

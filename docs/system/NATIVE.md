@@ -40,6 +40,11 @@ Final text comes from a successful, matched terminal exchange. Missing replies,
 malformed records, unexpected approval requests, output limits and incomplete
 drains prevent completion. The process deadline terminates the namespace;
 turn-interrupt acknowledgments are not used as proof of termination.
+An app-server error notification with `willRetry: true` is retained as a
+canonical warning while the turn remains active. Completion still requires the
+matched successful terminal exchange; nonretryable errors remain fatal. Raw RPC
+preserves the original retry notification and its details. This follows the
+[app-server error contract](https://learn.chatgpt.com/docs/app-server#errors).
 
 Native capture policy `native-rollout-summary-v1` retains the isolated guest
 `codex-home/sessions/**/*.jsonl` files inside `artifacts.tar`. The generated config
@@ -69,6 +74,9 @@ Before dispatch, retained credentials must still cover the native deadline,
 60 seconds of headroom and a 30-second expiry margin. Expiry is also checked
 before each provider request. VM setup, collection and cleanup retain their
 individual bounds, so the native deadline is not total wall-clock time.
+New native runs use a 1,024-request emergency backstop, also the maximum accepted
+`--max-requests` value. Explicit smaller caps remain supported. The time limit is
+the primary execution bound; the request cap is not calibrated to task efficiency.
 Request budgets are independent: a run can exhaust its request allowance before
 its time budget. Longer deadlines do not imply complete usage after interruption.
 
@@ -351,11 +359,22 @@ Inspect the bounded `native-run.json` together with its hash-bound
 `native-audit.json`, `events.jsonl`, `final.txt`, retained prompt and artifact
 inventory. The process record includes complete context inventories and is read
 up to the smaller of the run's artifact budget and the 32 MiB full-audit ceiling.
-Overall audit and compact-receipt limits still apply; overflow remains partial
+The consumer receipt remains bounded to 4 MiB. If needed, its request ledger
+keeps every request identity and exposure diagnostic while moving bulky context
+and protocol metadata behind explicit `metadata_audit` references. The
+`request_observations_compacted` marker identifies that form; each reference names
+the full observation in `native-audit.json` and hashes its listed metadata fields.
+The authoritative audit retains all observations, including first and last skill
+exposures. Overall audit and compact-receipt limits still apply; overflow remains partial
 evidence, not successful recording. Complete command outputs stay in the raw events/archive; compact
-metadata exposes hashes, counts and explicit sample omissions. Completion requires the observed process, native
-turn, provider requests, solver setup/namespace teardown and cleanup to agree;
-it leaves task quality unassessed. The trusted boundary receipt records identity,
+metadata exposes hashes, counts and explicit sample omissions. Completion requires the observed process, matched native
+turn, solver setup/namespace teardown and cleanup to agree, plus at least one
+host-observed provider response completed with HTTP 200. A recovered provider
+request failure does not override a successfully completed native turn;
+`provider_complete` still records whether every provider request completed.
+The full request ledger remains required for independent usage reconciliation:
+an interrupted request leaves usage incomplete and cost unknown. Completion
+leaves task quality unassessed. The trusted boundary receipt records identity,
 privilege removal and timings. Agent time starts after namespace setup and ends
 when native PID 1 is reaped; launcher time is retained separately. Collection
 does not proceed when namespace termination is unconfirmed.

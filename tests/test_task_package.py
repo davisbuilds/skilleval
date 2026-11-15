@@ -214,8 +214,11 @@ def test_package_preparation_preserves_code_as_data_and_rejects_input_drift(task
         load_package(Path(saved["path"]), saved["sha256"])
 
 
-def test_package_summary_preserves_directory_scope(task, route, tmp_path):
-    expanded = task["spec"].model_copy(update={"editable_directories": ("src", "tests")})
+@pytest.mark.parametrize("edit_scope", ["declared-paths", "repository"])
+def test_package_summary_preserves_edit_scope(task, route, tmp_path, edit_scope):
+    expanded = task["spec"].model_copy(
+        update={"editable_directories": ("src", "tests"), "edit_scope": edit_scope}
+    )
     contract = repair.prepare_repair(expanded, tmp_path / "expanded-task.json")
     spec = package_spec(task, route).model_copy(
         update={"task": contract["path"], "task_sha256": contract["sha256"]}
@@ -223,6 +226,7 @@ def test_package_summary_preserves_directory_scope(task, route, tmp_path):
     saved = prepare_package(spec, tmp_path / "package.json")
     assert saved["output_paths"] == list(expanded.editable_paths)
     assert saved["output_directories"] == ["src", "tests"]
+    assert saved.get("edit_scope", "declared-paths") == edit_scope
 
 
 def test_explicit_solver_profile_and_missing_legacy_profile_load_without_rewriting(

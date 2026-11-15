@@ -9,8 +9,9 @@ from test_judge import run_directory
 from test_repair_assessment import judgment
 from test_runner import route as route
 from test_study import prepared as prepared
+from test_task_package import package_spec
 
-from skilleval import cli, repair, study
+from skilleval import acceptance, cli, repair, study, task_package
 from skilleval.errors import SkillEvalError
 from skilleval.identity import file_digest
 from skilleval.repair_assessment import (
@@ -135,9 +136,62 @@ def test_review_shows_linked_judge_attempts_and_complete_or_unknown_total(
         assert "input_tokens known subtotal 100; 1 known, 1 unknown invocations." in review
 
 
+def test_review_displays_explicit_requirement_coverage_and_evidence(tmp_path):
+    review = render_review(
+        {
+            "cells": [
+                {
+                    "task_id": "repair",
+                    "arm": "absent",
+                    "attempts": [
+                        {
+                            "path": str(tmp_path),
+                            "repair_outcome": {
+                                "artifact_path": str(tmp_path / "artifact"),
+                                "checks": [],
+                                "semantic": {
+                                    "status": "unresolved",
+                                    "requirements": {
+                                        "status": "unresolved",
+                                        "expected_count": 3,
+                                        "judged_count": 2,
+                                        "missing": ["R3"],
+                                        "unresolved": ["R2"],
+                                    },
+                                    "requirement_judgments": [
+                                        {
+                                            "requirement_id": "R1",
+                                            "verdict": "satisfied",
+                                            "reasoning": "The source and retained candidate agree.",
+                                            "citations": [
+                                                {
+                                                    "path": "case/candidate/code.py",
+                                                    "line_start": 1,
+                                                    "line_end": 2,
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                },
+                            },
+                        }
+                    ],
+                }
+            ],
+        }
+    )
+    assert "Requirement coverage: 2/3 judged; unresolved." in review
+    assert "Missing requirements: R3." in review
+    assert "Unresolved requirements: R2." in review
+    assert "R1: satisfied" in review
+    assert "The source and retained candidate agree." in review
+    assert "case/candidate/code.py:1-2" in review
+
+
 @pytest.mark.parametrize("corrected", [False, True])
+@pytest.mark.parametrize("requirements", [False, True])
 def test_explicit_selection_binds_attempt_and_keeps_unassessed_arm(
-    prepared, route, tmp_path, capsys, corrected
+    prepared, route, tmp_path, capsys, corrected, requirements
 ):
     plan = json.loads(prepared["plan_path"].read_text())
     plan["spec"]["tasks"][0].update(mode="repair", prompt="Repair the code.")
@@ -194,8 +248,71 @@ def test_explicit_selection_binds_attempt_and_keeps_unassessed_arm(
         "report_sha256": file_digest(tmp_path / "check/repair-check.json"),
     }
     spec = RepairAssessmentSpec.model_validate_json(json.dumps(ref | {"checks": [check]}))
+    if requirements:
+        packaged = package_spec(
+            {
+                "task": contract,
+                "digest": task["sha256"],
+                "base": Path(task_data["input_bundle"]),
+                "spec": repair.load_task(contract, task["sha256"]),
+            },
+            route,
+        )
+        packaged = packaged.model_copy(
+            update={
+                "environment": packaged.environment.model_copy(
+                    update={"required_paths": ("code.py",)}
+                )
+            }
+        )
+        package = task_package.prepare_package(packaged, tmp_path / "package.json")
+        mapped = acceptance.AcceptanceMapSpec(
+            map_id="native-outcome-map",
+            task=str(contract),
+            task_sha256=task["sha256"],
+            package=package["path"],
+            package_sha256=package["sha256"],
+            purpose="Observe the requested repair.",
+            population="Authored control.",
+            selection_rationale="Deterministic consumer-path test.",
+            exposure_history="Author saw expected behavior.",
+            authored_after_outcomes=True,
+            requirements=(
+                acceptance.AcceptanceRequirement(
+                    requirement_id="R1",
+                    statement="Preserve the requested behavior.",
+                    role="core",
+                    criticality="required",
+                    source_rationale="The original repair brief.",
+                    mechanical=(acceptance.MechanicalRoute(probe_id="control", pointer=""),),
+                ),
+            ),
+            limitations=("Authored receipt does not qualify semantic correctness.",),
+        )
+        frozen_map = acceptance.prepare_acceptance(mapped, tmp_path / "map.json")
+        spec = spec.model_copy(
+            update={
+                "requirement_policy": "acceptance-requirements-v1",
+                "acceptance_map": frozen_map["path"],
+                "acceptance_map_sha256": frozen_map["sha256"],
+            }
+        )
     packet = prepare_assessment(spec, tmp_path / "packet")
     value = judgment(packet)
+    if requirements:
+        value.update(
+            acceptance_map_sha256=spec.acceptance_map_sha256,
+            requirement_judgments=[
+                {
+                    "requirement_id": "R1",
+                    "verdict": "satisfied",
+                    "reasoning": "The retained original and candidate agree.",
+                    "citations": [
+                        {"path": "case/candidate/code.py", "line_start": 1, "line_end": 1}
+                    ],
+                }
+            ],
+        )
     if corrected:
         value["judgments"][0]["citations"][0]["line_end"] = 2
     native_judge = run_directory(tmp_path, packet, value)
@@ -245,6 +362,13 @@ def test_explicit_selection_binds_attempt_and_keeps_unassessed_arm(
         == "satisfied-in-reviewed-scope"
     )
     assert linked["cells"][1]["primary_repair_outcome"] is None
+    if requirements:
+        semantic = linked["cells"][0]["primary_repair_outcome"]["semantic"]
+        assert semantic["requirements"]["expected_count"] == 1
+        assert semantic["requirement_judgments"][0]["requirement_id"] == "R1"
+        rendered = render_review(linked)
+        assert "Requirement coverage: 1/1 judged; satisfied-in-reviewed-scope." in rendered
+        assert "case/candidate/code.py:1-1" in rendered
     consumption = linked["cells"][0]["primary_repair_outcome"]["judge_consumption"]
     if corrected:
         assert consumption["attempt_count"] == 2

@@ -107,3 +107,49 @@ def test_regular_identity_reader_rejects_links_and_fifos(tmp_path: Path) -> None
     os.mkfifo(fifo)
     with pytest.raises(SkillEvalError, match="regular"):
         file_digest(fifo)
+
+
+def test_environment_identity_ignores_nonexecuted_sources_but_keeps_execution_changes():
+    sources = dict.fromkeys(
+        {*identity.SOURCES, *identity.ENVIRONMENT_SOURCES, *identity.SOLVER_ENVIRONMENT_SOURCES},
+        "0" * 64,
+    )
+    captured = {
+        "runtime": {"host": "synthetic"},
+        "sources": sources,
+        "controller": {"implementation": "CPython", "version": "3.14.0"},
+    }
+    before = identity.environment_identity(captured, "solver-isolated-v1")
+    changed = {**captured, "sources": {**sources, "src/skilleval/accounting.py": "1" * 64}}
+    assert identity.environment_identity(changed, "solver-isolated-v1") == before
+    for name in (*identity.ENVIRONMENT_SOURCES, *identity.SOLVER_ENVIRONMENT_SOURCES):
+        changed = {**captured, "sources": {**sources, name: "1" * 64}}
+        assert identity.environment_identity(changed, "solver-isolated-v1") != before
+    assert (
+        identity.environment_identity({**captured, "runtime": {}}, "solver-isolated-v1") != before
+    )
+
+
+@pytest.mark.parametrize(
+    "defect", ["missing", "malformed", "unknown-profile", "missing-controller"]
+)
+def test_environment_identity_never_invents_missing_or_unknown_proof(defect):
+    sources = dict.fromkeys(
+        (*identity.ENVIRONMENT_SOURCES, *identity.SOLVER_ENVIRONMENT_SOURCES), "0" * 64
+    )
+    captured = {
+        "runtime": {},
+        "sources": sources,
+        "controller": {"implementation": "CPython", "version": "3.14.0"},
+    }
+    profile = "solver-isolated-v1"
+    if defect == "missing":
+        del sources["src/skilleval/task_transfer.py"]
+    elif defect == "malformed":
+        sources["src/skilleval/task_transfer.py"] = None
+    elif defect == "missing-controller":
+        del captured["controller"]
+    else:
+        profile = "solver-isolated-v99"
+    with pytest.raises(SkillEvalError, match="environment identity"):
+        identity.environment_identity(captured, profile)

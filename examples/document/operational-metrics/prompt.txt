@@ -1,0 +1,7 @@
+Write a specification for an operational-metrics view in AgentMonitor's existing console.
+
+I want to understand whether Codex memory processing has reported activity recently, what outcomes it is reporting, and whether work is being skipped because of rate limits. This is the operational-metrics UI item in the project backlog.
+
+Use the operational data and read API already available. Keep this to a read-only console feature; changes to ingestion, storage, provider configuration, or usage accounting are outside this task.
+
+Inspect the existing application and decide what information and interactions would make this useful within the current console. Save a self-contained specification in one Markdown file under docs/specs/ so another engineer can implement it. Don't implement the feature yet. Use your judgment for product choices not prescribed here, following the existing application conventions.

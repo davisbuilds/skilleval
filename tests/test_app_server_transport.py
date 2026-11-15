@@ -12,6 +12,8 @@ from typing import Any
 import pytest
 
 from skilleval import app_server, guest_runner
+from skilleval.accounting import normalize_codex_usage
+from skilleval.harnesses.codex import parse_codex_jsonl
 
 SERVER = r"""
 import json, pathlib, subprocess, sys
@@ -70,6 +72,9 @@ elif mode == 'timeout':
     import time
     time.sleep(30)
 else:
+    if mode == 'retry':
+        send({'method':'error','params':{'threadId':'thread-1','turnId':'turn-1',
+            'error':{'message':'Reconnecting... 1/5'},'willRetry':True}})
     message = {'id':'answer-1','type':'agentMessage','phase':'final_answer','text':'Finished. café'}
     send({'method':'item/completed','params':{'threadId':'thread-1',
         'turnId':'turn-1','item':message}})
@@ -97,7 +102,7 @@ def execute(tmp_path: Path, mode: str, *, timeout: int = 5) -> dict[str, Any]:
     )
 
 
-@pytest.mark.parametrize("mode", ["success", "reply-last"])
+@pytest.mark.parametrize("mode", ["success", "reply-last", "retry"])
 def test_rpc_roundtrip_retains_raw_streams_and_derives_final(tmp_path: Path, mode: str) -> None:
     result = execute(tmp_path, mode)
     assert result["returncode"] == 0, result
@@ -106,6 +111,7 @@ def test_rpc_roundtrip_retains_raw_streams_and_derives_final(tmp_path: Path, mod
     assert result["protocol"]["complete"] is True
     assert result["protocol"]["permissions_confirmed"] is True
     assert result["protocol"]["error"] is None
+    assert result["protocol"]["errors"] == []
     assert (tmp_path / "app-server-rpc.jsonl").read_bytes() == (
         tmp_path / "server-output.jsonl"
     ).read_bytes()
@@ -113,7 +119,23 @@ def test_rpc_roundtrip_retains_raw_streams_and_derives_final(tmp_path: Path, mod
         tmp_path / "server-input.jsonl"
     ).read_bytes()
     assert (tmp_path / "final.txt").read_text() == "Finished. café"
+    parsed = parse_codex_jsonl((tmp_path / "events.jsonl").read_text())
+    assert parsed["execution_status"] == "completed" and parsed["errors"] == []
+    assert parsed["parse_errors"] == [] and parsed["usage"] is None
+    usage = normalize_codex_usage(
+        parsed["events"],
+        codex_identity={"observed_version": "0.164.0"},
+        model="synthetic-model",
+        surface="codex-app-server-jsonrpc-v2",
+    )
+    assert usage["total_tokens"] is None and usage["status"] != "complete"
     events = [json.loads(line) for line in (tmp_path / "events.jsonl").read_text().splitlines()]
+    if mode == "retry":
+        assert events.pop(2) == {
+            "type": "warning",
+            "message": "Reconnecting... 1/5",
+            "will_retry": True,
+        }
     assert [row["type"] for row in events] == [
         "thread.started",
         "turn.started",

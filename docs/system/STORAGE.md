@@ -103,6 +103,10 @@ Only these `runtime-state/` copies are eligible:
 - `tooling.tar`, after a bound native-run audit and recovered VM.
 
 Qualification tooling remains required by admission and is never eligible.
+Independent lane executions live under `executions/CASE/LANE/`. Their local
+`lane-execution.json` binds staging cleanup even when an interrupted run never
+published an aggregate. Keep that receipt, its original package, raw observations,
+validation row and recovery record: later reports reference them directly.
 Canonical captures/images, `artifacts.tar`, RPC/events, native rollouts, candidate
 patches, reports, recovery tickets and all judgments remain. Unknown files are
 not candidates. A later successful recovery can qualify staging from a failed

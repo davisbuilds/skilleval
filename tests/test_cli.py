@@ -21,6 +21,21 @@ def test_help_never_needs_a_runtime() -> None:
     assert not result.stderr
 
 
+def test_environment_execution_requires_output_before_accessing_inputs() -> None:
+    result = invoke(
+        "task-package",
+        "validate-environment",
+        "missing-package",
+        "--sha256",
+        "0" * 64,
+        "--runtime",
+        "missing-runtime",
+    )
+    assert result.returncode == 2
+    assert not result.stdout
+    assert "--output is required unless --dry-run" in result.stderr
+
+
 def test_native_judge_requires_declared_policy_before_any_runtime_access() -> None:
     result = invoke(
         "native",

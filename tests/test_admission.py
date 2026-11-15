@@ -738,6 +738,14 @@ def test_changed_seal_needs_external_digest_and_still_revalidates_facts(
         admission.check_admission(evidence["output"], file_digest(evidence["output"]))
 
 
+@pytest.mark.parametrize("number", ["NaN", "Infinity", "1e999", "-1e999"])
+def test_nonfinite_json_numbers_refused(evidence: dict[str, Any], number: str) -> None:
+    path = evidence["native_path"]
+    path.write_bytes(path.read_bytes()[:-1] + b',"overflow":' + number.encode() + b"}")
+    with pytest.raises(SkillEvalError, match="nonfinite JSON number"):
+        seal(evidence)
+
+
 def test_duplicate_json_keys_and_symlink_receipts_refused(evidence: dict[str, Any]) -> None:
     path = evidence["native_path"]
     original = path.read_bytes()

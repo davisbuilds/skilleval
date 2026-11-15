@@ -51,6 +51,14 @@ complete native-only observation; the runner supplies its broker ledger.
 The normalizer can validate supplied rows, not independently prove that its
 caller supplied an exhaustive ledger or a fresh thread.
 
+Execution completion is separate from accounting completeness. A matched native
+turn can complete after retrying an interrupted provider request, provided at
+least one host-observed provider response completed with HTTP 200 and all other
+execution, context, boundary and cleanup checks pass. `provider_complete` remains
+false if any request failed or was interrupted. Every request stays in the
+ledger: incomplete provider evidence leaves normalized usage incomplete and
+cost unknown, even when the native terminal snapshot contains token counts.
+
 Provider cached-token detail is cross-checked only when every request supplies
 it. If absent, matching core totals can still produce complete usage, while
 `cached_input_status` remains `unknown`: the cache partition is native-reported,
@@ -63,9 +71,11 @@ observations and is not an additional quantity to sum with normalized usage.
 `price_schedule` is optional and frozen with the study. It records the exact model,
 USD input/cached-input/output rates, public source URL, retrieval date and scope.
 Validation checks its structure, not the source's truth or applicability. The
-[2026-10-28 standard scenario](../../examples/pricing/gpt-6.1-sol-standard-2026-10-28.json)
-records a dated official API pricing source and a per-request short-context bound.
-It is an explicitly chosen comparison scenario, not a current-price promise.
+[dated standard scenarios](../../examples/pricing/README.md) record official API
+pricing sources and a per-request short-context bound. The 2026-11-08 scenario
+uses $2/$0.10/$10 per million uncached-input/cached-input/output tokens; the
+2026-10-28 scenario remains unchanged for earlier plans. Each is an explicitly
+chosen comparison scenario, not a continuing current-price promise.
 
 With complete matching-model usage, the estimate is:
 

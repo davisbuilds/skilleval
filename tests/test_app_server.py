@@ -10,7 +10,9 @@ from typing import Any
 
 import pytest
 
+from skilleval.accounting import normalize_codex_usage
 from skilleval.app_server import Session
+from skilleval.harnesses.codex import parse_codex_jsonl
 
 INITIALIZED = {
     "id": 1,
@@ -271,14 +273,78 @@ def test_interrupted_summary_does_not_invent_command_completion() -> None:
     assert not [event for event in session.events if event["type"] == "item.completed"]
 
 
-def test_transient_error_is_retained_conservatively() -> None:
+def test_retry_advisory_preserves_diagnostic_without_overriding_completed_turn() -> None:
     session = ready()
     session.receive(note("error", turnId="turn-1", error={"message": "retrying"}, willRetry=True))
+    assert not session.complete and session.final_text == ""
+    finish(session, items=[MESSAGE])
+    assert session.settled and session.complete
+    assert session.errors == []
+    assert session.final_text == MESSAGE["text"]
+    assert {"type": "warning", "message": "retrying", "will_retry": True} in session.events
+    assert session.events[-1]["type"] == "turn.completed"
+
+
+def test_nonretryable_error_remains_fatal_even_with_completed_terminal() -> None:
+    session = ready()
+    session.receive(note("error", turnId="turn-1", error={"message": "failed"}, willRetry=False))
     finish(session, items=[MESSAGE])
     assert session.settled and not session.complete
-    assert session.errors == ["retrying"]
+    assert session.errors == ["failed"]
     assert session.final_text == ""
     assert session.events[-1]["type"] == "turn.failed"
+
+
+@pytest.mark.parametrize("will_retry", [True, False])
+def test_retry_classification_reaches_runner_event_parser_and_usage(will_retry: bool) -> None:
+    import json
+
+    session = ready()
+    session.receive(
+        note("error", turnId="turn-1", error={"message": "retrying"}, willRetry=will_retry)
+    )
+    session.receive(
+        note(
+            "thread/tokenUsage/updated",
+            turnId="turn-1",
+            tokenUsage={"total": COUNTERS, "last": COUNTERS},
+        )
+    )
+    finish(session, items=[MESSAGE])
+    parsed = parse_codex_jsonl("\n".join(json.dumps(row) for row in session.events))
+    assert parsed["execution_status"] == ("completed" if will_retry else "failed")
+    assert bool(parsed["errors"]) is not will_retry
+    assert parsed["parse_errors"] == []
+    usage = normalize_codex_usage(
+        parsed["events"],
+        codex_identity={"observed_version": "0.164.0"},
+        model="synthetic-model",
+        surface="codex-app-server-jsonrpc-v2",
+    )
+    assert usage["status"] == ("complete" if will_retry else "incomplete")
+    assert usage["total_tokens"] == (96 if will_retry else None)
+
+
+@pytest.mark.parametrize("status", ["failed", "interrupted"])
+def test_retry_advisory_cannot_supply_terminal_success(status: str) -> None:
+    session = ready()
+    session.receive(note("error", turnId="turn-1", error={"message": "retrying"}, willRetry=True))
+    session.receive(note("turn/completed", turn=turn(status, items=[MESSAGE])))
+    assert session.settled and not session.complete
+    assert session.final_text == ""
+    assert session.events[-1]["type"] == "turn.failed"
+
+
+@pytest.mark.parametrize("will_retry", [None, "true", 1, 0])
+def test_malformed_retry_flag_cannot_be_downgraded_to_an_advisory(will_retry: Any) -> None:
+    session = ready()
+    with pytest.raises(ValueError, match="willRetry must be boolean"):
+        session.receive(
+            note("error", turnId="turn-1", error={"message": "retrying"}, willRetry=will_retry)
+        )
+    finish(session, items=[MESSAGE])
+    assert not session.complete and session.final_text == ""
+    assert session.errors == ["error.willRetry must be boolean"]
 
 
 @pytest.mark.parametrize(

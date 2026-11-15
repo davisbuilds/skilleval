@@ -32,7 +32,10 @@ class RepairSpec(Record):
     input_bundle: str = Field(min_length=1)
     input_sha256: Digest
     prompt: str = Field(min_length=1, max_length=262144)
-    editable_paths: tuple[str, ...] = Field(min_length=1, max_length=100)
+    edit_scope: Literal["declared-paths", "repository"] = Field(
+        default="declared-paths", exclude_if=lambda value: value == "declared-paths"
+    )
+    editable_paths: tuple[str, ...] = Field(default=(), max_length=100)
     editable_directories: tuple[str, ...] = Field(
         default=(), max_length=100, exclude_if=lambda value: not value
     )
@@ -49,6 +52,8 @@ class RepairSpec(Record):
     @model_validator(mode="after")
     def bounded_contract(self) -> RepairSpec:
         names = list(self.editable_paths)
+        if self.edit_scope == "declared-paths" and not names:
+            raise ValueError("declared-paths scope requires editable paths")
         for name in names:
             if _safe_path(name) != name or ignored(name) or name == "manifest.json":
                 raise ValueError("invalid editable repair path")
@@ -86,6 +91,8 @@ def _directory_metadata(name: str) -> bool:
 
 
 def _in_editable_scope(spec: RepairSpec, name: str) -> bool:
+    if spec.edit_scope == "repository":
+        return not _directory_metadata(name)
     if name in spec.editable_paths:
         return True
     if _directory_metadata(name):

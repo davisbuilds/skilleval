@@ -44,12 +44,12 @@ def solver_process(
 ) -> tuple[dict[str, Any], dict[str, str], dict[str, Any]]:
     """Use the native launcher and pipe collector with a fresh home for each lane."""
     if __package__:
-        from skilleval import guest_runner
+        from skilleval import native_process
     else:
         # The supervisor is invoked with -I. Import only the explicitly staged,
         # trusted controller modules, which the solver's root does not expose.
         sys.path.insert(0, str(Path(__file__).parent))
-        import guest_runner  # type: ignore[no-redef,import-not-found]
+        import native_process  # type: ignore[no-redef,import-not-found]
 
     controller = Path(__file__).parent
     root = Path(tempfile.mkdtemp(prefix="lane-", dir=controller))
@@ -74,7 +74,7 @@ def solver_process(
         "resource.setrlimit(resource.RLIMIT_CORE, (0,0)); "
         "os.execv(sys.executable, [sys.executable, *sys.argv[1:]])"
     )
-    result = guest_runner._execute_native(
+    result = native_process._execute_native(
         [
             "python3",
             "-I",

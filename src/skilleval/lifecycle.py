@@ -17,6 +17,7 @@ import signal
 import sys
 import tempfile
 import threading
+import time
 import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -30,6 +31,16 @@ from skilleval.qualification import _image_archive, _invoke
 
 TICKET = "recovery.json"
 TICKET_BYTES = 16 * 1024 * 1024
+
+
+@contextmanager
+def _timing(timings: dict[str, float], phase: str) -> Iterator[None]:
+    """Record inclusive wall time; nested phases must not be added together."""
+    started = time.monotonic()
+    try:
+        yield
+    finally:
+        timings[phase] = time.monotonic() - started
 
 
 def _write(path: Path, value: dict[str, Any]) -> None:
@@ -152,46 +163,63 @@ class Lifecycle:
         *,
         observer_socket: Path | None = None,
     ) -> Lifecycle:
-        identity = snapshot_identity(str(runtime))
-        image_identity = _image_archive(image, image_sha256)
+        started = time.monotonic()
+        timings: dict[str, float] = {}
+        with _timing(timings, "prepare_identity"):
+            identity = snapshot_identity(str(runtime))
         output = output.resolve()
         output.mkdir(mode=0o700, parents=True, exist_ok=False)
-        state = output / "runtime-state"
-        state.mkdir(mode=0o700)
-        home = Path(
-            tempfile.mkdtemp(
-                prefix="skl-", dir="/private/tmp" if sys.platform == "darwin" else "/tmp"
+        home: Path | None = None
+        try:
+            state = output / "runtime-state"
+            state.mkdir(mode=0o700)
+            home = Path(
+                tempfile.mkdtemp(
+                    prefix="skl-", dir="/private/tmp" if sys.platform == "darwin" else "/tmp"
+                )
             )
-        )
-        for name in ("config", "data", "tmp", "docker"):
-            (state / name).mkdir(mode=0o700)
-        for name in ("cache", "run"):
-            (home / name).mkdir(mode=0o700)
-        env = _environment(state, home)
-        copied_image = state / "image.tar"
-        _image_archive(image, image_sha256, copied_image)
-        _image_archive(copied_image, image_sha256)
-        config = {
-            "cpus": 2,
-            "memory_mib": 2048,
-            "guest_network": False,
-            "host_mounts": [],
-            "secrets": [],
-            "observer_socket": str(observer_socket) if observer_socket else None,
-            "guest_observer_socket": "/run/lifecycle.sock" if observer_socket else None,
-        }
-        return cls.register(
-            output,
-            state,
-            home,
-            env,
-            # The guest kernel and overlay metadata expose this identifier.
-            "workspace-" + uuid.uuid4().hex,
-            runtime,
-            image_identity,
-            config,
-            identity=identity,
-        )
+            for name in ("config", "data", "tmp", "docker"):
+                (state / name).mkdir(mode=0o700)
+            for name in ("cache", "run"):
+                (home / name).mkdir(mode=0o700)
+            env = _environment(state, home)
+            with _timing(timings, "prepare_image_copy_verify"):
+                image_identity = _image_archive(image, image_sha256, state / "image.tar")
+            config = {
+                "cpus": 2,
+                "memory_mib": 2048,
+                "guest_network": False,
+                "host_mounts": [],
+                "secrets": [],
+                "observer_socket": str(observer_socket) if observer_socket else None,
+                "guest_observer_socket": "/run/lifecycle.sock" if observer_socket else None,
+            }
+            session = cls.register(
+                output,
+                state,
+                home,
+                env,
+                # The guest kernel and overlay metadata expose this identifier.
+                "workspace-" + uuid.uuid4().hex,
+                runtime,
+                image_identity,
+                config,
+                identity=identity,
+            )
+            # Includes durable registration; excludes this timing metadata write.
+            timings["prepare_total"] = time.monotonic() - started
+            session.ticket["timings_seconds"] = timings
+            session.save()
+            return session
+        except BaseException:
+            # No VM can exist before prepare returns. Only remove paths whose
+            # exclusive creation succeeded here; preexisting output is untouched.
+            try:
+                if home is not None:
+                    shutil.rmtree(home)
+            finally:
+                shutil.rmtree(output)
+            raise
 
     @classmethod
     def register(
@@ -307,12 +335,22 @@ class Lifecycle:
         return names
 
     def create(self) -> None:
-        self.check_identity()
+        timings = self.ticket.setdefault("timings_seconds", {})
+        try:
+            with _timing(timings, "create_total"):
+                self._create(timings)
+        finally:
+            self.save()
+
+    def _create(self, timings: dict[str, float]) -> None:
+        with _timing(timings, "create_identity"):
+            self.check_identity()
         if self.ticket["create_attempted"]:
             raise SkillEvalError("lifecycle ticket cannot be reused to create a machine")
-        _image_archive(
-            Path(self.ticket["runtime_state"]) / "image.tar", self.ticket["image"]["sha256"]
-        )
+        with _timing(timings, "create_image_verify"):
+            _image_archive(
+                Path(self.ticket["runtime_state"]) / "image.tar", self.ticket["image"]["sha256"]
+            )
         version = self.invoke("runtime_version", ["--version"], 10)
         if not successful(version) or not re.fullmatch(r"smolvm 1\.32\.3\s*", version["stdout"]):
             raise SkillEvalError("runtime version differs from inspected lifecycle contract")
