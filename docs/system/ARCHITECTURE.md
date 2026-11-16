@@ -134,6 +134,12 @@ implementation. [GATEWAY.md](GATEWAY.md) owns transport, model/catalog pins,
 authentication, and upstream provenance. Prompt instructions are not network or
 command-level enforcement.
 
+[Claude subscription judges](CLAUDE-JUDGES.md) use a distinct host-native client
+with only VM-backed MCP investigation tools. Native login stays with the client;
+no subscription token enters the guest or a custom inference broker. Frozen judge
+profiles bind preparation and recording, and native-only usage remains distinct
+from Codex provider reconciliation. Task-agent execution is unchanged.
+
 Harness compatibility is separate from execution identity. Stable patch/minor
 Codex releases at or after the adapter baseline within the same major version may
 enter qualification. Older, prerelease, unknown, and new-major versions require

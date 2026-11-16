@@ -15,7 +15,8 @@ from skilleval.accounting import PriceSchedule, estimate_api_equivalent_cost
 from skilleval.budgets import JUDGE_TIMEOUT_SECONDS, native_deadline
 from skilleval.contracts import Digest, Identifier, Record
 from skilleval.errors import SkillEvalError
-from skilleval.gateway import EFFORT, MODEL
+from skilleval.gateway import MODEL
+from skilleval.judge_profiles import metadata_profile, profile_metadata, resolve_profile
 from skilleval.review_results import (
     PACKET_LIMIT,
     ReviewCitation,
@@ -161,8 +162,6 @@ class _Metadata(Record):
             raise ValueError("duplicate synthesis source or arm IDs")
         if any(arm.evidence_source_id not in source_ids for arm in self.arms):
             raise ValueError("arm accounting references an unknown source")
-        if self.price_schedule is not None and self.price_schedule.model != MODEL:
-            raise ValueError("synthesis price schedule must match the native model")
         return self
 
 
@@ -217,16 +216,21 @@ def _validate_sources(meta: _Metadata, payloads: dict[str, bytes]) -> dict[str, 
     return sources
 
 
-def prepare_synthesis(spec_path: Path, output: Path) -> dict[str, Any]:
+def prepare_synthesis(
+    spec_path: Path, output: Path, *, judge_profile: str = "codex-sol"
+) -> dict[str, Any]:
     """Freeze explicitly selected evidence without invoking a model or VM."""
     from skilleval.synthesis_inputs import compile_selection, load_selection
 
+    profile = resolve_profile(judge_profile)
     original = grading._read_regular(spec_path, PACKET_LIMIT)
     selection = load_selection(spec_path)
     compiled = compile_selection(selection)
     payloads = dict(compiled.pop("payloads"))
     meta = _Metadata.model_validate_json(json.dumps(compiled))
     _validate_sources(meta, payloads)
+    if meta.price_schedule is not None and meta.price_schedule.model != profile.model:
+        raise SkillEvalError("synthesis price schedule must match the selected native model")
     if set(payloads) != {source.path for source in meta.sources}:
         raise SkillEvalError("unexpected synthesis source payload")
     payloads.update(
@@ -238,6 +242,7 @@ def prepare_synthesis(spec_path: Path, output: Path) -> dict[str, Any]:
                     "kind": "skilleval-synthesis-packet",
                     "scope": "selected-known-label-comparative-synthesis",
                     "investigation": False,
+                    **profile_metadata(profile),
                     **meta.model_dump(mode="json"),
                 }
             ),
@@ -272,8 +277,8 @@ def prepare_synthesis(spec_path: Path, output: Path) -> dict[str, Any]:
                     "packet_sha256": digest,
                     "input_digest": captured["manifest_sha256"],
                     "prompt_sha256": _sha(prompt),
-                    "model": MODEL,
-                    "effort": EFFORT,
+                    "model": profile.model,
+                    "effort": profile.effort,
                     "files": {name: _identity(*item) for name, item in files.items()},
                 }
             )
@@ -283,11 +288,17 @@ def prepare_synthesis(spec_path: Path, output: Path) -> dict[str, Any]:
     except Exception:
         shutil.rmtree(output)
         raise
-    return {"status": "prepared", **_preparation_summary(output, preparation, _sha(raw))}
-
-
-def _preparation_summary(root: Path, prep: _Preparation, digest: str) -> dict[str, Any]:
     return {
+        "status": "prepared",
+        **_preparation_summary(output, preparation, _sha(raw), judge_profile=profile.name),
+    }
+
+
+def _preparation_summary(
+    root: Path, prep: _Preparation, digest: str, *, judge_profile: str = "codex-sol"
+) -> dict[str, Any]:
+    return {
+        **profile_metadata(resolve_profile(judge_profile)),
         "path": str(root.absolute()),
         "sha256": digest,
         "packet_sha256": prep.packet_sha256,
@@ -323,9 +334,10 @@ def _read_prepared(
         for name, (data, _) in files.items()
         if name.startswith("packet/")
     }
+    profile = metadata_profile(evidence._parse_json(payloads["packet.json"]))
     if (
-        prep.model != MODEL
-        or prep.effort != EFFORT
+        prep.model != profile.model
+        or prep.effort != profile.effort
         or _packet_digest(payloads) != prep.packet_sha256
         or judge._input_digest(payloads) != prep.input_digest
         or _sha(files["source-selection.json"][0]) != prep.selection_sha256
@@ -336,19 +348,31 @@ def _read_prepared(
     evidence.verify(prepared / "input", prep.input_digest)
     judge._check_packet(prepared / "packet", payloads)
     _validate_sources(prep.metadata, payloads)
+    if (
+        prep.metadata.price_schedule is not None
+        and prep.metadata.price_schedule.model != profile.model
+    ):
+        raise SkillEvalError("synthesis price schedule must match the selected native model")
     return prep, payloads, files
 
 
 def inspect_synthesis(prepared: Path, expected_sha256: str) -> dict[str, Any]:
-    prep, _, _ = _read_prepared(prepared, expected_sha256)
-    return {"status": "verified", **_preparation_summary(prepared, prep, expected_sha256)}
+    prep, payloads, _ = _read_prepared(prepared, expected_sha256)
+    profile = metadata_profile(evidence._parse_json(payloads["packet.json"]))
+    return {
+        "status": "verified",
+        **_preparation_summary(prepared, prep, expected_sha256, judge_profile=profile.name),
+    }
 
 
-def _overhead(receipt: dict[str, Any], schedule: PriceSchedule | None = None) -> dict[str, Any]:
+def _overhead(
+    receipt: dict[str, Any], schedule: PriceSchedule | None = None, *, model: str = MODEL
+) -> dict[str, Any]:
+    model = receipt.get("model", model)
     usage = receipt.get("usage_accounting")
     if not isinstance(usage, dict):
-        usage = {"model": receipt.get("model", MODEL), "status": "unknown"}
-    cost = estimate_api_equivalent_cost(usage, schedule, model=receipt.get("model", MODEL))
+        usage = {"model": model, "status": "unknown"}
+    cost = estimate_api_equivalent_cost(usage, schedule, model=model)
     return {
         "scope": "this-synthesis-invocation-only",
         "execution_status": receipt.get("status", "unknown"),
@@ -402,6 +426,8 @@ def _review_spec(
     receipt: dict[str, Any],
     sources: dict[str, bytes],
     consumption: dict[str, Any],
+    *,
+    judge_profile: str = "codex-sol",
 ) -> ReviewSpec:
     citations = [item.model_dump(mode="json") for item in result.citations]
     used = {item.id for item in result.citations}
@@ -445,12 +471,13 @@ def _review_spec(
         host_limit += f" This is a partial synthesis from a {status} invocation."
     # Keep all authored limitations while reserving one existing row for host context.
     summary["limitations"][0] = host_limit + " " + summary["limitations"][0]
+    profile = resolve_profile(judge_profile)
     return ReviewSpec.model_validate_json(
         json.dumps(
             {
                 "title": prep.metadata.title,
                 "author": {
-                    "name": f"Codex native synthesis ({receipt['effort']} effort)",
+                    "name": f"{profile.display_name} native synthesis ({receipt['effort']} effort)",
                     "role": "agent",
                     "model": receipt["model"],
                 },
@@ -489,7 +516,8 @@ def record_synthesis(
     sources = _validate_sources(prep.metadata, payloads)
     _check_result(result, sources, {arm.id for arm in prep.metadata.arms})
     consumption = _overhead(receipt, prep.metadata.price_schedule)
-    spec = _review_spec(prep, result, receipt, sources, consumption)
+    profile = metadata_profile(evidence._parse_json(payloads["packet.json"]))
+    spec = _review_spec(prep, result, receipt, sources, consumption, judge_profile=profile.name)
     status = "completed" if receipt["status"] == "completed" else "partial"
     audit = {
         "schema_version": 1,
@@ -562,16 +590,23 @@ def run_synthesis(
     runtime: Path,
     image: Path,
     image_sha256: str,
-    catalog: Path,
-    auth_file: Path,
+    catalog: Path | None = None,
+    auth_file: Path | None = None,
+    claude_binary: Path | None = None,
     timeout_seconds: int = JUDGE_TIMEOUT_SECONDS,
 ) -> dict[str, Any]:
     """Explicit opt-in native execution; retain failures without an implicit retry."""
-    prep, _, files = _read_prepared(prepared, expected_sha256)
+    prep, payloads, files = _read_prepared(prepared, expected_sha256)
+    profile = metadata_profile(evidence._parse_json(payloads["packet.json"]))
     native_deadline("judge", timeout_seconds)
     grading._outside(prepared, output)
     judge._write_tree(output, {})
     native: dict[str, Any] = {}
+    profile_options: dict[str, Any] = (
+        {"judge_profile": profile.name} if profile.name != "codex-sol" else {}
+    )
+    if claude_binary is not None:
+        profile_options["claude_binary"] = claude_binary
     try:
         native = runner.run_native(
             prepared / "input",
@@ -586,6 +621,7 @@ def run_synthesis(
             mode="judge",
             native_timeout_seconds=timeout_seconds,
             investigation=False,
+            **profile_options,
         )
         recorded = record_synthesis(prepared, expected_sha256, output / "native", output / "review")
         summary = {**recorded, "run_path": str(output.absolute())}
@@ -596,7 +632,9 @@ def run_synthesis(
             "native_status": native.get("status", "unknown"),
             "error": str(error),
             "native_path": str((output / "native").absolute()),
-            "synthesis_consumption": _overhead(native, prep.metadata.price_schedule),
+            "synthesis_consumption": _overhead(
+                native, prep.metadata.price_schedule, model=profile.model
+            ),
             "scored_admitted": False,
         }
     grading._private_write(output / "attempt.json", evidence._json_bytes(summary))

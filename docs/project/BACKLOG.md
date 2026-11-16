@@ -14,6 +14,12 @@ shipped history. Private provenance stays outside public entries and issues.
 
 ## Open
 
+- **Cross-provider judgment evidence:** qualify Claude/Opus on representative
+  retained packets, inspect disagreements with Sol and preserve native-only
+  accounting limits. Add cache-write pricing only with an explicit rate contract;
+  do not infer cash charges from subscription or client estimates. Solver-side
+  Claude comparisons require their own treatment/context qualification.
+
 - **Synthesis follow-through:** the explicit native synthesis pipeline now turns
   selected handoff evidence into an attributed browser review. Extend selection
   adapters beyond specification handoffs and automate response follow-through

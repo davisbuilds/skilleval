@@ -17,8 +17,8 @@ from skilleval import calibration, evidence, grading, judge, repair
 from skilleval.assessment_observations import AssessmentObservationSource, observation_payloads
 from skilleval.contracts import Citation, Digest, Identifier, Record
 from skilleval.errors import SkillEvalError
-from skilleval.gateway import EFFORT, MODEL
 from skilleval.identity import file_digest, object_digest
+from skilleval.judge_profiles import metadata_profile, profile_metadata, resolve_profile
 from skilleval.repair_check import compare_observations, validate_observer_resources
 from skilleval.study import _clean_native
 
@@ -872,7 +872,10 @@ def _requirement_ids(payloads: dict[str, bytes]) -> tuple[str, ...] | None:
     return tuple(item["requirement_id"] for item in evidence._parse_json(raw)["requirements"])
 
 
-def packet(spec: RepairAssessmentSpec) -> tuple[dict[str, bytes], str, dict[str, Any]]:
+def packet(
+    spec: RepairAssessmentSpec, *, judge_profile: str = "codex-sol"
+) -> tuple[dict[str, bytes], str, dict[str, Any]]:
+    profile = resolve_profile(judge_profile)
     task, result, candidate = source(spec)
     statement, tools, execution = _native_evidence(result, spec)
     payloads = {
@@ -961,6 +964,7 @@ def packet(spec: RepairAssessmentSpec) -> tuple[dict[str, bytes], str, dict[str,
         {
             "schema_version": 1,
             "evidence_sha256": digest,
+            **profile_metadata(profile),
             "rubric_version": version,
             "investigation": spec.investigation,
             "population": "development",
@@ -1020,10 +1024,13 @@ def packet(spec: RepairAssessmentSpec) -> tuple[dict[str, bytes], str, dict[str,
     return payloads, packet_digest, result
 
 
-def prepare_assessment(spec: RepairAssessmentSpec, output: Path) -> dict[str, Any]:
+def prepare_assessment(
+    spec: RepairAssessmentSpec, output: Path, *, judge_profile: str = "codex-sol"
+) -> dict[str, Any]:
     spec = _normalize(spec)
     _outside_sources(spec, output)
-    payloads, digest, _ = packet(spec)
+    profile = resolve_profile(judge_profile)
+    payloads, digest, _ = packet(spec, judge_profile=profile.name)
     judge._write_tree(output, payloads, source_modes=judge._packet_modes(payloads))
     meta = evidence._parse_json(payloads["packet.json"])
     return {
@@ -1032,8 +1039,8 @@ def prepare_assessment(spec: RepairAssessmentSpec, output: Path) -> dict[str, An
         **meta,
         "packet_sha256": digest,
         "input_digest": judge._input_digest(payloads),
-        "model": MODEL,
-        "effort": EFFORT,
+        "model": profile.model,
+        "effort": profile.effort,
         "prompt": judge._invocation_prompt(payloads, digest).decode(),
         "scored_admitted": False,
     }
@@ -1046,7 +1053,7 @@ def prepare_citation_correction(
     output: Path,
     *,
     timeout_seconds: int = 180,
-    max_requests: int = 4,
+    max_requests: int | None = None,
 ) -> dict[str, Any]:
     from skilleval.citation_correction import prepare_correction
 
@@ -1058,7 +1065,8 @@ def prepare_citation_correction(
 def _validated_assessment(
     spec: RepairAssessmentSpec, prepared: Path, run: Path
 ) -> tuple[AssessmentResult, dict[str, Any], dict[str, bytes], dict[str, bytes], str]:
-    payloads, digest, _ = packet(spec)
+    meta = evidence._parse_json(grading._read_regular(prepared / "packet.json", 64 * 1024))
+    payloads, digest, _ = packet(spec, judge_profile=metadata_profile(meta).name)
     judge._check_packet(prepared, payloads)
     receipt, retained, artifacts = judge._run_files(run)
     judge._native_policy(receipt, retained, payloads, digest, spec.investigation)

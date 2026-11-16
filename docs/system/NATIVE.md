@@ -16,6 +16,10 @@ review findings schemas and semantic review recording do not apply to it.
 Document tasks use this writable-file mode with a separate document package and
 rubric; [TASKS.md](TASKS.md) owns their preparation, grading, and readable reports.
 
+Claude/Opus judges use a separate [subscription-native profile](CLAUDE-JUDGES.md):
+the authenticated client runs on the host and its model-directed commands run
+inside the VM. The Codex procedure below remains the default.
+
 ## Inputs and boundaries
 
 The production adapter runs `codex app-server` over stdio inside the solver

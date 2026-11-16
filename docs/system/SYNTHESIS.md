@@ -7,7 +7,7 @@ material residual questions. It can disagree with an earlier interpretation by
 citing new evidence. Original verdicts remain unchanged.
 
 The first adapter covers specification-to-implementation handoffs. It reuses
-existing handoff accounting and artifact-assessment replay, the native Codex
+existing handoff accounting and artifact-assessment replay, the selected native
 judge route, and the [results view](RESULTS.md). This is an explicit operator
 workflow; serving a page or finishing an experiment does not launch synthesis.
 
@@ -56,16 +56,22 @@ Use the `sha256` returned by preparation; it identifies `preparation.json`.
 Every output directory is fresh. Preparation freezes selected source bytes,
 validated accounting/assessment projections, the agent prompt and output schema.
 It performs no model or VM work. Run verifies that generation before dispatch,
-invokes a fresh native Codex session, and records a valid result for the browser.
+invokes a fresh session through the frozen judge profile, and records a valid
+result for the browser.
 There is no implicit retry or automatic experiment dispatch.
 
-The current native route uses GPT-6.1 Sol/high with the judge's 15-minute default
-deadline and existing request backstop. Runtime, image, catalog and auth paths
-are explicit. Reuse applicable native qualification; synthesis does not need the
-application's entire test suite rerun merely to read retained results. Keep
+The default route uses GPT-6.1 Sol/high with the judge's 15-minute default
+deadline and existing request backstop. Preparation can instead freeze
+`--judge claude-opus`; [Claude subscription execution](CLAUDE-JUDGES.md) uses
+Opus/high with a 15-minute deadline and no provider-request ledger. Runtime and
+image paths are explicit; catalog and auth-file paths apply only to Codex. Reuse
+applicable native qualification; synthesis does not need the application's entire
+test suite rerun merely to read retained results. Keep
 runtime/image/controller sources stable through cleanup.
 
-The guest has the existing isolated native context and network boundary.
+Codex runs inside the existing isolated guest context and network boundary.
+Claude keeps its authenticated native client on the host and directs commands
+through the isolated VM dispatcher.
 Selected files are supplied under inert source-ID names, not as harness
 instructions. Evidence is untrusted data. The static judge policy permits source
 reading and prohibits executing imported code; that prohibition is a declared
