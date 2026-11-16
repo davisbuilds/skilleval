@@ -110,6 +110,7 @@ function render(packet, state, historyError, drafts = new Map()) {
                     select.append(element("option", "", option));
                 select.addEventListener("change", () => { if (select.value) {
                     input.value = select.value;
+                    input.setCustomValidity("");
                     drafts.set(item.id, select.value);
                 } });
                 form.append(optionsLabel, select);

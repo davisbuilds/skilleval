@@ -123,7 +123,7 @@ function render(packet: Packet, state: DecisionState | null, historyError?: stri
         empty.value = "";
         select.append(empty);
         for (const option of item.options) select.append(element("option", "", option));
-        select.addEventListener("change", () => { if (select.value) { input.value = select.value; drafts.set(item.id, select.value); } });
+        select.addEventListener("change", () => { if (select.value) { input.value = select.value; input.setCustomValidity(""); drafts.set(item.id, select.value); } });
         form.append(optionsLabel, select);
       }
       const label = element("label", "", "Your response");
