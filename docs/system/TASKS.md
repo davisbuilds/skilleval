@@ -196,6 +196,36 @@ is an error before execution, not a cache miss. Failed executions remain in new
 receipts; incomplete cleanup stops subsequent VMs. Input drift at final readback
 retains execution envelopes but prevents publication of an aggregate report.
 
+## Opt-in environment controls
+
+These public helpers use authored source and the production validation route.
+They need an existing smolvm distribution and a pinned `solver-isolated-v1` image
+with Python >=3.11 and Git. They make no model requests and run no imported task
+code on the host. Use fresh private outputs and keep execution source, runtime
+and image stable until every recovery ticket is clean.
+
+| Behavior | Entry point | Expected evidence |
+| --- | --- | --- |
+| Ordinary source/configuration, edits, subprocesses, two-commit Git history and fresh lane homes; controller file/process isolation | `scripts/qualify-validation.py` | `control-summary.json` passes both inspection and ordinary tests, including readable public controls and denied controller access; production validation readback accepts the report. |
+| Shared-case contamination, independent lanes, selective reuse and original receipt binding | `scripts/qualify-lanes.py` | `qualification.json` reports passing controls: shared state is detectable, independent startup uses two VMs, unchanged reuse uses zero, and changing only lane B uses one; all recovery tickets are clean. |
+
+```sh
+uv run --locked python scripts/qualify-validation.py \
+  --runtime /path/to/smolvm --image-archive /path/to/image.tar \
+  --image-sha256 IMAGE_SHA256 --output /path/to/fresh-validation-control --run
+uv run --locked python scripts/qualify-lanes.py \
+  --runtime /path/to/smolvm --image-archive /path/to/image.tar \
+  --image-sha256 IMAGE_SHA256 --output /path/to/fresh-lane-control
+```
+
+Omitting `--run` from the validation helper prepares inputs without launching a
+VM; later execution requires a fresh output too. After an interrupted controller
+has stopped, use `scripts/qualify-lanes.py --recover TICKET_DIRECTORY` for each
+retained `recovery.json` directory. Preserve failed reports and recovery receipts.
+These checks establish the sampled packaging/isolation/reuse behavior, not native
+Codex operation, representative task quality, grader reliability or scored admission.
+Native controls remain in `scripts/qualify-solver.py`.
+
 ## Grade the artifact independently
 
 `artifact collect`, `artifact control` and `artifact check` reuse exact collection

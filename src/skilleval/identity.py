@@ -69,6 +69,8 @@ SOURCES = (
     "scripts/qualify-context.py",
     "scripts/qualify-solver.py",
     "scripts/qualify-lifecycle.py",
+    "scripts/qualify-lanes.py",
+    "scripts/qualify-validation.py",
 )
 
 
