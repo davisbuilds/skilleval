@@ -14,12 +14,12 @@ shipped history. Private provenance stays outside public entries and issues.
 
 ## Open
 
-- **Synthesis follow-through:** the local results view now presents selected
-  conclusions/exceptions and saves separate operator answers. Agents still author
-  synthesis and follow-up explicitly. Add automated result selection or response
-  follow-through only when repeated use shows the seam needed; preserve original
-  judgments and distinguish unresolved evidence from human questions. Cross-packet
-  triage, optional artifact comparison and calibration sampling remain deferred.
+- **Synthesis follow-through:** the explicit native synthesis pipeline now turns
+  selected handoff evidence into an attributed browser review. Extend selection
+  adapters beyond specification handoffs and automate response follow-through
+  only when repeated use shows the need. Preserve original judgments and
+  distinguish unresolved evidence from human questions. Cross-packet triage,
+  optional artifact comparison and calibration sampling remain deferred.
 - **Remaining readiness precision:** whole-module execution fingerprints still
   couple task suites to unrelated changes within shared lifecycle, qualification
   and evidence modules. Revisit further extraction when retained phase timings

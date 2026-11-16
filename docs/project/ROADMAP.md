@@ -170,8 +170,10 @@ judgment, model agreement, or successful skill read cannot satisfy those gates.
 
 The [local results view](../system/RESULTS.md) now presents selected synthesis,
 evidence excerpts, agent follow-ups and qualified unknowns, with separately saved
-answers only for material human questions. An investigating agent authors that
-synthesis; automatic follow-through is deferred until repeated use warrants it.
+answers only for material human questions. The explicit
+[native synthesis pipeline](../system/SYNTHESIS.md) records that investigation
+over selected handoff evidence, with canonical accounting supplied by replayed
+receipts. Automatic follow-through is deferred until repeated use warrants it.
 The summary remains useful when no human action is required.
 Use [task-scoped readiness](../system/TASKS.md#readiness-reuse-and-invalidation)
 to reuse completed environment observations as briefs, grading criteria and

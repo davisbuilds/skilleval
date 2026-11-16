@@ -34,6 +34,8 @@ from skilleval.repair_assessment import (
 from skilleval.repair_outcomes import RepairOutcomeSelection
 from skilleval.review_results import ReviewSpec
 from skilleval.study import StudySpec
+from skilleval.synthesis import SynthesisResult
+from skilleval.synthesis_inputs import SynthesisSelection
 from skilleval.task_package import TaskPackageSpec
 
 RECORDS: dict[str, type[Record]] = {
@@ -62,6 +64,8 @@ RECORDS: dict[str, type[Record]] = {
     "spec-handoff-spec": SpecHandoffSpec,
     "handoff-report-spec": HandoffReportSpec,
     "results-review-spec": ReviewSpec,
+    "synthesis-selection": SynthesisSelection,
+    "synthesis-result": SynthesisResult,
 }
 
 
@@ -69,6 +73,34 @@ def parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser(prog="skilleval", description=__doc__)
     root.add_argument("--version", action="version", version=f"skilleval {__version__}")
     commands = root.add_subparsers(dest="command", required=True)
+    synthesis = commands.add_parser(
+        "synthesis", help="Investigate retained results with an explicitly invoked agent"
+    )
+    synthesis_commands = synthesis.add_subparsers(dest="operation", required=True)
+    synthesis_prepare = synthesis_commands.add_parser(
+        "prepare", help="Validate selected evidence and freeze an investigation input"
+    )
+    synthesis_prepare.add_argument("--spec", type=Path, required=True)
+    synthesis_prepare.add_argument("--output", type=Path, required=True)
+    for synthesis_operation in ("inspect", "run", "record"):
+        step = synthesis_commands.add_parser(
+            synthesis_operation, help=f"{synthesis_operation.title()} a frozen synthesis"
+        )
+        step.add_argument("prepared", type=Path)
+        step.add_argument("--sha256", required=True, help="Expected preparation.json digest")
+        if synthesis_operation != "inspect":
+            step.add_argument("--output", type=Path, required=True, help="Fresh output directory")
+        if synthesis_operation == "record":
+            step.add_argument(
+                "--run", type=Path, required=True, help="Retained native run directory"
+            )
+        if synthesis_operation == "run":
+            step.add_argument("--runtime", type=Path, required=True)
+            step.add_argument("--image-archive", type=Path, required=True)
+            step.add_argument("--image-sha256", required=True)
+            step.add_argument("--catalog", type=Path, required=True)
+            step.add_argument("--auth-file", type=Path, required=True)
+            step.add_argument("--timeout-seconds", type=int, default=900)
     results = commands.add_parser(
         "results", help="Inspect attributed synthesis and human exceptions"
     )
@@ -457,6 +489,31 @@ def write_new_json(path: Path, value: object) -> None:
 
 
 def dispatch(args: argparse.Namespace) -> dict[str, Any]:
+    if args.command == "synthesis":
+        from skilleval.synthesis import (
+            inspect_synthesis,
+            prepare_synthesis,
+            record_synthesis,
+            run_synthesis,
+        )
+
+        if args.operation == "prepare":
+            return prepare_synthesis(args.spec, args.output)
+        if args.operation == "inspect":
+            return inspect_synthesis(args.prepared, args.sha256)
+        if args.operation == "record":
+            return record_synthesis(args.prepared, args.sha256, args.run, args.output)
+        return run_synthesis(
+            args.prepared,
+            args.sha256,
+            args.output,
+            runtime=args.runtime,
+            image=args.image_archive,
+            image_sha256=args.image_sha256,
+            catalog=args.catalog,
+            auth_file=args.auth_file,
+            timeout_seconds=args.timeout_seconds,
+        )
     if args.command == "results":
         from skilleval.review_results import build_review, load_packet, review_status
 

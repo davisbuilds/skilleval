@@ -27,6 +27,12 @@ they do not establish that a skill helps or that the grader is generally reliabl
   with task-agent usage, conditional cost estimates, and timing. Keep judge spend
   separate and missing telemetry unknown.
 
+For specification-to-implementation comparisons, the explicit
+[agent-assisted synthesis pipeline](docs/system/SYNTHESIS.md) investigates selected
+retained evidence and produces a local results view. It records the agent's
+analysis and invocation provenance, keeps canonical accounting separate, and
+routes only material residual questions to the operator.
+
 The current execution route uses native Codex in fresh smolvm guests and a bounded
 host inference gateway. The selected skill is the treatment; ordinary task
 context and capabilities stay comparable. Natural skill discovery is a separate,
