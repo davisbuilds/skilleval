@@ -63,6 +63,9 @@ absolute locators when retiring implementation worktrees.
 
 - Preserve original evidence. Changed inputs, rubrics, workers, or judgments create
   new generations; never rewrite an earlier result or retroactively qualify it.
+  Explicit retirement of obsolete experiments follows
+  [storage retirement](docs/system/STORAGE.md#organization-and-experiment-retirement):
+  preserve retained dependencies, extract reusable tooling and record what is lost.
 - Keep execution validity, task quality, skill exposure/consultation, and usage
   separate. Missing telemetry is unknown. A read is not semantic application;
   authored controls are not holdouts; one pair is not a skill-effect estimate.

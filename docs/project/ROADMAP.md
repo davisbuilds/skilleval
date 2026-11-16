@@ -43,8 +43,10 @@ are open; they cannot become scored trials by relabeling their results.
 Run data now has a [durable storage layout](../system/STORAGE.md) outside
 implementation checkouts. Native runs retain guest-local session rollouts with
 explicit reasoning-summary coverage; guarded staging cleanup preserves replay
-evidence. Historical absolute locators remain in place until a supported
-relocation scheme exists. Backup and evidence-expiry policies remain open.
+evidence. Retained historical locators stay in place until supported relocation
+exists; obsolete cohorts can be deliberately retired with a dependency check and
+compact receipt. A private index separates active evidence from references and
+retired work. Backup and automatic expiry remain operator decisions.
 
 The [source register](SOURCES.md) records adopted ideas and implementation:
 SkillsBench/Harbor packaging, Tessl fixtures and explicit variants,
