@@ -32,6 +32,8 @@ interfaces. Do not load every reference for a small change.
   retained runs, native invocation provenance and deterministic accounting.
 - [ENVIRONMENT.md](docs/system/ENVIRONMENT.md), [GATEWAY.md](docs/system/GATEWAY.md),
   [NATIVE.md](docs/system/NATIVE.md): qualification, recovery, inference, and native runs.
+- [CLAUDE-JUDGES.md](docs/system/CLAUDE-JUDGES.md): subscription-native Claude
+  authentication, host context controls and isolated VM investigation tools.
 - [TASK-PRESENTATION.md](docs/system/TASK-PRESENTATION.md): solver-visible context,
   evaluation disclosures, the solver boundary, and its qualification limits.
 - [CALIBRATION.md](docs/system/CALIBRATION.md), [RELIABILITY.md](docs/system/RELIABILITY.md):
@@ -67,7 +69,7 @@ absolute locators when retiring implementation worktrees.
 - Give solvers ordinary work briefs without evaluation announcements. Keep
   evaluation-only context inaccessible; operator-state isolation alone does not
   establish that boundary. Preserve faithful upstream skill bytes and old evidence.
-  Native commands use the unprivileged solver boundary; do not bypass it to make
+  Model-directed commands use the unprivileged solver boundary; do not bypass it to make
   a task pass. Qualify required tools and image contents through that same route.
 - Support exploratory development runs from an original work brief, faithful repo
   context and declared provisional criteria/gaps. Use `mapped-acceptance-v1` when

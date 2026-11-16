@@ -14,7 +14,9 @@ alongside actual consumption. The [vision](VISION.md) owns the principles;
 
 The CLI supports immutable captures, task/environment packages, native Codex
 execution, review/repair/document artifacts, independent offline checks, and
-static or investigative semantic judgments. Development studies freeze paired
+static or investigative semantic judgments. Judges and synthesis can select
+[Claude Code subscription / Opus](../system/CLAUDE-JUDGES.md); task agents retain
+the Codex route. Development studies freeze paired
 inputs and budgets, preserve every attempt, and produce readable artifact and
 usage comparisons. [Task packages](../system/TASKS.md) and
 [study orchestration](../system/STUDIES.md) own those contracts.

@@ -1,5 +1,8 @@
 # Native qualification gateway
 
+This reference covers the Codex gateway. [Claude subscription judges](CLAUDE-JUDGES.md)
+use their unmodified native client for authentication and do not pass through it.
+
 `skilleval.gateway` supplies an explicit, bounded host inference capability for
 Codex CLI with adapter baseline **0.164.0**, **gpt-6.1-sol**, **high** reasoning.
 Stable same-major upgrades at or above that baseline may run qualification; the

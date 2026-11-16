@@ -8,6 +8,7 @@ import selectors
 import signal
 import subprocess
 import time
+from collections.abc import Callable
 from contextlib import nullcontext, suppress
 from pathlib import Path
 from typing import Any, Protocol
@@ -48,6 +49,7 @@ def _execute_native(
     protocol: ProcessProtocol | None = None,
     stdout_name: str = "events.jsonl",
     input_name: str | None = None,
+    event_observer: Callable[[dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     """Keep controller file descriptors outside the child; stream bounded pipes.
 
@@ -135,7 +137,7 @@ def _execute_native(
                         truncated |= len(block) > available
                         block = block[:available]
                     output.write(block)
-                    if protocol and output is stdout and not protocol_error:
+                    if (protocol or event_observer) and output is stdout and not protocol_error:
                         received += block
                         if truncated or len(received) > 4 * 1024 * 1024:
                             protocol_error = "app-server output limit exceeded"
@@ -143,11 +145,17 @@ def _execute_native(
                         try:
                             while b"\n" in received:
                                 line, received = received.split(b"\n", 1)
-                                enqueue(protocol.receive(json.loads(line)))
+                                record = json.loads(line)
+                                if not isinstance(record, dict):
+                                    raise ValueError("native event must be an object")
+                                if event_observer:
+                                    event_observer(record)
+                                if protocol:
+                                    enqueue(protocol.receive(record))
                             if pending and not process.stdin.closed:
                                 if process.stdin not in selector.get_map():
                                     selector.register(process.stdin, selectors.EVENT_WRITE, None)
-                            elif protocol.settled and not process.stdin.closed:
+                            elif protocol and protocol.settled and not process.stdin.closed:
                                 process.stdin.close()
                         except (ValueError, UnicodeError) as error:
                             protocol_error = str(error)[:1024]
@@ -168,7 +176,7 @@ def _execute_native(
         "output_limit_reached": truncated,
         "pipe_drain_incomplete": drain_incomplete,
     }
-    if protocol:
+    if protocol or event_observer:
         if received and protocol_error is None:
             protocol_error = "incomplete app-server JSON line"
         result["protocol_error"] = protocol_error

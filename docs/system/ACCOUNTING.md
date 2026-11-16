@@ -155,3 +155,12 @@ claim, a statistical comparison or a skill-effect estimate. Independent cache
 calibration, broader tier/charge support, representative quality evidence and
 cluster-aware uncertainty remain future work in the
 [backlog](../project/BACKLOG.md).
+
+## Claude subscription judge usage
+
+The [Claude judge route](CLAUDE-JUDGES.md) retains a single terminal per-model
+`modelUsage` snapshot. Input includes uncached, cache-read and cache-created tokens;
+raw main-loop usage and native cost estimates remain diagnostics. There is no
+independent provider ledger on this route. Missing or invalid native usage stays
+unknown, and the current schedule cannot estimate API cost when cache writes
+occur. These differences must remain visible when comparing judge overhead.

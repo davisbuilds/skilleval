@@ -33,8 +33,10 @@ retained evidence and produces a local results view. It records the agent's
 analysis and invocation provenance, keeps canonical accounting separate, and
 routes only material residual questions to the operator.
 
-The current execution route uses native Codex in fresh smolvm guests and a bounded
-host inference gateway. The selected skill is the treatment; ordinary task
+Task execution uses native Codex in fresh smolvm guests and a bounded host
+inference gateway. Judges and synthesis also support
+[Claude Code subscription / Opus](docs/system/CLAUDE-JUDGES.md), with the native
+client on the host and investigation tools confined to a fresh VM. The selected skill is the treatment; ordinary task
 context and capabilities stay comparable. Natural skill discovery is a separate,
 later experiment. See the [vision](docs/project/VISION.md) for the comparison
 principles and [roadmap](docs/project/ROADMAP.md) for priorities.
