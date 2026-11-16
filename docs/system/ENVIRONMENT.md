@@ -145,19 +145,30 @@ and every failed attempt. The separate credential-free lifecycle probe exercises
 execution timeout, detached guest work, fresh workspace/session state, and
 controller interruption:
 
+Supply an applicable retained authenticated native report for the seal. Creating
+one is a separate, explicit provider operation described in
+[native qualification](GATEWAY.md#run-the-explicit-control); an unchanged receipt
+does not need to be regenerated merely to use a new output directory.
+
 ```sh
-uv run skilleval qualification run task-plan.json --capture-identity \
-  --runtime /path/to/smolvm --output .local/task-qualification
+set -eu
+umask 077
+uv run skilleval storage init
+qualification_dir="$(uv run skilleval storage path experiments environment-qualification-v1 --plain)"
+mkdir "$qualification_dir"
+native_report="/path/to/existing/native-authenticated/report.json"
+uv run skilleval qualification run /path/to/private/task-plan.json --capture-identity \
+  --runtime /path/to/smolvm --output "$qualification_dir/offline"
 uv run python scripts/qualify-lifecycle.py \
   --runtime /path/to/smolvm --image /path/to/task-image.tar \
-  --image-sha256 ARCHIVE_SHA256 --output .local/lifecycle-qualification
-uv run skilleval admission seal --plan task-plan.json \
-  --offline .local/task-qualification/report.json \
-  --native .local/native-authenticated/report.json \
-  --lifecycle .local/lifecycle-qualification/report.json \
+  --image-sha256 ARCHIVE_SHA256 --output "$qualification_dir/lifecycle"
+uv run skilleval admission seal --plan /path/to/private/task-plan.json \
+  --offline "$qualification_dir/offline/report.json" \
+  --native "$native_report" \
+  --lifecycle "$qualification_dir/lifecycle/report.json" \
   --catalog /path/to/models.json --runtime /path/to/smolvm \
-  --output .local/environment-admission.json
-uv run skilleval admission check .local/environment-admission.json \
+  --output "$qualification_dir/environment-admission.json"
+uv run skilleval admission check "$qualification_dir/environment-admission.json" \
   --sha256 RETAINED_ADMISSION_SHA256
 ```
 
@@ -187,7 +198,7 @@ retain the state and ticket. Controller termination does not imply guest cleanup
 an explicit recovery command uses the retained namespace:
 
 ```sh
-uv run skilleval qualification recover .local/qualification-output
+uv run skilleval qualification recover "/path/to/existing/qualification-output"
 ```
 
 Recovery is idempotent after a completed cleanup. It refuses drifted identities
@@ -248,8 +259,8 @@ global cache. Distinct source image versions remain operator-owned.
 To inspect older runs or retry retained copies, name each run directory explicitly:
 
 ```sh
-uv run skilleval storage prune .local/run-one .local/run-two
-uv run skilleval storage prune .local/run-one .local/run-two --apply
+uv run skilleval storage prune "/path/to/existing/run-one" "/path/to/existing/run-two"
+uv run skilleval storage prune "/path/to/existing/run-one" "/path/to/existing/run-two" --apply
 ```
 
 The default is read-only preview; `--apply` removes only verified staging archives.

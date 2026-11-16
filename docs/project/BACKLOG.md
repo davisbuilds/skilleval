@@ -37,6 +37,13 @@ shipped history. Private provenance stays outside public entries and issues.
   The affected timeout tests pass individually; do not suppress signal failures
   or weaken descendant cleanup without a causal reproduction. This is separate
   from the Linux guest namespace teardown and independent-lane readiness checks.
+- **Portable native edge controls:** add opt-in qualification for solver timeout
+  with child-heartbeat silence before VM teardown, an inline image reaching the
+  next native request, and large skill-resource inventories. Current public
+  controls cover normal-completion child reaping and whole-VM recovery; those
+  do not establish the timeout boundary. Parser regressions also do not replace
+  native-route observations. Revisit when renewing the affected harness or
+  collection path; require explicit pinned inputs, fresh output and cleanup.
 - **Interactive clarification:** the first specification pilot delegates bounded
   product choices and runs each stage without live Q&A. Add a bounded conversation
   loop when selected tasks need requirements elicitation: explicit needs-input vs
@@ -109,16 +116,14 @@ shipped history. Private provenance stays outside public entries and issues.
   behavior remains outside that control. Preserve the older source-home runs and
   their contradictory scratch constraint as a task-context limitation. New task
   captures still need their own ordinary command and required-tool qualification.
-  The restored receipt-repair capture
-  now has matching baseline/reference unit failures and skips, with required
-  assets/history retained. The [environment record](../../examples/repair/receipt-admission/environment.md)
-  identifies two root-sensitive failures, eight unit skips and zero local tasks
-  validated. Revalidate the restored task under `solver-isolated-v1` and qualify
-  required tool-dependent lanes; old root diagnostics do not qualify the new
-  native profile. Imported validation and upstream CI platform/version
-  parity remain outside the current scope. Preserve historical tests and evidence.
-- **Larger judge artifact budgets:** the restored capture has over 5,300 files in
-  a before/after source packet. Copying both complete trees for investigation can
+  Receipt-admission remains a historical development seed; its
+  [environment record](../../examples/repair/receipt-admission/environment.md)
+  preserves root-sensitive failures and skipped capabilities. If revisited,
+  rebuild its capture and qualify required lanes under the current solver profile.
+  Old diagnostics do not qualify a fresh capture. Imported validation and upstream
+  CI platform/version parity remain outside the current scope.
+- **Larger judge artifact budgets:** the historical receipt capture had over 5,300
+  files in a before/after source packet. Copying both complete trees for investigation can
   exceed the native 10,000-file ceiling. Qualify selective investigation/export
   behavior on the actual workload before another judge run; retain canonical input
   identity and original citations rather than silently dropping evidence.

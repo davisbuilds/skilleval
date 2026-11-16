@@ -38,6 +38,51 @@ Initialization does not move old data or configure backup. These files can conta
 private source and transcripts. Backup scope, access and restore verification
 need an explicit operator policy; a stable directory alone provides no backup.
 
+## Organization and experiment retirement
+
+Keep a small private `INDEX.md` at the data root. For each experiment or related
+cohort, record its purpose, status (`active`, `reference`, or `retired`), entry
+report, required captures/images/tools and retention decision. Include legacy
+locations in the index instead of moving frozen evidence to make the directory
+tree look uniform. The index is operator-maintained navigation, not an input to
+admission, a dependency resolver or an automatic deletion policy.
+
+New durable outputs belong in these groups. Use checkout-local `.local/` only for
+disposable scratch and explicitly indexed legacy evidence or dependency anchors.
+Keep shared pinned assets in `images/` and `tools/`; retire them only after checking
+their remaining consumers. A build-provenance reference may document an ancestor
+without requiring its bytes for current execution, but deleting it forfeits that
+historical rebuild route. Record that distinction.
+
+Preserving original evidence means leaving retained records immutable; it does
+not require keeping every development experiment forever. An explicit operator
+decision may retire a complete obsolete cohort:
+
+1. Identify the exact directories and verify they have no active writers or
+   required consumers among retained experiments. Inspect actual readers as well
+   as path references; a text search alone cannot establish dependency safety.
+2. Extract reusable qualification code, recipes and minimal authored regression
+   fixtures into the public project. Remove private paths and pilot-specific
+   assumptions and verify the portable entry points before deleting their source.
+3. Save a compact private retirement receipt: scope, reason, file identities and
+   sizes, consequential conclusions/corrections, and the replay or rebuild
+   capabilities being relinquished. Keep original failures and corrections
+   together in the summary; do not turn retired results into fresh evidence.
+4. Delete only the reviewed cohort, then check retained identities and actual
+   result readers. Update the private index with the receipt and retired status.
+
+This is deliberate whole-experiment retirement, separate from the narrow
+`prune`/`prune-staging` commands below. There is no recursive garbage collector or
+automatic age threshold. A receipt records the deletion; it cannot reconstruct
+removed data. Choose archival and verified backup instead when future replay is
+still required.
+
+Track reusable machinery, portable task/rubric templates, environment recipes,
+source pins and authored controls in Git. Keep instantiated private settings,
+source captures, native traces, audit answers, generated results, images and
+installed binaries in the data store. A public result release needs its own
+privacy/license review; an ignored folder is not ready to publish wholesale.
+
 ## Native rollouts
 
 Future native runs request a persistent thread inside a fresh guest `CODEX_HOME`.
@@ -75,9 +120,9 @@ response includes a readable-summary positive control; `--auth-file` selects a
 bounded real-provider run and reports actual summary availability. Neither is a
 skill-effect experiment or scored admission.
 
-Rollouts currently remain with the run until an explicit archival/deletion policy
-is adopted. There is no automatic age-based expiry, including for failed runs or
-pending audits. The cleanup commands below never delete them.
+Rollouts remain with retained runs. Explicit cohort retirement may remove them;
+there is no automatic age-based expiry, including for failed runs or pending
+audits. The staging cleanup commands below never delete them.
 
 ## Disposable staging
 
@@ -123,7 +168,7 @@ Frozen records may embed absolute paths into other runs, captures or worker
 files. Readers deliberately reject symlink ancestors. Moving `.local` and adding
 a symlink can therefore break replay even when ordinary file reads succeed.
 
-For existing data, preserve the real evidence directory at its original path.
+For retained data, preserve the real evidence directory at its original path.
 Before removing a merged source checkout, inventory its dirty, untracked and
 ignored contents; verify there are no active consumers; preserve every evidence
 tree and external file referenced by frozen inputs. Retain nested Git histories
