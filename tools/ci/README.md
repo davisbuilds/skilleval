@@ -74,9 +74,13 @@ module rather than resolving that mutable tag. Upstream source and licensing:
 From the repository root, with the pinned Go compiler:
 
 ```sh
-mkdir -p .local/ci-tools
-tools/ci/build-gitleaks.sh "$PWD/.local/ci-tools/gitleaks"
-.local/ci-tools/gitleaks git --redact --no-banner --log-opts=--all .
+set -eu
+umask 077
+uv run skilleval storage init
+ci_tools_dir="$(uv run skilleval storage path tools ci-scanners-v1 --plain)"
+mkdir "$ci_tools_dir"
+tools/ci/build-gitleaks.sh "$ci_tools_dir/gitleaks"
+"$ci_tools_dir/gitleaks" git --redact --no-banner --log-opts=--all .
 ```
 
 CI first requires a synthetic credential pattern to be detected, then scans all
