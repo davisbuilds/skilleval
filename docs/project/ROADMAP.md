@@ -1,6 +1,6 @@
 ---
 status: in-progress
-updated: 2026-11-11
+updated: 2026-11-16
 ---
 
 # Roadmap
@@ -61,10 +61,12 @@ including browser interaction, with one known root-test failure and five skips
 retained explicitly. The first pair produced two specifications and two downstream
 candidates through fresh vanilla implementers. One implementer reached the frozen
 request cap; its failed invocation and retained artifact remain separate facts.
-Both candidates have retained observations from all ten browser scenarios. Next,
-inspect the specifications, implementation evidence and judgments against the
-original request, and use the simplified collection and stage-budget policies for
-further exploratory work. Freeze new inputs and budgets equally across arms;
+Both candidates have retained observations from all ten browser scenarios. A
+retained-evidence synthesis compares the valid product tradeoffs, preserves the
+interrupted invocation and unknown accounting, and adds baseline-failure evidence
+without rewriting original judgments. No demonstrated skill advantage or complete
+efficiency winner follows from this pair. Next, use the simplified collection and
+stage-budget policies for further exploratory work. Freeze new inputs and budgets equally across arms;
 retain the original cap failure. Treatment stays in the
 spec stage while downstream quality, omissions, rework and consumption remain visible.
 Specification-specific rubrics, explicit requirement-level verdicts, authored
@@ -166,10 +168,11 @@ Scored dispatch requires both applicable full-workload environment evidence and
 independently supported grader reliability. A bounded runtime seal, parseable
 judgment, model agreement, or successful skill read cannot satisfy those gates.
 
-The next operator-facing work is a local review exception inbox, detailed in the
-[backlog](BACKLOG.md). Automated assessment and targeted follow-up should settle
-routine questions; human involvement focuses on material residual ambiguity.
-A results summary should remain useful when no human action is required.
+The [local results view](../system/RESULTS.md) now presents selected synthesis,
+evidence excerpts, agent follow-ups and qualified unknowns, with separately saved
+answers only for material human questions. An investigating agent authors that
+synthesis; automatic follow-through is deferred until repeated use warrants it.
+The summary remains useful when no human action is required.
 Use [task-scoped readiness](../system/TASKS.md#readiness-reuse-and-invalidation)
 to reuse completed environment observations as briefs, grading criteria and
 reporting evolve. Opt into independent lane validation to rerun only checks whose

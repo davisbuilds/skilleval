@@ -21,6 +21,31 @@ def test_help_never_needs_a_runtime() -> None:
     assert not result.stderr
 
 
+def test_results_example_prepares_inspects_and_refuses_overwrite(tmp_path: Path) -> None:
+    output = tmp_path / "review"
+    example = Path(__file__).parents[1] / "examples/results/review/source.json"
+    result = invoke("results", "prepare", "--spec", str(example), "--output", str(output))
+    assert result.returncode == 0, result.stderr
+    receipt = json.loads(result.stdout)
+    assert receipt["human_questions"] == 1
+    inspected = invoke("results", "inspect", str(output))
+    assert inspected.returncode == 0, inspected.stderr
+    assert json.loads(inspected.stdout)["packet_id"] == receipt["packet_id"]
+    assert json.loads(inspected.stdout)["status"] == "verified"
+    repeated = invoke("results", "prepare", "--spec", str(example), "--output", str(output))
+    assert repeated.returncode == 2
+    assert not repeated.stdout
+
+
+def test_results_help_and_schema_do_not_start_server() -> None:
+    result = invoke("results", "serve", "--help")
+    assert result.returncode == 0
+    assert "--port" in result.stdout
+    schema = invoke("schema", "results-review-spec")
+    assert schema.returncode == 0
+    assert "sources" in json.loads(schema.stdout)["properties"]
+
+
 def test_environment_execution_requires_output_before_accessing_inputs() -> None:
     result = invoke(
         "task-package",

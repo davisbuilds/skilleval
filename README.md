@@ -35,10 +35,12 @@ principles and [roadmap](docs/project/ROADMAP.md) for priorities.
 
 ## Start locally
 
-Use a source checkout with Python 3.12+ and [uv](https://docs.astral.sh/uv/) 0.9.17+:
+Use a source checkout with Python 3.12+ and [uv](https://docs.astral.sh/uv/) 0.9.17+.
+For development checks, also use Node from `.node-version`:
 
 ```sh
 uv sync --locked
+npm ci --ignore-scripts
 uv run skilleval --help
 scripts/check
 ```
@@ -50,6 +52,9 @@ count, or to `0` to run them serially in one process. Native execution
 has been exercised on Apple Silicon macOS with Linux ARM64 guests; this is not a
 claim of runtime portability. Windows is unsupported. See
 [environment requirements](docs/system/ENVIRONMENT.md).
+The installed CLI and [local results view](docs/system/RESULTS.md) use packaged
+assets and do not need Node. The UI's browser checks are explicit development
+commands, outside the ordinary gate.
 
 Hosted CI runs the deterministic gate and package build on Linux and macOS, plus
 workflow auditing and full-history secret scanning. See the
@@ -144,8 +149,10 @@ welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md), the
 [backlog](docs/project/BACKLOG.md). [AGENTS.md](AGENTS.md) contains the working
 agreements and documentation map for coding agents.
 
-Python owns the CLI, execution contracts, evidence, and grading. A TypeScript
-review UI and a pi adapter are later work. Interfaces are provisional; no stable
+Python owns the CLI, execution contracts, evidence, and grading. The TypeScript
+[local results view](docs/system/RESULTS.md) shows attributed conclusions, retained
+excerpts and only material questions needing human judgment. Responses are saved
+separately from original judgments. The pi adapter is later work. Interfaces are provisional; no stable
 release or package-registry publication is claimed.
 
 ## License and sources

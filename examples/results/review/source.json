@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "title": "Synthetic scope question",
+  "author": {
+    "name": "Example author",
+    "role": "human",
+    "model": null
+  },
+  "summary": {
+    "headline": "One scope choice needs the owner.",
+    "conclusion": "Both described alternatives are plausible; the brief leaves the default unresolved.",
+    "scope": "Authored interface control only; no experiment ran.",
+    "limitations": [
+      "This example establishes no task outcome or grader reliability."
+    ],
+    "evidence": [
+      "scope"
+    ]
+  },
+  "arms": [
+    {
+      "id": "example",
+      "label": "Illustrative alternatives",
+      "status": "Authored, not executed",
+      "quality": [
+        "Both cover active items; archived-item handling differs."
+      ],
+      "usage": [
+        "Unknown; no measured invocation."
+      ],
+      "cost": [
+        "Unknown; no measured invocation."
+      ],
+      "timing": [
+        "Unknown; no measured invocation."
+      ],
+      "evidence": [
+        "scope"
+      ]
+    }
+  ],
+  "exceptions": [
+    {
+      "id": "archive-default",
+      "title": "Choose the default scope",
+      "category": "human-needed",
+      "question": "Should recent activity include archived items by default?",
+      "why_human": "The brief leaves a consequential owner preference unspecified.",
+      "investigation": [
+        "Checked the authored brief and both alternatives.",
+        "Considered a separate archived count; that still requires a default choice."
+      ],
+      "impact": "Determines the intended default for a later interpretation; saving does not regrade or launch work.",
+      "evidence": [
+        "scope"
+      ],
+      "options": [
+        "Active items only",
+        "Include archived items"
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "observations",
+      "label": "Authored observations",
+      "path": "observations.txt",
+      "sha256": "b4b9e16d8574373885b585939f91fd56500bd5bbcbed368b1a4f4ede5c358c2a"
+    }
+  ],
+  "citations": [
+    {
+      "id": "scope",
+      "source_id": "observations",
+      "label": "Original scope ambiguity and available alternatives",
+      "start_line": 1,
+      "end_line": 5
+    }
+  ]
+}
