@@ -32,6 +32,7 @@ from skilleval.repair_assessment import (
     parse_spec,
 )
 from skilleval.repair_outcomes import RepairOutcomeSelection
+from skilleval.review_results import ReviewSpec
 from skilleval.study import StudySpec
 from skilleval.task_package import TaskPackageSpec
 
@@ -60,6 +61,7 @@ RECORDS: dict[str, type[Record]] = {
     "acceptance-map-spec": AcceptanceMapSpec,
     "spec-handoff-spec": SpecHandoffSpec,
     "handoff-report-spec": HandoffReportSpec,
+    "results-review-spec": ReviewSpec,
 }
 
 
@@ -67,6 +69,24 @@ def parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser(prog="skilleval", description=__doc__)
     root.add_argument("--version", action="version", version=f"skilleval {__version__}")
     commands = root.add_subparsers(dest="command", required=True)
+    results = commands.add_parser(
+        "results", help="Inspect attributed synthesis and human exceptions"
+    )
+    results_commands = results.add_subparsers(dest="operation", required=True)
+    results_prepare = results_commands.add_parser(
+        "prepare", help="Pin a synthesis and verify its selected evidence excerpts (no model calls)"
+    )
+    results_prepare.add_argument("--spec", type=Path, required=True)
+    results_prepare.add_argument(
+        "--output", type=Path, required=True, help="Fresh private directory"
+    )
+    results_inspect = results_commands.add_parser("inspect", help="Check a frozen review packet")
+    results_inspect.add_argument("directory", type=Path)
+    results_serve = results_commands.add_parser("serve", help="Serve one local packet on loopback")
+    results_serve.add_argument("directory", type=Path)
+    results_serve.add_argument(
+        "--port", type=int, default=0, help="Port (0 selects an available port)"
+    )
     capture = commands.add_parser("capture", help="Copy and inventory an explicit evidence tree")
     capture.add_argument("source", type=Path)
     capture.add_argument("--output", type=Path, required=True)
@@ -437,6 +457,20 @@ def write_new_json(path: Path, value: object) -> None:
 
 
 def dispatch(args: argparse.Namespace) -> dict[str, Any]:
+    if args.command == "results":
+        from skilleval.review_results import build_review, load_packet, review_status
+
+        if args.operation == "prepare":
+            return build_review(args.spec, args.output)
+        if args.operation == "inspect":
+            return {
+                **review_status(load_packet(args.directory), args.directory),
+                "status": "verified",
+            }
+        from skilleval.review_server import serve_review
+
+        serve_review(args.directory, args.port)
+        return {"status": "stopped"}
     if args.command == "handoff":
         from skilleval.handoff import (
             check_implementation,

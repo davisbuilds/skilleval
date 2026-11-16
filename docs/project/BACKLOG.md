@@ -14,12 +14,12 @@ shipped history. Private provenance stays outside public entries and issues.
 
 ## Open
 
-- **Review exception inbox:** provide a local browser interface over selected
-  retained results, with concise automated conclusions, agent-resolvable follow-ups
-  and only material residual questions for the operator. Show why each question
-  needs human input, prior investigation and relevant evidence; save responses
-  separately from original judgments. Artifact comparison remains optional.
-  Calibration sampling is a separate opt-in workflow, not default homework.
+- **Synthesis follow-through:** the local results view now presents selected
+  conclusions/exceptions and saves separate operator answers. Agents still author
+  synthesis and follow-up explicitly. Add automated result selection or response
+  follow-through only when repeated use shows the seam needed; preserve original
+  judgments and distinguish unresolved evidence from human questions. Cross-packet
+  triage, optional artifact comparison and calibration sampling remain deferred.
 - **Remaining readiness precision:** whole-module execution fingerprints still
   couple task suites to unrelated changes within shared lifecycle, qualification
   and evidence modules. Revisit further extraction when retained phase timings

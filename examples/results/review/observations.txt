@@ -1,0 +1,5 @@
+Synthetic review control; no task or model was run.
+The authored brief asks for recent activity but does not define whether archived items are included.
+Both authored candidate descriptions cover active items. One also includes archived items.
+A separate count could preserve both interpretations, but the intended default is an owner choice.
+No measured usage, cost, timing or independent grader reliability is available.

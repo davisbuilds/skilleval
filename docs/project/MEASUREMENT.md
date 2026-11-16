@@ -140,6 +140,11 @@ calibration sampling is separate from this exception queue; it does not become
 routine approval homework or a gate on exploratory runs. Stronger reliability
 claims still require the independent support described above.
 
+The [local results view](../system/RESULTS.md) implements this presentation and
+response boundary over explicitly authored synthesis. Citation validation checks
+source identity and excerpt ranges, not the correctness of the synthesis or its
+decision to escalate. Operator responses remain separate records.
+
 ## Plan comparisons before dispatch
 
 For an explicit-use effect estimate, define the effect of assigning the skill across

@@ -4,6 +4,8 @@ Skilleval is a Python CLI coordinating explicit files: captured inputs, frozen
 plans, execution receipts, artifacts, and separately versioned assessments.
 It has no database, persistent daemon, or dependency on a sibling checkout.
 Runtime execution and inference are explicit opt-in operations.
+An optional loopback results server presents one frozen synthesis and records
+operator answers; it does not launch work or change evaluation evidence.
 
 ```mermaid
 flowchart LR
@@ -17,6 +19,8 @@ flowchart LR
   J --> A[Recorded assessment with citations]
   E --> O[Selected outcomes and usage comparison]
   A --> O
+  O --> S[Attributed synthesis and exception routing]
+  S --> U[Local results view and separate operator answers]
   A --> H[Independent human audit]
 ```
 
@@ -43,6 +47,7 @@ its contents or of relationships to other records.
 | File collection, observations and selection | `repair.py`, `repair_check.py`, `repair_outcomes.py` | [REPAIRS.md](REPAIRS.md), [TASKS.md](TASKS.md) |
 | Semantic assessment and judge controls | `grading.py`, `judge.py`, `repair_assessment.py`, `calibration.py`, `reliability.py` | [CALIBRATION.md](CALIBRATION.md), [RELIABILITY.md](RELIABILITY.md) |
 | Usage, timing and price scenarios | `accounting.py` | [ACCOUNTING.md](ACCOUNTING.md) |
+| Result synthesis and local review | `review_results.py`, `review_server.py`, `frontend/app.ts` | [RESULTS.md](RESULTS.md) |
 
 Study preparation and dispatch check selected inputs and execution identity.
 Recording checks the subject, packet, native invocation, artifact bytes, and

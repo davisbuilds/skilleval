@@ -19,6 +19,7 @@ check() {
 check "Ruff lint" uv run --locked ruff check .
 check "Ruff format" uv run --locked ruff format --check .
 check "Type checking" uv run --locked mypy
+check "Review UI types and compiled asset" npm run check:ui
 # pytest-xdist spreads tests over PYTEST_WORKERS processes: `auto` (one per CPU)
 # by default; CI sets a per-OS count. PYTEST_WORKERS=0 runs serially in one process.
 check "Tests" uv run --locked pytest -q -n "${PYTEST_WORKERS:-auto}"

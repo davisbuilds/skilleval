@@ -1,0 +1,12 @@
+{
+  "name": "skilleval-review-ui",
+  "private": true,
+  "scripts": {
+    "build:ui": "node frontend/build.mjs",
+    "check:ui": "node frontend/build.mjs --check",
+    "verify:ui": "node frontend/verify.mjs"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3"
+  }
+}

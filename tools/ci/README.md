@@ -4,6 +4,31 @@ These tools are isolated from skilleval's dependencies. They run on hosted
 runners against public source and synthetic inputs; no VM, model account, or
 private dataset is needed.
 
+## Review UI compiler
+
+The root `package-lock.json` pins TypeScript 6.0.3, the only JavaScript development
+dependency; it has no runtime dependency graph or install hooks. Install with
+`npm ci --ignore-scripts`. `npm run check:ui` typechecks the source and detects
+drift from committed Python-package assets. Dependabot observes an eight-day
+cooldown for npm updates. Renewal checks release age, advisories and available
+publisher evidence before updating the exact pin/lock.
+
+On 2026-11-16, registry metadata reported TypeScript 6.0.3 as 213 days old with no
+observed advisories; npm verified its registry signature, while build provenance
+was unavailable. These are scoped observations, not a safety certification.
+
+`.node-version` pins the development/CI runtime; the installed Python application
+does not invoke Node. The initial 24.22.3 pin takes a narrow early-release exception
+through 2026-11-18: this [security release](https://nodejs.org/en/blog/release/v24.22.3)
+supersedes 24.22.1 and repairs HTTP/TLS and other defects. It is confined to the
+UI compiler/verification tools and public hosted CI, with package install scripts
+disabled. The maintainer owns this exception; it expires once the seven-day age
+window elapses. Local qualification used the official darwin-arm64 archive,
+verified against the published SHA256
+`ff6e17d4874b76d272212b908cc020d6e815fba5a6c7eaaa06add725840307fd`;
+no local host default was changed. Published checksum agreement is not signature
+verification. CI uses the pinned official setup-node action to obtain its runtime.
+
 ## Workflow audit
 
 `pyproject.toml` and `uv.lock` pin zizmor and its distribution hashes. Use the

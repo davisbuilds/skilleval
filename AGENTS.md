@@ -3,7 +3,7 @@
 Local-first evaluation of explicit skill ON/OFF on relevant agent tasks. Measure
 quality and outcomes alongside tokens, cost, and time. Python owns the CLI,
 execution, evidence, and grading; native task tools own executable observations.
-A TypeScript review UI and pi adapter are later work.
+TypeScript owns the local results/exception view; the pi adapter is later work.
 
 ## Documentation map
 
@@ -26,6 +26,8 @@ interfaces. Do not load every reference for a small change.
   vanilla implementation inputs, linked stage consumption and question handling.
 - [STORAGE.md](docs/system/STORAGE.md): durable data roots, native rollouts, staging
   cleanup, and legacy path preservation.
+- [RESULTS.md](docs/system/RESULTS.md): attributed synthesis, local browser review,
+  evidence excerpts and separate operator answers.
 - [ENVIRONMENT.md](docs/system/ENVIRONMENT.md), [GATEWAY.md](docs/system/GATEWAY.md),
   [NATIVE.md](docs/system/NATIVE.md): qualification, recovery, inference, and native runs.
 - [TASK-PRESENTATION.md](docs/system/TASK-PRESENTATION.md): solver-visible context,
@@ -40,7 +42,9 @@ interfaces. Do not load every reference for a small change.
 
 ## Command quickstart
 
-Use `uv sync --locked` and `uv run skilleval --help` from the source checkout.
+Use `uv sync --locked`, `npm ci --ignore-scripts` and `uv run skilleval --help`
+from the source checkout. Node (see `.node-version`) is needed for UI development
+and the gate, not for the installed Python CLI or results server.
 **Pre-push: `scripts/check`.** Use uv >= 0.9.17, preserve the lockfile and seven-day
 release quarantine. The gate never launches VMs, calls models, or reads credentials.
 
@@ -104,6 +108,11 @@ Subprocess fixtures cannot establish real VM isolation or semantic judge quality
 The gate runs tests in parallel processes (`PYTEST_WORKERS=0` runs serially), so
 tests must not share fixed host state: use `tmp_path` or unique temporary names,
 ephemeral ports, and test-scoped environment changes.
+
+The gate typechecks `frontend/app.ts` and verifies its committed browser asset;
+run `npm run build:ui` after edits. UI changes also need the explicit browser
+control in [RESULTS.md](docs/system/RESULTS.md), plus the real server route when
+transport changes. No browser or package download is hidden in the gate.
 
 After changing a field or contract, inspect every producer and consumer: schemas,
 CLI parsing, recording/replay, report selection, docs, and parallel task families.
