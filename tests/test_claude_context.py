@@ -19,6 +19,9 @@ def init(**changes: object) -> dict[str, Any]:
         "type": "system",
         "subtype": "init",
         "model": "claude-opus-5-5",
+        "apiKeySource": "none",
+        "permissionMode": "dontAsk",
+        "agents": ["Explore", "general-purpose", "Plan", "statusline-setup"],
         "tools": ["mcp__vm__execute", "EndConversation"],
         "mcp_servers": [{"name": "vm", "status": "connected"}],
         "skills": [],
@@ -429,3 +432,160 @@ def test_auth_nonzero_exit_cannot_be_admitted_by_valid_status_json(tmp_path: Pat
             settings_path=tmp_path / "settings.json",
             work=tmp_path / "work",
         )
+
+
+def native_init_fixture(**changes: object) -> dict[str, Any]:
+    """Minimized public-shaped init observed on native Claude Code 2.1.321."""
+    return (
+        init(
+            claude_code_version="2.1.321",
+            tools=["mcp__vm__execute"],
+            mcp_servers=[{"name": "vm", "status": "connected", "source": "dynamic"}],
+            additional_directories=[],
+            plugins=[
+                {
+                    "name": "cc-plugin-agents-md",
+                    "path": "builtin",
+                    "source": "cc-plugin-agents-md@builtin",
+                },
+                {
+                    "name": "cc-plugin-privacy",
+                    "path": "builtin",
+                    "source": "cc-plugin-privacy@builtin",
+                },
+                {
+                    "name": "cc-plugin-plugin-authoring",
+                    "path": "builtin",
+                    "source": "cc-plugin-plugin-authoring@builtin",
+                },
+            ],
+        )
+        | changes
+    )
+
+
+def test_observed_native_builtin_components_open_gate_without_foreign_customizations(
+    tmp_path: Path,
+) -> None:
+    gate = tmp_path / "gate.json"
+    guard = InitGuard(gate)
+    guard(native_init_fixture())
+    assert guard.passed is True
+    assert json.loads(gate.read_text()) == {"status": "passed"}
+    assert stat.S_IMODE(gate.stat().st_mode) == 0o600
+
+
+@pytest.mark.parametrize(
+    "plugins",
+    [
+        [],
+        [{"name": "cc-plugin-privacy", "path": "builtin", "source": "cc-plugin-privacy@builtin"}],
+    ],
+)
+def test_known_builtin_subset_or_empty_plugin_catalog_remains_admissible(
+    tmp_path: Path,
+    plugins: list[dict[str, Any]],
+) -> None:
+    guard = InitGuard(tmp_path / "gate.json")
+    guard(native_init_fixture(plugins=plugins))
+    assert guard.passed is True
+
+
+@pytest.mark.parametrize(
+    "plugin",
+    [
+        {
+            "name": "cc-plugin-agents-md",
+            "path": "/host/plugin",
+            "source": "cc-plugin-agents-md@builtin",
+        },
+        {"name": "cc-plugin-agents-md", "path": "builtin", "source": "cc-plugin-agents-md@foreign"},
+        {"name": "custom-plugin", "path": "builtin", "source": "cc-plugin-agents-md@builtin"},
+        {"name": "custom-plugin", "path": "builtin", "source": "custom-plugin@builtin"},
+        {
+            "name": "cc-plugin-privacy",
+            "path": "builtin",
+            "source": "cc-plugin-privacy@builtin",
+            "unexpected": "unreviewed",
+        },
+        {"name": "cc-plugin-privacy", "path": "builtin"},
+        {"name": [], "path": "builtin", "source": "cc-plugin-privacy@builtin"},
+        "cc-plugin-privacy@builtin",
+    ],
+)
+def test_builtin_plugin_identity_requires_exact_native_name_path_and_source(
+    tmp_path: Path,
+    plugin: object,
+) -> None:
+    gate = tmp_path / "gate.json"
+    with pytest.raises(ValueError):
+        InitGuard(gate)(native_init_fixture(plugins=[plugin]))
+    assert not gate.exists()
+
+
+def test_duplicate_vendor_builtin_plugin_is_not_a_clean_catalog(tmp_path: Path) -> None:
+    plugins = native_init_fixture()["plugins"]
+    gate = tmp_path / "gate.json"
+    with pytest.raises(ValueError):
+        InitGuard(gate)(native_init_fixture(plugins=[*plugins, plugins[0]]))
+    assert not gate.exists()
+
+
+@pytest.mark.parametrize(
+    "agents",
+    [
+        ["custom-agent"],
+        ["Explore", "custom-agent"],
+        ["Explore", "Explore"],
+        None,
+        [[], "Plan"],
+    ],
+)
+def test_custom_duplicate_or_unobserved_agent_catalog_is_rejected(
+    tmp_path: Path,
+    agents: object,
+) -> None:
+    gate = tmp_path / "gate.json"
+    with pytest.raises(ValueError):
+        InitGuard(gate)(init(agents=agents))
+    assert not gate.exists()
+
+
+@pytest.mark.parametrize(
+    "agents", [[], ["Explore"], ["general-purpose", "Plan", "statusline-setup"]]
+)
+def test_builtin_agent_subset_is_catalog_metadata_without_added_tools(
+    tmp_path: Path,
+    agents: list[str],
+) -> None:
+    guard = InitGuard(tmp_path / "gate.json")
+    guard(native_init_fixture(agents=agents))
+    assert guard.passed is True
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"apiKeySource": "ANTHROPIC_API_KEY"},
+        {"apiKeySource": "apiKeyHelper"},
+        {"apiKeySource": None},
+        {"permissionMode": "bypassPermissions"},
+        {"permissionMode": "default"},
+        {"permissionMode": None},
+    ],
+)
+def test_observed_auth_source_and_permission_mode_must_match_subscription_route(
+    tmp_path: Path,
+    changes: dict[str, Any],
+) -> None:
+    gate = tmp_path / "gate.json"
+    with pytest.raises(ValueError):
+        InitGuard(gate)(init(**changes))
+    assert not gate.exists()
+
+
+def test_known_vendor_plugins_do_not_admit_loaded_skill_content(tmp_path: Path) -> None:
+    gate = tmp_path / "gate.json"
+    with pytest.raises(ValueError):
+        InitGuard(gate)(native_init_fixture(skills=["plugin-authoring"]))
+    assert not gate.exists()

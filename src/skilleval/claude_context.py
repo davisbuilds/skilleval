@@ -25,6 +25,16 @@ from skilleval.harnesses.claude import CLAUDE_MODEL
 
 VM_TOOL = "mcp__vm__execute"
 _ALLOWED_TOOLS = {VM_TOOL, "EndConversation"}
+# Exact vendor component identities observed on native Claude Code 2.1.321.
+# Built-in mods survive disableAllHooks. Keep the vendor privacy guard; exclude
+# foreign plugins by origin/path as well as name, and require no loaded skills.
+# https://code.claude.com/docs/en/plugins/mods/overview#mods-built-into-claude-code
+_BUILTIN_PLUGINS = {
+    ("cc-plugin-agents-md", "builtin", "cc-plugin-agents-md@builtin"),
+    ("cc-plugin-privacy", "builtin", "cc-plugin-privacy@builtin"),
+    ("cc-plugin-plugin-authoring", "builtin", "cc-plugin-plugin-authoring@builtin"),
+}
+_BUILTIN_AGENTS = {"Explore", "general-purpose", "Plan", "statusline-setup"}
 _SYSTEM_MANAGED_ROOTS = (Path("/Library/Application Support/ClaudeCode"), Path("/etc/claude-code"))
 _MANAGED_PREFERENCES_ROOT = Path("/Library/Managed Preferences")
 _SYSTEM_PREFERENCES_ROOT = Path("/Library/Preferences")
@@ -330,6 +340,10 @@ class InitGuard:
 
     def _init(self, record: dict[str, Any]) -> None:
         tools = record.get("tools")
+        if record.get("apiKeySource") != "none":
+            self._reject("Claude observed API key source differs from native subscription route")
+        if record.get("permissionMode") != "dontAsk":
+            self._reject("Claude observed permission mode differs from invocation contract")
         if record.get("model") != CLAUDE_MODEL:
             self._reject("Claude observed model differs from pinned model")
         if (
@@ -349,7 +363,30 @@ class InitGuard:
             or servers[0].get("status") != "connected"
         ):
             self._reject("Claude must observe only the connected VM MCP server")
-        for key in ("skills", "plugins", "slash_commands"):
+        agents = record.get("agents")
+        if (
+            not isinstance(agents, list)
+            or any(not isinstance(agent, str) for agent in agents)
+            or len(set(agents)) != len(agents)
+            or not set(agents) <= _BUILTIN_AGENTS
+        ):
+            self._reject("Claude observed an unreviewed or malformed agent catalog")
+        plugins = record.get("plugins")
+        if not isinstance(plugins, list):
+            self._reject("Claude plugin catalog is missing or malformed")
+        seen_plugins: set[tuple[str, str, str]] = set()
+        for plugin in plugins:
+            if (
+                not isinstance(plugin, dict)
+                or set(plugin) != {"name", "path", "source"}
+                or any(not isinstance(plugin[key], str) for key in ("name", "path", "source"))
+            ):
+                self._reject("Claude observed a malformed plugin identity")
+            identity = (plugin["name"], plugin["path"], plugin["source"])
+            if identity not in _BUILTIN_PLUGINS or identity in seen_plugins:
+                self._reject("Claude observed an unreviewed or duplicate plugin identity")
+            seen_plugins.add(identity)
+        for key in ("skills", "slash_commands"):
             if record.get(key) != []:
                 self._reject("Claude loaded unexpected or unobserved customization")
         if record.get("plugin_errors", []) != []:

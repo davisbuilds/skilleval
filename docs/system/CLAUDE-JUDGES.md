@@ -2,7 +2,8 @@
 
 Judges and comparative synthesis can select `--judge claude-opus` instead of the
 existing `codex-sol` default. The choice is frozen during preparation and checked
-again during recording. It selects Claude Code, `claude-opus-5-5`, and requests high effort. The provider effort setting is not independently observed.
+again during recording. It selects Claude Code, `claude-opus-5-5`, and requests
+high effort. The provider effort setting is not independently observed.
 Existing Codex packet bytes and recordings keep their original meaning. Task
 agents and ON/OFF study execution remain on the existing Codex route.
 
@@ -24,10 +25,12 @@ as inert evidence and is never executed on the host.
 
 This is a different execution profile from guest-native Codex. Claude's trusted
 host client is not OS-sandboxed by these launch flags. Its configuration disables
-instruction files, attachments, skills, memory, plugins, hooks, connectors and
-background work; an empty host working directory avoids repository ancestors.
+instruction files, attachments, skills, memory, ambient plugins, hooks, connectors
+and background work; an empty host working directory avoids repository ancestors.
 The client's actual initialization inventory must match the allowed model,
-tools and MCP server before the dispatcher admits command work. Managed policy
+tools and MCP server before the dispatcher admits command work. The small, exact
+allowlist of native bundled plugins and agents stays distinct from user-installed
+customizations. Native privacy behavior is retained. Managed policy
 can override invocation settings, so unreviewed managed sources are refused.
 A preflight cannot prove that new remote policy will never arrive later.
 

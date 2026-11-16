@@ -20,6 +20,7 @@ from skilleval.errors import SkillEvalError
 from skilleval.gateway import NATIVE_REQUEST_BACKSTOP
 from skilleval.handoff import HandoffReportSpec, SpecHandoffSpec
 from skilleval.judge import AgenticCalibrationResult, AgenticReviewResult
+from skilleval.judge_profiles import JUDGE_PROFILES
 from skilleval.reliability import ReliabilityObservations, ReliabilitySuite
 from skilleval.repair import RepairSpec
 from skilleval.repair_assessment import (
@@ -82,9 +83,7 @@ def parser() -> argparse.ArgumentParser:
     )
     synthesis_prepare.add_argument("--spec", type=Path, required=True)
     synthesis_prepare.add_argument("--output", type=Path, required=True)
-    synthesis_prepare.add_argument(
-        "--judge", choices=("codex-sol", "claude-opus"), default="codex-sol"
-    )
+    synthesis_prepare.add_argument("--judge", choices=JUDGE_PROFILES, default="codex-sol")
     for synthesis_operation in ("inspect", "run", "record"):
         step = synthesis_commands.add_parser(
             synthesis_operation, help=f"{synthesis_operation.title()} a frozen synthesis"
@@ -307,7 +306,7 @@ def parser() -> argparse.ArgumentParser:
     native_run.add_argument("--image-sha256", required=True)
     native_run.add_argument("--catalog", type=Path, help="Required for Codex")
     native_run.add_argument("--auth-file", type=Path, help="Required for Codex")
-    native_run.add_argument("--judge", choices=("codex-sol", "claude-opus"), default="codex-sol")
+    native_run.add_argument("--judge", choices=JUDGE_PROFILES, default="codex-sol")
     native_run.add_argument(
         "--claude-binary", type=Path, help="Existing native Claude Code executable"
     )
@@ -335,9 +334,7 @@ def parser() -> argparse.ArgumentParser:
         if kind == "review":
             prepare_judge.add_argument("report", type=Path)
         prepare_judge.add_argument("--output", type=Path, required=True)
-        prepare_judge.add_argument(
-            "--judge", choices=("codex-sol", "claude-opus"), default="codex-sol"
-        )
+        prepare_judge.add_argument("--judge", choices=JUDGE_PROFILES, default="codex-sol")
         prepare_judge.add_argument(
             "--static", action="store_true", help="Source-only prompt policy"
         )
@@ -419,9 +416,7 @@ def parser() -> argparse.ArgumentParser:
         command.add_argument("spec", type=Path)
         command.add_argument("--output", type=Path, required=True)
         if action == "prepare-assessment":
-            command.add_argument(
-                "--judge", choices=("codex-sol", "claude-opus"), default="codex-sol"
-            )
+            command.add_argument("--judge", choices=JUDGE_PROFILES, default="codex-sol")
         if action in ("record-assessment", "prepare-citation-correction"):
             command.add_argument("--packet", type=Path, required=True)
             command.add_argument("--run", type=Path, required=True)
