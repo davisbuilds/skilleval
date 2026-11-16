@@ -9,20 +9,6 @@
       "role": "request",
       "path": "REPLACE_WITH_ORIGINAL_REQUEST.md",
       "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
-    },
-    {
-      "id": "off-spec",
-      "label": "OFF delivered specification",
-      "role": "artifact",
-      "path": "REPLACE_WITH_OFF_SPECIFICATION.md",
-      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
-    },
-    {
-      "id": "on-spec",
-      "label": "ON delivered specification",
-      "role": "artifact",
-      "path": "REPLACE_WITH_ON_SPECIFICATION.md",
-      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
     }
   ],
   "arms": [

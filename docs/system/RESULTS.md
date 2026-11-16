@@ -38,6 +38,8 @@ calibration or task-effect evidence. Use a new directory for each generation.
 document names UTF-8 files, expected SHA-256 digests and one-based inclusive line
 ranges. Relative paths resolve against that document. Preparation verifies bytes,
 reference identities and bounded ranges, then freezes excerpts in `packet.json`.
+Large single JSONL lines are preserved in full; the overall serialized packet is
+bounded at 8 MiB, with no separate character cap that rejects a valid citation.
 Its content hash is the packet ID. `source-spec.json` retains the authoring input
 for provenance but is never served. The browser receives source labels/digests,
 locators and selected excerpts, without a general file-browsing endpoint. Review

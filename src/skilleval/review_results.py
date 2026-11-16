@@ -95,7 +95,9 @@ class ReviewExcerpt(Record):
     id: Identifier
     label: Text
     locator: Text
-    excerpt: str = Field(max_length=24000)
+    # JSONL and embedded command output can have large, valid single lines.
+    # Source reads and the complete serialized packet already have byte bounds.
+    excerpt: str
     source_sha256: Digest
 
 
@@ -167,8 +169,6 @@ def _excerpt(
     if citation.end_line > len(lines):
         raise SkillEvalError(f"citation {citation.id} extends beyond retained source")
     excerpt = "\n".join(lines[citation.start_line - 1 : citation.end_line])
-    if len(excerpt) > 24000:
-        raise SkillEvalError(f"citation {citation.id} exceeds excerpt size limit")
     return {
         "id": citation.id,
         "label": citation.label,

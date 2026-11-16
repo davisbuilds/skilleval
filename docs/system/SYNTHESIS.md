@@ -23,6 +23,8 @@ workflow; serving a page or finishing an experiment does not launch synthesis.
   records. Preparation replays their existing validators and binds assessments
   to the selected writer or implementation; a valid unrelated judgment is not
   enough. These records supply execution status and canonical consumption.
+  Preparation also includes the exact selected specification, so it does not
+  need a duplicate entry in the explicit source list.
 - The selection policy, known omissions and limitations. This first version
   uses explicit source selection; it does not automatically discover everything
   relevant in a repository or transcript archive.
