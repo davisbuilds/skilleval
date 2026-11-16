@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from skilleval import native_process, runner
-from skilleval.claude_runner import _merge_artifacts
+from skilleval.claude_runner import _merge_artifacts, _validate_tool_ledger
 from skilleval.errors import SkillEvalError
 
 
@@ -177,3 +177,82 @@ def test_claude_cli_selection_has_no_required_codex_auth() -> None:
         ]
     )
     assert correction.max_requests is None
+
+
+def native_tool(identity: str, command: str, status: str) -> list[dict]:
+    item = {
+        "type": "mcp_tool_call",
+        "id": identity,
+        "name": "mcp__vm__execute",
+        "arguments": {"command": command},
+    }
+    return [
+        {"type": "item.started", "item": {**item, "status": "in_progress"}},
+        {"type": "item.completed", "item": {**item, "status": status}},
+    ]
+
+
+def ledger_tool(identity: str, command: str, status: str) -> list[dict]:
+    row = {
+        "call_id": identity,
+        "parameters": {"name": "execute", "arguments": {"command": command}},
+    }
+    if status == "refused":
+        return [{**row, "event": "command-refused", "result": {"status": "refused"}}]
+    return [
+        {**row, "event": "command-started"},
+        {**row, "event": "command-result", "result": {"status": status}},
+    ]
+
+
+def test_ledger_reconciles_success_refusal_and_shell_failure_without_order_assumption() -> None:
+    native = [
+        native_tool("n1", "true", "completed"),
+        native_tool("n2", "false", "failed"),
+        native_tool("n3", "invalid", "failed"),
+    ]
+    events = [
+        *native[0][:1],
+        *native[1][:1],
+        *native[2][:1],
+        *native[2][1:],
+        *native[0][1:],
+        *native[1][1:],
+    ]
+    ledger = [
+        *ledger_tool("l2", "false", "failed"),
+        *ledger_tool("l3", "invalid", "refused"),
+        *ledger_tool("l1", "true", "completed"),
+    ]
+    result = _validate_tool_ledger(ledger, events)
+    assert result == {
+        "status": "matched",
+        "count": 2,
+        "started_count": 2,
+        "refused_count": 1,
+        "native_call_count": 3,
+        "ledger_rows": 5,
+    }
+    assert _validate_tool_ledger([], [])["native_call_count"] == 0
+
+
+@pytest.mark.parametrize(
+    "defect", ["missing", "dangling", "duplicate", "arguments", "status", "native"]
+)
+def test_incomplete_or_mismatched_ledger_cannot_complete(defect: str) -> None:
+    ledger = ledger_tool("l1", "true", "completed")
+    native = native_tool("n1", "true", "completed")
+    if defect == "missing":
+        ledger = []
+    elif defect == "dangling":
+        ledger.pop()
+    elif defect == "duplicate":
+        ledger += ledger_tool("l1", "true", "completed")
+    elif defect == "arguments":
+        ledger[-1]["parameters"] = {"name": "execute", "arguments": {"command": "other"}}
+    elif defect == "status":
+        native[-1]["item"]["status"] = "failed"
+    else:
+        native = []
+    with pytest.raises(SkillEvalError, match=r"ledger|command"):
+        _validate_tool_ledger(ledger, native)

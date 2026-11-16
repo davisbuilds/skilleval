@@ -83,7 +83,10 @@ and result ledger, each command's namespace/teardown receipt, immutable source
 identity, native launch identity, original guest archive and combined evidence.
 The final archive adds host-native evidence without overwriting the guest archive;
 a guest member cannot claim a reserved host-native evidence name. Failed runs and
-missing telemetry remain distinguishable from completed judgments.
+missing telemetry remain distinguishable from completed judgments. Completion
+requires the native tool calls to match paired executor records. A recorder failure
+revokes further command work; cancellation gives the tool server time to reap its
+runtime client before the remaining host process group is stopped.
 
 Usage comes from the single terminal native `modelUsage` snapshot for the selected
 model. Raw main-loop usage and client estimates remain diagnostics. Total input

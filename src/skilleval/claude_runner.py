@@ -15,6 +15,7 @@ import sys
 import tarfile
 import tempfile
 import time
+from collections import Counter
 from contextlib import suppress
 from pathlib import Path
 from typing import Any
@@ -36,6 +37,96 @@ from skilleval.task_transfer import (
 )
 
 PROFILE = "host-claude-subscription-vm-tools-v1"
+
+
+def _validate_tool_ledger(
+    ledger: list[dict[str, Any]], canonical: list[dict[str, Any]]
+) -> dict[str, Any]:
+    """Reconcile actual native tool calls with complete trusted executor records."""
+    pending: dict[str, dict[str, Any]] = {}
+    seen: set[str] = set()
+    observed: Counter[tuple[str, str]] = Counter()
+    started = completed = refused = 0
+
+    def arguments(parameters: Any) -> str:
+        if (
+            not isinstance(parameters, dict)
+            or parameters.get("name") != "execute"
+            or not isinstance(parameters.get("arguments", {}), dict)
+        ):
+            raise SkillEvalError("Claude VM tool ledger has invalid command parameters")
+        return json.dumps(parameters.get("arguments", {}), sort_keys=True, allow_nan=False)
+
+    for row in ledger:
+        if not isinstance(row, dict):
+            raise SkillEvalError("Claude VM tool ledger contains a non-object record")
+        identity, event = row.get("call_id"), row.get("event")
+        if not isinstance(identity, str) or not identity or len(identity) > 128:
+            raise SkillEvalError("Claude VM tool ledger has no bounded call identity")
+        signature = arguments(row.get("parameters"))
+        if event == "command-started":
+            if identity in seen:
+                raise SkillEvalError("Claude VM tool ledger repeats a command identity")
+            seen.add(identity)
+            pending[identity] = row
+            started += 1
+            continue
+        result = row.get("result")
+        if not isinstance(result, dict):
+            raise SkillEvalError("Claude VM tool ledger has no command result")
+        if event == "command-refused":
+            if identity in seen or result.get("status") != "refused":
+                raise SkillEvalError("Claude VM tool ledger has an invalid refusal")
+            seen.add(identity)
+            refused += 1
+        elif event == "command-result":
+            intent = pending.pop(identity, None)
+            if (
+                intent is None
+                or arguments(intent.get("parameters")) != signature
+                or result.get("status") not in {"completed", "failed"}
+            ):
+                raise SkillEvalError("Claude VM tool ledger has an unmatched command result")
+            completed += 1
+        else:
+            raise SkillEvalError("Claude VM tool ledger has an unknown record")
+        observed[signature, "completed" if result["status"] == "completed" else "failed"] += 1
+    if pending:
+        raise SkillEvalError("Claude VM tool ledger has an unfinished command intent")
+    native: Counter[tuple[str, str]] = Counter()
+    native_started: dict[str, str] = {}
+    native_settled: set[str] = set()
+    for event in canonical:
+        item = event.get("item")
+        if not isinstance(item, dict) or item.get("type") != "mcp_tool_call":
+            continue
+        if item.get("name") != "mcp__vm__execute" or not isinstance(item.get("id"), str):
+            raise SkillEvalError("native Claude tool differs from VM ledger capability")
+        identity = item["id"]
+        signature = arguments({"name": "execute", "arguments": item.get("arguments")})
+        if event.get("type") == "item.started":
+            if identity in native_started:
+                raise SkillEvalError("native Claude tool identity repeats")
+            native_started[identity] = signature
+        elif event.get("type") == "item.completed":
+            if (
+                native_started.get(identity) != signature
+                or identity in native_settled
+                or item.get("status") not in {"completed", "failed"}
+            ):
+                raise SkillEvalError("native Claude tool result has no matching invocation")
+            native_settled.add(identity)
+            native[signature, item["status"]] += 1
+    if native_settled != set(native_started) or native != observed:
+        raise SkillEvalError("Claude VM tool ledger differs from actual native tool calls")
+    return {
+        "status": "matched",
+        "count": completed,
+        "started_count": started,
+        "refused_count": refused,
+        "native_call_count": sum(native.values()),
+        "ledger_rows": len(ledger),
+    }
 
 
 def _merge_artifacts(
@@ -285,6 +376,7 @@ def run_claude_judge(
             stream_limit_bytes=max_artifact_bytes,
             stdout_name="claude-events.jsonl",
             event_observer=guard,
+            process_group_grace_seconds=3,
         )
         report["native_process"] = process
         timings["agent_seconds"] = process["agent_elapsed_seconds"]
@@ -343,6 +435,7 @@ def run_claude_judge(
                 )
             }
         )
+        ledger = []
         if tools_log.is_file():
             additions["evidence/claude-tools.jsonl"] = tools_log.read_bytes()
             ledger = [
@@ -370,6 +463,11 @@ def run_claude_judge(
             "manifest_sha256": file_digest(output / "artifacts.json"),
         }
         report["input_changes"] = _input_changes(manifest, artifact_manifest)
+        report["tool_calls"] = {
+            **report.get("tool_calls", {}),
+            **_validate_tool_ledger(ledger, parsed["canonical_events"]),
+        }
+        claude_vm._check_revoked(gate)
         report["status"] = "timed-out" if process["timed_out"] else "failed"
         if (
             process["returncode"] == 0

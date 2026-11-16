@@ -13,6 +13,8 @@ import select
 import stat
 import sys
 import time
+import uuid
+from contextlib import suppress
 from pathlib import Path
 from typing import Any, BinaryIO
 
@@ -37,6 +39,49 @@ from skilleval.task_transfer import GUEST_ROOT, GUEST_WORK
 COMMAND_BYTES = 16 * 1024
 MCP_INPUT_BYTES = 128 * 1024
 TOOLS_LOG_BYTES = 64 * 1024 * 1024
+
+
+class ToolEvidenceError(SkillEvalError):
+    """Fatal recorder failure; this invocation capability cannot be resumed."""
+
+
+def revocation_path(gate: Path) -> Path:
+    return gate.with_name(gate.name + ".revoked")
+
+
+def _check_revoked(gate: Path) -> None:
+    try:
+        revocation_path(gate).lstat()
+    except FileNotFoundError:
+        return
+    raise ToolEvidenceError("Claude VM tool capability was revoked")
+
+
+def _record(config: dict[str, Any], entry: dict[str, Any]) -> None:
+    gate = Path(config["gate_path"])
+    _check_revoked(gate)
+    try:
+        _append_log(Path(config["tools_log"]), entry)
+    except (OSError, ValueError, TypeError, SkillEvalError):
+        # Revoke before reporting failure. The marker also rejects a fresh MCP
+        # process if the native client reconnects after this process exits.
+        with suppress(OSError):
+            gate.unlink(missing_ok=True)
+        try:
+            descriptor = os.open(
+                revocation_path(gate), os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600
+            )
+            with os.fdopen(descriptor, "wb") as target:
+                target.write(b"tool evidence recording failed\n")
+                target.flush()
+                os.fsync(target.fileno())
+        except OSError:
+            pass
+        raise ToolEvidenceError(
+            "Claude VM tool evidence recording failed; capability revoked"
+        ) from None
+
+
 TOOL = {
     "name": "execute",
     "description": (
@@ -185,6 +230,7 @@ def _append_log(path: Path, value: dict[str, Any]) -> None:
 
 
 def _gate(path: Path, deadline: float) -> None:
+    _check_revoked(path)
     until = min(deadline, time.monotonic() + 2)
     while True:
         try:
@@ -201,8 +247,13 @@ def _tool_call(
     session: Lifecycle, config: dict[str, Any], parameters: dict[str, Any]
 ) -> dict[str, Any]:
     started = time.monotonic()
+    _check_revoked(Path(config["gate_path"]))
     arguments = parameters.get("arguments", {})
-    entry: dict[str, Any] = {"started_monotonic": started, "parameters": parameters}
+    entry: dict[str, Any] = {
+        "call_id": uuid.uuid4().hex,
+        "started_monotonic": started,
+        "parameters": parameters,
+    }
     result: dict[str, Any]
     try:
         if (
@@ -222,9 +273,23 @@ def _tool_call(
             raise SkillEvalError("Claude VM tool deadline exhausted")
         selected_timeout = min(requested, remaining)
         entry["selected_timeout_seconds"] = selected_timeout
-        # Commit intent before any guest effect. A recorder failure revokes work.
-        entry["event"] = "command-started"
-        _append_log(Path(config["tools_log"]), entry)
+    except ToolEvidenceError:
+        raise
+    except (OSError, ValueError, SkillEvalError) as error:
+        result = {
+            "status": "refused",
+            "error_type": type(error).__name__,
+            "error": str(error)[:1024],
+        }
+        entry.update(
+            event="command-refused", result=result, elapsed_seconds=time.monotonic() - started
+        )
+        _record(config, entry)
+        return {"content": [{"type": "text", "text": json.dumps(result)}], "isError": True}
+    # Commit intent before any guest effect. A recorder failure revokes work.
+    entry["event"] = "command-started"
+    _record(config, entry)
+    try:
         result = execute(session, command, selected_timeout)
     except (OSError, ValueError, SkillEvalError) as error:
         result = {
@@ -233,7 +298,7 @@ def _tool_call(
             "error": str(error)[:1024],
         }
     entry.update(event="command-result", result=result, elapsed_seconds=time.monotonic() - started)
-    _append_log(Path(config["tools_log"]), entry)
+    _record(config, entry)
     return {
         "content": [{"type": "text", "text": json.dumps(result, sort_keys=True)}],
         "isError": result.get("status") != "completed",
@@ -256,6 +321,7 @@ def serve(
     ):
         raise SkillEvalError("invalid Claude VM server configuration")
     session = Lifecycle.load(Path(config["output"]))
+    _check_revoked(Path(config["gate_path"]))
     vm_config = session.ticket.get("config", {})
     if (
         session.ticket.get("phase") != "running"
@@ -330,6 +396,8 @@ def serve(
             else:
                 raise SkillEvalError("unsupported MCP request")
             response = {"jsonrpc": "2.0", "id": identity, "result": result}
+        except ToolEvidenceError:
+            raise
         except (OSError, ValueError, SkillEvalError):
             response = {
                 "jsonrpc": "2.0",

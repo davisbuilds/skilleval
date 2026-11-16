@@ -477,7 +477,7 @@ def test_invalid_mcp_arguments_refused_without_guest_effects(
     result = json.loads(target.getvalue().splitlines()[-1])
     assert result["result"]["isError"] is True
     assert session.calls == []
-    assert json.loads(Path(config["tools_log"]).read_text())["event"] == "command-result"
+    assert json.loads(Path(config["tools_log"]).read_text())["event"] == "command-refused"
 
 
 def test_gate_and_remaining_deadline_refuse_without_effects_and_retain_failures(
@@ -505,14 +505,103 @@ def test_gate_and_remaining_deadline_refuse_without_effects_and_retain_failures(
 def test_log_failure_prevents_guest_command(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    path, _config = configuration(tmp_path)
+    path, config = configuration(tmp_path)
     session = Session()
     monkeypatch.setattr(claude_vm.Lifecycle, "load", lambda _path: session)
     monkeypatch.setattr(claude_vm, "TOOLS_LOG_BYTES", 1)
     output = io.BytesIO()
-    claude_vm.serve(path, source=messages(call({"command": "true"})), target=output)
+    with pytest.raises(claude_vm.ToolEvidenceError, match="recording failed"):
+        claude_vm.serve(path, source=messages(call({"command": "true"})), target=output)
     assert session.calls == []
-    assert "error" in json.loads(output.getvalue().splitlines()[-1])
+    assert not Path(config["gate_path"]).exists()
+    assert claude_vm.revocation_path(Path(config["gate_path"])).is_file()
+
+
+def test_post_effect_recorder_failure_revokes_current_and_restarted_server(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    path, config = configuration(tmp_path)
+    session = Session()
+    monkeypatch.setattr(claude_vm.Lifecycle, "load", lambda _path: session)
+    original = claude_vm._append_log
+    writes = 0
+
+    def fail_result(log: Path, value: dict[str, Any]) -> None:
+        nonlocal writes
+        writes += 1
+        if writes == 2:
+            raise OSError("authored result recorder failure")
+        original(log, value)
+
+    monkeypatch.setattr(claude_vm, "_append_log", fail_result)
+    with pytest.raises(claude_vm.ToolEvidenceError, match="recording failed"):
+        claude_vm.serve(
+            path,
+            source=messages(
+                call({"command": "first"}),
+                call({"command": "second"}, identity=4),
+            ),
+            target=io.BytesIO(),
+        )
+    assert len(session.calls) == 1
+    assert json.loads(Path(config["tools_log"]).read_text())["event"] == "command-started"
+    with pytest.raises(claude_vm.ToolEvidenceError, match="revoked"):
+        claude_vm.serve(path, source=messages(call({"command": "second"})), target=io.BytesIO())
+    with pytest.raises(claude_vm.ToolEvidenceError, match="revoked"):
+        claude_vm._tool_call(
+            session, config, {"name": "execute", "arguments": {"command": "second"}}
+        )  # type: ignore[arg-type]
+    assert len(session.calls) == 1
+
+
+def test_failed_shell_and_predispatch_refusal_remain_recorded_normal_tool_results(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    path, config = configuration(tmp_path)
+    session = Session()
+    monkeypatch.setattr(claude_vm.Lifecycle, "load", lambda _path: session)
+    monkeypatch.setattr(claude_vm, "execute", lambda *_args: {"status": "failed", "returncode": 1})
+    output = io.BytesIO()
+    claude_vm.serve(
+        path,
+        source=messages(
+            call({"command": "false"}),
+            call({"command": "invalid", "timeout_seconds": 31}, identity=4),
+        ),
+        target=output,
+    )
+    rows = [json.loads(line) for line in Path(config["tools_log"]).read_text().splitlines()]
+    assert [row["event"] for row in rows] == [
+        "command-started",
+        "command-result",
+        "command-refused",
+    ]
+    assert rows[0]["call_id"] == rows[1]["call_id"] != rows[2]["call_id"]
+    assert rows[1]["result"]["returncode"] == 1
+    assert rows[2]["result"]["status"] == "refused"
+    assert Path(config["gate_path"]).is_file()
+    assert not claude_vm.revocation_path(Path(config["gate_path"])).exists()
+
+
+@pytest.mark.parametrize("marker_kind", ["malformed", "dangling-link"])
+def test_any_revocation_marker_blocks_restart_conservatively(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    marker_kind: str,
+) -> None:
+    path, config = configuration(tmp_path)
+    session = Session()
+    monkeypatch.setattr(claude_vm.Lifecycle, "load", lambda _path: session)
+    marker = claude_vm.revocation_path(Path(config["gate_path"]))
+    if marker_kind == "malformed":
+        marker.write_bytes(b"\xff not valid JSON")
+    else:
+        marker.symlink_to(tmp_path / "absent")
+    with pytest.raises(claude_vm.ToolEvidenceError, match="revoked"):
+        claude_vm.serve(path, source=messages(call({"command": "true"})), target=io.BytesIO())
+    assert session.calls == []
 
 
 def test_symlink_gate_is_refused(tmp_path: Path) -> None:
@@ -678,3 +767,58 @@ def test_sigterm_unwinds_and_reaps_separately_grouped_host_client(tmp_path: Path
                 os.killpg(helper_pid, signal.SIGKILL)
         session = Lifecycle.load(session.output)
         session.cleanup()
+
+
+def test_native_leader_exit_grace_reaps_mcp_owned_client(tmp_path: Path) -> None:
+    runtime = runtime_at(tmp_path / "runtime")
+    runtime.write_text(
+        runtime.read_text().replace(
+            "elif args[:2]==['machine','stop']:",
+            "elif args[:2]==['machine','exec']:\n"
+            " (state/'pending-client.json').write_text(json.dumps({'pid':os.getpid()}))\n"
+            " time.sleep(60)\n raise SystemExit\n"
+            "elif args[:2]==['machine','stop']:",
+        )
+    )
+    image, digest = docker_archive(tmp_path / "image")
+    session = Lifecycle.prepare(tmp_path / "lifecycle", runtime, image, digest)
+    session.create()
+    path, config = configuration(tmp_path)
+    config["output"] = str(session.output)
+    path.write_text(json.dumps(config))
+    payload = tmp_path / "messages.jsonl"
+    payload.write_bytes(messages(call({"command": "pending"})).getvalue())
+    marker = Path(session.ticket["runtime_state"]) / "pending-client.json"
+    prompt = tmp_path / "prompt.txt"
+    prompt.write_bytes(b"")
+    leader = """import json,os,pathlib,subprocess,sys,time
+child=subprocess.Popen([sys.executable,'-I','-m','skilleval.claude_vm',sys.argv[1]],
+ stdin=subprocess.PIPE,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+child.stdin.write(pathlib.Path(sys.argv[2]).read_bytes());child.stdin.flush()
+while not pathlib.Path(sys.argv[3]).exists():time.sleep(.01)
+os.kill(json.loads(pathlib.Path(sys.argv[3]).read_text())['pid'],0)
+print(json.dumps({'helper_known_alive':True}))
+"""
+    helper_pid = None
+    try:
+        result = claude_vm_guest.native_process._execute_native(
+            [sys.executable, "-I", "-c", leader, str(path), str(payload), str(marker)],
+            {"PATH": "/usr/bin:/bin"},
+            prompt,
+            tmp_path,
+            tmp_path,
+            10,
+            process_group_grace_seconds=3,
+        )
+        helper_pid = json.loads(marker.read_text())["pid"]
+        assert result["returncode"] == 0 and result["timed_out"] is False
+        assert json.loads((tmp_path / "events.jsonl").read_text())["helper_known_alive"] is True
+        with pytest.raises(ProcessLookupError):
+            os.kill(helper_pid, 0)
+    finally:
+        if helper_pid is not None:
+            with suppress(ProcessLookupError):
+                os.killpg(helper_pid, signal.SIGKILL)
+        session = Lifecycle.load(session.output)
+        session.cleanup()
+        assert session.ticket["cleanup_complete"] is True
