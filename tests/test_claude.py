@@ -500,3 +500,127 @@ def test_end_conversation_exception_does_not_admit_other_native_builtins() -> No
     assert result["execution_status"] == "unknown"
     assert result["canonical_usage"] is None
     assert any("built-in tool observed" in error["error"] for error in result["parse_errors"])
+
+
+def api_limit_diagnostic(**changes: object) -> dict[str, Any]:
+    """Sanitized native 2.1.321 API failure shape, with no account identifiers."""
+    return {
+        "type": "assistant",
+        "session_id": "session-1",
+        "is_api_error_message": True,
+        "error": "rate_limit",
+        "api_error_status": 429,
+        "api_error": "usage_limit_reached",
+        "api_error_origin": "first_party",
+        "message": {
+            "model": "<synthetic>",
+            "content": [{"type": "text", "text": "Synthetic usage-limit diagnostic"}],
+            "usage": {"input_tokens": 0, "output_tokens": 0},
+        },
+        **changes,
+    }
+
+
+def test_native_usage_limit_is_failed_provider_call_without_synthetic_model_drift() -> None:
+    diagnostic = api_limit_diagnostic()
+    native_result = terminal(
+        is_error=True,
+        terminal_reason="api_error",
+        result="Synthetic usage-limit diagnostic",
+        api_error_status=429,
+        api_error="usage_limit_reached",
+        api_error_origin="first_party",
+        usage={
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_read_input_tokens": 0,
+            "cache_creation_input_tokens": 0,
+        },
+        modelUsage={},
+        total_cost_usd=0,
+    )
+    result = parse_claude_jsonl(stream(init(), diagnostic, native_result))
+    assert result["execution_status"] == "failed"
+    assert result["parse_errors"] == []
+    assert result["observed_models"] == [MODEL]
+    assert result["canonical_usage"] is None
+    assert result["normalized_usage"]["status"] == "unknown"
+    assert result["usage"]["input_tokens"] == 0
+    assert result["events"][1] == diagnostic
+    assert result["final_text"] == "Synthetic usage-limit diagnostic"
+    assert any(
+        error.get("message") == "native Claude reported an API error" for error in result["errors"]
+    )
+    errors = [event for event in result["canonical_events"] if event["type"] == "error"]
+    assert any(
+        event["error"]["code"] == "rate_limit"
+        and event["error"]["api_error_status"] == 429
+        and event["error"]["api_error"] == "usage_limit_reached"
+        and event["error"]["api_error_origin"] == "first_party"
+        for event in errors
+    )
+    assert not any(event["type"] == "turn.completed" for event in result["canonical_events"])
+    assert not any(
+        event["type"] == "item.completed" and event["item"]["type"] == "agent_message"
+        for event in result["canonical_events"]
+    )
+    assert result["canonical_events"][-1]["type"] == "turn.failed"
+
+
+@pytest.mark.parametrize(
+    "model,flag",
+    [
+        ("claude-sonnet-5-5", True),
+        ("<synthetic>", False),
+        ("<synthetic>", "true"),
+    ],
+)
+def test_native_api_error_marker_does_not_hide_real_model_drift_or_unmarked_synthetic_models(
+    model: str,
+    flag: object,
+) -> None:
+    diagnostic = api_limit_diagnostic(is_api_error_message=flag)
+    diagnostic["message"]["model"] = model
+    result = parse_claude_jsonl(stream(init(), diagnostic, terminal(is_error=True)))
+    assert result["execution_status"] == "unknown"
+    assert result["canonical_usage"] is None
+    assert model in result["observed_models"]
+    assert any("observed model identity differs" in row["error"] for row in result["parse_errors"])
+
+
+def test_native_terminal_api_failure_alone_has_explicit_error_and_unknown_usage() -> None:
+    result = parse_claude_jsonl(
+        stream(
+            init(),
+            terminal(
+                is_error=True,
+                terminal_reason="api_error",
+                api_error_status=429,
+                api_error="usage_limit_reached",
+                api_error_origin="first_party",
+                modelUsage={},
+            ),
+        )
+    )
+    assert result["execution_status"] == "failed"
+    assert result["canonical_usage"] is None
+    assert any(
+        event["type"] == "error" and event["error"]["api_error_status"] == 429
+        for event in result["canonical_events"]
+    )
+
+
+def test_native_error_projection_does_not_promote_unreviewed_text_to_normalized_metadata() -> None:
+    diagnostic = api_limit_diagnostic(
+        error="synthetic-private-code",
+        api_error="synthetic-private-detail",
+        api_error_origin="synthetic-private-origin",
+    )
+    result = parse_claude_jsonl(stream(init(), diagnostic, terminal(is_error=True)))
+    assert result["execution_status"] == "failed"
+    errors = [event for event in result["canonical_events"] if event["type"] == "error"]
+    assert errors[0]["error"]["code"] == "unknown"
+    assert errors[0]["error"]["api_error"] is None
+    assert errors[0]["error"]["api_error_origin"] is None
+    assert "synthetic-private" not in json.dumps(errors)
+    assert result["events"][1] == diagnostic

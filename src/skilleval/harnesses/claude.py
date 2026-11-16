@@ -56,6 +56,39 @@ def _nonempty(value: Any) -> TypeGuard[str]:
     return isinstance(value, str) and bool(value.strip())
 
 
+def _native_api_error(event: dict[str, Any], source: str) -> dict[str, Any]:
+    """Project only reviewed diagnostic enums/status; raw text stays in events."""
+    codes = {
+        "authentication_failed",
+        "oauth_org_not_allowed",
+        "account_on_hold",
+        "billing_error",
+        "rate_limit",
+        "overloaded",
+        "invalid_request",
+        "model_not_found",
+        "server_error",
+        "max_output_tokens",
+        "cloud_credential_error",
+        "unknown",
+    }
+    raw_code = event.get("error")
+    status = event.get("api_error_status")
+    details = {
+        "message": "native Claude reported an API error",
+        "source": source,
+        "code": raw_code if isinstance(raw_code, str) and raw_code in codes else "unknown",
+        "api_error_status": status if type(status) is int and 400 <= status <= 599 else None,
+        "api_error": "usage_limit_reached"
+        if event.get("api_error") == "usage_limit_reached"
+        else None,
+        "api_error_origin": "first_party"
+        if event.get("api_error_origin") == "first_party"
+        else None,
+    }
+    return {"type": "error", "message": details["message"], "error": details}
+
+
 def _usage(model_usage: Any, model: str | None) -> tuple[dict[str, Any], list[str]]:
     normalized: dict[str, Any] = {
         "schema_version": 1,
@@ -159,6 +192,11 @@ def parse_claude_jsonl(text: str) -> dict[str, Any]:
     def error(line: int, message: str) -> None:
         result["parse_errors"].append({"line": line, "error": message})
 
+    def api_failure(event: dict[str, Any], source: str) -> None:
+        canonical = _native_api_error(event, source)
+        result["errors"].append(canonical["error"])
+        result["canonical_events"].append(canonical)
+
     def observe_model(value: Any) -> None:
         if _nonempty(value) and value not in result["observed_models"]:
             result["observed_models"].append(value)
@@ -198,14 +236,29 @@ def parse_claude_jsonl(text: str) -> dict[str, Any]:
         elif kind in {"assistant", "user"}:
             if event.get("parent_tool_use_id") is not None or event.get("agent_id") is not None:
                 error(line_number, "subagent messages are outside the admitted single-agent stream")
-            if event.get("error") or event.get("aborted"):
+            if event.get("error"):
+                if kind == "assistant":
+                    api_failure(event, "assistant")
+                else:
+                    result["errors"].append(event)
+            if event.get("aborted"):
                 result["errors"].append(event)
             message = event.get("message")
             if not isinstance(message, dict):
                 error(line_number, "native message must be an object")
                 continue
+            synthetic_api_error = False
             if kind == "assistant":
-                observe_model(message.get("model"))
+                # Native API failures can be assistant-shaped diagnostics rather
+                # than inference responses. Only the exact observed marker and
+                # explicit native flag bypass inference-model identity checking.
+                synthetic_api_error = (
+                    event.get("is_api_error_message") is True
+                    and message.get("model") == "<synthetic>"
+                    and _nonempty(event.get("error"))
+                )
+                if not synthetic_api_error:
+                    observe_model(message.get("model"))
                 if isinstance(message.get("usage"), dict):
                     result["usage_observations"].append(
                         {
@@ -224,10 +277,13 @@ def parse_claude_jsonl(text: str) -> dict[str, Any]:
                     error(line_number, "native content block must be a typed object")
                     continue
                 block_type = block["type"]
+                if synthetic_api_error and block_type != "text":
+                    error(line_number, "native API error diagnostic contains unexpected content")
+                    continue
                 if kind == "assistant" and block_type == "text":
                     if not isinstance(block.get("text"), str):
                         error(line_number, "assistant text must be a string")
-                    else:
+                    elif not synthetic_api_error:
                         result["canonical_events"].append(
                             {
                                 "type": "item.completed",
@@ -347,7 +403,13 @@ def parse_claude_jsonl(text: str) -> dict[str, Any]:
             if isinstance(event.get("result"), str):
                 result["final_text"] = event["result"]
             if event.get("is_error") or event.get("errors"):
-                result["errors"].append(event)
+                status = event.get("api_error_status")
+                if event.get("terminal_reason") == "api_error" or (
+                    type(status) is int and 400 <= status <= 599
+                ):
+                    api_failure(event, "result")
+                else:
+                    result["errors"].append(event)
         elif kind == "error":
             result["errors"].append(event)
 
