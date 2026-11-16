@@ -13,6 +13,10 @@ the original request, selected results and contrary evidence. Use existing study
 and handoff reports for canonical consumption; incomplete usage remains unknown.
 Do not promote a raw diagnostic into a canonical total in display prose.
 
+The separate [synthesis pipeline](SYNTHESIS.md) can perform that investigation in
+a recorded native agent session and produce a packet for this same view. Manual
+authored packets remain supported; opening the view itself never invokes a model.
+
 ## Prepare and open
 
 ```sh

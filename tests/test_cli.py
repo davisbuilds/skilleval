@@ -46,6 +46,24 @@ def test_results_help_and_schema_do_not_start_server() -> None:
     assert "sources" in json.loads(schema.stdout)["properties"]
 
 
+def test_synthesis_help_and_schemas_need_no_execution_or_credentials() -> None:
+    help_result = invoke("synthesis", "run", "--help")
+    assert help_result.returncode == 0, help_result.stderr
+    assert "--auth-file" in help_result.stdout
+    assert "--sha256" in help_result.stdout
+    for kind, field in (("synthesis-selection", "coverage"), ("synthesis-result", "citations")):
+        schema = invoke("schema", kind)
+        assert schema.returncode == 0, schema.stderr
+        assert field in json.loads(schema.stdout)["properties"]
+
+
+def test_synthesis_run_requires_explicit_runtime_inputs_before_dispatch() -> None:
+    result = invoke("synthesis", "run", "missing", "--sha256", "0" * 64, "--output", "unused")
+    assert result.returncode == 2
+    assert "--auth-file" in result.stderr
+    assert not result.stdout
+
+
 def test_environment_execution_requires_output_before_accessing_inputs() -> None:
     result = invoke(
         "task-package",

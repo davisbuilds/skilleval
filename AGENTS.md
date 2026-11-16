@@ -28,6 +28,8 @@ interfaces. Do not load every reference for a small change.
   cleanup, and legacy path preservation.
 - [RESULTS.md](docs/system/RESULTS.md): attributed synthesis, local browser review,
   evidence excerpts and separate operator answers.
+- [SYNTHESIS.md](docs/system/SYNTHESIS.md): repeatable agent investigation of selected
+  retained runs, native invocation provenance and deterministic accounting.
 - [ENVIRONMENT.md](docs/system/ENVIRONMENT.md), [GATEWAY.md](docs/system/GATEWAY.md),
   [NATIVE.md](docs/system/NATIVE.md): qualification, recovery, inference, and native runs.
 - [TASK-PRESENTATION.md](docs/system/TASK-PRESENTATION.md): solver-visible context,
