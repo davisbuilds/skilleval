@@ -137,15 +137,11 @@ possible instead of calling the model again. Avoid unrelated requalification.
 - Update the owning reference when a contract, boundary, procedure, or direction
   changes. Keep roadmap priorities current and backlog entries future-only.
   Detailed delivery history belongs in Git; do not grow a session diary in docs.
-- **Plan and hand off work.** Use the accepted conversation or task as the
-  contract when it gives enough detail. Save a design, spec, or plan when it
-  helps people coordinate, agree on acceptance criteria, or sequence execution.
-  For unfinished work changing agents, sessions, or devices, leave a concise
-  handoff when the receiving context is incomplete. Commit audience-appropriate
-  documents needed for shared execution and keep their status current.
-  Before retiring execution docs, preserve lasting decisions and open work in
-  maintained references and repair incoming links.
-  Keep private experiment inputs and evidence in the external data root.
+- **Plan and hand off work.** Reuse clear task context. Save planning docs when
+  decisions, acceptance, or coordination need persistence. Leave a brief
+  handoff only when needed to resume unfinished work. Commit shared docs and
+  keep status current. Before archiving, preserve lasting decisions and open
+  work in maintained docs and repair links.
 - Stage explicit paths, inspect the staged set, and commit coherent changes. Push
   or publish only when requested. Never include private `.local/` evidence.
 - GitHub policy is merge + rebase, defaulting to merge commits, with merged
