@@ -128,6 +128,15 @@ possible instead of calling the model again. Avoid unrelated requalification.
 
 ## Working agreement
 
+- Clarify material ambiguity; proceed with authorized, bounded work.
+- Public CI uses hosted runners and synthetic inputs, pinned actions/toolchains,
+  least permissions, and the deterministic gate. No personal runners, credentials,
+  private datasets, or model calls in fork-triggered workflows.
+- Use a persistent terminal session for long-running or multi-process work and
+  retain logs outside tracked source. Clean up owned sessions when finished.
+- Update the owning reference when a contract, boundary, procedure, or direction
+  changes. Keep roadmap priorities current and backlog entries future-only.
+  Detailed delivery history belongs in Git; do not grow a session diary in docs.
 - **Plan and hand off work.** Use the accepted conversation or task as the
   contract when it gives enough detail. Save a design, spec, or plan when it
   helps people coordinate, agree on acceptance criteria, or sequence execution.
@@ -137,20 +146,11 @@ possible instead of calling the model again. Avoid unrelated requalification.
   Before retiring execution docs, preserve lasting decisions and open work in
   maintained references and repair incoming links.
   Keep private experiment inputs and evidence in the external data root.
-- Clarify material ambiguity; proceed with authorized, bounded work.
 - Stage explicit paths, inspect the staged set, and commit coherent changes. Push
   or publish only when requested. Never include private `.local/` evidence.
 - GitHub policy is merge + rebase, defaulting to merge commits, with merged
   branches deleted and required checks on `main`. Verify live hosting/settings
   against the repository policy before relying on them.
   Request Codex review on PRs when available; resolve actionable review threads.
-- Update the owning reference when a contract, boundary, procedure, or direction
-  changes. Keep roadmap priorities current and backlog entries future-only.
-  Detailed delivery history belongs in Git; do not grow a session diary in docs.
 - Re-ground in current source, docs, and commits after a handoff. A summary or
   earlier proposal is not user approval. Keep work scoped to this project.
-- Use a persistent terminal session for long-running or multi-process work and
-  retain logs outside tracked source. Clean up owned sessions when finished.
-- Public CI uses hosted runners and synthetic inputs, pinned actions/toolchains,
-  least permissions, and the deterministic gate. No personal runners, credentials,
-  private datasets, or model calls in fork-triggered workflows.
