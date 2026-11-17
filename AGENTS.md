@@ -129,19 +129,24 @@ possible instead of calling the model again. Avoid unrelated requalification.
 ## Working agreement
 
 - Clarify material ambiguity; proceed with authorized, bounded work.
+- Public CI uses hosted runners and synthetic inputs, pinned actions/toolchains,
+  least permissions, and the deterministic gate. No personal runners, credentials,
+  private datasets, or model calls in fork-triggered workflows.
+- Use a persistent terminal session for long-running or multi-process work and
+  retain logs outside tracked source. Clean up owned sessions when finished.
+- Update the owning reference when a contract, boundary, procedure, or direction
+  changes. Keep roadmap priorities current and backlog entries future-only.
+  Detailed delivery history belongs in Git; do not grow a session diary in docs.
+- **Plan and hand off work.** Reuse clear task context. Save planning docs when
+  decisions, acceptance, or coordination need persistence. Leave a brief
+  handoff only when needed to resume unfinished work. Commit shared docs and
+  keep status current. Before archiving, preserve lasting decisions and open
+  work in maintained docs and repair links.
 - Stage explicit paths, inspect the staged set, and commit coherent changes. Push
   or publish only when requested. Never include private `.local/` evidence.
 - GitHub policy is merge + rebase, defaulting to merge commits, with merged
   branches deleted and required checks on `main`. Verify live hosting/settings
   against the repository policy before relying on them.
   Request Codex review on PRs when available; resolve actionable review threads.
-- Update the owning reference when a contract, boundary, procedure, or direction
-  changes. Keep roadmap priorities current and backlog entries future-only.
-  Detailed delivery history belongs in Git; do not grow a session diary in docs.
 - Re-ground in current source, docs, and commits after a handoff. A summary or
   earlier proposal is not user approval. Keep work scoped to this project.
-- Use a persistent terminal session for long-running or multi-process work and
-  retain logs outside tracked source. Clean up owned sessions when finished.
-- Public CI uses hosted runners and synthetic inputs, pinned actions/toolchains,
-  least permissions, and the deterministic gate. No personal runners, credentials,
-  private datasets, or model calls in fork-triggered workflows.
