@@ -7,9 +7,6 @@ TypeScript owns the local results/exception view; the pi adapter is later work.
 
 ## Documentation map
 
-Read the owner for the decision at hand; CLI help, schemas, and source own exact
-interfaces. Do not load every reference for a small change.
-
 - [README.md](README.md): public introduction, setup, and workflow entry points.
 - [VISION.md](docs/project/VISION.md), [ROADMAP.md](docs/project/ROADMAP.md),
   [BACKLOG.md](docs/project/BACKLOG.md): principles, selected priorities, and future work.
@@ -52,9 +49,7 @@ and the gate, not for the installed Python CLI or results server.
 **Pre-push: `scripts/check`.** Use uv >= 0.9.17, preserve the lockfile and seven-day
 release quarantine. The gate never launches VMs, calls models, or reads credentials.
 
-`src/skilleval/` owns implementation; `tests/` owns deterministic checks;
-`examples/` contains authored fixtures and templates; `environments/` contains
-opt-in image recipes. Private captures, traces, runtime state, and audit packets
+Private captures, traces, runtime state, and audit packets
 belong in the private `storage init` data root or another explicit external
 directory. Existing ignored `.local/` evidence remains supported; preserve its
 absolute locators when retiring implementation worktrees.
@@ -126,27 +121,41 @@ CLI parsing, recording/replay, report selection, docs, and parallel task familie
 Retain failures when fixing live workflows, and replay unchanged evidence when
 possible instead of calling the model again. Avoid unrelated requalification.
 
-## Working agreement
+## Working Agreement
 
-- Clarify material ambiguity; proceed with authorized, bounded work.
-- Public CI uses hosted runners and synthetic inputs, pinned actions/toolchains,
-  least permissions, and the deterministic gate. No personal runners, credentials,
-  private datasets, or model calls in fork-triggered workflows.
-- Use a persistent terminal session for long-running or multi-process work and
-  retain logs outside tracked source. Clean up owned sessions when finished.
-- Update the owning reference when a contract, boundary, procedure, or direction
-  changes. Keep roadmap priorities current and backlog entries future-only.
-  Detailed delivery history belongs in Git; do not grow a session diary in docs.
+- **Clarify before building** when a request is vague, contradictory, or skips a
+  key decision; clear, well-scoped requests need no interview.
+- **Fix small issues now; backlog the rest.** Fix simple, quick, or blocking
+  issues in this repo as part of the current change and call them out. Record in
+  `docs/project/BACKLOG.md` only what can't be finished now or needs the
+  maintainer's decision; don't open a branch or PR just for a backlog entry.
+  Keep backlog entries future-only and roadmap priorities current.
+- **Keep docs current** when a change makes a documented contract, boundary,
+  procedure, or direction stale. Detailed delivery history belongs in Git; do
+  not grow a session diary in docs.
 - **Plan and hand off work.** Reuse clear task context. Save planning docs when
   decisions, acceptance, or coordination need persistence. Leave a brief
   handoff only when needed to resume unfinished work. Commit shared docs and
   keep status current. Before archiving, preserve lasting decisions and open
   work in maintained docs and repair links.
-- Stage explicit paths, inspect the staged set, and commit coherent changes. Push
-  or publish only when requested. Never include private `.local/` evidence.
-- GitHub policy is merge + rebase, defaulting to merge commits, with merged
-  branches deleted and required checks on `main`. Verify live hosting/settings
-  against the repository policy before relying on them.
-  Request Codex review on PRs when available; resolve actionable review threads.
-- Re-ground in current source, docs, and commits after a handoff. A summary or
-  earlier proposal is not user approval. Keep work scoped to this project.
+- **Commit and push.** Commit coherent chunks, staging by explicit path and
+  inspecting the staged set. Push your task branch and open a PR once the work
+  is complete and the local gate passes; don't push directly to `main`. Never
+  include private `.local/` evidence. Releases and package publication happen
+  only when the maintainer asks.
+- **Merge** only under the standing merge authority in the maintainer's
+  workspace instructions, or when the maintainer asks. Without those
+  instructions in context, leave the PR for the maintainer.
+- **Git:** [GIT_HISTORY_POLICY.md](docs/project/GIT_HISTORY_POLICY.md) owns
+  the merge strategy (merge commits by default) and required checks. `main`
+  requires an up-to-date branch even for administrators, so update a behind
+  branch before merging. Request Codex review on PRs when available and resolve
+  actionable threads. Merging deploys and publishes nothing.
+- Public CI uses hosted runners and synthetic inputs, pinned actions/toolchains,
+  least permissions, and the deterministic gate. No personal runners, credentials,
+  private datasets, or model calls in fork-triggered workflows.
+- Use a persistent terminal session for long-running or multi-process work and
+  retain logs outside tracked source. Clean up owned sessions when finished.
+- **Re-ground after compaction** or a handoff in source, this file, the owning
+  docs, and recent commits. A summary and your own earlier proposals are not
+  user approval. Keep work scoped to this project.
