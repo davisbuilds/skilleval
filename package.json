@@ -7,6 +7,6 @@
     "verify:ui": "node frontend/verify.mjs"
   },
   "devDependencies": {
-    "typescript": "6.0.3"
+    "typescript": "7.0.2"
   }
 }
