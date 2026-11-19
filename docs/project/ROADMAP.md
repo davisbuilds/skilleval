@@ -14,7 +14,9 @@ alongside actual consumption. The [vision](VISION.md) owns the principles;
 
 The CLI supports immutable captures, task/environment packages, native Codex
 execution, review/repair/document artifacts, independent offline checks, and
-static or investigative semantic judgments. Development studies freeze paired
+static or investigative semantic judgments. Judges and synthesis can select
+[Claude Code subscription / Opus](../system/CLAUDE-JUDGES.md); task agents retain
+the Codex route. Development studies freeze paired
 inputs and budgets, preserve every attempt, and produce readable artifact and
 usage comparisons. [Task packages](../system/TASKS.md) and
 [study orchestration](../system/STUDIES.md) own those contracts.
@@ -41,8 +43,10 @@ are open; they cannot become scored trials by relabeling their results.
 Run data now has a [durable storage layout](../system/STORAGE.md) outside
 implementation checkouts. Native runs retain guest-local session rollouts with
 explicit reasoning-summary coverage; guarded staging cleanup preserves replay
-evidence. Historical absolute locators remain in place until a supported
-relocation scheme exists. Backup and evidence-expiry policies remain open.
+evidence. Retained historical locators stay in place until supported relocation
+exists; obsolete cohorts can be deliberately retired with a dependency check and
+compact receipt. A private index separates active evidence from references and
+retired work. Backup and automatic expiry remain operator decisions.
 
 The [source register](SOURCES.md) records adopted ideas and implementation:
 SkillsBench/Harbor packaging, Tessl fixtures and explicit variants,
@@ -170,8 +174,10 @@ judgment, model agreement, or successful skill read cannot satisfy those gates.
 
 The [local results view](../system/RESULTS.md) now presents selected synthesis,
 evidence excerpts, agent follow-ups and qualified unknowns, with separately saved
-answers only for material human questions. An investigating agent authors that
-synthesis; automatic follow-through is deferred until repeated use warrants it.
+answers only for material human questions. The explicit
+[native synthesis pipeline](../system/SYNTHESIS.md) records that investigation
+over selected handoff evidence, with canonical accounting supplied by replayed
+receipts. Automatic follow-through is deferred until repeated use warrants it.
 The summary remains useful when no human action is required.
 Use [task-scoped readiness](../system/TASKS.md#readiness-reuse-and-invalidation)
 to reuse completed environment observations as briefs, grading criteria and

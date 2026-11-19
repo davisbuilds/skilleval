@@ -404,6 +404,8 @@ def _publish_receipt(output: Path, report: dict[str, Any]) -> None:
             "scored_admitted",
             "model",
             "effort",
+            "harness",
+            "execution_profile",
             "machine_name",
             "input_digest",
             "original_input",
@@ -818,8 +820,8 @@ def run_native(
     runtime: Path,
     image: Path,
     image_sha256: str,
-    catalog: Path,
-    auth_file: Path | None,
+    catalog: Path | None = None,
+    auth_file: Path | None = None,
     mode: Literal["review", "repair", "judge"] = "review",
     limits: GatewayLimits | None = None,
     native_timeout_seconds: int | None = None,
@@ -830,6 +832,8 @@ def run_native(
     investigation: bool | None = None,
     synthetic_transport: TestTransport | None = None,
     context_control: Literal["dirty-system"] | None = None,
+    judge_profile: str = "codex-sol",
+    claude_binary: Path | None = None,
 ) -> dict[str, Any]:
     """Execute explicitly authorized development work; never creates admission.
 
@@ -839,6 +843,43 @@ def run_native(
     A programmatic synthetic transport uses no credential and produces a distinct
     context-control receipt, which task/judgment consumers must reject.
     """
+    from skilleval.judge_profiles import resolve_profile
+
+    selected_judge = resolve_profile(judge_profile)
+    if selected_judge.name == "claude-opus":
+        if (
+            mode != "judge"
+            or type(investigation) is not bool
+            or catalog is not None
+            or auth_file is not None
+            or limits is not None
+            or skill_bundle is not None
+            or skill_digest is not None
+            or synthetic_transport is not None
+            or context_control is not None
+        ):
+            raise SkillEvalError(
+                "Claude supports judge mode with native subscription login; "
+                "Codex catalog, auth, gateway limits and skill treatments do not apply"
+            )
+        from skilleval.claude_runner import run_claude_judge
+
+        return run_claude_judge(
+            input_bundle,
+            expected_digest,
+            prompt,
+            output,
+            runtime=runtime,
+            image=image,
+            image_sha256=image_sha256,
+            claude_binary=claude_binary,
+            investigation=investigation,
+            native_timeout_seconds=native_timeout_seconds,
+            max_artifact_bytes=max_artifact_bytes,
+            max_artifact_files=max_artifact_files,
+        )
+    if catalog is None or claude_binary is not None:
+        raise SkillEvalError("Codex requires its model catalog and no Claude binary")
     started = time.monotonic()
     native_timeout_seconds = native_deadline(mode, native_timeout_seconds)
     if limits is None:

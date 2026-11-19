@@ -46,6 +46,12 @@ SOURCES = (
     "src/skilleval/gateway.py",
     "src/skilleval/budgets.py",
     "src/skilleval/harnesses/codex.py",
+    "src/skilleval/harnesses/claude.py",
+    "src/skilleval/judge_profiles.py",
+    "src/skilleval/claude_context.py",
+    "src/skilleval/claude_runner.py",
+    "src/skilleval/claude_vm.py",
+    "src/skilleval/claude_vm_guest.py",
     "src/skilleval/evidence.py",
     "src/skilleval/workspace.py",
     "src/skilleval/contracts.py",
@@ -58,10 +64,13 @@ SOURCES = (
     "src/skilleval/judge.py",
     "src/skilleval/treatments.py",
     "scripts/qualify-native.py",
+    "scripts/qualify-claude.py",
     "scripts/qualify-rollout.py",
     "scripts/qualify-context.py",
     "scripts/qualify-solver.py",
     "scripts/qualify-lifecycle.py",
+    "scripts/qualify-lanes.py",
+    "scripts/qualify-validation.py",
 )
 
 

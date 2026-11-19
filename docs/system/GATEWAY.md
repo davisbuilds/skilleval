@@ -1,5 +1,8 @@
 # Native qualification gateway
 
+This reference covers the Codex gateway. [Claude subscription judges](CLAUDE-JUDGES.md)
+use their unmodified native client for authentication and do not pass through it.
+
 `skilleval.gateway` supplies an explicit, bounded host inference capability for
 Codex CLI with adapter baseline **0.164.0**, **gpt-6.1-sol**, **high** reasoning.
 Stable same-major upgrades at or above that baseline may run qualification; the
@@ -263,14 +266,20 @@ and a [prepared image](../../environments/python-review/README.md). Start with
 synthetic events:
 
 ```sh
+set -eu
+umask 077
+uv run skilleval storage init
+control_dir="$(uv run skilleval storage path experiments native-control-v1 --plain)"
+mkdir "$control_dir"
 uv run python scripts/qualify-native.py \
   --runtime /path/to/smolvm --image-archive /path/to/task-image.tar \
   --image-sha256 ARCHIVE_SHA256 --catalog /path/to/models.json \
-  --output .local/native-synthetic
+  --output "$control_dir/native-synthetic"
 ```
 
 Adding `--auth-file /path/to/existing/auth.json` explicitly performs the bounded
-real model control; choose a new output directory for each attempt. Retain failed
+real model control; use a fresh output such as `"$control_dir/native-authenticated"`
+and choose a new output directory for each attempt. Retain failed
 attempts. These operations are separate from `scripts/check` and campaign
 admission. The roadmap records current observed outcomes and remaining gates.
 

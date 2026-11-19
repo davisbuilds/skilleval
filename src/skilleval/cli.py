@@ -20,6 +20,7 @@ from skilleval.errors import SkillEvalError
 from skilleval.gateway import NATIVE_REQUEST_BACKSTOP
 from skilleval.handoff import HandoffReportSpec, SpecHandoffSpec
 from skilleval.judge import AgenticCalibrationResult, AgenticReviewResult
+from skilleval.judge_profiles import JUDGE_PROFILES
 from skilleval.reliability import ReliabilityObservations, ReliabilitySuite
 from skilleval.repair import RepairSpec
 from skilleval.repair_assessment import (
@@ -34,6 +35,8 @@ from skilleval.repair_assessment import (
 from skilleval.repair_outcomes import RepairOutcomeSelection
 from skilleval.review_results import ReviewSpec
 from skilleval.study import StudySpec
+from skilleval.synthesis import SynthesisResult
+from skilleval.synthesis_inputs import SynthesisSelection
 from skilleval.task_package import TaskPackageSpec
 
 RECORDS: dict[str, type[Record]] = {
@@ -62,6 +65,8 @@ RECORDS: dict[str, type[Record]] = {
     "spec-handoff-spec": SpecHandoffSpec,
     "handoff-report-spec": HandoffReportSpec,
     "results-review-spec": ReviewSpec,
+    "synthesis-selection": SynthesisSelection,
+    "synthesis-result": SynthesisResult,
 }
 
 
@@ -69,6 +74,38 @@ def parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser(prog="skilleval", description=__doc__)
     root.add_argument("--version", action="version", version=f"skilleval {__version__}")
     commands = root.add_subparsers(dest="command", required=True)
+    synthesis = commands.add_parser(
+        "synthesis", help="Investigate retained results with an explicitly invoked agent"
+    )
+    synthesis_commands = synthesis.add_subparsers(dest="operation", required=True)
+    synthesis_prepare = synthesis_commands.add_parser(
+        "prepare", help="Validate selected evidence and freeze an investigation input"
+    )
+    synthesis_prepare.add_argument("--spec", type=Path, required=True)
+    synthesis_prepare.add_argument("--output", type=Path, required=True)
+    synthesis_prepare.add_argument("--judge", choices=JUDGE_PROFILES, default="codex-sol")
+    for synthesis_operation in ("inspect", "run", "record"):
+        step = synthesis_commands.add_parser(
+            synthesis_operation, help=f"{synthesis_operation.title()} a frozen synthesis"
+        )
+        step.add_argument("prepared", type=Path)
+        step.add_argument("--sha256", required=True, help="Expected preparation.json digest")
+        if synthesis_operation != "inspect":
+            step.add_argument("--output", type=Path, required=True, help="Fresh output directory")
+        if synthesis_operation == "record":
+            step.add_argument(
+                "--run", type=Path, required=True, help="Retained native run directory"
+            )
+        if synthesis_operation == "run":
+            step.add_argument("--runtime", type=Path, required=True)
+            step.add_argument("--image-archive", type=Path, required=True)
+            step.add_argument("--image-sha256", required=True)
+            step.add_argument("--catalog", type=Path, help="Required for the Codex judge")
+            step.add_argument("--auth-file", type=Path, help="Required for the Codex judge")
+            step.add_argument(
+                "--claude-binary", type=Path, help="Existing native Claude Code executable"
+            )
+            step.add_argument("--timeout-seconds", type=int, default=900)
     results = commands.add_parser(
         "results", help="Inspect attributed synthesis and human exceptions"
     )
@@ -267,8 +304,12 @@ def parser() -> argparse.ArgumentParser:
     native_run.add_argument("--runtime", type=Path, required=True)
     native_run.add_argument("--image-archive", type=Path, required=True)
     native_run.add_argument("--image-sha256", required=True)
-    native_run.add_argument("--catalog", type=Path, required=True)
-    native_run.add_argument("--auth-file", type=Path, required=True)
+    native_run.add_argument("--catalog", type=Path, help="Required for Codex")
+    native_run.add_argument("--auth-file", type=Path, help="Required for Codex")
+    native_run.add_argument("--judge", choices=JUDGE_PROFILES, default="codex-sol")
+    native_run.add_argument(
+        "--claude-binary", type=Path, help="Existing native Claude Code executable"
+    )
     native_run.add_argument("--output", type=Path, required=True)
     native_run.add_argument(
         "--timeout-seconds",
@@ -293,6 +334,7 @@ def parser() -> argparse.ArgumentParser:
         if kind == "review":
             prepare_judge.add_argument("report", type=Path)
         prepare_judge.add_argument("--output", type=Path, required=True)
+        prepare_judge.add_argument("--judge", choices=JUDGE_PROFILES, default="codex-sol")
         prepare_judge.add_argument(
             "--static", action="store_true", help="Source-only prompt policy"
         )
@@ -373,6 +415,8 @@ def parser() -> argparse.ArgumentParser:
         command = repair_commands.add_parser(action)
         command.add_argument("spec", type=Path)
         command.add_argument("--output", type=Path, required=True)
+        if action == "prepare-assessment":
+            command.add_argument("--judge", choices=JUDGE_PROFILES, default="codex-sol")
         if action in ("record-assessment", "prepare-citation-correction"):
             command.add_argument("--packet", type=Path, required=True)
             command.add_argument("--run", type=Path, required=True)
@@ -389,8 +433,8 @@ def parser() -> argparse.ArgumentParser:
             command.add_argument(
                 "--max-requests",
                 type=int,
-                default=4,
-                help="Declared correction request ceiling (default: 4)",
+                default=None,
+                help="Codex correction request ceiling (default: 4); omit for Claude",
             )
     for repair_operation in ("collect", "control", "check"):
         command = repair_commands.add_parser(repair_operation)
@@ -457,6 +501,32 @@ def write_new_json(path: Path, value: object) -> None:
 
 
 def dispatch(args: argparse.Namespace) -> dict[str, Any]:
+    if args.command == "synthesis":
+        from skilleval.synthesis import (
+            inspect_synthesis,
+            prepare_synthesis,
+            record_synthesis,
+            run_synthesis,
+        )
+
+        if args.operation == "prepare":
+            return prepare_synthesis(args.spec, args.output, judge_profile=args.judge)
+        if args.operation == "inspect":
+            return inspect_synthesis(args.prepared, args.sha256)
+        if args.operation == "record":
+            return record_synthesis(args.prepared, args.sha256, args.run, args.output)
+        return run_synthesis(
+            args.prepared,
+            args.sha256,
+            args.output,
+            runtime=args.runtime,
+            image=args.image_archive,
+            image_sha256=args.image_sha256,
+            catalog=args.catalog,
+            auth_file=args.auth_file,
+            timeout_seconds=args.timeout_seconds,
+            claude_binary=args.claude_binary,
+        )
     if args.command == "results":
         from skilleval.review_results import build_review, load_packet, review_status
 
@@ -565,7 +635,7 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
                 )
             assessment_spec = parse_spec(json.dumps(read_json(args.spec)))
             if args.operation == "prepare-assessment":
-                return prepare_assessment(assessment_spec, args.output)
+                return prepare_assessment(assessment_spec, args.output, judge_profile=args.judge)
             if args.operation == "prepare-citation-correction":
                 return prepare_citation_correction(
                     assessment_spec,
@@ -649,6 +719,10 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
 
         if (args.mode == "judge") != (args.judge_policy is not None):
             raise SkillEvalError("judge mode requires --judge-policy; task modes omit it")
+        if args.judge == "claude-opus" and args.max_requests != NATIVE_REQUEST_BACKSTOP:
+            raise SkillEvalError(
+                "Claude subscription requests are not broker-counted; use the judge deadline"
+            )
         deadline = native_deadline(args.mode, args.timeout_seconds)
         return run_native(
             args.bundle,
@@ -658,13 +732,17 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
             runtime=args.runtime.resolve(),
             image=args.image_archive.absolute(),
             image_sha256=args.image_sha256,
-            catalog=args.catalog.absolute(),
-            auth_file=args.auth_file.absolute(),
+            catalog=args.catalog.absolute() if args.catalog else None,
+            auth_file=args.auth_file.absolute() if args.auth_file else None,
             mode=args.mode,
             native_timeout_seconds=deadline,
             max_artifact_bytes=args.max_artifact_bytes,
             max_artifact_files=args.max_artifact_files,
-            limits=native_limits(deadline, max_requests=args.max_requests),
+            limits=native_limits(deadline, max_requests=args.max_requests)
+            if args.judge == "codex-sol"
+            else None,
+            judge_profile=args.judge,
+            claude_binary=args.claude_binary,
             skill_bundle=args.skill_bundle,
             skill_digest=args.skill_sha256,
             investigation=None if args.mode != "judge" else args.judge_policy == "investigative",
@@ -679,11 +757,15 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
 
         if args.operation == "prepare-calibration":
             return prepare_agentic_calibration(
-                args.bundle, args.output, investigation=not args.static
+                args.bundle, args.output, investigation=not args.static, judge_profile=args.judge
             )
         if args.operation == "prepare-review":
             return prepare_agentic_review(
-                args.bundle, args.report, args.output, investigation=not args.static
+                args.bundle,
+                args.report,
+                args.output,
+                investigation=not args.static,
+                judge_profile=args.judge,
             )
         if args.operation == "record-calibration":
             return record_agentic_calibration(args.bundle, args.packet, args.run, args.output)

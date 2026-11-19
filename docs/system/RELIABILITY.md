@@ -58,11 +58,20 @@ Ordinary checks and both reliability operations are offline. They never launch a
 VM, execute imported source, read credentials or invoke a model.
 
 ```sh
+set -eu
+umask 077
+uv run skilleval storage init
+reliability_dir="$(uv run skilleval storage path experiments reliability-v1 --plain)"
+mkdir "$reliability_dir"
 uv run skilleval capture examples/reliability/review-v1 \
-  --output .local/reliability-suite
-uv run skilleval reliability prepare .local/reliability-suite \
-  --output .local/reliability-prepared > .local/reliability-preparation.json
+  --output "$reliability_dir/suite" > "$reliability_dir/suite-receipt.json"
+uv run skilleval reliability prepare "$reliability_dir/suite" \
+  --output "$reliability_dir/prepared" > "$reliability_dir/preparation.json"
 ```
+
+Choose a new experiment name for every generation. The plain `mkdir` refuses an
+existing experiment directory; keep the quoted `reliability_dir` for the following
+commands in the same shell.
 
 Use `--static` for a separate static-policy preparation. Policy variants have
 different identities and must not be combined as repeats.
@@ -89,9 +98,9 @@ recorder, selecting the matching evidence and packet paths:
 
 ```sh
 uv run skilleval judge record-calibration \
-  .local/reliability-prepared/evidence/original \
-  .local/reliability-prepared/packets/original NATIVE_RUN \
-  --output .local/reliability-records
+  "$reliability_dir/prepared/evidence/original" \
+  "$reliability_dir/prepared/packets/original" NATIVE_RUN \
+  --output "$reliability_dir/records"
 ```
 
 Keep the frozen native input at its original path: native record revalidation
@@ -100,16 +109,17 @@ checks its manifest as well as collected bytes. Independent audit stays
 
 ## Explicit comparison and denominators
 
-Copy the observation template to a separate JSON file. Keep `plan_sha256` from
-that template and append each attempted session:
+Copy `"$reliability_dir/prepared/observations.template.json"` to
+`"$reliability_dir/observations.json"`. Keep `plan_sha256` from that template and
+append each attempted session:
 
 ```json
 {
   "schema_version": 1,
   "plan_sha256": "REPLACE_WITH_PLAN_DIGEST",
   "attempts": [
-    {"attempt_id": "a", "slot_id": "repeat-a", "record_dir": "reliability-records/RESULT_A"},
-    {"attempt_id": "b", "slot_id": "repeat-b", "record_dir": "reliability-records/RESULT_B"},
+    {"attempt_id": "a", "slot_id": "repeat-a", "record_dir": "records/RESULT_A"},
+    {"attempt_id": "b", "slot_id": "repeat-b", "record_dir": "records/RESULT_B"},
     {"attempt_id": "c", "slot_id": "order-reversed", "declared_failure": "No recordable final result."}
   ]
 }
@@ -124,8 +134,8 @@ native result IDs; retain every attempt rather than replacing a failed or poor
 run with a preferred retry.
 
 ```sh
-uv run skilleval reliability compare .local/reliability-prepared \
-  .local/reliability-observations.json > .local/reliability-comparison.json
+uv run skilleval reliability compare "$reliability_dir/prepared" \
+  "$reliability_dir/observations.json" > "$reliability_dir/comparison.json"
 ```
 
 Comparison verifies the original and reordered evidence, prepared packet bytes,

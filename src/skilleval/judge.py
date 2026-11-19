@@ -17,7 +17,7 @@ from pydantic import Field, ValidationError, model_validator
 from skilleval import calibration, evidence, grading
 from skilleval.contracts import Citation, Digest, Identifier, Record
 from skilleval.errors import SkillEvalError
-from skilleval.gateway import EFFORT, MODEL
+from skilleval.judge_profiles import metadata_profile, profile_metadata, resolve_profile
 from skilleval.runner import _native_tar_headers
 
 AGENTIC_VERSION = "calibration-agentic-v1"
@@ -158,14 +158,15 @@ class AgenticReviewResult(Record):
 
 
 def _packet(
-    bundle: Path, investigation: bool
+    bundle: Path, investigation: bool, *, judge_profile: str = "codex-sol"
 ) -> tuple[calibration.CalibrationSuite, str, dict[str, bytes], str]:
+    profile = resolve_profile(judge_profile)
     suite, original_manifest, digest, payloads, _ = calibration._packet(bundle)
     _add_source_modes(original_manifest, payloads)
     version = AGENTIC_VERSION if investigation else STATIC_VERSION
     payloads["ASSESS.md"] = (_COMMON + (_INVESTIGATION if investigation else _STATIC)).encode()
     meta = grading._parse_json(payloads["packet.json"])
-    meta.update(rubric_version=version, investigation=investigation)
+    meta.update(rubric_version=version, investigation=investigation, **profile_metadata(profile))
     payloads["packet.json"] = grading._json_bytes(meta)
     payloads["result-schema.json"] = grading._json_bytes(
         AgenticCalibrationResult.model_json_schema()
@@ -253,21 +254,26 @@ def _input_digest(payloads: dict[str, bytes]) -> str:
 
 
 def _invocation_prompt(payloads: dict[str, bytes], packet_digest: str) -> bytes:
-    """Supply the actual fixed native identity; never ask the judge to infer it."""
+    """Supply the selected fixed native identity; never ask the judge to infer it."""
+    profile = metadata_profile(grading._parse_json(payloads["packet.json"]))
     return (
         payloads["ASSESS.md"]
         + (
-            f"\nInvocation receipt: packet_sha256={packet_digest}\nmodel={MODEL}\neffort={EFFORT}\n"
+            f"\nInvocation receipt: packet_sha256={packet_digest}\n"
+            f"model={profile.model}\neffort={profile.effort}\n"
         ).encode()
     )
 
 
 def prepare_agentic_calibration(
-    bundle: Path, destination: Path, *, investigation: bool
+    bundle: Path, destination: Path, *, investigation: bool, judge_profile: str = "codex-sol"
 ) -> dict[str, Any]:
     """Prepare a fresh label-free packet for an explicitly invoked native judge."""
     grading._outside(bundle, destination)
-    suite, digest, payloads, packet_digest = _packet(bundle, investigation)
+    profile = resolve_profile(judge_profile)
+    suite, digest, payloads, packet_digest = _packet(
+        bundle, investigation, judge_profile=profile.name
+    )
     _write_tree(destination, payloads, source_modes=_packet_modes(payloads))
     return {
         "status": "prepared",
@@ -280,8 +286,9 @@ def prepare_agentic_calibration(
         "investigation": investigation,
         "probe_count": len(suite.probes),
         "independent_blind": False,
-        "model": MODEL,
-        "effort": EFFORT,
+        **profile_metadata(profile),
+        "model": profile.model,
+        "effort": profile.effort,
         "prompt": _invocation_prompt(payloads, packet_digest).decode(),
     }
 
@@ -302,7 +309,7 @@ def _verified_packet(
     meta = grading._parse_json(grading._read_regular(packet / "packet.json", 64 * 1024))
     if not isinstance(meta, dict) or type(meta.get("investigation")) is not bool:
         raise SkillEvalError("invalid agentic packet metadata")
-    context = _packet(bundle, meta["investigation"])
+    context = _packet(bundle, meta["investigation"], judge_profile=metadata_profile(meta).name)
     payloads = context[2]
     _check_packet(packet, payloads)
     return context
@@ -426,6 +433,7 @@ def _native_audit(run_dir: Path, receipt: dict[str, Any]) -> bytes | None:
         "input_digest",
         "model",
         "effort",
+        "harness",
         "investigation",
         "machine_name",
         "prompt_sha256",
@@ -625,10 +633,14 @@ def _native_policy(
     packet_digest: str,
     investigation: bool,
 ) -> None:
-    if receipt.get("model") != MODEL or receipt.get("effort") != EFFORT:
+    profile = metadata_profile(grading._parse_json(payloads["packet.json"]))
+    if receipt.get("model") != profile.model or receipt.get("effort") != profile.effort:
         raise SkillEvalError(
-            "native invocation model or effort differs from fixed gateway identity"
+            "native invocation model or effort differs from selected judge identity"
         )
+    harness = receipt.get("harness")
+    if (profile.name != "codex-sol" or harness is not None) and harness != profile.harness:
+        raise SkillEvalError("native invocation harness differs from selected judge identity")
     expected_input = _input_digest(payloads)
     original = receipt.get("original_input")
     copied = receipt.get("copied_input")
@@ -795,8 +807,9 @@ effectiveness. Later revisions use a new result_id and supersedes prior ID.
 
 
 def _review_packet(
-    bundle: Path, report_file: Path, investigation: bool
+    bundle: Path, report_file: Path, investigation: bool, *, judge_profile: str = "codex-sol"
 ) -> tuple[str, dict[str, bytes], str, str, dict[str, Any]]:
+    profile = resolve_profile(judge_profile)
     manifest, digest = grading._verified(bundle)
     payloads = {
         entry["path"]: grading._read_payload(bundle, manifest, entry["path"])
@@ -860,6 +873,7 @@ def _review_packet(
             "schema_version": 1,
             "evidence_sha256": digest,
             "report_sha256": report_digest,
+            **profile_metadata(profile),
             "rubric_version": version,
             "population": "development",
             "independent_blind": False,
@@ -883,11 +897,13 @@ def prepare_agentic_review(
     destination: Path,
     *,
     investigation: bool = True,
+    judge_profile: str = "codex-sol",
 ) -> dict[str, Any]:
     """Pair original source with one native report, omitting historical reports."""
     grading._outside(bundle, destination)
+    profile = resolve_profile(judge_profile)
     digest, payloads, packet_digest, report_digest, report = _review_packet(
-        bundle, report_file, investigation
+        bundle, report_file, investigation, judge_profile=profile.name
     )
     _write_tree(destination, payloads, source_modes=_packet_modes(payloads))
     return {
@@ -902,8 +918,9 @@ def prepare_agentic_review(
         "finding_count": len(report["findings"]),
         "review_execution_status": report["execution_status"],
         "independent_blind": False,
-        "model": MODEL,
-        "effort": EFFORT,
+        **profile_metadata(profile),
+        "model": profile.model,
+        "effort": profile.effort,
         "prompt": _invocation_prompt(payloads, packet_digest).decode(),
     }
 
@@ -919,7 +936,7 @@ def record_agentic_review(
     if not isinstance(meta, dict) or type(meta.get("investigation")) is not bool:
         raise SkillEvalError("invalid agentic packet metadata")
     digest, payloads, packet_digest, report_digest, report = _review_packet(
-        bundle, report_file, meta["investigation"]
+        bundle, report_file, meta["investigation"], judge_profile=metadata_profile(meta).name
     )
     _check_packet(prepared_packet, payloads)
     receipt, retained, artifacts = _run_files(run_dir)

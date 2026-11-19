@@ -31,11 +31,17 @@ currently pins GPT-6.1 Sol/high; the observed Codex version remains in each outc
 Duplicate task snapshots are repetitions, not independent task IDs.
 
 ```sh
-uv run skilleval study prepare study-spec.json --output study-plan.json
-uv run skilleval study run study-plan.json --sha256 PLAN_SHA256 \
-  --output .local/study-run --auth-file /explicit/host/auth.json --development
-uv run skilleval study report study-plan.json --sha256 PLAN_SHA256 \
-  --output .local/study-run
+set -eu
+umask 077
+uv run skilleval storage init
+study_dir="$(uv run skilleval storage path experiments study-example-v1 --plain)"
+mkdir "$study_dir"
+uv run skilleval study prepare /path/to/private/study-spec.json \
+  --output "$study_dir/study-plan.json"
+uv run skilleval study run "$study_dir/study-plan.json" --sha256 PLAN_SHA256 \
+  --output "$study_dir/run" --auth-file /explicit/host/auth.json --development
+uv run skilleval study report "$study_dir/study-plan.json" --sha256 PLAN_SHA256 \
+  --output "$study_dir/run"
 ```
 
 Planning does not launch a VM or read credentials. It freezes prompt/task/skill
@@ -151,9 +157,9 @@ existing native recovery ticket owns VM cleanup. Stop the old controller, recove
 any retained VM, then reconcile:
 
 ```sh
-uv run skilleval qualification recover NATIVE_ATTEMPT_DIRECTORY
-uv run skilleval study reconcile study-plan.json --sha256 PLAN_SHA256 \
-  --output .local/study-run
+uv run skilleval qualification recover "/path/to/existing/native-attempt"
+uv run skilleval study reconcile "$study_dir/study-plan.json" --sha256 PLAN_SHA256 \
+  --output "$study_dir/run"
 ```
 
 Reconciliation inspects terminal cleanup evidence without launching a VM or
@@ -199,8 +205,9 @@ unstarted cells are not zero-cost observations. See [accounting](ACCOUNTING.md)
 for native/provider reconciliation, cache limitations, pricing and timing scopes.
 
 Artifact checks and explicitly selected repair/document assessments can be attached
-with `--outcomes SELECTION --outcomes-sha256 DIGEST`; see [repair reporting](REPAIRS.md).
-Add `--review-output comparison.md` to write a fresh Markdown index of delivered
+with `--outcomes "$study_dir/outcomes-selection.json" --outcomes-sha256 DIGEST`
+to the same study report command; see [repair reporting](REPAIRS.md).
+Add `--review-output "$study_dir/comparison.md"` to write a fresh Markdown index of delivered
 files, judgments, and consumption; see [readable comparisons](TASKS.md#inspect-quality-and-consumption).
 Audit-backed task quality, scalar quality differences and uncertainty are not
 estimated. Native completion, a skill read, a parseable judgment or a stable judge

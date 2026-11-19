@@ -197,15 +197,46 @@ and judgments remains pending. Use a new generation when requirements, prompts o
 graders change, and preserve unknown normalized consumption for interrupted runs.
 
 
-### Prepare and judge a downstream candidate
+### Select, implement and observe a downstream candidate
 
-After selecting a writer artifact with `handoff prepare`, bind the implementation
-contract to that exact handoff and the original source package:
+Run this recipe from the source checkout after collecting a writer attempt.
+Replace every path and uppercase digest/budget placeholder with an explicit
+operator selection. Keep operator files in a private data root outside solver
+input. Each handoff, contract, native attempt, collected result and check needs
+a fresh output directory; retries retain earlier attempts and use new directories.
+Preparation and identity readback launch no VM or model. Native dispatch and the
+two observation commands below are explicit runtime operations.
+
+Select one exact changed Markdown artifact with `schema spec-handoff-spec`.
+For example, save this operator-only selection as `handoff-spec.json`:
+
+```json
+{
+  "task": "/path/to/writer-task.json",
+  "task_sha256": "WRITER_TASK_SHA256",
+  "result": "/path/to/writer-result",
+  "result_sha256": "WRITER_RESULT_SHA256",
+  "spec_path": "docs/specs/selected-feature.md",
+  "spec_sha256": "SELECTED_SPEC_SHA256"
+}
+```
+
+```sh
+uv run skilleval handoff prepare /path/to/handoff-spec.json \
+  --output /path/to/fresh-handoff
+uv run skilleval handoff verify /path/to/fresh-handoff --sha256 HANDOFF_SHA256
+```
+
+Use the returned handoff digest, not a digest of its preparation stdout. The
+handoff contains the original baseline plus only the selected spec, with its
+derived implementation prompt. Writer conversation and other generated documents
+stay outside that input. Artifact selection leaves quality unassessed.
+Bind the implementation contract to that handoff and the original source package:
 
 ```sh
 uv run python examples/document/operational-metrics/prepare_implementation.py prepare \
-  --handoff /path/to/handoff --handoff-sha256 HANDOFF_SHA256 \
-  --source-package /path/to/writer-package.json --source-package-sha256 PACKAGE_SHA256 \
+  --handoff /path/to/fresh-handoff --handoff-sha256 HANDOFF_SHA256 \
+  --source-package /path/to/writer-package.json --source-package-sha256 WRITER_PACKAGE_SHA256 \
   --output /path/to/fresh-implementation-contract
 ```
 
@@ -219,14 +250,78 @@ and repository contracts. The generated spec remains input, not an answer key.
 The small `source-present` worker establishes only availability of key source
 files. Use the normal native collection and `repair check` route for its evidence.
 
+Read back the handoff through its verifying API to write the exact prompt. This
+offline preflight also refuses a current Codex model/effort profile that differs
+from the writer. It prints the input digest, deadline and request cap to use in
+the next command; preserve frozen historical caps rather than substituting new
+defaults.
+
+```sh
+uv run python - /path/to/fresh-handoff HANDOFF_SHA256 /path/to/implementation-prompt.txt <<'PY'
+import json
+import sys
+from pathlib import Path
+from skilleval import gateway, handoff
+
+value = handoff.load_handoff(Path(sys.argv[1]), sys.argv[2])
+limits = value["stage_limits"]
+if (gateway.MODEL, gateway.EFFORT) != (limits["model"], limits["effort"]):
+    raise SystemExit("current Codex profile differs from frozen writer limits")
+with Path(sys.argv[3]).open("x") as stream:
+    stream.write(value["prompt"])
+print(json.dumps({"input_sha256": value["input_sha256"], **limits}, indent=2))
+PY
+```
+
+Select the qualified runtime, image and model catalog explicitly, and an existing
+host login as described in [native execution](../../../docs/system/NATIVE.md).
+Keep their identities and execution source stable until cleanup completes. Pass
+the login path only to the native CLI; do not put credentials or that path in
+task inputs, handoff selections or custom receipts. Launch without a skill bundle:
+
+```sh
+uv run skilleval native qualify /path/to/fresh-handoff/input \
+  --sha256 HANDOFF_INPUT_SHA256 --prompt /path/to/implementation-prompt.txt \
+  --mode repair --runtime /path/to/smolvm \
+  --image-archive /path/to/image.tar --image-sha256 IMAGE_SHA256 \
+  --catalog /path/to/model-catalog.json --auth-file "$AUTH_FILE" \
+  --timeout-seconds WRITER_TIMEOUT_SECONDS --max-requests WRITER_MAX_REQUESTS \
+  --output /path/to/fresh-implementation-native
+```
+
+Retain failed or interrupted native attempts too. After completed cleanup (or
+explicit recovery through the native recovery procedure), verify the exact input,
+prompt, model/effort, budgets and absence of the selected skill before collection:
+
+```sh
+uv run skilleval handoff check-implementation /path/to/fresh-handoff \
+  --sha256 HANDOFF_SHA256 --run /path/to/fresh-implementation-native
+uv run skilleval repair collect /path/to/fresh-implementation-contract/task.json \
+  --task-sha256 IMPLEMENTATION_TASK_SHA256 \
+  --run /path/to/fresh-implementation-native --output /path/to/fresh-result
+uv run skilleval repair check /path/to/fresh-implementation-contract/task.json \
+  --task-sha256 IMPLEMENTATION_TASK_SHA256 \
+  --result /path/to/fresh-result --result-sha256 RESULT_SHA256 \
+  --runtime /path/to/smolvm --image-archive /path/to/image.tar \
+  --image-sha256 IMAGE_SHA256 --output /path/to/fresh-source-check
+```
+
+Use task/package/map digests from `preparation.json` and the collection's returned
+result digest. Stop before checking an `invalid-scope` result; preserve its bytes
+and failure. A handoff identity check can bind a failed native attempt without
+turning it into a completion. A completed source check observes source presence
+only. Neither establishes delivery or feature correctness; check native and
+observation cleanup independently.
+
 Inspect the final candidate and write a neutral affordance driver as described in
 [the observer guide](downstream/README.md). Bind it before observation:
 
 ```sh
 uv run python examples/document/operational-metrics/prepare_implementation.py observe \
-  --task /path/to/implementation/task.json --task-sha256 TASK_SHA256 \
-  --result /path/to/collected-result --result-sha256 RESULT_SHA256 \
-  --package /path/to/implementation/package.json --package-sha256 PACKAGE_SHA256 \
+  --task /path/to/fresh-implementation-contract/task.json --task-sha256 IMPLEMENTATION_TASK_SHA256 \
+  --result /path/to/fresh-result --result-sha256 RESULT_SHA256 \
+  --package /path/to/fresh-implementation-contract/package.json \
+  --package-sha256 IMPLEMENTATION_PACKAGE_SHA256 \
   --driver /path/to/operator-driver.json --output /path/to/observation-package.json
 uv run skilleval task-package validate-environment /path/to/observation-package.json \
   --sha256 OBSERVATION_PACKAGE_SHA256 --runtime /path/to/smolvm \
@@ -267,3 +362,41 @@ judge and record route. Retain per-requirement judgments and citations alongside
 broad repair criteria; no mechanical or semantic aggregate defines an automatic
 winner. Use the [dated pricing scenario](../../pricing/README.md) for explicit
 API-equivalent costs, with judge overhead separate from both task stages.
+
+### Replay separate stage consumption
+
+After selecting retained attempts, use `schema handoff-report-spec` to prepare an
+operator-only report selection. For a writer launched by a study, a minimal
+selection is:
+
+```json
+{
+  "handoff": "/path/to/fresh-handoff",
+  "handoff_sha256": "HANDOFF_SHA256",
+  "writer_study": {
+    "plan": "/path/to/writer-plan.json",
+    "plan_sha256": "WRITER_PLAN_SHA256",
+    "output": "/path/to/writer-study-output",
+    "cell_id": "EXPLICIT_WRITER_CELL_ID"
+  },
+  "implementation_runs": [{
+    "path": "/path/to/fresh-implementation-native",
+    "sha256": "IMPLEMENTATION_NATIVE_RUN_JSON_SHA256"
+  }],
+  "judge_runs": [],
+  "price_schedule": null
+}
+```
+
+```sh
+uv run skilleval handoff report /path/to/handoff-report-spec.json
+```
+
+List every selected implementation attempt, including failures and retries, and
+every selected judge run with its retained `native-run.json` digest. An attempted
+run without a receipt uses `sha256: null`; it remains unfinished with unknown
+usage and unverified binding. The report retains all attempts in the writer cell,
+and separates writer, implementation, combined-agent and judge ledgers. It does
+not discover omitted external attempts. Without complete usage and a compatible
+explicit price schedule, consumption or cost remains unknown. Reporting replays
+evidence without dispatch and does not grant semantic acceptance or scored admission.

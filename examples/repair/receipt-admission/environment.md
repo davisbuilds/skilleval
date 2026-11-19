@@ -76,16 +76,19 @@ task difficulty, exhaustive correctness or skill effectiveness.
 
 ## Evidence generations and next boundary
 
-Original captures and agent attempts remain unchanged. The first expanded capture
-revealed additional missing verifier commits, and its first non-root control failed
-to import source because the directory was inaccessible. Those failures are retained;
-the corrected generation adds the required objects and gives both narrow identity
-controls readable source. No failed attempt is recast as a pass.
+These are historical development observations, not current environment admission
+or a shipped evidence dataset. The first expanded capture revealed additional
+missing verifier commits, and its first non-root control failed
+to import source because the directory was inaccessible. The corrected generation
+added the required objects and gave both narrow identity controls readable source.
+No failed attempt is recast as a pass.
 
-Captured source, manifests, complete raw logs, run scripts and comparison records
-remain in an explicit local evidence directory. They are development inputs, not
-publicly shipped benchmark data. The reusable capture CLI and general task-package
-format remain future work; this case does not select them prematurely.
+Private development evidence may be explicitly retired under the
+[storage policy](../../../docs/system/STORAGE.md#organization-and-experiment-retirement).
+The authored worker, source pins and environment lessons remain public. To revive
+this task, create a fresh [source capture](../../../docs/system/SOURCE-CAPTURE.md)
+and [task package](../../../docs/system/TASKS.md), then validate the current
+environment; the historical observations do not qualify a rebuilt capture.
 
 Before scored use, choose and qualify the solver user profile, declare the required
 tool-dependent validation lanes and check the larger repair-judge packet against
