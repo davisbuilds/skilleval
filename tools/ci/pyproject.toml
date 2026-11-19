@@ -2,7 +2,7 @@
 name = "skilleval-ci-tools"
 version = "0.0.0"
 requires-python = "==3.12.*"
-dependencies = ["zizmor==1.31.1"]
+dependencies = ["zizmor==1.32.0"]
 
 [tool.uv]
 required-version = ">=0.13.5"
