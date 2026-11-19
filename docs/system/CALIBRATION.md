@@ -192,6 +192,87 @@ fixture round trips establish contract behavior, not judge discrimination.
 Omitting the opt-in fields preserves legacy repair/document/specification packet
 and result schemas and bytes. Earlier assessments are not retroactively mapped.
 
+## Opt-in research document judgments
+
+Set `assessment_kind: document` and `rubric_profile: research-v1` in the existing
+document assessment specification. Topic selection and model execution remain
+explicit operator actions. The shared `artifact prepare-assessment`, native judge,
+`artifact record-assessment` and retained assessment reader support this profile;
+no research task or skill-effect evaluation is launched during setup or ordinary
+checks. The profile is independent of the Sol/Claude judge selection.
+
+Research results use separate `ResearchAssessment` and
+`ResearchRequirementAssessment` contracts, with `research-agentic-v1` or
+`research-static-v1` rubric versions (and `research-requirements-*` when the frozen
+requirement map is selected). The five separate judgments are `factual-support`,
+`coverage`, `reasoning-and-applicability`, `uncertainty-and-limits` and `usefulness`.
+They distinguish faithful source interpretation, answering the original questions,
+valid inference for the user's situation, calibrated uncertainty, and a usable
+answer. A supported quotation alone does not establish real-world truth or
+applicability. Missing criteria and missing requirement verdicts remain missing;
+no scalar score or inferred coverage is created. Earlier repair, document and
+specification result schemas and packet bytes remain unchanged.
+
+The judge compares the original request, substantive retained source passages and
+delivered report, including consequential uncited claims. URLs, search snippets,
+source prestige and citation counts are insufficient evidence. Contrary evidence,
+novel valid findings, concise valid alternatives and warranted inconclusive
+answers receive consideration on their merits. Missing or access-limited evidence
+remains unresolved. Report length, headings, template conformity, and resemblance
+to a preferred draft earn no credit. As with every document assessment, retained
+citation checks establish path/line integrity, not semantic entailment. Independent
+human audit remains pending after recording.
+
+Set `web_search: true` in an investigative `research-v1` assessment specification
+and pass `--web-search` to its native judge invocation to opt into the native web
+tool. The frozen packet and native receipt must agree on that permission; earlier
+packets and default research packets retain their existing permissions. Live web
+research currently uses the Codex Sol judge; supplied-source research packets
+support either judge provider. Static and other document profiles reject this
+opt-in. This permission enables a tool; it does not demonstrate that research was
+performed or that a result is reliable.
+
+Research packets project available native solver web actions into
+`case/tools.json` as `web_search_observations`, including retained queries, URLs,
+status and citations with event limits and omissions. These are action metadata,
+not full hosted page text. A web-enabled judge is instructed to write consulted
+URLs, material excerpts, context, inferences and access limits into
+`investigation/repair/research-notes.md`, retained as
+`task/investigation/repair/research-notes.md`. Those notes are model-authored,
+unauthenticated evidence. Neither notes nor native action metadata establishes
+an exact page capture or independently verified source interpretation. Retain and
+inspect the raw native events alongside those notes; preserve unresolved support
+when passages cannot be checked. Independent judge research must not silently
+repair what the original report itself failed to support.
+
+### Authored research grader-control recipe
+
+These newly authored controls are a development recipe, not an executed judge
+calibration, independent ground truth or holdout. Before using the recipe, create
+three small document task/candidate pairs with the exact original request and
+retained source text below. Capture them using the normal document input and
+candidate collection route. A document worker may check that `report.md` exists;
+its result must not encode semantic expectations. Keep the expectations in a
+separate operator-only file outside the source/candidate trees, frozen input and
+judge packet. A later actual judge invocation must retain the preparation receipt,
+actual model/effort/provider, prompt and collected output, then compare each
+judgment to the frozen expectations with independent review of disagreements.
+
+| Control | Original request and retained source | Candidate report | Operator-only discrimination target |
+| --- | --- | --- | --- |
+| Wrong-source interpretation | Request: "Does this trial establish improved survival from Treatment A?" Source: "In this randomized trial of 120 adults, Treatment A improved symptom scores at eight weeks. Mortality was not measured." | "Treatment A improved survival in this randomized trial [1]." Link [1] to that exact retained source. | Factual-support and reasoning-and-applicability should identify that symptoms are not survival and mortality was not measured. A genuine citation must not conceal the unsupported interpretation. Cite candidate and source passages. |
+| Concise valid alternative | Request: "Choose a backup plan for files that must stay offline, with recovery after one disk fails." Source: "Plan A stores independent full copies on two offline disks. Plan B synchronizes files to a cloud account. Neither plan's recovery time has been measured." | "Choose A: its two offline copies meet the constraint and permit recovery after one disk fails. Keep the second copy current and test restoration. Recovery speed is unmeasured." | Accept the concise, supported recommendation and valid extra restoration advice. Do not require headings, a third source, a template, or more words; do not misclassify advice as a measured source finding. |
+| Appropriately inconclusive | Request: "Do retained results establish that Method X outperforms Method Y on production latency?" Source: "X was measured on a simulator. Y's latency data could not be accessed. No production comparison is available." | "The retained evidence cannot establish a production winner: X has simulator results and Y's latency is inaccessible. A comparable production measurement is needed." | Preserve the winner as unresolved while crediting coverage, sound inference, explicit access limits and useful next evidence. Do not invent a winner or turn missing Y data into evidence that Y is slower. |
+
+The cases deliberately test different failure modes rather than an overall score.
+Record expected/supplied/missing/unresolved verdicts per criterion, disagreements,
+citations and the reason for each adjudication. An appropriately inconclusive
+report can satisfy uncertainty and usefulness while the substantive winner remains
+unresolved; decide criterion-level expectations before the run. Deterministic
+schema, prompt and storage tests cannot establish that any model discriminates
+these cases. Repeating this small exposed recipe cannot establish general judge
+reliability or a skill benefit.
+
 ## Offline result contract and recording
 
 `CalibrationResult.model_json_schema()` exposes the strict version-1 result

@@ -20,6 +20,12 @@ from skilleval.errors import SkillEvalError
 from skilleval.identity import file_digest, object_digest
 from skilleval.judge_profiles import metadata_profile, profile_metadata, resolve_profile
 from skilleval.repair_check import compare_observations, validate_observer_resources
+from skilleval.research_rubric import (
+    RESEARCH_CRITERIA,
+    RESEARCH_RUBRIC,
+    RESEARCH_WEB_PERMISSION,
+    ResearchJudgment,
+)
 from skilleval.study import _clean_native
 
 Criterion = Literal["task-contract", "scope-and-regressions", "verification-claims"]
@@ -145,9 +151,16 @@ class RepairAssessment(_RepairAssessmentBase[Literal["repair-agentic-v1", "repai
 
 class DocumentAssessmentSpec(RepairAssessmentSpec):
     assessment_kind: Literal["document"] = "document"
-    rubric_profile: Literal["document-v1", "specification-v1"] = Field(
+    rubric_profile: Literal["document-v1", "specification-v1", "research-v1"] = Field(
         default="document-v1", exclude_if=lambda value: value == "document-v1"
     )
+    web_search: bool = Field(default=False, exclude_if=lambda value: not value)
+
+    @model_validator(mode="after")
+    def research_only(self) -> DocumentAssessmentSpec:
+        if self.web_search and (self.rubric_profile != "research-v1" or not self.investigation):
+            raise ValueError("web search requires an investigative research-v1 profile")
+        return self
 
 
 DOCUMENT_CRITERIA = (
@@ -263,6 +276,61 @@ class DocumentRequirementAssessment(
         return self
 
 
+class _ResearchAssessmentBase[RubricVersion: str](Record):
+    result_id: Identifier
+    evidence_sha256: Digest
+    packet_sha256: Digest
+    rubric_version: RubricVersion
+    assessor_kind: Literal["llm"]
+    assessor: str = Field(min_length=1)
+    model: str = Field(min_length=1)
+    investigation_status: Literal["not-permitted", "not-needed", "completed", "blocked"]
+    judgments: tuple[ResearchJudgment, ...] = Field(max_length=5)
+    limitations: tuple[str, ...] = ()
+    supersedes: Identifier | None = None
+
+    @model_validator(mode="after")
+    def coherent(self) -> _ResearchAssessmentBase[RubricVersion]:
+        if len({j.criterion for j in self.judgments}) != len(self.judgments):
+            raise ValueError("duplicate research criterion")
+        static = self.rubric_version.endswith("-static-v1")
+        if static != (self.investigation_status == "not-permitted"):
+            raise ValueError("investigation status differs from permission")
+        if static and any(
+            c.path.startswith("task/investigation/")
+            for j in self.judgments
+            for c in (*j.citations, *j.artifact_citations)
+        ):
+            raise ValueError("static assessment cannot cite investigation artifacts")
+        return self
+
+
+class ResearchAssessment(
+    _ResearchAssessmentBase[Literal["research-agentic-v1", "research-static-v1"]]
+):
+    pass
+
+
+class ResearchRequirementAssessment(
+    _ResearchAssessmentBase[
+        Literal["research-requirements-agentic-v1", "research-requirements-static-v1"]
+    ]
+):
+    acceptance_map_sha256: Digest
+    requirement_judgments: tuple[RequirementJudgment, ...] = Field(max_length=200)
+
+    @model_validator(mode="after")
+    def requirement_ids(self) -> ResearchRequirementAssessment:
+        _distinct_requirements(self.requirement_judgments)
+        if self.investigation_status == "not-permitted" and any(
+            c.path.startswith("task/investigation/")
+            for j in self.requirement_judgments
+            for c in (*j.citations, *j.artifact_citations)
+        ):
+            raise ValueError("static assessment cannot cite investigation artifacts")
+        return self
+
+
 def _distinct_requirements(judgments: tuple[RequirementJudgment, ...]) -> None:
     ids = [item.requirement_id for item in judgments]
     if len(set(ids)) != len(ids):
@@ -274,6 +342,8 @@ AssessmentResult = (
     | DocumentAssessment
     | RepairRequirementAssessment
     | DocumentRequirementAssessment
+    | ResearchAssessment
+    | ResearchRequirementAssessment
 )
 
 
@@ -281,6 +351,8 @@ def assessment_model(
     spec: RepairAssessmentSpec,
 ) -> type[AssessmentResult]:
     if isinstance(spec, DocumentAssessmentSpec):
+        if spec.rubric_profile == "research-v1":
+            return ResearchRequirementAssessment if spec.requirement_policy else ResearchAssessment
         return DocumentRequirementAssessment if spec.requirement_policy else DocumentAssessment
     return RepairRequirementAssessment if spec.requirement_policy else RepairAssessment
 
@@ -578,11 +650,55 @@ def _native_evidence(
         raise SkillEvalError("repair native provenance differs")
     receipt, retained, _ = judge._run_files(run, mode="repair")
     tools = _tool_evidence(retained.get("events.jsonl", b""), spec.tool_evidence_policy)
+    if isinstance(spec, DocumentAssessmentSpec) and spec.rubric_profile == "research-v1":
+        tools["web_search_observations"] = _web_search_evidence(retained.get("events.jsonl", b""))
     return (
         retained["final.txt"],
         evidence._json_bytes(tools),
         {"execution_status": receipt["status"]},
     )
+
+
+def _web_search_evidence(raw: bytes) -> dict[str, Any]:
+    """Retain bounded native action metadata, never claim hosted page capture."""
+    items: list[dict[str, Any]] = []
+    count = withheld = 0
+    for index, line in enumerate(raw.splitlines(), 1):
+        event = evidence._parse_json(line)
+        if not isinstance(event, dict) or event.get("type") not in (
+            "item.started",
+            "item.completed",
+        ):
+            continue
+        item = event.get("item")
+        if not isinstance(item, dict) or item.get("type") not in ("web_search", "web_search_call"):
+            continue
+        count += 1
+        selected = {
+            key: item[key]
+            for key in ("id", "type", "status", "action", "query", "url", "citations")
+            if key in item
+        }
+        encoded = evidence._json_bytes(selected)
+        if len(encoded) > 65536 or _execution_harness_marker(encoded.decode()):
+            withheld += 1
+            continue
+        if len(items) < 256:
+            items.append({"event_index": index, "event_type": event["type"], "item": selected})
+    return {
+        "items": items,
+        "observed_event_count": count,
+        "withheld_event_count": withheld,
+        "items_truncated": count - withheld > len(items),
+        "limits": [
+            "Native action metadata may retain queries, URLs, status and citations; "
+            "it is not a complete transcript of hosted page content.",
+            "A start is not a completion; missing fields and unobserved actions remain unknown.",
+            "Events over 64 KiB or containing recognized harness/skill markers are withheld; "
+            "at most 256 events are projected. This is bounded masking, not proven blinding.",
+            "Judge-written excerpts and research notes are model-authored and unauthenticated.",
+        ],
+    }
 
 
 def _tool_evidence(raw: bytes, policy: ToolEvidencePolicy = "legacy-v1") -> dict[str, Any]:
@@ -876,6 +992,8 @@ def packet(
     spec: RepairAssessmentSpec, *, judge_profile: str = "codex-sol"
 ) -> tuple[dict[str, bytes], str, dict[str, Any]]:
     profile = resolve_profile(judge_profile)
+    if isinstance(spec, DocumentAssessmentSpec) and spec.web_search and profile.name != "codex-sol":
+        raise SkillEvalError("native web search is currently supported only by the codex-sol judge")
     task, result, candidate = source(spec)
     statement, tools, execution = _native_evidence(result, spec)
     payloads = {
@@ -956,7 +1074,16 @@ def packet(
     specification = isinstance(spec, DocumentAssessmentSpec) and (
         spec.rubric_profile == "specification-v1"
     )
-    prefix = "specification" if specification else "document" if document else "repair"
+    research = isinstance(spec, DocumentAssessmentSpec) and spec.rubric_profile == "research-v1"
+    prefix = (
+        "research"
+        if research
+        else "specification"
+        if specification
+        else "document"
+        if document
+        else "repair"
+    )
     if requirements is not None:
         prefix += "-requirements"
     version = prefix + ("-agentic-v1" if spec.investigation else "-static-v1")
@@ -970,6 +1097,11 @@ def packet(
             "population": "development",
             "treatment_metadata": "withheld",
             "independent_blind": False,
+            **(
+                {"web_search": True}
+                if isinstance(spec, DocumentAssessmentSpec) and spec.web_search
+                else {}
+            ),
             **(
                 {
                     "requirement_policy": spec.requirement_policy,
@@ -992,7 +1124,17 @@ def packet(
         if spec.investigation
         else judge._STATIC.replace("calibration-static-v1", version)
     )
-    rubric = SPECIFICATION_RUBRIC if specification else DOCUMENT_RUBRIC if document else RUBRIC
+    if isinstance(spec, DocumentAssessmentSpec) and spec.web_search:
+        permission = RESEARCH_WEB_PERMISSION.replace("<rubric_version>", version)
+    rubric = (
+        RESEARCH_RUBRIC
+        if research
+        else SPECIFICATION_RUBRIC
+        if specification
+        else DOCUMENT_RUBRIC
+        if document
+        else RUBRIC
+    )
     payloads["ASSESS.md"] = (rubric + permission).encode()
     if requirements is not None:
         payloads["ASSESS.md"] += REQUIREMENT_RUBRIC.encode()
@@ -1007,7 +1149,7 @@ def packet(
     )
     result_model = assessment_model(spec)
     result_schema = result_model.model_json_schema()
-    if document and not specification and requirements is None:
+    if document and not specification and not research and requirements is None:
         # Historical packets pin this schema as well as the rubric. Runtime
         # parsing accepts new versions, but old document-v1 packet bytes do not
         # change merely because another profile was added.
@@ -1100,7 +1242,10 @@ def _assessment_result(
         if name.startswith("task/investigation/repair/")
     }
     requirement_judgments: tuple[RequirementJudgment, ...] = ()
-    if isinstance(result, (RepairRequirementAssessment, DocumentRequirementAssessment)):
+    if isinstance(
+        result,
+        (RepairRequirementAssessment, DocumentRequirementAssessment, ResearchRequirementAssessment),
+    ):
         if result.acceptance_map_sha256 != spec.acceptance_map_sha256:
             raise SkillEvalError("requirement judgment acceptance map differs")
         required = _requirement_ids(payloads)
@@ -1109,9 +1254,15 @@ def _assessment_result(
         if {item.requirement_id for item in requirement_judgments} - set(required):
             raise SkillEvalError("judgment references an unknown projected requirement")
     for item in (*result.judgments, *requirement_judgments):
-        if isinstance(result, (DocumentAssessment, DocumentRequirementAssessment)) or isinstance(
-            item, RequirementJudgment
-        ):
+        if isinstance(
+            result,
+            (
+                DocumentAssessment,
+                DocumentRequirementAssessment,
+                ResearchAssessment,
+                ResearchRequirementAssessment,
+            ),
+        ) or isinstance(item, RequirementJudgment):
             paths = []
             for citation in (*item.citations, *item.artifact_citations):
                 if citation.path.startswith("task/investigation/repair/"):
@@ -1145,7 +1296,9 @@ def summary(
 ) -> dict[str, Any]:
     judgments = {j.criterion: j.verdict for j in result.judgments}
     criteria = (
-        DOCUMENT_CRITERIA
+        RESEARCH_CRITERIA
+        if isinstance(result, (ResearchAssessment, ResearchRequirementAssessment))
+        else DOCUMENT_CRITERIA
         if isinstance(result, (DocumentAssessment, DocumentRequirementAssessment))
         else CRITERIA
     )
@@ -1164,7 +1317,10 @@ def summary(
         "independent_audit": "required-pending",
         "scored_admitted": False,
     }
-    if isinstance(result, (RepairRequirementAssessment, DocumentRequirementAssessment)):
+    if isinstance(
+        result,
+        (RepairRequirementAssessment, DocumentRequirementAssessment, ResearchRequirementAssessment),
+    ):
         if requirement_ids is None:
             raise SkillEvalError("requirement summary needs projected requirement IDs")
         verdicts = {item.requirement_id: item.verdict for item in result.requirement_judgments}
