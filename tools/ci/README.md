@@ -6,16 +6,12 @@ private dataset is needed.
 
 ## Review UI compiler
 
-The root `package-lock.json` pins TypeScript 6.0.3, the only JavaScript development
-dependency; it has no runtime dependency graph or install hooks. Install with
+The root `package-lock.json` pins TypeScript 7.0.2 and its platform-specific
+compiler packages as development dependencies. Install with
 `npm ci --ignore-scripts`. `npm run check:ui` typechecks the source and detects
 drift from committed Python-package assets. Dependabot observes an eight-day
 cooldown for npm updates. Renewal checks release age, advisories and available
 publisher evidence before updating the exact pin/lock.
-
-On 2026-11-16, registry metadata reported TypeScript 6.0.3 as 213 days old with no
-observed advisories; npm verified its registry signature, while build provenance
-was unavailable. These are scoped observations, not a safety certification.
 
 `.node-version` pins the development/CI runtime; the installed Python application
 does not invoke Node. The initial 24.22.3 pin takes a narrow early-release exception
