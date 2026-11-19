@@ -176,6 +176,28 @@ def test_native_hosted_action_history_requires_opt_in(action: dict) -> None:
 
 
 @pytest.mark.parametrize(
+    "fields",
+    [
+        {"status": "open", "action": {"type": "open_page", "url": "https://example.com/"}},
+        {"id": "ws_partial", "status": "in_progress"},
+        {"action": {"type": "search"}},
+        {"action": {"type": "search", "queries": []}},
+        {"action": {"type": "open_page"}},
+        {"action": {"type": "find_in_page", "pattern": "reference"}},
+    ],
+)
+def test_native_optional_history_metadata_does_not_block_replay(fields: dict) -> None:
+    # Pinned Codex DTO uses optional fields and an open status string; missing
+    # metadata is not evidence of a completed search, but remains valid history.
+    body = search_body()
+    body["input"][1] = {"type": "web_search_call", **fields}
+    raw = json.dumps(body).encode()
+    assert gateway.validate_body(raw, CONFIG, web_search=True) == body
+    with pytest.raises(ValueError):
+        gateway.validate_body(raw, CONFIG)
+
+
+@pytest.mark.parametrize(
     "change",
     [
         {"tools": [{"type": "file_search", "vector_store_ids": ["vs_remote"]}]},
@@ -240,12 +262,12 @@ def test_web_flag_preserves_other_capability_refusals(change: dict) -> None:
             "type": "web_search_call",
             "action": {"type": "search", "query": "q", "secret": "unrecognized"},
         },
-        {"type": "web_search_call", "action": {"type": "open_page"}},
+        {"type": "web_search_call", "action": {"type": "open_page", "url": 42}},
         {"type": "web_search_call", "action": {"type": "search", "queries": "query"}},
         {
             "type": "web_search_call",
             "action": {"type": "search", "query": "q"},
-            "status": "unknown",
+            "status": {"unsupported": "value"},
         },
         {
             "type": "web_search_call",

@@ -35,6 +35,8 @@ TypeScript owns the local results/exception view; the pi adapter is later work.
   evaluation disclosures, the solver boundary, and its qualification limits.
 - [CALIBRATION.md](docs/system/CALIBRATION.md), [RELIABILITY.md](docs/system/RELIABILITY.md):
   judge contracts, authored controls, stability checks, and independent audit limits.
+- [RESEARCH.md](docs/system/RESEARCH.md): opt-in native web search, research judgments,
+  retained source observations and retrieval visibility limits.
 - [PILOT-CANDIDATES.md](docs/project/PILOT-CANDIDATES.md),
   [SOURCES.md](docs/project/SOURCES.md): task selection and external provenance.
 - [CONTRIBUTING.md](CONTRIBUTING.md): contribution scope and review expectations.

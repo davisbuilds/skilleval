@@ -55,6 +55,13 @@ tasks or graders. No implementation was copied from these sources.
 | [Anthropic, Demystifying evals for AI agents (2026-01-09)](https://www.anthropic.com/research/demystifying-evals-for-ai-agents) | Combine objective observations, semantic judgments and expert calibration; retain valid alternatives and unknown outcomes | Practitioner guidance does not replace representative independent labels or evidence-packet audits. |
 | [Evan Miller, Adding Error Bars to Evals, v1](https://arxiv.org/html/2411.00640v1), [METR long-task methods (2025-03-19)](https://metr.org/blog/2025-03-19-measuring-ai-ability-to-complete-long-tasks/) | Paired task differences, repetitions summarized within task, clustered uncertainty, and sample allocation based on useful effect and precision | Analysis remains future work; a selected pilot or many related probes cannot support population inference. |
 
+Research assessment also draws on [ResearchRubrics, v1](https://arxiv.org/html/2511.07685v1)
+for task-specific criteria and [DeepResearch Bench](https://arxiv.org/abs/2506.11763)
+for separating report quality from citation support. These are methodological
+influences, not copied implementations or evidence that skilleval's research
+grader is independently reliable. The original inquiry supplies acceptance;
+reference similarity and citation volume do not define success.
+
 ## Runtime and harness contracts
 
 | Source | Current decision / possible reuse | Qualification still needed |

@@ -31,9 +31,9 @@ class ResearchJudgment(Record):
 
 RESEARCH_RUBRIC = """# Research document semantic assessment, development v1
 
-Read packet.json and the original request in case/instruction.md. Read the
-substantive retained source passages in case/source/, then the delivered report
-in case/candidate/. Compare request, passages
+Read packet.json and the original request in case/instruction.md. Inspect any
+supplied source passages in case/source/ and the delivered report in
+case/candidate/. Compare request, inspected source content
 and report, including consequential uncited claims and implications. A URL, search
 snippet, title, citation marker or retrieved-file count alone cannot establish a
 claim. Search results can identify leads; a retained passage supports only what
@@ -53,8 +53,9 @@ of the judge provider or model.
 
 Assess five independent criteria using satisfied, violated or unresolved:
 - factual-support: check material factual claims, including consequential uncited
-  claims, against the substantive retained passages. Cite both the report passage
-  and relevant source passage for a disputed interpretation. Separate faithful
+  claims, against substantive source content you actually inspect. Cite the report
+  passage and relevant source passage or investigation notes for a disputed
+  interpretation. Separate faithful
   source support from whether the source establishes real-world truth: a source
   can state a claim while offering weak, outdated, biased or inapplicable evidence.
   A citation to a real but contradictory or unrelated source is not support.
@@ -96,7 +97,11 @@ report/source evidence. Investigation artifacts supplement retained originals,
 never rewrite them. Native web action metadata can retain queries, URLs and
 citations without retaining the full hosted page text. A judge's investigation
 notes are model-authored evidence, not authenticated retrieval transcripts,
-independently verified source passages or proof of semantic truth.
+independently verified source passages or proof of semantic truth. When native web
+investigation is enabled, judge claims using the substantive content you inspect
+and retain relevant excerpts and context in your notes. The absence of a full
+authenticated page capture alone does not require an unresolved verdict; identify
+any actual access, support or interpretation gap that limits your judgment.
 
 Return one JSON object matching result-schema.json with exact packet/evidence
 identities, rubric version, actual invocation model, fresh result_id,
@@ -105,7 +110,7 @@ inclusive line spans. Investigation artifact paths use task/investigation/repair
 (the shared collector). Missing judgments remain missing. No claim of independent
 human audit, general judge reliability, scored admission or skill effectiveness
 is permitted. Additional judge research, if separately enabled by the invocation,
-requires explicit opt-in and retained source evidence; this rubric does not itself
+requires explicit opt-in and retained investigation notes; this rubric does not itself
 authorize network access. Static packets never authorize additional investigation.
 """
 

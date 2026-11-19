@@ -1,6 +1,6 @@
 ---
 status: in-progress
-updated: 2026-11-16
+updated: 2026-11-19
 ---
 
 # Roadmap
@@ -53,37 +53,27 @@ SkillsBench/Harbor packaging, Tessl fixtures and explicit variants,
 Anthropic/Engram assessment patterns, gstack's separation of validity and benefit,
 and the adapted OpenBench gateway. External skills remain experimental inputs.
 
-## Now: a useful workflow-skill task and independent judgment audit
+## Now: research capability and a relevant inquiry
 
-The current development pilot uses a routine `write-spec` task for the selected
-[operational-metrics console feature](../../examples/document/operational-metrics/README.md).
-Its shared brief delegates bounded product choices without live Q&A and requests
-one self-contained Markdown spec. Historical specifications and plans are
-deliberately withheld from both arms. The task, acceptance map and two-cell
-development plan are frozen. The selected baseline matches six reviewed VM lanes,
-including browser interaction, with one known root-test failure and five skips
-retained explicitly. The first pair produced two specifications and two downstream
-candidates through fresh vanilla implementers. One implementer reached the frozen
-request cap; its failed invocation and retained artifact remain separate facts.
-Both candidates have retained observations from all ten browser scenarios. A
-retained-evidence synthesis compares the valid product tradeoffs, preserves the
-interrupted invocation and unknown accounting, and adds baseline-failure evidence
-without rewriting original judgments. No demonstrated skill advantage or complete
-efficiency winner follows from this pair. Next, use the simplified collection and
-stage-budget policies for further exploratory work. Freeze new inputs and budgets equally across arms;
-retain the original cap failure. Treatment stays in the
-spec stage while downstream quality, omissions, rework and consumption remain visible.
-Specification-specific rubrics, explicit requirement-level verdicts, authored
-specification and implementation controls, retained browser/API observations and
-[linked-stage recording](../system/HANDOFFS.md) are implemented. The downstream
-judge assesses the original need, not compliance with a generated spec. Frozen
-[API-equivalent price scenarios](../../examples/pricing/README.md) supplement
-tokens and time, with missing usage left unknown. Structural checks and automated
-review do not establish semantic reliability. Interactive
-clarification is backlogged. Debugging expansion
-is deferred while this pilot is audited; retained repairs remain development
-evidence. The [candidate register](PILOT-CANDIDATES.md#current-selection-direction)
-owns selection and exclusions.
+The next selected skill family is direct research. Qualify the opt-in
+[native web-search and research-judge route](../system/RESEARCH.md), then choose
+an actual unresolved inquiry for an explicit `deep-research` ON/OFF pilot. Topic
+selection and task-specific criteria remain open. Start with one faithful skill
+and equal retrieval access; measure supported, useful answers alongside total
+agent consumption. Native hosted-search metadata and model-authored verification
+notes have different evidence strength from retained source passages.
+
+Research-architect commissioning can later compare prompts through fresh,
+identically configured researchers. Assessment of supplied reports is another
+separate comparison. Interactive question formation needs the backlogged Q&A
+capability; a noninteractive drafting task cannot establish that benefit.
+
+The earlier [operational-metrics specification pilot](../../examples/document/operational-metrics/README.md)
+remains development evidence, including both artifacts, downstream browser/API
+observations, an interrupted implementation and incomplete accounting. It does
+not establish a skill advantage or an efficiency winner. Its document collection,
+fresh-agent handoffs, requirement-level judgments and linked-stage accounting are
+reusable infrastructure. Original evidence and its stated limits remain intact.
 
 1. **Develop useful acceptance criteria through ordinary work.** Exploratory pairs
    can start from an original brief, faithful context and provisional criteria/gaps.

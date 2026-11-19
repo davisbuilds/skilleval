@@ -289,16 +289,19 @@ def main() -> int:
             tool_evidence_policy="execution-context-v3",
             limitations=(
                 "Authored route control, no independent semantic audit.",
-                "No authenticated full hosted source capture; original source passages "
-                "are absent. Model-written report excerpts and judge notes cannot "
-                "authenticate themselves; preserve resulting unresolved support.",
+                "Full hosted page content is not retained automatically. Inspect the "
+                "relevant sources through native web and record excerpts, context and "
+                "access limits in model-authored notes. This recording limit alone "
+                "does not require an unresolved verdict.",
             ),
         )
         save(root / "assessment-spec.json", assessment_spec.model_dump(mode="json"))
         prepared = repair_assessment.prepare_assessment(assessment_spec, root / "packet")
         save(root / "prepared-assessment.json", prepared)
+        captured_judge = evidence.snapshot(root / "packet", root / "judge-input")
+        check("judge-input-bound", captured_judge["manifest_sha256"] == prepared["input_digest"])
         judge_run = native(
-            root / "packet",
+            root / "judge-input",
             prepared["input_digest"],
             prepared["prompt"],
             root / "judge",

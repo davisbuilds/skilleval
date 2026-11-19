@@ -14,6 +14,15 @@ shipped history. Private provenance stays outside public entries and issues.
 
 ## Open
 
+- **Representative research inquiry:** select an actual unresolved question for
+  an explicit `deep-research` ON/OFF pilot after qualifying the native search and
+  research-judge route. Freeze ordinary context and task-specific criteria before
+  looking at outcomes; avoid topics answered by the skill's bundled examples.
+  Native web actions and model-authored source notes do not provide exact hosted
+  page captures or independent semantic reliability. Retain access failures,
+  source dates and disagreements. Research-architect commissioning/synthesis and
+  interactive inquiry formation are separate later comparisons.
+
 - **Cross-provider judgment evidence:** qualify Claude/Opus on representative
   retained packets, inspect disagreements with Sol and preserve native-only
   accounting limits. Add cache-write pricing only with an explicit rate contract;

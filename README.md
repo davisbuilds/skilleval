@@ -102,6 +102,8 @@ a prepared dependency image, a compatible Codex binary and model catalog, and a
 selected existing host login. These are not supplied by the offline example.
 The native profile currently selects `gpt-6.1-sol` with high reasoning; observed
 harness versions and exact execution identities are retained per run.
+Research tasks can explicitly enable [native web search and research judgments](docs/system/RESEARCH.md)
+through the same subscription-backed route; existing runs default to offline.
 
 1. [Capture and validate a task package](docs/system/TASKS.md). Preserve the task's
    ordinary context and declare unsupported environment capabilities.

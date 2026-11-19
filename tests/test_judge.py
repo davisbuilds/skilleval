@@ -412,7 +412,16 @@ def test_modified_empty_report_cannot_borrow_old_completed_execution(tmp_path: P
 
 
 @pytest.mark.parametrize(
-    "mutation", ["prompt", "model", "human-provenance", "permission", "original", "missing-final"]
+    "mutation",
+    [
+        "prompt",
+        "model",
+        "human-provenance",
+        "permission",
+        "web-search",
+        "original",
+        "missing-final",
+    ],
 )
 def test_recording_binds_actual_native_policy_model_prompt_and_original_snapshot(
     tmp_path: Path, mutation: str
@@ -432,6 +441,8 @@ def test_recording_binds_actual_native_policy_model_prompt_and_original_snapshot
         receipt["model"] = "different-native-model"
     elif mutation == "permission":
         receipt["investigation"] = False
+    elif mutation == "web-search":
+        receipt["web_search"] = True
     elif mutation == "original":
         receipt["original_input_unchanged"] = False
     elif mutation == "missing-final":
@@ -643,6 +654,29 @@ def test_referenced_native_audit_is_verified_and_retained(tmp_path: Path) -> Non
         ]
         == hashlib.sha256(audit).hexdigest()
     )
+
+
+@pytest.mark.parametrize("enabled", [False, True])
+def test_native_audit_binds_web_policy_even_when_compact_flag_is_changed(
+    tmp_path: Path, enabled: bool
+) -> None:
+    bundle, packet, prep = prepared(tmp_path)
+    run = run_directory(tmp_path, prep, document(bundle, prep))
+    receipt_file = run / "native-run.json"
+    receipt = json.loads(receipt_file.read_bytes())
+    if enabled:
+        receipt["web_search"] = True
+    receipt_file.write_text(json.dumps(receipt))
+    attach_native_audit(run)
+    receipt = json.loads(receipt_file.read_bytes())
+    if enabled:
+        receipt.pop("web_search")
+    else:
+        receipt["web_search"] = True
+    receipt_file.write_text(json.dumps(receipt))
+    with pytest.raises(SkillEvalError, match="native audit"):
+        judge.record_agentic_calibration(bundle, packet, run, tmp_path / "records")
+    assert not (tmp_path / "records").exists()
 
 
 @pytest.mark.parametrize(

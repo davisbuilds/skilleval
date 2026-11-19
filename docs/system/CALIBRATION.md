@@ -213,8 +213,8 @@ applicability. Missing criteria and missing requirement verdicts remain missing;
 no scalar score or inferred coverage is created. Earlier repair, document and
 specification result schemas and packet bytes remain unchanged.
 
-The judge compares the original request, substantive retained source passages and
-delivered report, including consequential uncited claims. URLs, search snippets,
+The judge compares the original request, supplied passages or sources it actually
+inspects, and delivered report, including consequential uncited claims. URLs, search snippets,
 source prestige and citation counts are insufficient evidence. Contrary evidence,
 novel valid findings, concise valid alternatives and warranted inconclusive
 answers receive consideration on their merits. Missing or access-limited evidence

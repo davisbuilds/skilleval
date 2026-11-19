@@ -75,6 +75,7 @@ class StudySpec(Record):
     catalog: str = Field(min_length=1)
     repetitions: int = Field(default=1, ge=1, le=100)
     order_seed: int = Field(ge=0)
+    web_search: bool = Field(default=False, exclude_if=lambda value: not value)
     invocation_policy: Literal["explicit-use", "natural-availability"] = "explicit-use"
     price_schedule: PriceSchedule | None = None
     max_attempts_per_cell: int = Field(default=1, ge=1, le=5)
@@ -476,6 +477,8 @@ def _checked_dispatch(
     }
     if selected != _acceptance_metadata(plan, spec, task):
         raise SkillEvalError("dispatch acceptance metadata differs from frozen study plan")
+    if dispatch.get("native_expected", {}).get("web_search", False) is not spec.web_search:
+        raise SkillEvalError("dispatch web search policy differs from frozen study plan")
     return dispatch
 
 
@@ -547,7 +550,7 @@ def _summary_fields(report: dict[str, Any]) -> dict[str, Any]:
         "harness_identity": report.get("codex_identity"),
         **{
             key: report[key]
-            for key in ("usage_accounting", "timings", "request_budget")
+            for key in ("usage_accounting", "timings", "request_budget", "web_search")
             if key in report
         },
     }
@@ -567,6 +570,8 @@ def _check_native(path: Path, report: dict[str, Any]) -> None:
     if report.get("kind") != "skilleval-native-run" or report.get("inference_mode") == "synthetic":
         raise SkillEvalError("study requires a native model run, not a synthetic control")
     expected = _document(path / "dispatch.json")["native_expected"]
+    if report.get("web_search", False) is not expected.get("web_search", False):
+        raise SkillEvalError("native web search policy differs from dispatched inputs")
     if any(
         report.get(key) != value
         for key, value in expected.items()
@@ -697,6 +702,7 @@ def run_study(
                     "native_timeout_seconds": spec.native_timeout_seconds,
                     "identity_sha256": object_digest(plan["identity"]),
                     "skill_sha256": spec.skill_sha256 if cell["arm"] == "available" else None,
+                    **({"web_search": True} if spec.web_search else {}),
                 }
                 with (
                     evidence._directory(path.parent),
@@ -748,6 +754,7 @@ def run_study(
                         if cell["arm"] == "available"
                         else None,
                         skill_digest=spec.skill_sha256 if cell["arm"] == "available" else None,
+                        web_search=spec.web_search,
                     )
                     interrupted = report.get("error") == "LifecycleInterruptedError"
                     if interrupted:

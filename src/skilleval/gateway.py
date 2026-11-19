@@ -127,7 +127,7 @@ def validate_body(raw: bytes, config: object, *, web_search: bool = False) -> di
         raise ValueError("request violates inference policy")
     if web_search:
         return validate_web_search_body(raw, config)
-    return cast(dict[str, Any], _vendor.validate_body(raw, config))
+    return cast(dict[str, Any], _vendor.validate_body(raw, cast(_vendor.GatewayConfig, config)))
 
 
 def _read_auth_document(path: Path) -> object:

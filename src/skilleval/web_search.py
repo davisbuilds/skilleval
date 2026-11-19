@@ -35,38 +35,34 @@ def _web_tool(value: dict[str, Any]) -> None:
 
 
 def _web_history(value: dict[str, Any]) -> None:
-    _keys(value, {"type", "id", "status", "action", "encrypted_content"}, {"type", "action"})
+    _keys(value, {"type", "id", "status", "action", "encrypted_content"}, {"type"})
     for key in ("id", "encrypted_content"):
         if key in value:
             _text(value[key], maximum=8 * 1024 * 1024 if key == "encrypted_content" else 256)
-    if "status" in value and value["status"] not in {
-        "in_progress",
-        "searching",
-        "completed",
-        "failed",
-    }:
-        raise ValueError("invalid native web status")
+    if "status" in value:
+        _text(value["status"], maximum=256)
+    if "action" not in value:
+        return
     action = value["action"]
     if not isinstance(action, dict):
         raise ValueError("invalid native web action")
     kind = action.get("type")
     if kind == "search":
         _keys(action, {"type", "query", "queries"}, {"type"})
-        if "query" not in action and "queries" not in action:
-            raise ValueError("missing native web query")
         if "query" in action:
             _text(action["query"])
         if "queries" in action:
             queries = action["queries"]
-            if not isinstance(queries, list) or not 1 <= len(queries) <= 32:
+            if not isinstance(queries, list) or len(queries) > 32:
                 raise ValueError("invalid native web queries")
             for query in queries:
                 _text(query)
     elif kind in {"open_page", "find_in_page"}:
-        required = {"type", "url", "pattern"} if kind == "find_in_page" else {"type", "url"}
-        _keys(action, required, required)
-        _text(action["url"])
-        if kind == "find_in_page":
+        allowed = {"type", "url", "pattern"} if kind == "find_in_page" else {"type", "url"}
+        _keys(action, allowed, {"type"})
+        if "url" in action:
+            _text(action["url"])
+        if "pattern" in action:
             _text(action["pattern"])
     else:
         raise ValueError("unsupported native web action")
@@ -141,7 +137,7 @@ def validate_web_search_body(raw: bytes, config: object) -> dict[str, Any]:
                         part["annotations"] = []
             local_items.append(item)
         shadow["input"] = local_items
-        _vendor.validate_body(json.dumps(shadow).encode(), config)
+        _vendor.validate_body(json.dumps(shadow).encode(), cast(_vendor.GatewayConfig, config))
         return body
     except (ValueError, TypeError, KeyError, UnicodeError, RecursionError, AttributeError):
         raise ValueError("request violates inference policy") from None

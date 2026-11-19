@@ -30,6 +30,12 @@ run directories. The common task brief is unchanged across arms. The native rout
 currently pins GPT-6.1 Sol/high; the observed Codex version remains in each outcome.
 Duplicate task snapshots are repetitions, not independent task IDs.
 
+Research studies can set `"web_search": true` before preparation. The frozen
+capability applies identically to both arms and every attempt; omitted/false
+keeps native search disabled. Dispatch and readback reject a changed capability.
+[RESEARCH.md](RESEARCH.md) owns the native route, evidence visibility and live-web
+comparability limits.
+
 ```sh
 set -eu
 umask 077

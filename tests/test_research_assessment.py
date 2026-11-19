@@ -107,7 +107,7 @@ def test_research_prepare_record_read_is_provider_neutral(
 def test_research_rubric_demands_passage_comparison_without_style_proxies(assessment):
     payloads, _, _ = assessments.packet(research_spec(assessment))
     text = payloads["ASSESS.md"].decode()
-    assert "original request" in text and "substantive retained source passages" in text
+    assert "original request" in text and "substantive source content you actually inspect" in text
     assert "consequential uncited claims" in text and "real-world truth" in text
     assert "novel valid" in text and "substantively different valid" in text
     assert "appropriately inconclusive" in text and "access-limited" in text

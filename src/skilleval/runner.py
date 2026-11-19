@@ -48,6 +48,9 @@ from skilleval.gateway import (
     load_chatgpt_auth,
     native_limits,
 )
+from skilleval.gateway import (
+    validate_body as validate_inference_body,
+)
 from skilleval.harnesses.codex import codex_version_identity, parse_codex_jsonl
 from skilleval.identity import file_digest
 from skilleval.lifecycle import (
@@ -399,6 +402,9 @@ def _publish_receipt(output: Path, report: dict[str, Any]) -> None:
             "kind",
             "mode",
             "investigation",
+            "web_search",
+            "effective_catalog_sha256",
+            "catalog_adaptation",
             "scope",
             "admitted",
             "scored_admitted",
@@ -834,6 +840,7 @@ def run_native(
     context_control: Literal["dirty-system"] | None = None,
     judge_profile: str = "codex-sol",
     claude_binary: Path | None = None,
+    web_search: bool = False,
 ) -> dict[str, Any]:
     """Execute explicitly authorized development work; never creates admission.
 
@@ -857,10 +864,12 @@ def run_native(
             or skill_digest is not None
             or synthetic_transport is not None
             or context_control is not None
+            or web_search
         ):
             raise SkillEvalError(
                 "Claude supports judge mode with native subscription login; "
-                "Codex catalog, auth, gateway limits and skill treatments do not apply"
+                "Codex catalog, auth, gateway limits, native web search and skill treatments "
+                "do not apply"
             )
         from skilleval.claude_runner import run_claude_judge
 
@@ -902,6 +911,8 @@ def run_native(
         or (synthetic_transport is not None and auth_file is not None)
         or (context_control is not None and synthetic_transport is None)
         or context_control not in {None, "dirty-system"}
+        or type(web_search) is not bool
+        or (web_search and mode == "judge" and investigation is not True)
     ):
         raise SkillEvalError("invalid native workload, deadline, or artifact limit")
     input_bundle, output = evidence._paths(input_bundle, output)
@@ -960,6 +971,8 @@ def run_native(
         "prompt": "prompt.txt",
     }
     broker = None
+    if web_search:
+        report["web_search"] = True
     request_records: list[dict[str, Any]] = []
     observation_lock = threading.Lock()
     observation_failure: str | None = None
@@ -1014,7 +1027,7 @@ def run_native(
         if skill_detector is not None:
             record.update(skill_detector(raw))
         try:
-            vendor.validate_body(
+            validate_inference_body(
                 raw,
                 vendor.GatewayConfig(
                     MODEL,
@@ -1024,6 +1037,7 @@ def run_native(
                     limits.timeout_seconds,
                     limits.max_concurrent_requests,
                 ),
+                web_search=web_search,
             )
         except ValueError:
             if len(protocol_rejections) < 4:
@@ -1055,7 +1069,15 @@ def run_native(
             raise SkillEvalError("ChatGPT authentication unavailable or expired")
 
     try:
-        config = codex_provider_config(8765, Path(GUEST_ROOT) / "models.json")
+        from skilleval.web_search import effective_catalog
+
+        catalog_bytes = effective_catalog(catalog.read_bytes(), web_search=web_search)
+        if web_search:
+            report["effective_catalog_sha256"] = hashlib.sha256(catalog_bytes).hexdigest()
+            report["catalog_adaptation"] = "native-web-search-responses-v1"
+        config = codex_provider_config(
+            8765, Path(GUEST_ROOT) / "models.json", web_search=web_search
+        )
         settings: dict[str, Any] = {
             "native_timeout_seconds": native_timeout_seconds,
             "request_timeout_seconds": limits.timeout_seconds,
@@ -1066,7 +1088,7 @@ def run_native(
         }
         entries = [("task/" + name, data, executable) for name, data, executable in files]
         entries += [
-            ("native/models.json", catalog.read_bytes(), False),
+            ("native/models.json", catalog_bytes, False),
             ("native/config.toml", config.encode(), False),
             ("native/prompt.txt", prompt.encode(), False),
             ("native/runner.py", Path(guest_runner.__file__).read_bytes(), False),
@@ -1122,6 +1144,7 @@ def run_native(
             limits=limits,
             request_observer=observe_request,
             test_transport=synthetic_transport,
+            web_search=web_search,
         ) as broker:
             session.ticket["config"].update(
                 {
