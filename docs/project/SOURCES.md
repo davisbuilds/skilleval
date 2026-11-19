@@ -7,7 +7,7 @@ revision before depending on its behavior.
 
 The OpenBench gateway is incorporated at the exact revision recorded below.
 The other concrete external contracts are the candidate smolvm CLI adapter and
-native Codex interfaces. Remaining entries are design influences or reuse
+native Codex interfaces and the documented Claude Code judge interfaces. Remaining entries are design influences or reuse
 candidates. Declared Python dependencies are owned by `pyproject.toml` and `uv.lock`.
 
 ## Evaluation platforms, workflows, and research
@@ -182,3 +182,12 @@ independent implementation informed by a design. Keep meaningful upstream tests
 where applicable, add skilleval-specific controls, and state remaining limits.
 Do not present a candidate as adopted, a source inspection as a successful run,
 or upstream benchmark results as evidence of skilleval's effectiveness.
+
+## Claude judge interface sources
+
+The [Claude judge reference](../system/CLAUDE-JUDGES.md#primary-references) links
+the primary CLI, configuration, authentication, model and usage contracts used
+for the subscription-native adapter. The implementation is local; no third-party
+Claude adapter code was copied. Existing native login remains with Claude Code,
+and MCP tools dispatch into the existing VM boundary. This is a distinct profile,
+not an assertion of equivalence with the Codex guest-native route.

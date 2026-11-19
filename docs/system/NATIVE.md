@@ -16,6 +16,10 @@ review findings schemas and semantic review recording do not apply to it.
 Document tasks use this writable-file mode with a separate document package and
 rubric; [TASKS.md](TASKS.md) owns their preparation, grading, and readable reports.
 
+Claude/Opus judges use a separate [subscription-native profile](CLAUDE-JUDGES.md):
+the authenticated client runs on the host and its model-directed commands run
+inside the VM. The Codex procedure below remains the default.
+
 ## Inputs and boundaries
 
 The production adapter runs `codex app-server` over stdio inside the solver
@@ -200,41 +204,49 @@ selected local paths/identities; do not put auth contents in shell variables.
 The image, runtime and inference route need applicable qualification evidence.
 
 ```sh
+set -eu
 umask 077
-mkdir -p .local/native-calibration
+uv run skilleval storage init
+calibration_dir="$(uv run skilleval storage path experiments native-calibration-v1 --plain)"
+mkdir "$calibration_dir"
 uv run skilleval capture examples/calibration/review-v1 \
-  --output .local/native-calibration/suite \
-  > .local/native-calibration/suite-receipt.json
-uv run skilleval judge prepare-calibration .local/native-calibration/suite \
-  --output .local/native-calibration/packet \
-  > .local/native-calibration/preparation.json
-uv run skilleval capture .local/native-calibration/packet \
-  --output .local/native-calibration/input \
-  > .local/native-calibration/input-receipt.json
+  --output "$calibration_dir/suite" \
+  > "$calibration_dir/suite-receipt.json"
+uv run skilleval judge prepare-calibration "$calibration_dir/suite" \
+  --output "$calibration_dir/packet" \
+  > "$calibration_dir/preparation.json"
+uv run skilleval capture "$calibration_dir/packet" \
+  --output "$calibration_dir/input" \
+  > "$calibration_dir/input-receipt.json"
 
-uv run python - <<'PY'
+uv run python - "$calibration_dir" <<'PY'
 import json
+import sys
 from pathlib import Path
 
-root = Path('.local/native-calibration')
+root = Path(sys.argv[1])
 prepared = json.loads((root / 'preparation.json').read_text())
 captured = json.loads((root / 'input-receipt.json').read_text())
 assert prepared['input_digest'] == captured['manifest_sha256']
 (root / 'prompt.txt').write_text(prepared['prompt'])
 PY
-INPUT_SHA256=$(uv run python -c \
-  'import json; print(json.load(open(".local/native-calibration/input-receipt.json"))["manifest_sha256"])')
+INPUT_SHA256="$(uv run python -c \
+  'import json, sys; print(json.load(open(sys.argv[1]))["manifest_sha256"])' \
+  "$calibration_dir/input-receipt.json")"
 
-uv run skilleval native qualify .local/native-calibration/input \
-  --sha256 "$INPUT_SHA256" --prompt .local/native-calibration/prompt.txt \
+uv run skilleval native qualify "$calibration_dir/input" \
+  --sha256 "$INPUT_SHA256" --prompt "$calibration_dir/prompt.txt" \
   --mode judge --judge-policy investigative \
   --runtime "$NATIVE_RUNTIME" --image-archive "$IMAGE_ARCHIVE" \
   --image-sha256 "$IMAGE_SHA256" --catalog "$MODEL_CATALOG" \
-  --auth-file "$AUTH_FILE" --output .local/native-calibration/run
-uv run skilleval judge record-calibration .local/native-calibration/suite \
-  .local/native-calibration/packet .local/native-calibration/run \
-  --output .local/native-calibration/records
+  --auth-file "$AUTH_FILE" --output "$calibration_dir/run"
+uv run skilleval judge record-calibration "$calibration_dir/suite" \
+  "$calibration_dir/packet" "$calibration_dir/run" \
+  --output "$calibration_dir/records"
 ```
+
+Choose a new experiment name for each generation. The plain `mkdir` refuses an
+existing experiment directory; do not reuse it for another preparation or run.
 
 Preparation withholds authored labels and structured history. It does not establish
 independent blinding: source/report prose or prior exposure can reveal identity.

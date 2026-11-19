@@ -48,6 +48,7 @@ its contents or of relationships to other records.
 | Semantic assessment and judge controls | `grading.py`, `judge.py`, `repair_assessment.py`, `calibration.py`, `reliability.py` | [CALIBRATION.md](CALIBRATION.md), [RELIABILITY.md](RELIABILITY.md) |
 | Usage, timing and price scenarios | `accounting.py` | [ACCOUNTING.md](ACCOUNTING.md) |
 | Result synthesis and local review | `review_results.py`, `review_server.py`, `frontend/app.ts` | [RESULTS.md](RESULTS.md) |
+| Recorded comparative agent investigation | `synthesis_inputs.py`, `synthesis.py` | [SYNTHESIS.md](SYNTHESIS.md) |
 
 Study preparation and dispatch check selected inputs and execution identity.
 Recording checks the subject, packet, native invocation, artifact bytes, and
@@ -132,6 +133,12 @@ owns request ceilings, expiry, receipts, and cleanup around the pinned OpenBench
 implementation. [GATEWAY.md](GATEWAY.md) owns transport, model/catalog pins,
 authentication, and upstream provenance. Prompt instructions are not network or
 command-level enforcement.
+
+[Claude subscription judges](CLAUDE-JUDGES.md) use a distinct host-native client
+with only VM-backed MCP investigation tools. Native login stays with the client;
+no subscription token enters the guest or a custom inference broker. Frozen judge
+profiles bind preparation and recording, and native-only usage remains distinct
+from Codex provider reconciliation. Task-agent execution is unchanged.
 
 Harness compatibility is separate from execution identity. Stable patch/minor
 Codex releases at or after the adapter baseline within the same major version may

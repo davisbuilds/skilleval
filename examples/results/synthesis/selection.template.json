@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "title": "Selected specification and implementation comparison",
+  "objective": "Assess useful differences in the specifications and downstream artifacts against the original request, explain quality and consumption tradeoffs, investigate conflicting evidence, and escalate only material residual owner questions.",
+  "sources": [
+    {
+      "id": "request",
+      "label": "Original work request",
+      "role": "request",
+      "path": "REPLACE_WITH_ORIGINAL_REQUEST.md",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "arms": [
+    {
+      "id": "off",
+      "label": "OFF",
+      "handoff_report_spec": {
+        "path": "REPLACE_WITH_OFF_HANDOFF_REPORT_SPEC.json",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "assessments": [
+        {
+          "id": "specification",
+          "stage": "specification",
+          "directory": "REPLACE_WITH_OFF_SPECIFICATION_ASSESSMENT_RECORD",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "id": "implementation",
+          "stage": "implementation",
+          "directory": "REPLACE_WITH_OFF_IMPLEMENTATION_ASSESSMENT_RECORD",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    },
+    {
+      "id": "on",
+      "label": "ON",
+      "handoff_report_spec": {
+        "path": "REPLACE_WITH_ON_HANDOFF_REPORT_SPEC.json",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "assessments": [
+        {
+          "id": "specification",
+          "stage": "specification",
+          "directory": "REPLACE_WITH_ON_SPECIFICATION_ASSESSMENT_RECORD",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "id": "implementation",
+          "stage": "implementation",
+          "directory": "REPLACE_WITH_ON_IMPLEMENTATION_ASSESSMENT_RECORD",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    }
+  ],
+  "coverage": {
+    "selection_policy": "Explicit selected handoffs and original evidence; replace these limitations with the actual selection scope.",
+    "known_omissions": [
+      "Add relevant repository context, observations, controls and traces before relying on the synthesis."
+    ],
+    "limitations": [
+      "Exploratory selected comparison; this template does not establish representative sampling or independent grader reliability."
+    ]
+  },
+  "price_schedule": null
+}

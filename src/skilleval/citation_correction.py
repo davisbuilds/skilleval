@@ -12,8 +12,9 @@ from skilleval import evidence, grading, judge
 from skilleval.budgets import native_deadline
 from skilleval.contracts import Citation
 from skilleval.errors import SkillEvalError
-from skilleval.gateway import EFFORT, MAX_REQUESTS, MODEL
+from skilleval.gateway import MAX_REQUESTS
 from skilleval.identity import object_digest
+from skilleval.judge_profiles import metadata_profile, profile_metadata, resolve_profile
 from skilleval.repair_assessment import (
     AssessmentResult,
     RepairAssessmentSpec,
@@ -48,8 +49,18 @@ unlinked duplicate invocations are not enumerated.
 """
 
 
-def _budget(timeout_seconds: int, max_requests: int) -> dict[str, int]:
+def _budget(
+    timeout_seconds: int, max_requests: int | None, *, judge_profile: str = "codex-sol"
+) -> dict[str, int]:
     native_deadline("judge", timeout_seconds)
+    profile = resolve_profile(judge_profile)
+    if profile.name == "claude-opus":
+        if max_requests is not None:
+            raise SkillEvalError(
+                "Claude citation correction provider request limits are unavailable"
+            )
+        return {"linked_attempts": 1, "timeout_seconds": timeout_seconds}
+    max_requests = 4 if max_requests is None else max_requests
     if type(max_requests) is not int or not 1 <= max_requests <= MAX_REQUESTS:
         raise SkillEvalError("invalid citation correction request budget")
     return {"linked_attempts": 1, "timeout_seconds": timeout_seconds, "max_requests": max_requests}
@@ -78,7 +89,8 @@ class _Context:
 
 
 def _eligible(spec: RepairAssessmentSpec, prepared: Path, run: Path) -> _Context:
-    payloads, digest, _ = packet(spec)
+    meta = evidence._parse_json(grading._read_regular(prepared / "packet.json", 64 * 1024))
+    payloads, digest, _ = packet(spec, judge_profile=metadata_profile(meta).name)
     judge._check_packet(prepared, payloads)
     receipt, retained, artifacts = judge._run_files(run)
     judge._native_policy(receipt, retained, payloads, digest, spec.investigation)
@@ -129,7 +141,10 @@ def _correction_packet(
     context: _Context, budget: dict[str, int]
 ) -> tuple[dict[str, bytes], str, dict[str, Any]]:
     retained = context.retained
+    profile = metadata_profile(evidence._parse_json(context.payloads["packet.json"]))
     metadata = {
+        **profile_metadata(profile),
+        **({"provider_requests": "unknown"} if profile.name == "claude-opus" else {}),
         "schema_version": 1,
         "kind": "skilleval-citation-correction",
         "original_packet_sha256": context.digest,
@@ -183,23 +198,25 @@ def prepare_correction(
     output: Path,
     *,
     timeout_seconds: int = 180,
-    max_requests: int = 4,
+    max_requests: int | None = None,
 ) -> dict[str, Any]:
     spec = _normalize(spec)
     _outside_sources(spec, output)
     for root in (prepared, run):
         grading._outside(root, output)
-    budget = _budget(timeout_seconds, max_requests)
     context = _eligible(spec, prepared, run)
+    profile = metadata_profile(evidence._parse_json(context.payloads["packet.json"]))
+    budget = _budget(timeout_seconds, max_requests, judge_profile=profile.name)
     files, digest, metadata = _correction_packet(context, budget)
+    profile = metadata_profile(metadata)
     judge._write_tree(output, files)
     return {
         "status": "prepared",
         "path": str(output.absolute()),
         **metadata,
         "input_digest": judge._input_digest(files),
-        "model": MODEL,
-        "effort": EFFORT,
+        "model": profile.model,
+        "effort": profile.effort,
         "prompt": judge._invocation_prompt(files, digest).decode(),
     }
 
@@ -212,7 +229,14 @@ def _without_bounds(value: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
-def _run_budget(receipt: dict[str, Any], budget: dict[str, int]) -> None:
+def _run_budget(
+    receipt: dict[str, Any], budget: dict[str, int], *, judge_profile: str = "codex-sol"
+) -> None:
+    if judge_profile == "claude-opus":
+        timeout = receipt.get("native_timeout_seconds")
+        if type(timeout) is not int or not 1 <= timeout <= budget["timeout_seconds"]:
+            raise SkillEvalError("citation correction invocation exceeds or lacks declared budget")
+        return
     limits = receipt.get("gateway_limits")
     requests = receipt.get("request_count")
     request_budget = receipt.get("request_budget")
@@ -256,7 +280,10 @@ def validated_correction(
     if not isinstance(packet_meta, dict) or not isinstance(packet_meta.get("budget"), dict):
         raise SkillEvalError("invalid citation correction packet budget")
     supplied = packet_meta["budget"]
-    budget = _budget(supplied.get("timeout_seconds"), supplied.get("max_requests"))
+    profile = metadata_profile(evidence._parse_json(context.payloads["packet.json"]))
+    budget = _budget(
+        supplied.get("timeout_seconds"), supplied.get("max_requests"), judge_profile=profile.name
+    )
     if object_digest(budget) != object_digest(supplied):
         raise SkillEvalError("invalid citation correction linked-attempt budget")
     files, correction_digest, metadata = _correction_packet(context, budget)
@@ -265,7 +292,7 @@ def validated_correction(
     judge._native_policy(corrected_receipt, corrected_retained, files, correction_digest, False)
     if corrected_receipt["status"] != "completed":
         raise SkillEvalError("citation correction execution is incomplete")
-    _run_budget(corrected_receipt, budget)
+    _run_budget(corrected_receipt, budget, judge_profile=profile.name)
     corrected = evidence._parse_json(corrected_retained["final.txt"])
     if not isinstance(corrected, dict):
         raise SkillEvalError("citation correction result must be a JSON object")

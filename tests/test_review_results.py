@@ -157,3 +157,31 @@ def test_suggested_answers_fit_the_response_contract(tmp_path: Path) -> None:
         build_review(spec, tmp_path / "too-long")
     edit_spec(spec, lambda x: x["exceptions"][0].update(options=["x" * 10000]))
     assert build_review(spec, tmp_path / "valid")["human_questions"] == 1
+
+
+def test_large_single_line_evidence_is_preserved_within_packet_budget(tmp_path: Path) -> None:
+    spec = source_spec(tmp_path)
+    text = json.dumps({"captured_output": "retained evidence " * 60000})
+    (tmp_path / "result.txt").write_text(text + "\n")
+    edit_spec(
+        spec,
+        lambda x: x["sources"][0].update(sha256=hashlib.sha256((text + "\n").encode()).hexdigest()),
+    )
+    edit_spec(spec, lambda x: x["citations"][0].update(end_line=1))
+    build_review(spec, tmp_path / "review")
+    assert load_packet(tmp_path / "review")["evidence"][0]["excerpt"] == text
+
+
+def test_large_excerpts_still_obey_complete_packet_budget(tmp_path: Path) -> None:
+    spec = source_spec(tmp_path)
+    text = "x" * (5 * 1024 * 1024)
+    (tmp_path / "result.txt").write_text(text + "\n")
+    edit_spec(
+        spec,
+        lambda x: x["sources"][0].update(sha256=hashlib.sha256((text + "\n").encode()).hexdigest()),
+    )
+    edit_spec(spec, lambda x: x["citations"][0].update(end_line=1))
+    edit_spec(spec, lambda x: x["citations"].append({**x["citations"][0], "id": "second"}))
+    with pytest.raises(SkillEvalError, match="packet exceeds size"):
+        build_review(spec, tmp_path / "review")
+    assert not (tmp_path / "review").exists()
