@@ -2,13 +2,17 @@
   "upstream_commit": "39fec903f1e73bd3e8e3b15cacefbcce051bd1a6",
   "upstream_url": "https://github.com/davisbuilds/openbench/blob/39fec903f1e73bd3e8e3b15cacefbcce051bd1a6/obench/sandbox_gateway.py",
   "upstream_sha256": "ed02f42cc52a22cfd16d49e3d639a27ce66de0b3bc3a9f41758c646bb26aed48",
-  "adapted_sha256": "245b93cf59a1d465a89be6aeeca388ad6dfedbf62e82b2147ed95fdb8498a4b6",
+  "adapted_sha256": "ebe8fc6b702c500da17269e2b273adc6abf0d363366bf42982a9c6ca15baffe4",
   "patch": "openbench_gateway.patch",
   "changes": [
     "Accept only empty annotations/logprobs arrays on output_text; preserve request bytes.",
-    "Accept only null reasoning.content and null or string reasoning.encrypted_content on native replay; preserve request bytes."
+    "Accept only null reasoning.content and null or string reasoning.encrypted_content on native replay; preserve request bytes.",
+    "Add a trusted per-instance request validator and Responses Lite selector; defaults retain the original local-only policy and fixed upstream. Explicit native web search is validated by the standalone wrapper and uses ordinary Responses."
   ],
   "protocol_source": "https://github.com/openai/codex/blob/6aaac694803004a63c6f393d153c96d22521a6b9/codex-rs/protocol/src/models.rs#L898",
   "license": "OPENBENCH_LICENSE",
-  "reasoning_protocol_source": "https://github.com/openai/codex/blob/6aaac694803004a63c6f393d153c96d22521a6b9/codex-rs/protocol/src/models.rs#L1095"
+  "reasoning_protocol_source": "https://github.com/openai/codex/blob/6aaac694803004a63c6f393d153c96d22521a6b9/codex-rs/protocol/src/models.rs#L1095",
+  "web_search_protocol_source": "https://github.com/openai/codex/blob/6aaac694803004a63c6f393d153c96d22521a6b9/codex-rs/protocol/src/models.rs#L1253",
+  "web_search_tool_source": "https://github.com/openai/codex/blob/6aaac694803004a63c6f393d153c96d22521a6b9/codex-rs/core/src/tools/hosted_spec.rs",
+  "responses_lite_source": "https://github.com/openai/codex/blob/6aaac694803004a63c6f393d153c96d22521a6b9/codex-rs/core/src/tools/spec_plan.rs#L692"
 }
