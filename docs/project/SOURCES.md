@@ -178,10 +178,12 @@ documents restored ordinary dependencies, required historical object closures an
 baseline/reference validation. Imported source and raw evidence remain external;
 no additional implementation was copied into the public package.
 
-For a selected component, record its exact public source/revision, intended use,
-and local owner. Check the license and any NOTICE or file-level terms at that
-revision before copying code, prompts, assets, or fixtures. Retain required
-notices with incorporated material and add a concise README acknowledgement.
+Select a component from this register only when its phase needs it. For a
+selected component, record its exact public source/revision, intended use, and
+local owner. Check the license, any NOTICE or file-level terms, and the tests at
+that revision before copying code, prompts, assets, or fixtures, or declaring it
+as a dependency. Retain required notices with incorporated material and add a
+concise README acknowledgement.
 Attribution is not a substitute for permission or license compatibility.
 
 Record whether a change is a dependency, copied implementation, adaptation, or
