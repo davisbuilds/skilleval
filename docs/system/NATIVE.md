@@ -15,6 +15,8 @@ checks. Repair mode receives a normal implementation brief and leaves file edits
 review findings schemas and semantic review recording do not apply to it.
 Document tasks use this writable-file mode with a separate document package and
 rubric; [TASKS.md](TASKS.md) owns their preparation, grading, and readable reports.
+Research tasks can opt into [native hosted web search](RESEARCH.md) with
+`--web-search`. Guest networking remains disabled; the default route is unchanged.
 
 Claude/Opus judges use a separate [subscription-native profile](CLAUDE-JUDGES.md):
 the authenticated client runs on the host and its model-directed commands run

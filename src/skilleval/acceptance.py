@@ -17,6 +17,7 @@ from skilleval.contracts import Digest, Identifier, Record
 from skilleval.errors import SkillEvalError
 from skilleval.grading import _read_regular
 from skilleval.repair_assessment import CRITERIA, DOCUMENT_CRITERIA
+from skilleval.research_rubric import RESEARCH_CRITERIA
 from skilleval.task_package import TaskPackageSpec, load_package
 
 MAX_MAP_BYTES = 4 * 1024 * 1024
@@ -145,7 +146,7 @@ def _validate_routes(spec: AcceptanceMapSpec, task: repair.RepairSpec, family: s
     """Validate declared traceability without evaluating an outcome."""
     probes = {probe.probe_id: probe for probe in task.probes}
     mapped: set[str] = set()
-    criteria = DOCUMENT_CRITERIA if family == "document" else CRITERIA
+    criteria = (*DOCUMENT_CRITERIA, *RESEARCH_CRITERIA) if family == "document" else CRITERIA
     for requirement in spec.requirements:
         for route in requirement.mechanical:
             if route.probe_id not in probes:

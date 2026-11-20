@@ -1,8 +1,6 @@
 --- a/openbench_gateway.py
 +++ b/openbench_gateway.py
-@@ -275,7 +275,13 @@
-             if not raw.startswith(prefixes[prefix]):
-                 raise ValueError('image signature differs from declared type')
+@@ -277,3 +277,9 @@
              continue
 -        _keys(item, {"type", "text"}, {"type", "text"})
 +        if isinstance(item, dict) and item.get("type") == "output_text":
@@ -13,20 +11,12 @@
 +        else:
 +            _keys(item, {"type", "text"}, {"type", "text"})
          if item["type"] not in {"input_text", "output_text"}:
-             raise ValueError("only text content is permitted")
-         _string(item["text"])
-@@ -506,7 +512,7 @@
-             elif kind == "reasoning":
-                 _keys(
+@@ -508,3 +514,3 @@
                      item,
 -                    {"type", "id", "summary", "encrypted_content", "status"},
 +                    {"type", "id", "summary", "content", "encrypted_content", "status"},
                      {"type", "summary"},
-                 )
-                 if not isinstance(item["summary"], list):
-@@ -516,7 +522,11 @@
-                     if part["type"] != "summary_text":
-                         raise ValueError("unsupported summary")
+@@ -518,3 +524,7 @@
                      _string(part["text"])
 -                if "encrypted_content" in item:
 +                # Codex 0.164.0 serializes absent optional reasoning fields as
@@ -35,5 +25,25 @@
 +                    raise ValueError("non-null reasoning content is forbidden")
 +                if item.get("encrypted_content") is not None:
                      _string(item["encrypted_content"])
-             else:
-                 raise ValueError("hosted input and references are forbidden")
+@@ -982,2 +992,4 @@
+         receipt: Callable | None = None,
++        validator: Callable | None = None,
++        responses_lite: bool = True,
+     ):
+@@ -990,2 +1002,4 @@
+         self.receipt = receipt or _emit
++        self._validator = validator or validate_body
++        self._responses_lite = responses_lite
+         self.max_body_bytes, self.timeout_seconds = (
+@@ -1007,3 +1021,3 @@
+         try:
+-            validate_body(raw, self.config)
++            self._validator(raw, self.config)
+         except ValueError:
+@@ -1071,4 +1085,5 @@
+                 "Connection": "close",
+-                "x-openai-internal-codex-responses-lite": "true",
+             }
++            if self._responses_lite:
++                headers["x-openai-internal-codex-responses-lite"] = "true"
+             if self._production:

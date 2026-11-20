@@ -138,7 +138,7 @@ qualification ceilings. Use `broker_scope` on the host.
 
 `codex_provider_config(8765, Path("/run/models.json"))` returns guest TOML with
 the exact model/effort, an explicit catalog path, a distinct custom provider,
-HTTP Responses transport, no authentication requirement, disabled hosted search,
+HTTP Responses transport, no authentication requirement, disabled hosted search by default,
 disabled output-token replay, disabled concurrent reasoning summaries, disabled
 request compression, and disabled apps. It includes full tool execution inside
 the separately qualified VM. Write the profile and pinned native catalog as
@@ -157,7 +157,7 @@ remains native. This configuration difference is part of the qualification;
 captured requests must verify its effective behavior.
 
 The controller must check the actual guest binary version and catalog digest.
-The exact native catalog's Sol entry uses Responses Lite and
+The default native catalog's Sol entry uses Responses Lite and
 `tool_mode=code_mode_only`, matching the gateway's fixed upstream header and
 requiring the exact release's `codex-code-mode-host` companion inside the image.
 Preserve that native tool mode. Select plain text output and keep qualification below
@@ -167,18 +167,34 @@ account/plan discovery and workspace routing are absent too. The supplied
 account header is resolved only on the host. This is a specific qualified route,
 not a claim of equivalence with every interactive Codex feature.
 
+### Opt-in native web search
+
+`codex_provider_config(..., web_search=True)` selects live native web search.
+The controller derives a separate guest catalog with only the selected Sol
+entry's `use_responses_lite` disabled; the source catalog is unchanged. The
+matching `broker_scope(..., web_search=True)` uses regular Responses at the same
+fixed ChatGPT endpoint. Responses Lite rejects hosted web search. This is one
+explicit capability/transport profile, used equally in both study arms.
+
+The opt-in validator permits native web-search declarations and their typed
+history/citation replay in addition to ordinary local tools. Other hosted tools,
+remote schemas, arbitrary upstreams and host credentials remain unavailable.
+Default brokers continue rejecting hosted search. The flag does not enable guest
+networking. [RESEARCH.md](RESEARCH.md) owns selection, retained search observations,
+judge permissions and the limits of opaque hosted page content.
+
 ## Request and receipt contract
 
 The broker validates pinned model/effort, streaming and `store=false`, explicit
 local input, local function/custom tools and namespaced history. It refuses
-hosted tools, remote references, external schemas, arbitrary routes, unsupported
+hosted tools on the default route, remote references, external schemas, arbitrary routes, unsupported
 framing, compression, upgrades, and unknown fields. It reconstructs upstream
 headers, so guest credentials or destination headers have no authority. HTTPS
 host/path and certificate validation are fixed. Redirects and non-SSE responses
 are rejected without exposing upstream errors. Stream cancellation, deadline,
 request limits, and receipt failure fail closed.
 
-The host validator has two explicit adaptations from the pinned upstream source:
+The default host validator retains these native DTO adaptations from the pinned upstream source:
 `output_text` may retain `annotations: []` and `logprobs: []`. The native DTO
 [deliberately preserves those empty arrays](https://github.com/openai/codex/blob/6aaac694803004a63c6f393d153c96d22521a6b9/codex-rs/protocol/src/models.rs#L898).
 They remain forbidden on `input_text`; nonempty, null, and unknown metadata

@@ -30,6 +30,8 @@ from skilleval.repair_assessment import (
     RepairAssessment,
     RepairAssessmentSpec,
     RepairRequirementAssessment,
+    ResearchAssessment,
+    ResearchRequirementAssessment,
     parse_spec,
 )
 from skilleval.repair_outcomes import RepairOutcomeSelection
@@ -59,6 +61,8 @@ RECORDS: dict[str, type[Record]] = {
     "document-assessment-spec": DocumentAssessmentSpec,
     "document-assessment": DocumentAssessment,
     "document-requirement-assessment": DocumentRequirementAssessment,
+    "research-assessment": ResearchAssessment,
+    "research-requirement-assessment": ResearchRequirementAssessment,
     "repair-requirement-assessment": RepairRequirementAssessment,
     "task-package-spec": TaskPackageSpec,
     "acceptance-map-spec": AcceptanceMapSpec,
@@ -326,6 +330,11 @@ def parser() -> argparse.ArgumentParser:
     native_run.add_argument("--max-artifact-files", type=int, default=10_000)
     native_run.add_argument("--skill-bundle", type=Path)
     native_run.add_argument("--skill-sha256")
+    native_run.add_argument(
+        "--web-search",
+        action="store_true",
+        help="Enable Codex native live web search (default: disabled; no guest network access)",
+    )
     judge = commands.add_parser("judge", help="Prepare or record native semantic assessments")
     judge_commands = judge.add_subparsers(dest="operation", required=True)
     for kind in ("calibration", "review"):
@@ -746,6 +755,7 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
             skill_bundle=args.skill_bundle,
             skill_digest=args.skill_sha256,
             investigation=None if args.mode != "judge" else args.judge_policy == "investigative",
+            web_search=args.web_search,
         )
     if args.command == "judge":
         from skilleval.judge import (

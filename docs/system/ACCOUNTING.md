@@ -92,6 +92,11 @@ context-rate changes are outside the scenario. Nonzero observed cache writes
 withhold an estimate pending a supported price contract. Missing cache-write
 detail does not establish that no such charge exists.
 
+This exclusion also applies to opt-in native hosted web search. A model-token
+estimate does not include unobserved search/tool charges or establish the cost
+of a subscription-backed search. Retain the search capability and native events
+alongside consumption; do not infer a zero search charge from missing telemetry.
+
 If the schedule has a per-request input limit, an estimate requires matching
 provider core totals and observed request sizes within that bound. Session totals
 are not used to choose a request tier. The estimator does not infer actual service

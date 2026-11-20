@@ -434,6 +434,8 @@ def _native_audit(run_dir: Path, receipt: dict[str, Any]) -> bytes | None:
         "model",
         "effort",
         "harness",
+        "effective_catalog_sha256",
+        "catalog_adaptation",
         "investigation",
         "machine_name",
         "prompt_sha256",
@@ -442,8 +444,10 @@ def _native_audit(run_dir: Path, receipt: dict[str, Any]) -> bytes | None:
         "final_text",
         "events",
     )
-    if not isinstance(audit, dict) or any(
-        audit.get(key) != receipt.get(key) for key in identity_fields
+    if (
+        not isinstance(audit, dict)
+        or any(audit.get(key) != receipt.get(key) for key in identity_fields)
+        or audit.get("web_search", False) is not receipt.get("web_search", False)
     ):
         raise SkillEvalError("native audit invocation differs from compact receipt")
     if audit.get("metadata_complete") is False:
@@ -633,7 +637,10 @@ def _native_policy(
     packet_digest: str,
     investigation: bool,
 ) -> None:
-    profile = metadata_profile(grading._parse_json(payloads["packet.json"]))
+    packet = grading._parse_json(payloads["packet.json"])
+    profile = metadata_profile(packet)
+    if receipt.get("web_search", False) is not packet.get("web_search", False):
+        raise SkillEvalError("native invocation web search policy differs from prepared judge")
     if receipt.get("model") != profile.model or receipt.get("effort") != profile.effort:
         raise SkillEvalError(
             "native invocation model or effort differs from selected judge identity"

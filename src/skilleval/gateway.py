@@ -19,7 +19,7 @@ from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager, suppress
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Protocol, cast
+from typing import Any, Protocol, cast
 
 from skilleval._vendor import openbench_gateway as _vendor
 from skilleval.budgets import (
@@ -29,6 +29,7 @@ from skilleval.budgets import (
 )
 from skilleval.errors import SkillEvalError
 from skilleval.harnesses.codex import CODEX_BASELINE_VERSION
+from skilleval.web_search import validate_web_search_body
 
 CODEX_VERSION = CODEX_BASELINE_VERSION
 MODEL = "gpt-6.1-sol"
@@ -42,7 +43,7 @@ MAX_RECEIPTS = 2 * MAX_REQUESTS + 4
 MAX_REQUEST_OBSERVATIONS = MAX_RECEIPTS - 4
 UPSTREAM_COMMIT = "39fec903f1e73bd3e8e3b15cacefbcce051bd1a6"
 UPSTREAM_SHA256 = "ed02f42cc52a22cfd16d49e3d639a27ce66de0b3bc3a9f41758c646bb26aed48"
-ADAPTED_SHA256 = "245b93cf59a1d465a89be6aeeca388ad6dfedbf62e82b2147ed95fdb8498a4b6"
+ADAPTED_SHA256 = "ebe8fc6b702c500da17269e2b273adc6abf0d363366bf42982a9c6ca15baffe4"
 
 
 class UpstreamResponse(Protocol):
@@ -103,6 +104,8 @@ class _VendorBoundary(Protocol):
         *,
         transport: TestTransport | None,
         receipt: ReceiptSink,
+        validator: Callable[[bytes, object], object] | None,
+        responses_lite: bool,
     ) -> _Server: ...
 
     def RelayServer(  # noqa: N802
@@ -116,6 +119,15 @@ class _VendorBoundary(Protocol):
 
 
 _upstream = cast(_VendorBoundary, _vendor)
+
+
+def validate_body(raw: bytes, config: object, *, web_search: bool = False) -> dict[str, Any]:
+    """Validate the selected explicit native capability without changing its bytes."""
+    if type(web_search) is not bool:
+        raise ValueError("request violates inference policy")
+    if web_search:
+        return validate_web_search_body(raw, config)
+    return cast(dict[str, Any], _vendor.validate_body(raw, cast(_vendor.GatewayConfig, config)))
 
 
 def _read_auth_document(path: Path) -> object:
@@ -384,12 +396,15 @@ def broker_scope(
     receipt: ReceiptSink | None = None,
     test_transport: TestTransport | None = None,
     request_observer: Callable[[bytes], None] | None = None,
+    web_search: bool = False,
 ) -> Iterator[GatewayHandle]:
     """Serve one bounded host-only UDS capability; always stop and remove it.
 
     The directory must be fresh. Only the socket enters the VM. ``test_transport``
     is an in-process test seam, never an endpoint or a CLI-selectable destination.
     """
+    if type(web_search) is not bool:
+        raise SkillEvalError("invalid native web search capability")
     if (
         not math.isfinite(auth.expires_at)
         or auth.expires_at <= time.time() + limits.timeout_seconds + 30
@@ -423,6 +438,10 @@ def broker_scope(
             _upstream.AuthCredentials(auth._access_token, auth._account_id),
             transport=test_transport,
             receipt=records.record,
+            validator=(lambda raw, config: validate_body(raw, config, web_search=True))
+            if web_search
+            else None,
+            responses_lite=not web_search,
         )
     except (OSError, ValueError):
         if created:
@@ -502,8 +521,10 @@ def relay_scope(
         yield handle
 
 
-def codex_provider_config(port: int, catalog_path: Path) -> str:
+def codex_provider_config(port: int, catalog_path: Path, *, web_search: bool = False) -> str:
     """Render a credential-free, pinned native guest profile for this route."""
+    if type(web_search) is not bool:
+        raise SkillEvalError("invalid native web search capability")
     if type(port) is not int or not 1 <= port <= 65535:
         raise SkillEvalError("invalid relay port")
     if not catalog_path.is_absolute() or ".." in catalog_path.parts:
@@ -515,7 +536,7 @@ model_reasoning_summary = "auto"
 model_catalog_json = {json.dumps(str(catalog_path))}
 model_auto_compact_token_limit = 1000000
 cli_auth_credentials_store = "ephemeral"
-web_search = "disabled"
+web_search = "{"live" if web_search else "disabled"}"
 approval_policy = "never"
 sandbox_mode = "danger-full-access"
 

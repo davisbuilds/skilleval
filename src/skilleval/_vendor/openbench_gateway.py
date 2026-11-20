@@ -990,6 +990,8 @@ class BrokerServer(_BoundedServer, socketserver.UnixStreamServer):
         *,
         transport: Callable | None = None,
         receipt: Callable | None = None,
+        validator: Callable | None = None,
+        responses_lite: bool = True,
     ):
         self.socket_path = Path(socket_path)
         if not self.socket_path.is_absolute():
@@ -998,6 +1000,8 @@ class BrokerServer(_BoundedServer, socketserver.UnixStreamServer):
         self.transport = transport or _production_transport
         self._production = transport is None
         self.receipt = receipt or _emit
+        self._validator = validator or validate_body
+        self._responses_lite = responses_lite
         self.max_body_bytes, self.timeout_seconds = (
             config.max_body_bytes,
             config.timeout_seconds,
@@ -1015,7 +1019,7 @@ class BrokerServer(_BoundedServer, socketserver.UnixStreamServer):
 
     def forward(self, handler, raw):
         try:
-            validate_body(raw, self.config)
+            self._validator(raw, self.config)
         except ValueError:
             handler._error(400, "inference_policy")
             return
@@ -1079,8 +1083,9 @@ class BrokerServer(_BoundedServer, socketserver.UnixStreamServer):
                 "Accept": "text/event-stream",
                 "Content-Length": str(len(raw)),
                 "Connection": "close",
-                "x-openai-internal-codex-responses-lite": "true",
             }
+            if self._responses_lite:
+                headers["x-openai-internal-codex-responses-lite"] = "true"
             if self._production:
 
                 def register(connection):
