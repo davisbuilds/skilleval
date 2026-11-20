@@ -138,7 +138,8 @@ qualification, 2 for invalid input or an operational error, and 130 for interrup
 A completed run is an execution observation. A recorded judgment is an assessment
 with an audit status. Neither is automatically a correctness claim. Small exposed
 controls and single pairs cannot rank skills; representative tasks, independent
-human audit, repeats, and uncertainty analysis are still required.
+audit ([cross-model by default](docs/project/MEASUREMENT.md#independent-review)),
+repeats, and uncertainty analysis are still required.
 Use the [measurement workflow](docs/project/MEASUREMENT.md) to ground acceptance
 in real work and declare provisional criteria and gaps for exploratory pairs.
 Independent grader validation and a prespecified comparison design are required

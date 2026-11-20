@@ -5,8 +5,9 @@ suite. It does not change `examples/calibration/review-v1`, earlier native recor
 or historical human-audit packets. Its controls ask whether substantive verdicts
 remain invariant when irrelevant evidence changes, and whether repeated native
 sessions remain stable. A consistently wrong judge can pass every stability
-comparison. Authored-label agreement is reported separately; independent human
-semantic audit is still required for scored claims on the applicable task
+comparison. Authored-label agreement is reported separately; independent semantic
+audit ([cross-model by default](../project/MEASUREMENT.md#independent-review)) is
+still required for scored claims on the applicable task
 population. As of 2026-11-02, the old tiny-control audit is no longer an active
 user action or a prerequisite for the realigned engineering development slice.
 Its retained record state is unchanged; it does not qualify new task judgments.

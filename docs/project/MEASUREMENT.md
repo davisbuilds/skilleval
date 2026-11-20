@@ -100,7 +100,8 @@ not become independent tasks. Record expected discrimination separately from the
 observed evidence and preserve unsuccessful controls.
 
 Before relying on a grader for scored or general effectiveness claims, obtain
-independent task-domain review of brief sufficiency, scope and acceptance conditions.
+[independent review](#independent-review) of brief sufficiency, scope and acceptance
+conditions.
 A particularly strong check is an independent implementation
 from ordinary task context without seeing the reference solution. SWE-Bench Pro V2
 describes this check for repaired instructions. Its specific choice to retain tests
@@ -115,10 +116,11 @@ reviewed representative examples. Preserve disagreements, missing evidence and a
 unresolved outcome. [Agent evaluation guidance](https://www.anthropic.com/research/demystifying-evals-for-ai-agents)
 
 Track false acceptance, false rejection, unresolved, missing and invalid results
-with explicit denominators per criterion/task family. Record human-human disagreement
-as well as judge agreement. Judge repetition tests stability, not truth; several
-models may share a mistake. Choose error tolerances appropriate to the decision
-and report uncertainty instead of declaring a universal agreement threshold. An
+with explicit denominators per criterion/task family. Record disagreement between
+independent reviewers as well as judge agreement. Judge repetition tests stability,
+not truth; several models may share a mistake. Choose error tolerances appropriate
+to the decision and report uncertainty instead of declaring a universal agreement
+threshold. An
 attached review file establishes provenance only; it is not authenticated independent
 approval. Existing [reliability](../system/RELIABILITY.md) and
 [calibration](../system/CALIBRATION.md) evidence retain their stated limits.
@@ -144,6 +146,89 @@ The [local results view](../system/RESULTS.md) implements this presentation and
 response boundary over explicitly authored synthesis. Citation validation checks
 source identity and excerpt ranges, not the correctness of the synthesis or its
 decision to escalate. Operator responses remain separate records.
+
+### Independent review
+
+The maintainer decided on 2026-11-20 that independent review is performed mostly
+by agents through cross-model review, escalating to the maintainer only when
+absolutely necessary. This covers the reviews that gate scored or general claims:
+acceptance-map scope and brief sufficiency, representative verdict and label
+audits, specification-quality audits and grader qualification for scored admission.
+
+A cross-model reviewer comes from a different model family than the agent that
+produced the reviewed artifact and the primary judgment it audits. With Codex task
+agents and the default `codex-sol` judge, the reviewer is the
+[Claude/Opus route](../system/CLAUDE-JUDGES.md); Codex reviews Claude-produced work.
+The reviewer starts a fresh session from the same retained evidence, records its
+own verdicts before seeing the primary judgment, and both records and their
+disagreements are preserved. Cross-model agreement is stronger than same-family
+agreement, but different families can share a mistake; the limits above still apply.
+
+Proposed escalation criteria, pending the maintainer's confirmation. Escalate only
+when:
+
+1. the answer needs owner intent the brief did not delegate, such as whether an
+   acceptance requirement or map scope reflects what the maintainer would accept,
+   or a criterion change proposed after outcomes were seen;
+2. a consequential cross-model disagreement persists (one that would change a
+   task-level outcome, an acceptance requirement or an admission decision) after
+   both reviewers investigated retained evidence and a targeted check or another
+   cross-model pass could not settle it;
+3. neither model family can check the deciding evidence (unavailable domain
+   knowledge, inaccessible sources, or behavior no retained observation covers)
+   and the verdict gates a scored or general claim; or
+4. a grader is first admitted for scored comparisons on a task population: the
+   maintainer confirms the agent-produced qualification summary once per grader
+   and population, not per judgment.
+
+Do not escalate single-judge uncertainty, missing evidence that can remain a
+qualified unknown, same-family agreement (add a cross-model pass instead),
+authored-control results or exploratory pairs. Escalations use the question format
+above. Native audit records carry only a pending status and cannot yet record a
+completed cross-model audit; see the [backlog](BACKLOG.md).
+
+## Model spend
+
+The maintainer decided on 2026-11-20 how solver and judge runs consume model usage:
+
+- Subscription quota only; no paid API runs. Current routes already enforce this:
+  the [Codex gateway](../system/GATEWAY.md) uses an existing ChatGPT login with no
+  Platform API-key mode, and [Claude judges](../system/CLAUDE-JUDGES.md) require a
+  first-party subscription login with no API-billing fallback. API-equivalent
+  estimates remain comparison scenarios, not spend.
+- Codex is the default executor for solvers and judges, because more subscription
+  usage is available there. Use Claude/Opus where
+  [independent review](#independent-review) needs a different model family, sized
+  to that audit.
+- Schedule large runs overnight on the maintainer's always-on Mac mini, in a
+  persistent terminal session with logs outside tracked source.
+- Every run declares a per-run cap before dispatch.
+
+Proposed cap form, pending the maintainer's confirmation of the numbers: count
+attempts, not tokens. Tokens cannot bound a run in advance. Usage is observed only
+after requests complete, interrupted attempts can leave canonical accounting
+incomplete, the Claude route keeps one terminal usage snapshot without request
+counts, and subscription quota is not denominated in observed tokens. Attempts are
+already what the [study controller](../system/STUDIES.md) freezes and enforces: a
+plan fixes tasks, repetitions, arms and the retry limit, and its preparation
+receipt reports the reserved attempt and provider-request ceilings. Each attempt is
+bounded by its native deadline (1,800 seconds by default for task agents, 900 for
+judges) and, on the Codex route, `max_requests_per_attempt`.
+
+A run's declared cap therefore states:
+
+- the maximum task-agent attempts, including retries, which is the frozen plan's
+  reserved attempt ceiling;
+- the maximum judge and synthesis invocations, counted separately and including
+  corrections and failed invocations; and
+- the worst-case wall-clock those imply under sequential execution (attempts ×
+  deadline), which must fit the scheduled window.
+
+The controller enforces the task-agent ceiling through the frozen plan. Separate
+judge and synthesis invocations have no run-level counter, so the operator enforces
+their declared count. Report observed consumption against the cap afterwards;
+missing usage stays unknown. Treat a provider usage-limit stop as an interrupted
+run, not a task outcome.
 
 ## Plan comparisons before dispatch
 
@@ -207,11 +292,11 @@ mechanical acceptance and legacy judge packets retain their existing semantics.
 
 The completed-session development pair now has audited v3 packet readback,
 supplementary lifecycle observations, fresh investigative judgments and explicit
-outcome selection. Its separate automated source audit is not independent human
-validation. Independent domain review of task scope, legitimate alternative repairs
-and remaining mapped gaps is still needed before relying on that grader for scored
-or general effectiveness claims; exploratory comparisons can proceed with those
-limits declared.
+outcome selection. Its separate automated source audit is not independent
+validation. [Independent review](#independent-review) of task scope, legitimate
+alternative repairs and remaining mapped gaps is still needed before relying on that
+grader for scored or general effectiveness claims; exploratory comparisons can
+proceed with those limits declared.
 Keep supported test reports separate from broad completion claims contradicted by
 behavior: the latter can overlap the task-contract verdict and must not be counted
 as an additional independent defect. Methodology
