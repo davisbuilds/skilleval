@@ -16,7 +16,7 @@ requires = ["hatchling>=1.33.0"]
 build-backend = "hatchling.build"
 
 [dependency-groups]
-dev = ["pytest>=9.2.0", "pytest-xdist>=3.8.0", "ruff>=0.17.4", "mypy>=2.4.1"]
+dev = ["pytest>=9.2.0", "pytest-xdist>=3.8.0", "ruff>=0.17.5", "mypy>=2.4.1"]
 
 [tool.uv]
 required-version = ">=0.9.17"
