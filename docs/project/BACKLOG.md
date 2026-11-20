@@ -43,9 +43,15 @@ shipped history. Private provenance stays outside public entries and issues.
   remaining footprint.
 - **macOS process-group cleanup:** investigate intermittent `PermissionError`
   from `os.killpg` in native timeout cleanup during parallel deterministic tests.
-  The affected timeout tests pass individually; do not suppress signal failures
-  or weaken descendant cleanup without a causal reproduction. This is separate
-  from the Linux guest namespace teardown and independent-lane readiness checks.
+  A development gate on 2026-11-11 hit `EPERM` in the timeout test's second
+  process-group stop, after the first stop had terminated the leader; the focused
+  rerun, ten instrumented repetitions and a subsequent full gate passed. The
+  original process-group state was not captured, so the cause remains unconfirmed.
+  On recurrence, capture owned group membership and termination state, then test
+  whether redundant teardown can be removed safely. Do not suppress signal failures
+  or weaken descendant cleanup based on successful reruns or without a causal
+  reproduction. This is separate from the Linux guest namespace teardown and
+  independent-lane readiness checks.
 - **Portable native edge controls:** add opt-in qualification for solver timeout
   with child-heartbeat silence before VM teardown, an inline image reaching the
   next native request, and large skill-resource inventories. Current public
@@ -238,14 +244,6 @@ shipped history. Private provenance stays outside public entries and issues.
   remain open. Real runtime stop/delete failures and host reboot
   remain outside the live controls; local fault-injection tests cover the
   refusal/retry contract.
-- **Intermittent macOS subprocess teardown:** a development gate on 2026-11-11
-  hit `EPERM` in the timeout test's second process-group stop, after the first stop
-  had terminated the leader. The focused rerun, ten instrumented repetitions and
-  a subsequent full gate passed. The original process-group state was not
-  captured, so the cause remains unconfirmed. Capture owned group membership and
-  termination state on recurrence, then test whether redundant teardown can be
-  removed safely. Do not suppress permission errors or weaken descendant cleanup
-  based on successful reruns.
 - **Qualification packaging:** the opt-in controls, native runner and admission
   currently require the source checkout and share private package helpers.
   Stabilize those interfaces when supporting installed-wheel qualification,
@@ -254,11 +252,12 @@ shipped history. Private provenance stays outside public entries and issues.
   captures. Extend supported validation formats and environment profiles only
   when selected task families require them; preserve current source/history and
   expected-exception evidence when doing so.
-- **Evidence archival and legacy relocation:** durable storage roots and guarded
-  staging cleanup are implemented; native rollouts are retained without automatic
-  expiry. Define audit-aware archive/expiry and backup/restore coverage before
-  adding evidence deletion. Older records embed absolute paths and no-follow
-  readers reject symlink aliases. Preserve real legacy evidence directories until
+- **Evidence archival and legacy relocation:** native rollouts are retained
+  without automatic expiry. Deliberate retirement of whole obsolete cohorts now
+  follows the [storage retirement procedure](../system/STORAGE.md#organization-and-experiment-retirement)
+  (dependency check, compact receipt); audit-aware archive/automatic expiry and
+  backup/restore coverage remain undefined. Older records embed absolute paths
+  and no-follow readers reject symlink aliases. Preserve real legacy evidence directories until
   a versioned locator scheme can relocate them without rewriting frozen records.
   Keep opaque reasoning separate from readable summaries in any trajectory audit.
 - **OCI portability:** attest media types/effective image policy before permitting
@@ -271,8 +270,3 @@ shipped history. Private provenance stays outside public entries and issues.
   deterministic filesystem/process suite. Synthetic subprocess tests cannot
   establish real VM compatibility on either platform; qualify additional runtime
   platforms only when a selected task requires them.
-- **Selective adoption:** use [SOURCES.md](SOURCES.md) to choose a component when
-  its phase needs it. Pin and inspect that revision's license/NOTICE and tests
-  before copying, adapting, or declaring it as a dependency. A research influence
-  is not an adopted implementation.
-- **Later:** natural-discovery comparisons and pi support.
