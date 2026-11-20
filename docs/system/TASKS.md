@@ -273,7 +273,7 @@ aliases), and investigation citations must exist in the captured investigation.
 Static judgments cannot cite investigations; every resolved judgment still needs
 substantive original evidence. The recorder preserves the submitted lists.
 Masking is not proven blinding, citation validation is not semantic calibration,
-and authored controls do not substitute for independent human audit.
+and authored controls do not substitute for independent audit.
 
 ## Inspect quality and consumption
 

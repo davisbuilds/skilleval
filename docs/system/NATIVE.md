@@ -410,9 +410,11 @@ separate citation class. A new result ID creates a fresh directory; explicit
 supersession retains earlier generations. Calibration records also retain authored labels outside the
 judge's input; review records retain the reviewed native run.
 
-Each audit starts with `independent_audit: required-pending`. A human independent
-of the model judgment must inspect original evidence, verdict reasoning and probe
-limits before a scored correctness claim. The recorder validates structure and
-identity and cannot supply this audit. Native model output cannot name itself a
-human assessor. Label agreement, hash consistency or another model pass does not
-establish independent human review, general judge reliability, or a skill benefit.
+Each audit starts with `independent_audit: required-pending`. A reviewer
+independent of the model judgment
+([cross-model by default](../project/MEASUREMENT.md#independent-review)) must
+inspect original evidence, verdict reasoning and probe limits before a scored
+correctness claim. The recorder validates structure and identity and cannot supply
+this audit. Native model output cannot name itself a human assessor. Label
+agreement, hash consistency or a same-family model pass does not establish
+independent review, general judge reliability, or a skill benefit.
