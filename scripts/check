@@ -18,6 +18,7 @@ check() {
 
 check "Ruff lint" uv run --locked ruff check .
 check "Ruff format" uv run --locked ruff format --check .
+check "Comment ratchet" python3 scripts/check_comments.py
 check "Type checking" uv run --locked mypy
 check "Review UI types and compiled asset" npm run check:ui
 # pytest-xdist spreads tests over PYTEST_WORKERS processes: `auto` (one per CPU)
