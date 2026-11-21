@@ -1,25 +1,14 @@
 {
   "version": 1,
   "exclude": [
+    "environments/*/Dockerfile",
+    "examples/*/*/**",
     "examples/*/*/cases/**",
     "src/skilleval/_vendor/**"
   ],
   "files": {
     ".github/dependabot.yml": 2,
     ".github/workflows/ci.yml": 3,
-    "environments/node-debugging/Dockerfile": 3,
-    "environments/operational-metrics/Dockerfile": 3,
-    "environments/python-review/Dockerfile": 2,
-    "examples/document/operational-metrics/downstream/observe.mjs": 11,
-    "examples/document/operational-metrics/downstream/prepare.py": 1,
-    "examples/document/operational-metrics/downstream/scenarios.mjs": 10,
-    "examples/document/operational-metrics/downstream/validate.py": 2,
-    "examples/document/operational-metrics/environment/browser.mjs": 5,
-    "examples/document/operational-metrics/environment/validate.py": 10,
-    "examples/document/operational-metrics/prepare_controls.py": 2,
-    "examples/document/operational-metrics/prepare_task.py": 1,
-    "examples/repair/completed-sessions/environment/validate.py": 15,
-    "examples/repair/completed-sessions/prepare.py": 5,
     "frontend/verify.mjs": 3,
     "scripts/check": 2,
     "scripts/qualify-lanes.py": 2,
