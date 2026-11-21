@@ -25,7 +25,10 @@ exclude-newer = "7 days"
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-extend-exclude = ["src/skilleval/_vendor/openbench_gateway.py"]
+extend-exclude = [
+  "src/skilleval/_vendor/openbench_gateway.py",
+  "scripts/check_comments.py",
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "W", "C4", "SIM", "ERA", "RUF", "PIE", "N"]
