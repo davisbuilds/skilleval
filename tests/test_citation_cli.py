@@ -113,8 +113,6 @@ def test_cli_correction_round_trip_preserves_original_and_rejects_invalid_result
     assert correction["investigation"] is False
     assert correction["budget"]["timeout_seconds"] == 25
     assert correction["budget"]["max_requests"] == 2
-    # WHY: Author a result as the native runtime fixture would: the final and archive
-    # agree, while all original assessment fields remain intact.
     fixed = copy.deepcopy(proposal)
     fixed["judgments"][0]["artifact_citations"][0]["line_end"] = 43
     correction_run = run_directory(tmp_path, correction, fixed, run_name="correction-run")

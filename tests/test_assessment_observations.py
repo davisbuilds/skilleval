@@ -206,7 +206,6 @@ def version_two(observed, route):
 def test_v2_unexpected_observation_replays_without_live_readiness(observed, route):
     expected = payloads(observed)
     selected = version_two(observed, route)
-    # WHY: Neither a changed live runtime nor a retired checker alters retained observations.
     Path(route["runtime"]).write_text("changed runtime must never execute")
     Path(selected[1]["spec"].worker).unlink()
     assert payloads(selected) == expected

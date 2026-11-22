@@ -234,7 +234,6 @@ def test_prepare_failure_removes_only_owned_output_and_runtime_home(
         assert archive.exists()
         assert not list(output.parent.glob(".lifecycle-*"))
     finally:
-        # WHY: Also clean up when this regression test runs against the old behavior.
         for home in homes:
             shutil.rmtree(home, ignore_errors=True)
         shutil.rmtree(output, ignore_errors=True)
@@ -330,12 +329,11 @@ def test_inventory_failure_cannot_masquerade_as_absence(tmp_path: Path) -> None:
 
 def test_absence_without_positive_control_retains_recovery_state(tmp_path: Path) -> None:
     session = session_at(tmp_path)
-    session.mark_create_attempted()  # WHY: interruption before create's observable effect
+    session.mark_create_attempted()
     result = session.cleanup()
     assert result["cleanup_complete"] is False
     assert "known-present" in result["error"]
     assert Path(result["runtime_home"]).is_dir()
-    # WHY: Test fixture repairs missing control by performing the pending create.
     session.invoke("fixture_create", ["machine", "create", "--name", session.machine])
     assert recover(session.output)["cleanup_complete"]
 
@@ -490,7 +488,7 @@ def test_cleanup_identity_drift_is_retained_report_instead_of_exception(tmp_path
     result = session.cleanup()
     assert result["identity_changed"] is True
     assert result["cleanup_complete"] is False
-    assert len(result["steps"]) == before  # WHY: no changed-runtime command was launched
+    assert len(result["steps"]) == before
     assert Path(result["runtime_home"]).exists()
     component.write_bytes(original)
     assert recover(session.output)["cleanup_complete"]
@@ -598,7 +596,7 @@ def test_probe_observer_receives_only_registered_tokens_and_remains_alive(tmp_pa
         assert quiet["stopped"] and quiet["observer_alive"]
         assert quiet["before"] >= 3
         assert observer.close() == {"thread_stopped": True, "socket_closed": True}
-        assert observer.stopped(token)["stopped"] is False  # WHY: dead detector is never absence
+        assert observer.stopped(token)["stopped"] is False
     for wait in (True, False):
         command = probe["background_command"]("synthetic", wait=wait)
         ast.parse(command[-1])

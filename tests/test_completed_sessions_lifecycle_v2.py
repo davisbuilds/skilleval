@@ -113,8 +113,6 @@ def test_authored_transport_preserves_order_errors_and_separate_diagnostics(
     tmp_path, monkeypatch, capsys
 ):
     worker = load_module("worker")
-    # WHY: Bypass only the Python platform guard for a synthetic Python executable;
-    # no Node/application import is executed by this transport test.
     monkeypatch.setattr(worker, "require_guest", lambda: None)
     executable = tmp_path / "authored-transport"
     executable.write_text(
@@ -175,8 +173,6 @@ def test_preparation_freezes_new_identity_without_changing_legacy_or_executing_s
     assert Path(task.worker).stat().st_mode & 0o777 == 0o444
     for name, raw in legacy_before.items():
         assert (EXAMPLE / name).read_bytes() == raw
-    # WHY: An existing retained candidate can enter this generation as a fresh
-    # authored control; this creates no new native attempt or app execution.
     control = repair.collect_control(
         Path(result["path"]),
         result["sha256"],

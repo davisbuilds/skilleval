@@ -280,8 +280,6 @@ def test_filter_unknown_architecture_fails_closed() -> None:
 
 @pytest.mark.skipif(sys.platform != "linux", reason="actual seccomp requires a Linux child")
 def test_linux_child_enforces_filter_and_preserves_local_socket_work() -> None:
-    # WHY: This child changes only its own irreversible security state. It neither
-    # launches a VM nor establishes the production native-route boundary.
     source = """
 import errno,json,socket,subprocess,sys
 from skilleval.solver_boundary import Linux, install_transport_filter

@@ -253,8 +253,6 @@ def evidence(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     catalog = tmp_path / "catalog.json"
     catalog.write_text('{"synthetic_catalog":true}')
     policy = admission._native_policy()
-    # WHY: A synthetic catalog replaces the costly external pinned artifact, while
-    # all receipt/config hashing and admission semantics remain real.
     policy["CATALOG_SHA256"] = file_digest(catalog)
     monkeypatch.setattr(admission, "_native_policy", lambda: policy)
     mode = policy["mode_settings"](True)
@@ -653,7 +651,7 @@ def test_refuses_semantically_failed_receipt_even_when_status_still_passes(
     target[fields[-1]] = value
     write(path, document)
     with pytest.raises(SkillEvalError):
-        seal(evidence)  # WHY: Digests are calculated from the mutated receipt, not stale hashes.
+        seal(evidence)
     assert not evidence["output"].exists()
 
 

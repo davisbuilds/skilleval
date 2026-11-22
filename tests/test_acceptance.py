@@ -65,7 +65,6 @@ def prepare(data, tmp_path, name="map.json"):
 
 
 def test_round_trip_and_render_preserve_declarations_without_execution(mapped, task, tmp_path):
-    # WHY: Real source and worker fixtures raise if imported. Both remain inert data.
     before = {
         name: path.read_bytes()
         for name, path in {

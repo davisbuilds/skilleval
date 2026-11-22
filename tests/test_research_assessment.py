@@ -169,7 +169,6 @@ def test_research_requirement_profile_round_trip(assessment, mapped, tmp_path, v
         tmp_path / "document-package.json",
     )
     mapped.update(package=frozen_package["path"], package_sha256=frozen_package["sha256"])
-    # WHY: This common route also works with historical acceptance-map validators.
     mapped["requirements"][0]["semantic"][0]["criterion"] = "factual-support"
     frozen_map = acceptance.prepare_acceptance(
         acceptance.AcceptanceMapSpec.model_validate_json(json.dumps(mapped)),

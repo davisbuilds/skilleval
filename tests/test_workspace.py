@@ -73,8 +73,6 @@ def test_reconstructs_meaningful_history_without_changing_candidate(tmp_path: Pa
     bundle, digest = captured(tmp_path)
     target = tmp_path / "work"
     receipt = workspace.prepare_review(bundle, digest, target)
-    # WHY: The historical task instruction names these refs. Native callers must
-    # see the same diff without rewriting ordinary task instructions.
     assert git(target, "diff", "--full-index", "review-base", "HEAD") == git(
         target, "diff", "--full-index", "base", "candidate"
     )
@@ -131,7 +129,6 @@ def test_unsupported_patch_refused_without_partial_workspace(tmp_path: Path, pat
 
 
 def test_full_blob_identity_refuses_plausible_but_different_base(tmp_path: Path) -> None:
-    # WHY: The hunk applies cleanly; a wrong full base identity must still fail.
     patch = (
         "diff --git a/changed.txt b/changed.txt\n"
         f"index {blob(b'other\n')}..{blob(b'after\n')} 100644\n"
@@ -204,8 +201,6 @@ def test_host_git_config_hooks_and_filters_cannot_execute(
         f'[filter "forbidden"]\n\tclean = {filter_program}\n\trequired = true\n'
         f"[init]\n\ttemplateDir = {tmp_path / 'missing-template'}\n"
     )
-    # WHY: Positive control: the same config and captured attributes invoke its filter
-    # through ordinary native Git add, proving the marker detector is live.
     control = tmp_path / "control"
     control.mkdir()
     git(control, "init", "--quiet", "--template=")

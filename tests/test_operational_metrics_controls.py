@@ -36,13 +36,10 @@ def test_authored_alternatives_and_semantic_defects_share_mechanical_result(work
         directory = root / "docs/specs/arbitrary-subdirectory"
         directory.mkdir(parents=True)
         if control["candidate"] is not None:
-            # WHY: Collection does not depend on the authored control's own filename.
             (directory / "another-design.markdown").write_bytes(
                 (EXAMPLE / "controls" / control["candidate"]).read_bytes()
             )
         assert worker.observe(root) == control["expected_observation"]
-    # WHY: These are author expectations for future semantic assessment, not results
-    # inferred by the worker or proved by this deterministic test.
     assert manifest["independent_audit"] == "required-pending"
     assert manifest["observed_judge_results"] is None
     cases = {case["case_id"]: case for case in manifest["cases"]}
@@ -213,7 +210,6 @@ def test_operator_acceptance_template_binds_real_task_routes_without_execution(
     )
     with pytest.raises(SkillEvalError, match="outside solver inputs"):
         acceptance.prepare_acceptance(mapped, task["base"] / "leaked-map.json")
-    # WHY: Its raising candidate source and old worker were never run on the host.
     assert (task["base"] / "code.py").read_text().startswith("raise RuntimeError")
 
 
@@ -223,7 +219,6 @@ def test_assessment_template_selects_versioned_profile_and_downstream_plan_keeps
     assert spec.tool_evidence_policy == "execution-context-v3"
     plan = json.loads((EXAMPLE / "controls/downstream-contract.json").read_text())
     assert plan["implemented_executable_coverage"] is True
-    # WHY: Dated development receipts can advance without establishing independent audit.
     assert plan["independent_audit"] == "required-pending"
     assert len({row["observation_id"] for row in plan["required_observations"]}) == len(
         plan["required_observations"]

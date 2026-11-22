@@ -74,7 +74,6 @@ def selection_file(tmp_path: Path, linked) -> Path:
 def test_selection_rejects_changed_text_before_compiling_authority(linked, tmp_path):
     path = selection_file(tmp_path, linked)
     spec = load_selection(path)
-    # WHY: The selection itself stays intact; a retained source changes afterward.
     (tmp_path / "request.txt").write_text("A different work request.\n")
     with pytest.raises(SkillEvalError, match="digest"):
         compile_selection(spec)
@@ -258,8 +257,6 @@ def test_selected_writer_assessment_is_bound_and_not_replaced_by_other_valid_rec
     projection = json.loads(compiled["payloads"]["case/sources/derived-off-quality.txt"])
     assert projection["provenance"]["record_sha256"] == recorded["sha256"]
     assert projection["assessment"]["independent_audit"] == "required-pending"
-    # WHY: Both arms are real retained study attempts with identical authored output;
-    # a valid judgment for the other arm must not be substituted by content alone.
     writer_ref = linked["spec"].writer_study
     plan = json.loads(Path(writer_ref.plan).read_text())
     other_cell = next(row for row in plan["assignments"] if row["cell_id"] != writer_ref.cell_id)

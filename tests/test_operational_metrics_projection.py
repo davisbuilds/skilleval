@@ -94,7 +94,6 @@ output.mkdir()
     output = tmp_path / "observations"
     result = observer.run(source, baseline, dependencies, output, {}, environment)
 
-    # WHY: The old copytree reaches bridge_dependencies and fails on the retained cache.
     assert result["execution_status"] == "observed", result
     assert result["candidate_source_changes"] == []
     assert result["build_changed_candidate_inputs"] == []

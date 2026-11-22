@@ -266,8 +266,6 @@ def test_schema_two_validation_staging_requires_parent_and_recovery_bindings(
 def lane_staging(observed, route):
     selected = version_three(observed, route)
     ref, _, output, _ = selected
-    # WHY: A complete leaf can be recovered and pruned even if aggregate publication
-    # never happened. Imported code and the real VM runtime remain unexecuted.
     Path(ref.report).unlink()
     state = output / "runtime-state"
     state.mkdir()
@@ -480,8 +478,6 @@ def test_batch_partial_retry_and_hardlink_accounting(
 def test_native_producer_audit_and_artifact_reader_survive_staging_cleanup(
     tmp_path: Path, route: dict[str, Any], failed_cleanup: bool
 ) -> None:
-    # WHY: This uses the normal native controller against the repository's synthetic
-    # child-process runtime. It never starts a VM or calls a provider.
     report = invoke_native(tmp_path, route, "stop-failure" if failed_cleanup else "")
     output = tmp_path / "run"
     staged = output / "runtime-state/tooling.tar"

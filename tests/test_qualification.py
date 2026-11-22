@@ -156,7 +156,7 @@ def test_subprocess_contract_copies_only_source_and_cleans_up(
     with tarfile.open(tmp_path / "result" / "runtime-state" / "task.tar") as archive:
         assert archive.getnames() == ["task.txt"]
         assert archive.extractfile("task.txt").read() == b"captured task"  # type: ignore[union-attr]
-    assert not sentinel.exists()  # WHY: command text was never evaluated by a host shell
+    assert not sentinel.exists()
     control = next(step for step in report["steps"] if step["label"] == "project_control_0")
     assert control["output_truncated"] is True
     assert len(control["stdout"].encode()) == LOG_BYTES
@@ -407,7 +407,7 @@ def test_packed_registry_route_refused_before_any_subprocess(tmp_path: Path) -> 
     bundle = bundle_at(tmp_path)
     image = "registry.smolmachines.com/library/network-enabled@sha256:" + "b" * 64
     plan = plan_qualification(bundle, image, [["true"]])
-    assert plan["status"] == "planned"  # WHY: still useful as a reviewable plan
+    assert plan["status"] == "planned"
     runtime = fake_runtime(tmp_path)
     with pytest.raises(SkillEvalError, match=r"docker\.io"):
         run_offline_qualification(plan, tmp_path / "result", str(runtime))

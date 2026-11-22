@@ -101,8 +101,6 @@ def test_finalize_refuses_missing_or_changed_receipts_before_writing(controls, t
 
 def test_finalize_consumes_checked_reports_and_withholds_author_labels(controls, route, tmp_path):
     helper, receipt, _ = controls
-    # WHY: The existing synthetic runtime generates legitimate checker/recovery
-    # envelopes for deterministic protocol tests; it does not run real source.
     for row in receipt["cases"]:
         ref = row["source"]
         observed = check_repair(

@@ -234,7 +234,6 @@ def test_correction_cannot_change_semantics_or_evidence_authority(assessment, tm
         item["citations"].append(item["artifact_citations"].pop())
     else:
         item["artifact_citations"][0].pop("line_start")
-    # WHY: Preserve the deliberately mutated value rather than the helper's correction.
     fixed_run = run_directory(
         tmp_path,
         preparation,

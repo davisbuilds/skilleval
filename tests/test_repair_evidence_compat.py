@@ -24,8 +24,9 @@ from skilleval.repair_assessment import (
     record_assessment,
 )
 
-# WHY: Captured from the existing authored fixture at 0083444 before the policy change.
-# A whole-packet golden also pins the rubric, result schema and all evidence bytes.
+# WHY: Goldens captured from the authored fixture at 0083444, before the policy change.
+# Never regenerate them from current code: the whole packet pins the legacy rubric,
+# result schema and evidence bytes.
 LEGACY_PACKETS = {
     "repair": "95d1d678deb282c347f80281dbd2a074f3d96e04d2b22feb8596df80527ffc38",
     "document": "d6f81404f4a91f1c8c44283b60d419ffe4d3c480f39d5a3bfff9435a90e96bfc",

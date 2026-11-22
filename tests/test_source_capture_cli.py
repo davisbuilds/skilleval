@@ -41,7 +41,6 @@ def test_source_capture_cli_freezes_revision_and_optional_policy(
     source: tuple[Path, str], tmp_path: Path, exclude_specs: bool
 ) -> None:
     root, revision = source
-    # WHY: The command reads the named revision, not uncommitted working-tree bytes.
     (root / "module.py").write_text("changed after the selected revision\n")
     output = tmp_path / "capture"
     args = ["source", "capture", str(root), "--revision", revision, "--output", str(output)]
@@ -77,7 +76,6 @@ def test_source_capture_cli_freezes_revision_and_optional_policy(
     verified = invoke("verify", str(baseline), "--sha256", receipt["baseline"]["manifest_sha256"])
     assert verified.returncode == 0, verified.stderr
     assert json.loads(verified.stdout)["kind"] == "snapshot"
-    # WHY: Fresh destinations protect earlier generations from replacement.
     rejected = invoke(*args)
     assert rejected.returncode == 2
     assert not rejected.stdout

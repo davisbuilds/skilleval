@@ -348,8 +348,6 @@ def test_writer_study_task_identity_must_match_handoff_lineage(linked, tmp_path)
 def test_supported_native_metadata_overflow_preserves_unverified_unknown_attempt(
     linked, tmp_path, monkeypatch
 ):
-    # WHY: Use the actual producer's supported reduced-receipt path. No model or VM
-    # runs: the authored native subprocess fixture supplies representative bytes.
     monkeypatch.setattr(runner, "MAX_NATIVE_AUDIT_BYTES", 1)
     frozen = linked["frozen"]
     run = tmp_path / "metadata-overflow"

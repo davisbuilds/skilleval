@@ -89,7 +89,6 @@ def test_record_is_append_only_and_bound_to_verified_evidence(tmp_path: Path) ->
 def test_comparison_reports_confusion_missing_and_unresolved_separately(tmp_path: Path) -> None:
     bundle = captured(tmp_path)
     document = result_document(bundle)
-    # WHY: A correct control establishes the detector can recognize every authored class.
     control = write_result(tmp_path, document)
     full = calibration.compare_calibration(bundle, [control])["results"][0]
     assert full["agreement_count"] == full["probe_count"]
@@ -103,7 +102,6 @@ def test_comparison_reports_confusion_missing_and_unresolved_separately(tmp_path
     assert result["missing_count"] == 1
     assert result["missing_counts"]["supported"] == 1
     assert result["expected_counts"]["supported"] == 3
-    # WHY: Includes the authored insufficient-evidence control.
     assert result["unresolved_count"] == 2
     assert result["resolved_count"] == result["judgment_count"] - 2
     assert result["agreement_count"] == result["probe_count"] - 3

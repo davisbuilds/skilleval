@@ -195,7 +195,6 @@ def test_mapped_plan_and_operator_refs_do_not_reach_actual_native_inputs(mapped_
     assert result["pairs"][0]["task_quality_difference"] is None
     assert len(calls) == 2
     for positional, keywords in calls:
-        # WHY: Known-positive normal content establishes the inspected boundary.
         assert "Repair the defect." in positional[2]
         assert mapped_study["marker"] not in positional[2]
         assert "acceptance" not in str(keywords)
@@ -213,8 +212,6 @@ def test_mapped_plan_and_operator_refs_do_not_reach_actual_native_inputs(mapped_
         assert dispatch["acceptance_map_sha256"] == mapped_study["map"]["sha256"]
         assert dispatch["acceptance_policy"] == "mapped-acceptance-v1"
         assert not any("acceptance" in key for key in dispatch["native_expected"])
-    # WHY: Reporting identifies selected declarations without requalifying
-    # or requiring live attachments.
     Path(mapped_study["map"]["path"]).unlink()
     assert study.report_study(args["plan_path"], args["expected_sha256"], args["output"]) == result
     from skilleval.repair_outcomes import render_review
@@ -383,7 +380,6 @@ def test_consistent_dispatch_outcome_tamper_cannot_change_frozen_acceptance(
     original_outcome = json.loads(outcome_path.read_text())
     if state == "unfinished":
         outcome_path.unlink()
-    # WHY: This remains an offline identity check when live design artifacts disappear.
     Path(mapped_study["map"]["path"]).unlink()
     baseline = study.report_study(**{k: v for k, v in args.items() if k != "auth_file"})
     assert baseline["acceptance_policy"] == "mapped-acceptance-v1"

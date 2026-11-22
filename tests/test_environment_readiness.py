@@ -278,7 +278,6 @@ def test_changed_executed_conditions_require_new_environment_evidence(readiness,
             }
         )
     elif change == "image":
-        # WHY: This is a real valid Docker-save archive with different pinned bytes.
         from test_qualification import docker_archive
 
         image, _digest = docker_archive(readiness["root"] / "new-image")

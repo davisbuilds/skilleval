@@ -211,7 +211,6 @@ def test_editable_directories_allow_existing_new_and_removed_descendants(task, t
         "src/removed.py",
     ]
     assert "src/removed.py" not in {name for name, _, _ in files}
-    # WHY: A retained result cannot borrow a broader scope during readback.
     narrow = loaded.model_copy(update={"editable_directories": ()})
     with pytest.raises(SkillEvalError, match="retained evidence"):
         repair.result_files(narrow, prepared["sha256"], output, result["sha256"])
