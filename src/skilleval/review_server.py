@@ -53,7 +53,7 @@ def _json(data: bytes) -> Any:
 
 
 def _packet(directory: Path) -> dict[str, Any]:
-    # Lazy import keeps this transport independent of packet construction.
+    # WHY: Lazy import keeps this transport independent of packet construction.
     from skilleval.review_results import load_packet
 
     return load_packet(directory)
@@ -216,7 +216,7 @@ class _Handler(BaseHTTPRequestHandler):
     sys_version = ""
 
     def log_message(self, format: str, *args: Any) -> None:
-        # Request targets, answers, and tokens never enter logs.
+        # WHY: Request targets, answers, and tokens never enter logs.
         pass
 
     def send_error(self, code: int, message: str | None = None, explain: str | None = None) -> None:

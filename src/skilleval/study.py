@@ -332,10 +332,10 @@ def _plan(path: Path, expected: str) -> tuple[dict[str, Any], StudySpec]:
         )
     ):
         raise SkillEvalError("legacy study plans cannot declare acceptance maps or policies")
-    # Frozen schemas 1-3 predate mode-specific defaults. Preserve their historic
+    # WHY: Frozen schemas 1-3 predate mode-specific defaults. Preserve their historic
     # missing-field interpretation without altering the retained plan bytes.
     data.setdefault("native_timeout_seconds", LEGACY_STUDY_TIMEOUT_SECONDS)
-    # All retained schemas historically interpreted an omitted request cap as
+    # WHY: All retained schemas historically interpreted an omitted request cap as
     # 32. New preparation always freezes the current default explicitly.
     data.setdefault("max_requests_per_attempt", 32)
     if value["schema_version"] == 1:
@@ -369,7 +369,7 @@ def _dispatch_check(
     *,
     timings: dict[str, float] | None = None,
 ) -> dict[str, Any] | None:
-    # Reuse an inventory only inside this operation. Each attempt, lifecycle
+    # WHY: Reuse an inventory only inside this operation. Each attempt, lifecycle
     # create, and recovery still captures its own fresh identity.
     if timings is None:
         timings = {}
@@ -404,7 +404,6 @@ def _dispatch_check(
         or seal["bindings"]["catalog_sha256"] != file_digest(Path(spec.catalog))
     ):
         raise SkillEvalError("admission does not cover this runtime/image/catalog route")
-    # A bounded seal remains bounded; it is never promoted to task/grader admission.
     timings["admission"] = time.monotonic() - admission_started
     timings["total"] = time.monotonic() - started
     return checked
@@ -431,7 +430,7 @@ def _attempts(output: Path, cell: dict[str, Any]) -> list[Path]:
     if not parent.exists():
         return []
     with evidence._directory(parent):
-        # A pending directory cannot have launched native work: publication of
+        # WHY: A pending directory cannot have launched native work: publication of
         # its complete dispatch record happens before calling the runner.
         paths = sorted(p for p in parent.iterdir() if not p.name.startswith(".pending-"))
         if [p.name for p in paths] != [f"attempt-{i:03}" for i in range(1, len(paths) + 1)]:
@@ -523,7 +522,7 @@ def _terminal(
 
 def _clean_native(native: Path) -> bool:
     if not (native / "recovery.json").exists():
-        # The native runner durably registers before the first VM mutation.
+        # WHY: The native runner durably registers before the first VM mutation.
         return True
     ticket = _document(native / "recovery.json")
     return (
@@ -589,7 +588,7 @@ def _check_native(path: Path, report: dict[str, Any]) -> None:
     if object_digest(native_identity) != expected["identity_sha256"]:
         raise SkillEvalError("native execution identity differs from study plan")
     treatment = report.get("skill_treatment")
-    # A failed setup may precede treatment installation; it cannot become a
+    # WHY: A failed setup may precede treatment installation; it cannot become a
     # completed execution through that missing evidence.
     if report.get("status") == "completed":
         from skilleval.judge import _run_files
@@ -606,7 +605,7 @@ def _record_outcome(
     path: Path, report: dict[str, Any] | None, *, elapsed: float | None, error: str | None = None
 ) -> dict[str, Any]:
     receipt_path = path / "native/native-run.json"
-    # KeyboardInterrupt can propagate after the runner's finally has durably
+    # WHY: KeyboardInterrupt can propagate after the runner's finally has durably
     # published a receipt. Preserve its actual fields rather than inventing an
     # interrupted summary that contradicts the recorded native result.
     if report is None and receipt_path.exists():
@@ -680,7 +679,6 @@ def run_study(
             if any(value["status"] == "completed" for value in previous):
                 continue
             while len(attempts) < spec.max_attempts_per_cell:
-                # Recheck before EACH dispatch, including retries, not just at planning.
                 _plan(plan_path, expected_sha256)
                 preflight_timings: dict[str, float] = {}
                 admission = _dispatch_check(plan, spec, timings=preflight_timings)

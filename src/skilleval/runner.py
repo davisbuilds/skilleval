@@ -364,7 +364,7 @@ def _publish_receipt(output: Path, report: dict[str, Any]) -> None:
         consultation["observations_omitted"] = max(0, len(observations) - 64)
         consultation["observations"] = observations[:64]
     if len(_json(report)) > 4 * 1024 * 1024 and report.get("request_observations"):
-        # Growing histories repeat bulky context and protocol metadata. Keep the
+        # WHY: Growing histories repeat bulky context and protocol metadata. Keep the
         # authoritative observations in the hash-bound audit and retain every
         # request's identity, reasoning and skill-exposure diagnostics inline.
         compact = []
@@ -389,7 +389,7 @@ def _publish_receipt(output: Path, report: dict[str, Any]) -> None:
         report["request_observations"] = compact
         report["request_observations_compacted"] = True
     if len(audit) > MAX_NATIVE_AUDIT_BYTES or len(_json(report)) > 4 * 1024 * 1024:
-        # Preserve oversized private evidence for the operator, but do not claim
+        # WHY: Preserve oversized private evidence for the operator, but do not claim
         # a successful record that the append-only grader cannot retain.
         _exclusive(output / "native-audit-overflow.json", audit)
         overflow = {
@@ -722,7 +722,7 @@ def native_rollouts(
     ]
     files: list[dict[str, Any]] = []
     retained = 0
-    # One tar traversal: rescanning the full archive for every rollout would
+    # WHY: One tar traversal: rescanning the full archive for every rollout would
     # multiply the byte budget by the (up to 10,000) member-count budget.
     wanted = {entry["path"]: entry for entry in entries}
     with tarfile.open(archive, "r:") as source:
@@ -761,7 +761,7 @@ def native_rollouts(
 
 
 def _copy_artifacts(session: Lifecycle, destination: Path, maximum: int) -> dict[str, Any]:
-    # Bound writes made by the host copy client, before inspecting hostile bytes.
+    # WHY: Bound writes made by the host copy client, before inspecting hostile bytes.
     # This trusted controller fragment never imports or executes guest artifacts.
     wrapper = (
         "import os,resource,sys; n=int(sys.argv[1]); "
@@ -795,7 +795,7 @@ def _required(result: dict[str, Any], label: str) -> None:
 
 def _read_native(archive: Path, maximum: int) -> tuple[dict[str, Any], bytes, bytes]:
     try:
-        # This record includes complete preflight and post-start inventories.
+        # WHY: This record includes complete preflight and post-start inventories.
         # Bound it by the artifact budget and the downstream full-audit ceiling,
         # rather than the old small process-status allowance.
         process = json.loads(
@@ -1047,7 +1047,7 @@ def run_native(
 
     def observe_request(raw: bytes) -> None:
         nonlocal observation_failure
-        # Observation includes bodies the broker subsequently refuses, so its
+        # WHY: Observation includes bodies the broker subsequently refuses, so its
         # capacity is separate from the admitted provider-request allowance.
         with observation_lock:
             if len(request_records) >= MAX_REQUEST_OBSERVATIONS:
@@ -1060,8 +1060,8 @@ def run_native(
                 raise
 
     def require_auth_horizon(required_seconds: float) -> None:
-        # Recheck retained credentials after host preparation and VM setup. Never
-        # refresh credentials or disclose their expiration in retained evidence.
+        # WHY: Never refresh credentials or record their expiry: retained evidence must not
+        # disclose credential lifetime.
         if (
             not math.isfinite(auth.expires_at)
             or auth.expires_at <= time.time() + required_seconds + 30
@@ -1132,10 +1132,9 @@ def run_native(
         report["native_config"] = config
         report["native_config_sha256"] = hashlib.sha256(config.encode()).hexdigest()
         _exclusive(output / "prompt.txt", prompt.encode())
-        # Recheck both authority-bearing copied inputs before the first VM mutation.
         evidence.verify(input_bundle, expected_digest)
         require_auth_horizon(limits.lifetime_seconds)
-        # Start conservatively before broker startup. Its actual expiry is no
+        # WHY: Start conservatively before broker startup. Its actual expiry is no
         # earlier; VM setup must not consume the reserved native execution time.
         broker_started = time.monotonic()
         with broker_scope(
@@ -1220,7 +1219,7 @@ def run_native(
                 raise SkillEvalError("invalid native collection status")
             report["collection_result"] = collection_result
             if collection_result["status"] != "complete":
-                # A failed archive is private diagnostic evidence, never an
+                # WHY: A failed archive is private diagnostic evidence, never an
                 # eligible artifact. A copy failure must not mask the cause.
                 try:
                     _required(
@@ -1328,7 +1327,7 @@ def run_native(
                 for row in requests
             )
             report["provider_complete"] = provider_complete
-            # A native turn can recover from an interrupted provider stream.
+            # WHY: A native turn can recover from an interrupted provider stream.
             # Require host-observed success, while the full ledger independently
             # determines whether usage accounting is complete.
             provider_response_completed = any(

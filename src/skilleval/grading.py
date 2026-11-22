@@ -185,7 +185,6 @@ def prepare_review(
             "Packet preparation does not establish independent blinding or correctness."
         ],
     }
-    # Read only allowlisted evidence. No imported paths are executed or interpreted.
     payloads = {name: _read_payload(bundle, manifest, name) for name in selected}
     payloads["reports.json"] = _json_bytes(
         [{field: report[field] for field in REPORT_FIELDS if field in report} for report in reports]

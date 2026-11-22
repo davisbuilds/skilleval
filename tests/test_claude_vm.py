@@ -745,7 +745,7 @@ def test_sigterm_unwinds_and_reaps_separately_grouped_host_client(tmp_path: Path
         helper_pid = helper["pid"]
         assert helper["pgid"] == helper_pid
         assert helper["pgid"] != os.getpgid(process.pid)
-        os.kill(helper_pid, 0)  # Known-positive independent helper liveness.
+        os.kill(helper_pid, 0)
         os.killpg(process.pid, signal.SIGTERM)
         stdout, stderr = process.communicate(timeout=10)
         with pytest.raises(ProcessLookupError):
@@ -753,8 +753,6 @@ def test_sigterm_unwinds_and_reaps_separately_grouped_host_client(tmp_path: Path
         assert process.returncode == 24, (stdout, stderr)
         assert b"retained lifecycle requires cleanup" in stderr
         assert '"event": "command-started"' in Path(config["tools_log"]).read_text()
-        # Interrupting the host client does not establish remote guest teardown.
-        # The owning controller reloads and performs whole-VM lifecycle cleanup.
         session = Lifecycle.load(session.output)
         session.cleanup()
         assert session.ticket["cleanup_complete"] is True

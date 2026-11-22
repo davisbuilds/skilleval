@@ -25,7 +25,7 @@ from skilleval.harnesses.claude import CLAUDE_MODEL
 
 VM_TOOL = "mcp__vm__execute"
 _ALLOWED_TOOLS = {VM_TOOL, "EndConversation"}
-# Exact vendor component identities observed on native Claude Code 2.1.321.
+# WHY: Exact vendor component identities observed on native Claude Code 2.1.321.
 # Built-in mods survive disableAllHooks. Keep the vendor privacy guard; exclude
 # foreign plugins by origin/path as well as name, and require no loaded skills.
 # https://code.claude.com/docs/en/plugins/mods/overview#mods-built-into-claude-code
@@ -72,7 +72,7 @@ def _settings() -> dict[str, Any]:
         "disableBundledSkills": True,
         "disableSkillShellExecution": True,
         "disableWorkflows": True,
-        # This key is managed-only; freshness of the plugin root and omitted
+        # WHY: This key is managed-only; freshness of the plugin root and omitted
         # non-managed settings, rather than this key, exclude command plugins.
         "disableCommandPluginSources": True,
         "pluginConfigs": {

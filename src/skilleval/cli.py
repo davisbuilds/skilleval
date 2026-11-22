@@ -933,7 +933,7 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(error), file=sys.stderr)
         return 2
     except (SkillEvalError, OSError, ValueError, RecursionError) as exc:
-        # Avoid echoing untrusted file content or exception representations.
+        # WHY: Avoid echoing untrusted file content or exception representations.
         message = str(exc) if isinstance(exc, SkillEvalError) else type(exc).__name__
         print(json.dumps({"status": "error", "error": message}), file=sys.stderr)
         return 2

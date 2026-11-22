@@ -191,7 +191,6 @@ def attach_outcomes(
             "task_quality": "independent-audit-pending",
             "scored_admitted": False,
         }
-    # Include every attempt and pair, even if no repair evidence was selected.
     for cell in report["cells"]:
         for number, attempt in enumerate(cell["attempts"], 1):
             attempt["repair_outcome"] = rows.get((cell["cell_id"], number))

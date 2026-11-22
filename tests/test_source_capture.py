@@ -58,7 +58,6 @@ def source(tmp_path: Path) -> tuple[Path, str]:
     (repo / "src/task.py").chmod(0o755)
     (repo / "CLAUDE.md").symlink_to("AGENTS.md")
     revision = commit(repo)
-    # A later commit and untracked/modified working files must not enter the capture.
     (repo / "future.md").write_text("FUTURE_PRIVATE\n")
     commit(repo)
     (repo / "AGENTS.md").write_text("Uncommitted operator edits.\n")
@@ -193,13 +192,13 @@ def test_instruction_exclusion_is_rejected(source, tmp_path):
 def test_source_hooks_and_filters_are_not_executed_and_failure_cleans_staging(source, tmp_path):
     repo, revision = source
     marker = tmp_path / "executed"
-    # Only trusted fixture strings are interpolated; no imported code is invoked.
     hook = repo / ".git/hooks/post-checkout"
     hook.parent.mkdir(exist_ok=True)
     hook.write_text(f"#!/bin/sh\ntouch '{marker}'\n")
     hook.chmod(0o755)
     (repo / ".gitattributes").write_text("*.md filter=danger\n")
-    # Write this fixture directly to the index; never trigger its configured filter.
+    # WHY: git add would run the configured filter and fire the marker, so write the
+    # fixture straight to the index.
     oid = git(repo, "hash-object", "-w", "--no-filters", ".gitattributes").stdout.strip()
     git(repo, "update-index", "--add", "--cacheinfo", f"100644,{oid},.gitattributes")
     git(
@@ -222,7 +221,6 @@ def test_source_hooks_and_filters_are_not_executed_and_failure_cleans_staging(so
     assert marker.exists(), "positive control must execute the authored filter"
     git(repo, "config", "--unset", "filter.danger.clean")
 
-    # Unsupported links are not followed, and an unsuccessful capture is unpublished.
     (repo / "outside-link").symlink_to(tmp_path / "outside")
     git(repo, "add", "outside-link")
     git(

@@ -216,7 +216,6 @@ def invoke(tmp_path: Path, route: dict[str, Any], fault: str = "") -> dict[str, 
     frozen = tmp_path / "frozen"
     receipt = evidence.snapshot(source, frozen)
     if fault == "drift":
-        # Point the synthetic runtime at the immutable original captured file.
         shutil.rmtree(frozen)
         (source / "scenario.json").write_text(
             json.dumps({"fault": fault, "original": str(frozen / "code.py")})
@@ -249,7 +248,7 @@ def test_complete_capture_exceeds_client_stdout_cap_and_preserves_originals(
     assert (tmp_path / "run/app-server-input.jsonl").read_bytes() == (
         b'{"method":"initialize","id":1}\n'
     )
-    assert not (tmp_path / "run/task").exists()  # Archive was never extracted.
+    assert not (tmp_path / "run/task").exists()
     assert (tmp_path / "run/native-run.json").stat().st_mode & 0o077 == 0
     with pytest.raises(SkillEvalError, match="already exists"):
         runner.run_native(
@@ -594,7 +593,6 @@ def test_native_streams_use_pipes_instead_of_controller_file_descriptors(tmp_pat
 
 
 def test_trusted_relay_does_not_import_modules_from_task_working_directory(tmp_path: Path) -> None:
-    # This is authored hostile fixture code, never an imported repository.
     (tmp_path / "runpy.py").write_text("raise RuntimeError('task module ran with relay authority')")
     (tmp_path / "json.py").write_text("raise RuntimeError('task module ran with relay authority')")
     command = list(guest_runner.RELAY_PREFIX)
@@ -858,7 +856,7 @@ def test_guest_preparation_accepts_pristine_existing_image_workdir(tmp_path: Pat
         ],
     )
     task, native = tmp_path / "task", tmp_path / "native"
-    task.mkdir()  # A prepared image's WORKDIR already exists.
+    task.mkdir()
     argv = runner.preparation_argv(archive, task, native)
     result = subprocess.run([sys.executable, *argv[1:]], capture_output=True, check=False)
     assert result.returncode == 0, result.stderr.decode()

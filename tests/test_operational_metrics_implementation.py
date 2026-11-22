@@ -161,7 +161,6 @@ def test_observation_package_binds_candidate_and_retains_nonoracle_status(
     )
     from types import SimpleNamespace
 
-    # This tests packing, not browser behavior; the real lane helper is qualified separately.
     monkeypatch.setattr(
         helper,
         "_helper",
