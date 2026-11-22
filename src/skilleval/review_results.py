@@ -95,7 +95,7 @@ class ReviewExcerpt(Record):
     id: Identifier
     label: Text
     locator: Text
-    # JSONL and embedded command output can have large, valid single lines.
+    # WHY: JSONL and embedded command output can have large, valid single lines.
     # Source reads and the complete serialized packet already have byte bounds.
     excerpt: str
     source_sha256: Digest
@@ -204,14 +204,15 @@ def build_review(spec_path: Path, output: Path) -> dict[str, Any]:
             _excerpt(row, sources[row.source_id], lines[row.source_id]) for row in spec.citations
         ],
     )
-    # Normalize before hashing so defaults never change the identity on readback.
+    # WHY: Normalize before hashing so defaults never change the identity on readback.
     packet = ReviewPacket.model_validate_json(json.dumps({**core, "packet_id": "0" * 64}))
     core = packet.model_dump(mode="json", exclude={"packet_id"})
     value = {**core, "packet_id": packet_identity(core)}
     encoded = (json.dumps(value, indent=2, ensure_ascii=False) + "\n").encode()
     if len(encoded) > PACKET_LIMIT:
         raise SkillEvalError("review packet exceeds size limit")
-    # Validate everything before claiming the new output directory. Never update an older packet.
+    # WHY: Validate everything before claiming the new output directory.
+    # Never update an older packet.
     output.mkdir(mode=0o700, parents=True, exist_ok=False)
     (output / "packet.json").write_bytes(encoded)
     (output / "source-spec.json").write_bytes(raw)

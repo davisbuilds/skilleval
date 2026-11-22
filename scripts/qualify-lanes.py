@@ -265,7 +265,7 @@ def main():
     finally:
         for recovery in root.rglob("recovery.json"):
             directory = recovery.parent
-            # The subprocess controller has exited; recover only its durable ticket.
+            # WHY: The subprocess controller has exited; recover only its durable ticket.
             # Successful tickets are idempotent and do not recreate runtime HOME.
             try:
                 ticket = recover(directory)

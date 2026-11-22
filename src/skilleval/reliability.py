@@ -277,7 +277,7 @@ def _execution_inputs(receipt: dict[str, Any], retained: dict[str, bytes]) -> di
         raise SkillEvalError(
             "native execution identity or limits unavailable or malformed"
         ) from None
-    # Image location is an evidence handle; content identity determines compatibility.
+    # WHY: Image location is an evidence handle; content identity determines compatibility.
     return actual.model_dump(exclude={"schema_version": True, "image": {"path", "schema_version"}})
 
 

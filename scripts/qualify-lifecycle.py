@@ -94,7 +94,7 @@ class Heartbeats:
         return False
 
     def stopped(self, token: str) -> dict[str, Any]:
-        # Permit already queued heartbeats to drain, then require a quiet window.
+        # WHY: Permit already queued heartbeats to drain, then require a quiet window.
         time.sleep(0.5)
         before = self.count(token)
         time.sleep(1)
@@ -262,7 +262,7 @@ def interrupted_control(
 
 def run(runtime: Path, image: Path, digest: str, output: Path) -> dict[str, Any]:
     output = output.resolve()
-    # Private receipts cannot accidentally enter tracked/public source paths.
+    # WHY: Private receipts cannot accidentally enter tracked/public source paths.
     repository = Path(__file__).resolve().parents[1]
     require(
         repository / ".local" in output.parents, "probe output must be inside repository .local"

@@ -219,7 +219,7 @@ def snapshot_identity(runtime_binary: str) -> dict[str, Any]:
     }
 
 
-# Execution dependencies for completed, credential-free task-environment evidence.
+# WHY: Execution dependencies for completed, credential-free task-environment evidence.
 # Host interpretation is replayed separately; model/grade/report code is not run.
 ENVIRONMENT_SOURCES = (
     "src/skilleval/evidence.py",

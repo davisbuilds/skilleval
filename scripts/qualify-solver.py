@@ -57,7 +57,7 @@ PROBE_MARKER = "SOLVER_BOUNDARY_TOOL_RESULT="
 PROMPT = "Change the value to 'after', run the unit tests, and report the result."
 ROOT_PING_MARKER = "ROOT_VSOCK_PING="
 
-# Pinned smolvm 1.32.3 protocol: only the unit Ping request is permitted here.
+# WHY: Pinned smolvm 1.32.3 protocol: only the unit Ping request is permitted here.
 # CIDs 1 (local) and 3 (guest), port 6000, were independently reached in the
 # retained pre-filter control. Repeat both in the same VM before native launch.
 ROOT_PING = r"""
@@ -100,7 +100,7 @@ for cid in (1,3):
 print('ROOT_VSOCK_PING='+json.dumps(report,sort_keys=True),flush=True)
 """
 
-# This program is supplied as a synthetic tool call, never run by ordinary tests
+# WHY: This program is supplied as a synthetic tool call, never run by ordinary tests
 # or imported as task code on the host. Its raw observations survive in both the
 # native command result and the collected task artifact.
 PROBE = r'''
@@ -350,7 +350,7 @@ def worker(spec_path: Path) -> int:
         calls += 1
         if calls <= len(commands):
             item = responder.tool_item(json.loads(raw), commands[calls - 1])
-            # Each tool result has a unique call identity, including the code-mode route.
+            # WHY: Each tool result has a unique call identity, including the code-mode route.
             item["id"] += "_" + str(calls)
             item["call_id"] += "_" + str(calls)
             if item["type"] == "custom_tool_call":
@@ -915,7 +915,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             workers[arm] = {"error": type(error).__name__}
         print(json.dumps({"arm": arm, **workers[arm]}), flush=True)
         if workers[arm].get("returncode") != 0:
-            # Do not create another VM when the previous worker cannot establish cleanup.
+            # WHY: Do not create another VM when the previous worker cannot establish cleanup.
             break
     report = assess(output, markers, skill_body)
     report["workers"] = workers

@@ -99,7 +99,7 @@ def _eligible(spec: RepairAssessmentSpec, prepared: Path, run: Path) -> _Context
     model = assessment_model(spec)
     model.model_validate_json(retained["final.txt"])
     value = evidence._parse_json(retained["final.txt"])
-    # First establish every non-range constraint with known safe line bounds.
+    # WHY: First establish every non-range constraint with known safe line bounds.
     # Missing/non-UTF8/empty evidence and invalid aliases still fail here.
     bounded = copy.deepcopy(value)
     for _, raw_bound in _citations(bounded):
@@ -187,7 +187,7 @@ def _correction_packet(
             {name: hashlib.sha256(raw).hexdigest() for name, raw in sorted(files.items())}
         )
     ).hexdigest()
-    # Original IDs remain in previous-result.json; this receipt pins only the new invocation.
+    # WHY: Original IDs remain in previous-result.json; this receipt pins only the new invocation.
     return files, digest, metadata | {"packet_sha256": digest}
 
 
@@ -296,7 +296,7 @@ def validated_correction(
     corrected = evidence._parse_json(corrected_retained["final.txt"])
     if not isinstance(corrected, dict):
         raise SkillEvalError("citation correction result must be a JSON object")
-    # Parse and validate first, so malformed lists cannot bypass the structural comparison.
+    # WHY: Parse and validate first, so malformed lists cannot bypass the structural comparison.
     result = _assessment_result(
         spec,
         corrected_retained["final.txt"],

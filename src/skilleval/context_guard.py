@@ -16,7 +16,7 @@ from typing import Any
 
 MAX_FILES = 10_000
 MAX_BYTES = 32 * 1024 * 1024
-MAX_REQUEST_BYTES = 8 * 1024 * 1024  # GatewayLimits' largest accepted request budget.
+MAX_REQUEST_BYTES = 8 * 1024 * 1024  # WHY: GatewayLimits' largest accepted request budget.
 INSTRUCTIONS = {"AGENTS.md", "AGENTS.override.md"}
 
 
@@ -82,7 +82,7 @@ def preflight(
         observed.append(str(path))
     instructions = []
 
-    # Task source may be larger than the context budget. Read only instruction files.
+    # WHY: Task source may be larger than the context budget. Read only instruction files.
     def failed(error: OSError) -> None:
         raise error
 
@@ -126,7 +126,7 @@ def request_context(raw: bytes) -> dict[str, Any]:
         if item.get("type") == "additional_tools":
             if not isinstance(item.get("tools"), list):
                 raise ValueError("unsupported native tool catalog")
-            # The record id is a fresh transport identifier, not a tool capability.
+            # WHY: The record id is a fresh transport identifier, not a tool capability.
             # Original request bytes retain it; compare complete definitions here.
             tools.append(
                 {
@@ -151,7 +151,7 @@ def request_context(raw: bytes) -> dict[str, Any]:
             ):
                 prose.append(part["text"])
             elif part.get("type") == "input_image" and isinstance(part.get("image_url"), str):
-                # Observe identity and position, never interpret image data as
+                # WHY: Observe identity and position, never interpret image data as
                 # instruction prose. The gateway still validates inline URLs,
                 # signatures, sizes and detail before dispatching the request.
                 images.append(

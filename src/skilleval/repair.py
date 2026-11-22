@@ -116,8 +116,8 @@ def _inputs(spec: RepairSpec) -> list[tuple[str, bytes, bool]]:
     if hashlib.sha256(raw).hexdigest() != spec.worker_sha256:
         raise SkillEvalError("repair worker digest differs")
     selected = [row for row in files if not ignored(row[0])]
-    # The initial patch adapter supports the same portable path subset as the
-    # review exporter. Refuse unsupported context before spending a native run.
+    # WHY: The patch adapter supports the same portable path subset as the review
+    # exporter. Refuse unsupported context before spending a native run.
     for name, _, _ in selected:
         _safe_path(name)
     return selected
@@ -173,7 +173,7 @@ def _write(root: Path, files: list[tuple[str, bytes, bool]]) -> None:
 
 
 def _patch(before: list[tuple[str, bytes, bool]], after: list[tuple[str, bytes, bool]]) -> bytes:
-    # Hash exact bytes without imported attributes/filters. Separate payload
+    # WHY: Hash exact bytes without imported attributes/filters. Separate payload
     # trees also support file/directory replacements without stale directories.
     with tempfile.TemporaryDirectory(prefix="skilleval-repair-diff-") as temporary:
         root = Path(temporary)
@@ -183,7 +183,7 @@ def _patch(before: list[tuple[str, bytes, bool]], after: list[tuple[str, bytes, 
             _write(root / label, files)
             _git(root, "read-tree", "--empty")
             index = bytearray()
-            # Bound argv size while avoiding one subprocess per source file.
+            # WHY: Bound argv size while avoiding one subprocess per source file.
             for offset in range(0, len(files), 64):
                 batch = files[offset : offset + 64]
                 hashes = _git(
@@ -259,7 +259,7 @@ def _record(
             "scored_admitted": False,
         }
         digest = _publish(stage / "repair-result.json", result)
-        # Recheck originals before publishing; task/worker drift cannot be hidden.
+        # WHY: Recheck originals before publishing; task/worker drift cannot be hidden.
         load_task(task, task_digest)
         evidence._publish(stage, destination)
     return {

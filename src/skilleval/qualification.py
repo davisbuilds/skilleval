@@ -162,7 +162,7 @@ def _docker_save(source: BinaryIO) -> dict[str, Any]:
             )
         ):
             raise SkillEvalError("unsupported Docker-save root filesystem config")
-        # Docker-save can carry legacy per-layer metadata or modern OCI-layout
+        # WHY: Docker-save can carry legacy per-layer metadata or modern OCI-layout
         # metadata. Never accept arbitrary extra top-level policy documents.
         allowed = {"manifest.json", "index.json", "oci-layout", *required}
         for layer in image["Layers"]:
@@ -174,7 +174,7 @@ def _docker_save(source: BinaryIO) -> dict[str, Any]:
                 continue
             if not re.fullmatch(r"blobs/sha256/[a-f0-9]{64}", name):
                 raise SkillEvalError("unexpected file in Docker-save archive")
-            # Supplemental OCI manifests are content addressed too.
+            # WHY: Supplemental OCI manifests are content addressed too.
             extra = archive.extractfile(info)
             assert extra is not None
             observed = hashlib.sha256()
@@ -281,7 +281,7 @@ def plan_qualification(
             or any(not isinstance(arg, str) or not arg or "\x00" in arg for arg in argv)
         ):
             raise SkillEvalError("command must be a nonempty argv list of nonempty strings")
-    # Verify before reading the manifest digest, then bind that exact version.
+    # WHY: Verify before reading the manifest digest, then bind that exact version.
     # Reuse bounded no-follow reads if the path is replaced between checks.
     verify(bundle)
     with _directory(bundle) as root:
@@ -465,7 +465,7 @@ def _run_offline_qualification(
     if rebuilt != plan:
         raise SkillEvalError("qualification plan or captured bundle changed; replan explicitly")
     manifest = verify(bundle, plan["bundle_sha256"])
-    # v1.32.3 create --image otherwise auto-restores registry packs, inheriting
+    # WHY: v1.32.3 create --image otherwise auto-restores registry packs, inheriting
     # their network and mount policy. The literal Docker Hub route bypasses
     # that detector before fetching or interpreting a packed manifest; existing
     # local image archive paths bypass registry pack resolution entirely.
@@ -478,7 +478,7 @@ def _run_offline_qualification(
     if resolved is None:
         raise SkillEvalError(f"runtime binary unavailable: {runtime_binary}; nothing launched")
     binary = str(Path(resolved).resolve())
-    # Legacy/offline probes remain usable with alternate trusted executables.
+    # WHY: Legacy/offline probes remain usable with alternate trusted executables.
     # Admission requires this explicit complete-distribution capture route.
     from skilleval.identity import file_digest, snapshot_identity
     from skilleval.lifecycle import Lifecycle, LifecycleInterruptedError
@@ -493,7 +493,7 @@ def _run_offline_qualification(
     state.mkdir(mode=0o700)
     for directory in ("home", "config", "data", "cache", "run", "tmp", "docker"):
         (state / directory).mkdir(mode=0o700)
-    # macOS uses HOME/Library/Caches for its 103-byte Unix socket paths, ignoring
+    # WHY: macOS uses HOME/Library/Caches for its 103-byte Unix socket paths, ignoring
     # XDG_CACHE_HOME. Keep the actual runtime home shallow regardless of output.
     short_parent = "/private/tmp" if sys.platform == "darwin" else "/tmp"
     runtime_home = Path(tempfile.mkdtemp(prefix="ske-", dir=short_parent))
@@ -610,7 +610,7 @@ def _run_offline_qualification(
             )
             if identity != plan["image_archive"]:
                 raise SkillEvalError("local image archive changed; replan explicitly")
-            # Inspect the actual immutable-path copy supplied to the runtime too.
+            # WHY: Inspect the actual immutable-path copy supplied to the runtime too.
             _image_archive(Path(image), plan["image_archive"]["sha256"])
         attempted_create = True
         if session is not None:
@@ -715,7 +715,7 @@ def _run_offline_qualification(
             for action in ("stop", "delete"):
                 arguments = [binary, "machine", action, "--name", name]
                 if action == "delete":
-                    # DEVNULL cannot answer the interactive confirmation prompt.
+                    # WHY: DEVNULL cannot answer the interactive confirmation prompt.
                     arguments.append("--force")
                 result = _invoke(arguments, state, env, 30)
                 report["cleanup"].append({"action": action, **result})

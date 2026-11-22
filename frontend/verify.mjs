@@ -1,4 +1,4 @@
-// Optional real-browser check. Supply an installed Playwright module via
+// WHY: Optional real-browser check. Supply an installed Playwright module via
 // SKILLEVAL_PLAYWRIGHT_MODULE, or install it in the verification environment.
 // No browser package is needed to build, package, or use the review UI.
 import assert from "node:assert/strict";

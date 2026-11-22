@@ -114,7 +114,7 @@ def _namespace(output: Path, ticket: dict[str, Any]) -> None:
     directories = [output, state, *(state / name for name in ("config", "data", "tmp", "docker"))]
     home_directories = [home, home / "cache", home / "run"]
     if ticket.get("home_removal_authorized"):
-        # A killed rmtree can leave any subset of these directories. Existing
+        # WHY: A killed rmtree can leave any subset of these directories. Existing
         # entries must still be private real directories; missing ones are only
         # allowed after machine absence durably authorized home removal.
         directories += [entry for entry in home_directories if entry.exists() or entry.is_symlink()]
@@ -199,20 +199,20 @@ class Lifecycle:
                 state,
                 home,
                 env,
-                # The guest kernel and overlay metadata expose this identifier.
+                # WHY: The guest kernel and overlay metadata expose this identifier.
                 "workspace-" + uuid.uuid4().hex,
                 runtime,
                 image_identity,
                 config,
                 identity=identity,
             )
-            # Includes durable registration; excludes this timing metadata write.
+            # WHY: Includes durable registration; excludes this timing metadata write.
             timings["prepare_total"] = time.monotonic() - started
             session.ticket["timings_seconds"] = timings
             session.save()
             return session
         except BaseException:
-            # No VM can exist before prepare returns. Only remove paths whose
+            # WHY: No VM can exist before prepare returns. Only remove paths whose
             # exclusive creation succeeded here; preexisting output is untouched.
             try:
                 if home is not None:
@@ -269,7 +269,7 @@ class Lifecycle:
         }
         _namespace(output, ticket)
         session = cls(output, ticket)
-        session.save()  # durable before any VM mutation, including partial create
+        session.save()  # WHY: durable before any VM mutation, including partial create
         return session
 
     @classmethod

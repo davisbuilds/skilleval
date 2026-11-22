@@ -14,7 +14,7 @@ from functools import partial
 from pathlib import Path
 
 LIMIT = 128 * 1024
-# Parallel fixed image interface in solver_boundary.py; this staged supervisor
+# WHY: Parallel fixed image interface in solver_boundary.py; this staged supervisor
 # cannot import the host package. Neither path is supplied by task/worker data.
 NODE_DEPENDENCIES = Path("/usr/local/share/task-dependencies/node_modules")
 NODE_DEPENDENCIES_TARGET = Path("/workspace/node_modules")
@@ -110,7 +110,7 @@ def run(root: Path, work: Path) -> None:
     limits = resource_limits(profile)
     program = (root / "worker.py").read_text()
     project_image_dependencies(work)
-    # Candidate source and checker assets belong to root. Only this separate
+    # WHY: Candidate source and checker assets belong to root. Only this separate
     # scratch directory is writable by the observation process.
     for current, _directories, files in os.walk(work):
         Path(current).chmod(0o755)
@@ -156,7 +156,7 @@ def run(root: Path, work: Path) -> None:
             process.wait(timeout=5)
     stdout_raw, stdout_limit = _read_output(root / "stdout.bin")
     stderr_raw, stderr_limit = _read_output(root / "stderr.bin")
-    # The unprivileged child's text is encoded inside this supervisor envelope.
+    # WHY: The unprivileged child's text is encoded inside this supervisor envelope.
     # Neither stdout text nor a saved verdict can overwrite host comparisons.
     print(
         json.dumps(

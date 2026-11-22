@@ -86,7 +86,7 @@ def _writer(
     ):
         raise SkillEvalError("handoff requires a retained native writer attempt")
     run = Path(provenance["native_run"])
-    # Reuse collection to bind the selected result to the actual native archive,
+    # WHY: Reuse collection to bind the selected result to the actual native archive,
     # prompt, original baseline and recovery receipt. Result readback alone
     # validates candidate bytes but does not prove this native provenance.
     with tempfile.TemporaryDirectory(prefix="skilleval-handoff-writer-") as temporary:
@@ -205,7 +205,7 @@ def prepare_handoff(spec: SpecHandoffSpec, destination: Path) -> dict[str, Any]:
             "scored_admitted": False,
         }
         digest = repair._publish(stage / "handoff.json", value)
-        # Recheck the external source immediately before atomic publication.
+        # WHY: Recheck the external source immediately before atomic publication.
         _writer(spec)
         evidence._publish(stage, destination)
     return {
@@ -246,7 +246,7 @@ def load_handoff(path: Path, digest: str) -> dict[str, Any]:
     ):
         raise SkillEvalError("handoff lineage, prompt or stage policy differs")
     _, files = runner._snapshot_files(path / "input", value["input_sha256"])
-    # Snapshot traversal groups directories; compare globally sorted path/bytes/mode tuples.
+    # WHY: Snapshot traversal groups directories; compare globally sorted path/bytes/mode tuples.
     if sorted(files) != _input_files(task, spec, selected):
         raise SkillEvalError("handoff input differs from original baseline plus selected spec")
     check_task_baseline(path / "input")
@@ -349,7 +349,7 @@ def _consumption(
     if not isinstance(model, str):
         raise SkillEvalError("native consumption lacks model identity")
     if audit.get("metadata_complete") is False:
-        # The supported overflow receipt deliberately omits stage limits and
+        # WHY: The supported overflow receipt deliberately omits stage limits and
         # treatment metadata. Keep it as an unverified attempt, without claiming
         # that its input or budget satisfies the implementation-stage contract.
         return {
@@ -387,7 +387,7 @@ def _consumption(
             treatment = metadata.get("skill_treatment")
             if treatment != absent and not (treatment is None and receipt["status"] != "completed"):
                 raise SkillEvalError("implementation consumption requires absent selected skill")
-    # Incomplete attempts may fail before any archive exists. Keep those rows and
+    # WHY: Incomplete attempts may fail before any archive exists. Keep those rows and
     # their unknown usage; complete evidence always takes the full archive route.
     artifacts_verified = False
     evidence_status = "incomplete-no-artifacts"
@@ -420,7 +420,7 @@ def _consumption(
 
 
 def _ledger(attempts: list[dict[str, Any]]) -> dict[str, Any]:
-    # Reuse the existing all-attempt accounting without reinterpretation of
+    # WHY: Reuse the existing all-attempt accounting without reinterpretation of
     # native cumulative usage or treating an absent observation as zero.
     result: dict[str, Any] = efficiency_ledger([{"arm": "absent", "attempts": attempts}])["arms"][
         "absent"

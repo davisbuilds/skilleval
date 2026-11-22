@@ -62,7 +62,7 @@ def _bounded_result(result: dict[str, Any]) -> dict[str, Any]:
             if isinstance(value, str):
                 value = value[:1024]
             if name == "boundary" and isinstance(value, dict):
-                # The original complete receipt is retained separately. Keep
+                # WHY: The original complete receipt is retained separately. Keep
                 # its reviewed setup/teardown contract ahead of diagnostics.
                 fields = (
                     "schema_version",
@@ -101,7 +101,7 @@ def _bounded_result(result: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("command envelope lost required boundary metadata")
     metadata["metadata_truncated"] = metadata_truncated
     metadata["wire_bytes_limit"] = WIRE_BYTES
-    # Reserve both stream flags before either stream consumes the wire budget.
+    # WHY: Reserve both stream flags before either stream consumes the wire budget.
     # Updating false to true then shrinks the JSON rather than adding late keys.
     for name in ("stdout_truncated", "stderr_truncated", "output_truncated"):
         metadata.setdefault(name, False)
@@ -115,7 +115,7 @@ def _bounded_result(result: dict[str, Any]) -> dict[str, Any]:
             continue
         bounded[name + "_truncated"] = True
         bounded["output_truncated"] = True
-        # Search by Unicode code point; the actual encoder accounts for UTF-8
+        # WHY: Search by Unicode code point; the actual encoder accounts for UTF-8
         # and escaping of control bytes, quotes, backslashes, and the newline.
         low, high = 0, len(original) - 1
         while low < high:
@@ -179,7 +179,7 @@ def initialize(root: Path, work: Path) -> dict[str, Any]:
     for name in ("home", "codex-home", "evidence"):
         (root / name).mkdir(mode=0o700)
     (root / "evidence/commands").mkdir(mode=0o700)
-    # These credential-free placeholders satisfy the existing mount contract.
+    # WHY: These credential-free placeholders satisfy the existing mount contract.
     if (root / "models.json").read_bytes() != b"{}\n":
         raise ValueError("command model placeholder differs")
     if (root / "config.toml").read_bytes():
@@ -198,7 +198,7 @@ def execute(root: Path, work: Path, request: dict[str, Any]) -> dict[str, Any]:
     _write(directory / "request.json", request)
     prompt = directory / "stdin.txt"
     prompt.write_bytes(b"")
-    # The old jail is a trusted, inaccessible skeleton. Private mounts vanish
+    # WHY: The old jail is a trusted, inaccessible skeleton. Private mounts vanish
     # with the previous boundary process; state only becomes safe after reaping.
     jail = root / "solver-root"
     if jail.exists() or jail.is_symlink():

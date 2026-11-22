@@ -25,8 +25,8 @@ _ZERO = "0" * 40
 
 
 def _safe_path(value: str) -> str:
-    # Deliberately restrict this initial exporter instead of guessing Git's
-    # quoting, platform aliases, or arbitrary filename encodings.
+    # WHY: Deliberately restrict this exporter instead of guessing Git's quoting,
+    # platform aliases, or arbitrary filename encodings.
     if (
         not re.fullmatch(r"[A-Za-z0-9_./@+-]+", value)
         or value.startswith("/")
@@ -74,7 +74,7 @@ def _git(root: Path, *argv: str, data: bytes = b"") -> bytes:
     except (OSError, subprocess.TimeoutExpired):
         raise SkillEvalError("native Git reconstruction could not complete") from None
     if completed.returncode:
-        # Git diagnostics may contain private paths or patch contents.
+        # WHY: Git diagnostics may contain private paths or patch contents.
         raise SkillEvalError("native Git rejected review reconstruction")
     return completed.stdout
 
@@ -172,7 +172,7 @@ def _check_index(root: Path, sections: list[dict[str, str]], side: str) -> None:
 def _reconstruct(root: Path, files: list[tuple[str, bytes, bool]], patch: bytes) -> dict[str, Any]:
     sections = _patch_sections(patch)
     _git(root, "init", "--quiet", "--template=", "--initial-branch=candidate")
-    # Persist protections for subsequent ordinary native Git inspection too.
+    # WHY: Persist protections for subsequent ordinary native Git inspection too.
     for key, value in (
         ("core.hooksPath", os.devnull),
         ("core.attributesFile", os.devnull),
@@ -186,7 +186,7 @@ def _reconstruct(root: Path, files: list[tuple[str, bytes, bool]], patch: bytes)
         _git(root, "config", "--local", key, value)
     index = bytearray()
     for name, data, executable in files:
-        # Avoid add/checkout: attributes, filters and ignore rules must not alter
+        # WHY: Avoid add/checkout: attributes, filters and ignore rules must not alter
         # captured bytes or omit ignored candidate files.
         oid = _git(root, "hash-object", "-w", "--no-filters", "--stdin", data=data).strip()
         index.extend((b"100755" if executable else b"100644") + b" " + oid + b"\t")
@@ -287,7 +287,7 @@ def prepare_review(bundle: Path, expected_digest: str, destination: Path) -> dic
             target.write_bytes(data)
             target.chmod(0o755 if executable else 0o644)
         receipt = _reconstruct(temporary, files, content["review.patch"])
-        # Detect concurrent replacement of the pinned manifest before publication.
+        # WHY: Detect concurrent replacement of the pinned manifest before publication.
         evidence.verify(bundle, expected_digest)
         evidence._publish(temporary, destination)
         temporary = None

@@ -319,7 +319,7 @@ class Session:
                 raise ValueError("error.willRetry must be boolean")
             message = _text(error.get("message"), "error message")
             if params["willRetry"]:
-                # Retry notifications leave this turn active. Retain the
+                # WHY: Retry notifications leave this turn active. Retain the
                 # diagnostic while requiring explicit terminal success below.
                 self.events.append({"type": "warning", "message": message, "will_retry": True})
             else:

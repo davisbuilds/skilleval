@@ -33,13 +33,13 @@ NATIVE_PAX_PATH_BYTES = native_process.NATIVE_PAX_PATH_BYTES
 _pax_path_size = native_process._pax_path_size
 _stop = native_process._stop
 
-# Preserve the vendored file verbatim; presentation is owned by this launcher.
+# WHY: Preserve the vendored file verbatim; presentation is owned by this launcher.
 RELAY_PROGRAM = """import runpy, sys
 gateway = runpy.run_path('/opt/skilleval/openbench_gateway.py')
 gateway['_Handler'].server_version = 'LocalGateway'
 raise SystemExit(gateway['main'](sys.argv[1:]))
 """
-# The inherited cwd is the untrusted task. Exclude it from privileged imports.
+# WHY: The inherited cwd is the untrusted task. Exclude it from privileged imports.
 RELAY_PREFIX = ("python3", "-I", "-c", RELAY_PROGRAM)
 
 
@@ -130,7 +130,7 @@ def _archive(root: Path, work: Path, maximum: int, count: int) -> dict[str, Any]
                 if len(entries) + len(links) >= count or total > maximum:
                     return {"status": "limit-exceeded", "bytes": total, "files": len(entries)}
     metadata = json.dumps(links, sort_keys=True).encode()
-    # Preserve the existing short-name allowance; larger bounded PAX headers
+    # WHY: Preserve the existing short-name allowance; larger bounded PAX headers
     # also need their actual header bytes plus worst-case file block padding.
     headers = sum(
         max(4096, len(tarfile.TarInfo(name).tobuf(format=tarfile.PAX_FORMAT)) + 511)
@@ -194,7 +194,7 @@ def run(root: Path, work: Path) -> int:
     for name in ("events.jsonl", "stderr.log", "final.txt"):
         (evidence / name).touch(exist_ok=False)
     try:
-        # Synthetic negative control is never available on the authenticated route.
+        # WHY: Synthetic negative control is never available on the authenticated route.
         if settings.get("context_control") == "dirty-system":
             contaminated = Path("/etc/codex")
             contaminated.mkdir(exist_ok=True)
@@ -253,7 +253,7 @@ def run(root: Path, work: Path) -> int:
         result["relay_ready"] = ready
         if not ready:
             raise ValueError("guest relay unavailable")
-        # Apply to the child and descendants; logs are streamed, not buffered in RAM.
+        # WHY: Apply to the child and descendants; logs are streamed, not buffered in RAM.
         maximum = settings["max_artifact_bytes"]
         resource.setrlimit(resource.RLIMIT_FSIZE, (maximum, maximum))
         boundary_started = True
