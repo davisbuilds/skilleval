@@ -94,7 +94,8 @@ class Heartbeats:
         return False
 
     def stopped(self, token: str) -> dict[str, Any]:
-        # WHY: Permit already queued heartbeats to drain, then require a quiet window.
+        # WHY: Heartbeats queued before the stop would otherwise land inside the quiet window
+        # and read as a live process.
         time.sleep(0.5)
         before = self.count(token)
         time.sleep(1)

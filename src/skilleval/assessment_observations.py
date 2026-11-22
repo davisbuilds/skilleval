@@ -322,7 +322,6 @@ def observation_payloads(
                 unpacked = _archive_payloads(value)
                 for name, raw in unpacked.items():
                     payloads[prefix + "/artifacts/" + name] = raw
-                # WHY: Avoid duplicating opaque archive bytes; retain the identity and summary.
                 projection["process"]["stdout"] = evidence._json_bytes(
                     {key: item for key, item in value.items() if key != "base64"}
                 ).decode()

@@ -205,7 +205,6 @@ def _paths(source: Path, destination: Path) -> tuple[Path, Path]:
         raise SkillEvalError("source and destination must not be nested")
     if os.path.lexists(destination):
         raise SkillEvalError("destination already exists")
-    # WHY: Require an existing explicit parent; do not create unrelated directories.
     with _directory(destination.parent):
         pass
     return source, destination
@@ -280,7 +279,6 @@ def _capture(
         raise SkillEvalError("cannot capture evidence: nesting limit exceeded") from None
     finally:
         if temporary is not None:
-            # WHY: Only remove the private temporary directory allocated by this call.
             try:
                 shutil.rmtree(temporary)
             except OSError:

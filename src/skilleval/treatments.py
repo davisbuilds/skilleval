@@ -302,7 +302,6 @@ def _read_command(command: str, skill_path: str) -> bool:
         return False
     if len(argv) == 3 and Path(argv[0]).name in {"sh", "bash", "zsh"} and argv[1] in {"-c", "-lc"}:
         return _read_command(argv[2], skill_path)
-    # WHY: Full known content must also occur in the successful command output.
     if len(argv) in {2, 3} and Path(argv[0]).name == "cat":
         return argv[1:] in ([skill_path], ["--", skill_path])
     if len(argv) == 4 and Path(argv[0]).name == "sed" and argv[1] == "-n":

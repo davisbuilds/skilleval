@@ -100,9 +100,9 @@ for cid in (1,3):
 print('ROOT_VSOCK_PING='+json.dumps(report,sort_keys=True),flush=True)
 """
 
-# WHY: This program is supplied as a synthetic tool call, never run by ordinary tests
-# or imported as task code on the host. Its raw observations survive in both the
-# native command result and the collected task artifact.
+#: Synthetic tool-call program. Never run by ordinary tests or imported as task code
+#: on the host; its raw observations survive in both the native command result and
+#: the collected task artifact.
 PROBE = r'''
 import ctypes,errno,hashlib,http.client,json,os,pathlib,pty,select
 import signal,socket,stat,subprocess,sys,time
@@ -350,7 +350,6 @@ def worker(spec_path: Path) -> int:
         calls += 1
         if calls <= len(commands):
             item = responder.tool_item(json.loads(raw), commands[calls - 1])
-            # WHY: Each tool result has a unique call identity, including the code-mode route.
             item["id"] += "_" + str(calls)
             item["call_id"] += "_" + str(calls)
             if item["type"] == "custom_tool_call":
@@ -915,7 +914,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             workers[arm] = {"error": type(error).__name__}
         print(json.dumps({"arm": arm, **workers[arm]}), flush=True)
         if workers[arm].get("returncode") != 0:
-            # WHY: Do not create another VM when the previous worker cannot establish cleanup.
+            # WHY: A nonzero worker could not establish its VM cleanup; launching the next arm
+            # could leave two VMs running.
             break
     report = assess(output, markers, skill_body)
     report["workers"] = workers

@@ -404,7 +404,6 @@ def _dispatch_check(
         or seal["bindings"]["catalog_sha256"] != file_digest(Path(spec.catalog))
     ):
         raise SkillEvalError("admission does not cover this runtime/image/catalog route")
-    # WHY: A bounded seal remains bounded; it is never promoted to task/grader admission.
     timings["admission"] = time.monotonic() - admission_started
     timings["total"] = time.monotonic() - started
     return checked
@@ -680,7 +679,6 @@ def run_study(
             if any(value["status"] == "completed" for value in previous):
                 continue
             while len(attempts) < spec.max_attempts_per_cell:
-                # WHY: Recheck before EACH dispatch, including retries, not just at planning.
                 _plan(plan_path, expected_sha256)
                 preflight_timings: dict[str, float] = {}
                 admission = _dispatch_check(plan, spec, timings=preflight_timings)

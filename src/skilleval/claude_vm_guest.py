@@ -62,8 +62,6 @@ def _bounded_result(result: dict[str, Any]) -> dict[str, Any]:
             if isinstance(value, str):
                 value = value[:1024]
             if name == "boundary" and isinstance(value, dict):
-                # WHY: The original complete receipt is retained separately. Keep
-                # its reviewed setup/teardown contract ahead of diagnostics.
                 fields = (
                     "schema_version",
                     "profile",
@@ -179,7 +177,6 @@ def initialize(root: Path, work: Path) -> dict[str, Any]:
     for name in ("home", "codex-home", "evidence"):
         (root / name).mkdir(mode=0o700)
     (root / "evidence/commands").mkdir(mode=0o700)
-    # WHY: These credential-free placeholders satisfy the existing mount contract.
     if (root / "models.json").read_bytes() != b"{}\n":
         raise ValueError("command model placeholder differs")
     if (root / "config.toml").read_bytes():

@@ -110,8 +110,6 @@ def run(root: Path, work: Path) -> None:
     limits = resource_limits(profile)
     program = (root / "worker.py").read_text()
     project_image_dependencies(work)
-    # WHY: Candidate source and checker assets belong to root. Only this separate
-    # scratch directory is writable by the observation process.
     for current, _directories, files in os.walk(work):
         Path(current).chmod(0o755)
         for name in files:

@@ -99,8 +99,9 @@ def _eligible(spec: RepairAssessmentSpec, prepared: Path, run: Path) -> _Context
     model = assessment_model(spec)
     model.model_validate_json(retained["final.txt"])
     value = evidence._parse_json(retained["final.txt"])
-    # WHY: First establish every non-range constraint with known safe line bounds.
-    # Missing/non-UTF8/empty evidence and invalid aliases still fail here.
+    # WHY: Correction may change only line ranges. Validate a copy with neutral bounds
+    # first, so any other defect (missing, non-UTF-8 or empty evidence, invalid aliases)
+    # still refuses correction.
     bounded = copy.deepcopy(value)
     for _, raw_bound in _citations(bounded):
         raw_bound.update(line_start=1, line_end=1)
@@ -187,7 +188,6 @@ def _correction_packet(
             {name: hashlib.sha256(raw).hexdigest() for name, raw in sorted(files.items())}
         )
     ).hexdigest()
-    # WHY: Original IDs remain in previous-result.json; this receipt pins only the new invocation.
     return files, digest, metadata | {"packet_sha256": digest}
 
 

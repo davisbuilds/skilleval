@@ -199,14 +199,14 @@ class Lifecycle:
                 state,
                 home,
                 env,
-                # WHY: The guest kernel and overlay metadata expose this identifier.
+                # WHY: The guest kernel and overlay metadata expose this name, so it carries no
+                # task or host detail.
                 "workspace-" + uuid.uuid4().hex,
                 runtime,
                 image_identity,
                 config,
                 identity=identity,
             )
-            # WHY: Includes durable registration; excludes this timing metadata write.
             timings["prepare_total"] = time.monotonic() - started
             session.ticket["timings_seconds"] = timings
             session.save()

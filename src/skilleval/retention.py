@@ -123,7 +123,8 @@ def prune_image(output: Path, *, apply: bool = False) -> dict[str, Any]:
 
                 receipt = output / "image-retention.json"
                 _write(receipt, {**result, "status": "removing"})
-                # WHY: Recheck paths and recorded cleanup immediately before unlink.
+                # WHY: The archive, its source or the run's cleanup record can change after the
+                # eligibility check; unlink only if all three still match what was inspected.
                 if (
                     _fingerprint(initial)
                     != _fingerprint(os.stat("image.tar", dir_fd=state, follow_symlinks=False))
@@ -299,7 +300,6 @@ def _staging_evidence(output: Path, name: str) -> dict[str, bytes | None]:
         ):
             raise SkillEvalError("unsupported native staging producer")
         if "audit" in report:
-            # WHY: Native receipts compact their identity into a hash-bound full audit.
             from skilleval.judge import _native_audit
 
             audit = _native_audit(output, report)

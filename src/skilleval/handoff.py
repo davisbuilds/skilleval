@@ -205,7 +205,9 @@ def prepare_handoff(spec: SpecHandoffSpec, destination: Path) -> dict[str, Any]:
             "scored_admitted": False,
         }
         digest = repair._publish(stage / "handoff.json", value)
-        # WHY: Recheck the external source immediately before atomic publication.
+        # WHY: The task, writer result or native run can change while the stage is built.
+        # Recheck them so a handoff never publishes against inputs that changed after
+        # validation.
         _writer(spec)
         evidence._publish(stage, destination)
     return {
@@ -420,8 +422,6 @@ def _consumption(
 
 
 def _ledger(attempts: list[dict[str, Any]]) -> dict[str, Any]:
-    # WHY: Reuse the existing all-attempt accounting without reinterpretation of
-    # native cumulative usage or treating an absent observation as zero.
     result: dict[str, Any] = efficiency_ledger([{"arm": "absent", "attempts": attempts}])["arms"][
         "absent"
     ]

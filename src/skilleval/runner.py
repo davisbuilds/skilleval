@@ -1060,8 +1060,8 @@ def run_native(
                 raise
 
     def require_auth_horizon(required_seconds: float) -> None:
-        # WHY: Recheck retained credentials after host preparation and VM setup. Never
-        # refresh credentials or disclose their expiration in retained evidence.
+        # WHY: Never refresh credentials or record their expiry: retained evidence must not
+        # disclose credential lifetime.
         if (
             not math.isfinite(auth.expires_at)
             or auth.expires_at <= time.time() + required_seconds + 30
@@ -1132,7 +1132,6 @@ def run_native(
         report["native_config"] = config
         report["native_config_sha256"] = hashlib.sha256(config.encode()).hexdigest()
         _exclusive(output / "prompt.txt", prompt.encode())
-        # WHY: Recheck both authority-bearing copied inputs before the first VM mutation.
         evidence.verify(input_bundle, expected_digest)
         require_auth_horizon(limits.lifetime_seconds)
         # WHY: Start conservatively before broker startup. Its actual expiry is no

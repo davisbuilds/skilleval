@@ -194,7 +194,6 @@ def run(root: Path, work: Path) -> int:
     for name in ("events.jsonl", "stderr.log", "final.txt"):
         (evidence / name).touch(exist_ok=False)
     try:
-        # WHY: Synthetic negative control is never available on the authenticated route.
         if settings.get("context_control") == "dirty-system":
             contaminated = Path("/etc/codex")
             contaminated.mkdir(exist_ok=True)
@@ -253,7 +252,6 @@ def run(root: Path, work: Path) -> int:
         result["relay_ready"] = ready
         if not ready:
             raise ValueError("guest relay unavailable")
-        # WHY: Apply to the child and descendants; logs are streamed, not buffered in RAM.
         maximum = settings["max_artifact_bytes"]
         resource.setrlimit(resource.RLIMIT_FSIZE, (maximum, maximum))
         boundary_started = True

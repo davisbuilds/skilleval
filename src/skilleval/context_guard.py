@@ -16,7 +16,8 @@ from typing import Any
 
 MAX_FILES = 10_000
 MAX_BYTES = 32 * 1024 * 1024
-MAX_REQUEST_BYTES = 8 * 1024 * 1024  # WHY: GatewayLimits' largest accepted request budget.
+#: GatewayLimits' largest accepted request budget.
+MAX_REQUEST_BYTES = 8 * 1024 * 1024
 INSTRUCTIONS = {"AGENTS.md", "AGENTS.override.md"}
 
 

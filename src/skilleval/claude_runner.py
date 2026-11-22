@@ -145,7 +145,6 @@ def _merge_artifacts(
         raise SkillEvalError("guest artifacts collide with trusted native evidence")
     if len(names) + len(additions) > count:
         raise SkillEvalError("combined Claude artifacts exceed file bound")
-    # WHY: Include tar headers and padding before allocating the final archive.
     projected = guest.stat().st_size + sum(len(raw) + 4096 for raw in additions.values())
     if projected > maximum:
         raise SkillEvalError("combined Claude artifacts exceed byte bound")
@@ -404,7 +403,8 @@ def run_claude_judge(
         }
         report["execution_status"] = parsed["execution_status"]
         report["parse_errors"] = parsed["parse_errors"]
-        # WHY: The MCP process owns ticket writes while it runs; recover its latest steps.
+        # WHY: The MCP process writes the ticket while it runs, so the in-memory session is
+        # stale; reload it to recover the latest steps.
         session = Lifecycle.load(output)
         collection_started = time.monotonic()
         report["collection_result"] = claude_vm.collect(

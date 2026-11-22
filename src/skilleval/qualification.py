@@ -174,7 +174,6 @@ def _docker_save(source: BinaryIO) -> dict[str, Any]:
                 continue
             if not re.fullmatch(r"blobs/sha256/[a-f0-9]{64}", name):
                 raise SkillEvalError("unexpected file in Docker-save archive")
-            # WHY: Supplemental OCI manifests are content addressed too.
             extra = archive.extractfile(info)
             assert extra is not None
             observed = hashlib.sha256()
@@ -610,7 +609,6 @@ def _run_offline_qualification(
             )
             if identity != plan["image_archive"]:
                 raise SkillEvalError("local image archive changed; replan explicitly")
-            # WHY: Inspect the actual immutable-path copy supplied to the runtime too.
             _image_archive(Path(image), plan["image_archive"]["sha256"])
         attempted_create = True
         if session is not None:

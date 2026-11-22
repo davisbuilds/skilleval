@@ -106,7 +106,6 @@ def validate_layout(root: Path, work: Path) -> tuple[Path, Path]:
             path
         ):
             raise ValueError("boundary root overlaps image dependencies")
-    # WHY: Keep task/controller paths away from the runtime and kernel mount points.
     for path in (root, work):
         if path == Path("/") or any(
             path.is_relative_to(prefix)

@@ -320,7 +320,6 @@ def _check_packet(packet: Path, payloads: dict[str, bytes]) -> None:
     source_modes = _packet_modes(payloads)
     try:
         with evidence._directory(packet) as directory:
-            # WHY: Reuse evidence's no-follow traversal, including bounded reads.
             for name, data, executable in evidence._walk(directory):
                 if name == "manifest.json":
                     evidence.verify(packet, _input_digest(payloads))

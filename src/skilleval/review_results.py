@@ -211,8 +211,6 @@ def build_review(spec_path: Path, output: Path) -> dict[str, Any]:
     encoded = (json.dumps(value, indent=2, ensure_ascii=False) + "\n").encode()
     if len(encoded) > PACKET_LIMIT:
         raise SkillEvalError("review packet exceeds size limit")
-    # WHY: Validate everything before claiming the new output directory.
-    # Never update an older packet.
     output.mkdir(mode=0o700, parents=True, exist_ok=False)
     (output / "packet.json").write_bytes(encoded)
     (output / "source-spec.json").write_bytes(raw)
