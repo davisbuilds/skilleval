@@ -127,7 +127,7 @@ def test_preparation_freezes_evidence_and_exact_native_policy(selected, tmp_path
     assert not {"author", "sources", "usage", "cost", "status", "model"} & set(schema["properties"])
     assert schema["additionalProperties"] is False
     assert json.loads((prepared / "packet/source-modes.json").read_text())["files"] == {}
-    # Frozen copies support recording after the original selected sources move.
+    # WHY: Frozen copies support recording after the original selected sources move.
     path.unlink()
     (tmp_path / "request.txt").unlink()
     run = native_run(tmp_path, prepared, receipt)
@@ -168,7 +168,7 @@ def test_record_injects_canonical_accounting_and_native_attribution(selected, tm
     ).read_bytes()
     assert (review / "audit/input/result.schema.json").exists()
     assert not (review / "responses").exists()
-    # A new recording does not mutate the original generation or native evidence.
+    # WHY: A new recording does not mutate the original generation or native evidence.
     before = (review / "packet.json").read_bytes()
     again = synthesis.record_synthesis(prepared, receipt["sha256"], native, tmp_path / "replay")
     assert again["status"] == "completed"

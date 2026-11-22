@@ -114,7 +114,7 @@ console.log(JSON.stringify({initial:read('initial'),wide:read('wide-loaded'),
             if row.get("attrs", {}) and row["attrs"].get("phase") == "older-window"
         ]
 
-    # The first URL requests only one minute of data; wide phase metadata cannot
+    # WHY: The first URL requests only one minute of data; wide phase metadata cannot
     # override the actual query's lower bound.
     assert older(observed["wide"]) == []
     assert older(observed["initial"]) == []

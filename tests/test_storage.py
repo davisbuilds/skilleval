@@ -55,7 +55,6 @@ def test_private_store_is_idempotent_and_outputs_remain_unreserved(tmp_path: Pat
     target = Path(storage_path("experiments", "debugging-v1", root=root)["path"])
     assert target == root / "experiments/debugging-v1"
     assert not target.exists()
-    # Existing artifacts survive subsequent initialization.
     target.mkdir()
     (target / "receipt.json").write_text("retained")
     initialize(root)

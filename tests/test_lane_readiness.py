@@ -228,7 +228,7 @@ def test_changed_effective_execution_dependency_invalidates_all_lanes(
 
 
 def test_changed_reference_input_invalidates_only_its_case(retained, task, tmp_path):
-    # The original report has no reference execution; add one without changing
+    # WHY: The original report has no reference execution; add one without changing
     # the baseline, then change only that reference's snapshot on the next plan.
     spec, _, _, runtime, prior, prior_digest, _ = retained
     case = spec.validation[0]

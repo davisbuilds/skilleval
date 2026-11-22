@@ -86,7 +86,7 @@ def test_actual_response_input_forms_preserve_exact_body_detection(
     }
     result = observe(json.dumps(request).encode())
     assert result["skill_body_observed"] is True
-    # Name/path alone do not establish an exact catalog entry.
+    # WHY: Name/path alone do not establish an exact catalog entry.
     assert result["skill_metadata_observed"] is False
     matches = result["match_diagnostics"]
     assert matches["input"]["name"] == 2

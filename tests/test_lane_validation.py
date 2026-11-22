@@ -350,7 +350,7 @@ def test_incomplete_lane_keeps_envelope_and_stops_on_failed_cleanup(
         tmp_path / "failed.json",
         argv=("authored-lane", failure),
     )
-    # Put failure first so failed cleanup must prevent the second launch.
+    # WHY: Put failure first so failed cleanup must prevent the second launch.
     case = spec.validation[0]
     spec = spec.model_copy(
         update={"validation": (case.model_copy(update={"lanes": tuple(reversed(case.lanes))}),)}

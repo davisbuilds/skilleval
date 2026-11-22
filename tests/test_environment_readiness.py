@@ -94,7 +94,7 @@ def record_validation(state, spec):
 
 @pytest.fixture
 def readiness(task, route, tmp_path, monkeypatch):
-    # Hash isolated copies rather than modifying the active execution checkout.
+    # WHY: Hash isolated copies rather than modifying the active execution checkout.
     source_root = Path(identity.__file__).resolve().parents[2]
     copied = tmp_path / "control-source"
     for name in identity.SOURCES:
@@ -278,11 +278,11 @@ def test_changed_executed_conditions_require_new_environment_evidence(readiness,
             }
         )
     elif change == "image":
-        # This is a real valid Docker-save archive with different pinned bytes.
+        # WHY: This is a real valid Docker-save archive with different pinned bytes.
         from test_qualification import docker_archive
 
         image, _digest = docker_archive(readiness["root"] / "new-image")
-        # Fixture writer is deterministic; append tar padding to distinguish content.
+        # WHY: Fixture writer is deterministic; append tar padding to distinguish content.
         image.write_bytes(image.read_bytes() + b"\0" * 1024)
         spec = spec.model_copy(
             update={

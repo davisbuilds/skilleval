@@ -234,7 +234,7 @@ def test_prepare_failure_removes_only_owned_output_and_runtime_home(
         assert archive.exists()
         assert not list(output.parent.glob(".lifecycle-*"))
     finally:
-        # Also clean up when this regression test runs against the old behavior.
+        # WHY: Also clean up when this regression test runs against the old behavior.
         for home in homes:
             shutil.rmtree(home, ignore_errors=True)
         shutil.rmtree(output, ignore_errors=True)
@@ -330,12 +330,12 @@ def test_inventory_failure_cannot_masquerade_as_absence(tmp_path: Path) -> None:
 
 def test_absence_without_positive_control_retains_recovery_state(tmp_path: Path) -> None:
     session = session_at(tmp_path)
-    session.mark_create_attempted()  # interruption before create's observable effect
+    session.mark_create_attempted()  # WHY: interruption before create's observable effect
     result = session.cleanup()
     assert result["cleanup_complete"] is False
     assert "known-present" in result["error"]
     assert Path(result["runtime_home"]).is_dir()
-    # Test fixture repairs missing control by performing the pending create.
+    # WHY: Test fixture repairs missing control by performing the pending create.
     session.invoke("fixture_create", ["machine", "create", "--name", session.machine])
     assert recover(session.output)["cleanup_complete"]
 
@@ -370,7 +370,7 @@ def test_native_controller_timeout_kills_real_process_group_descendant(
 
     class ReadyProcess(subprocess.Popen[bytes]):
         def wait(self, timeout: float | None = None) -> int:
-            # Establish the real descendant before starting the timed wait. Hosted
+            # WHY: Establish the real descendant before starting the timed wait. Hosted
             # interpreter startup can exceed the timeout we are trying to test.
             # Popen, timed wait, and process-group termination remain real.
             if timeout is not None:
@@ -454,7 +454,7 @@ def test_sigterm_unwinds_client_and_real_child_group(tmp_path: Path) -> None:
     try:
         wait_for(beat)
         before = beat.read_text()
-        # Wait for the heartbeat to advance rather than for a fixed interval: on a
+        # WHY: Wait for the heartbeat to advance rather than for a fixed interval: on a
         # contended runner the child may not be scheduled within any short sleep.
         deadline = time.monotonic() + 10
         while beat.read_text() == before and time.monotonic() < deadline:
@@ -490,7 +490,7 @@ def test_cleanup_identity_drift_is_retained_report_instead_of_exception(tmp_path
     result = session.cleanup()
     assert result["identity_changed"] is True
     assert result["cleanup_complete"] is False
-    assert len(result["steps"]) == before  # no changed-runtime command was launched
+    assert len(result["steps"]) == before  # WHY: no changed-runtime command was launched
     assert Path(result["runtime_home"]).exists()
     component.write_bytes(original)
     assert recover(session.output)["cleanup_complete"]
@@ -572,7 +572,7 @@ def test_probe_observer_receives_only_registered_tokens_and_remains_alive(tmp_pa
     import threading
 
     probe = runpy.run_path(str(Path(__file__).parents[1] / "scripts" / "qualify-lifecycle.py"))
-    # macOS's 103-byte UDS pathname limit also applies to this synthetic control.
+    # WHY: macOS's 103-byte UDS pathname limit also applies to this synthetic control.
     with tempfile.TemporaryDirectory(prefix="sko-", dir="/tmp") as shallow:
         observer = probe["Heartbeats"](Path(shallow) / "observer.sock")
         token = observer.register()
@@ -598,7 +598,7 @@ def test_probe_observer_receives_only_registered_tokens_and_remains_alive(tmp_pa
         assert quiet["stopped"] and quiet["observer_alive"]
         assert quiet["before"] >= 3
         assert observer.close() == {"thread_stopped": True, "socket_closed": True}
-        assert observer.stopped(token)["stopped"] is False  # dead detector is never absence
+        assert observer.stopped(token)["stopped"] is False  # WHY: dead detector is never absence
     for wait in (True, False):
         command = probe["background_command"]("synthetic", wait=wait)
         ast.parse(command[-1])

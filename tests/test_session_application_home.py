@@ -97,7 +97,7 @@ def test_changed_fixture_fails_even_when_application_succeeds(tmp_path, monkeypa
 def test_home_log_header_truncation_marks_evidence_incomplete(tmp_path, monkeypatch, capfd):
     source, dependencies = authored_runtime(tmp_path, monkeypatch)
     monkeypatch.setattr(worker, "RAW_LIMIT", 1024)
-    # Process output fits in the per-case budget. The retained record, including
+    # WHY: Process output fits in the per-case budget. The retained record, including
     # its label, exceeds it: losing the stderr tail must invalidate completeness.
     monkeypatch.setenv("OUTPUT_BYTES", "511")
     result = worker.run_application_home(source, dependencies)

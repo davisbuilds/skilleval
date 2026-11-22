@@ -50,7 +50,7 @@ def test_acceptance_schema_and_structural_validation_are_offline(mapped, tmp_pat
     source = tmp_path / "missing-inputs.json"
     mapped["task"] = "/missing/task.json"
     source.write_text(json.dumps(mapped))
-    # Generic validation intentionally validates declaration shape only.
+    # WHY: Generic validation intentionally validates declaration shape only.
     assert invoke("validate", "acceptance-map-spec", str(source)).returncode == 0
     prepared = invoke(
         "task-package", "prepare-acceptance", str(source), "--output", str(tmp_path / "map.json")

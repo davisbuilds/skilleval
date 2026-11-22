@@ -71,7 +71,7 @@ def test_identity_refuses_unreadable_distribution_directory(tmp_path: Path, dire
     assert "lib/engine" in known_readable["files"]
     target = binary.parent / directory
     original_mode = target.stat().st_mode & 0o777
-    target.chmod(0o111)  # Known paths remain usable; listing must fail closed.
+    target.chmod(0o111)  # WHY: Known paths remain usable; listing must fail closed.
     try:
         assert (binary.parent / "smolvm-bin").read_bytes() == b"initial"
         assert (binary.parent / "lib/engine").read_bytes() == b"engine"

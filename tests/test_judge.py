@@ -364,7 +364,7 @@ def test_failed_empty_review_retains_failure_separately_from_no_findings(tmp_pat
     result = judge.record_agentic_review(bundle, report, packet, run, tmp_path / "records")
     assert result["review_execution_status"] == "failed"
     assert result["finding_count"] == 0
-    assert result["execution_status"] == "completed"  # Judge execution only.
+    assert result["execution_status"] == "completed"  # WHY: Judge execution only.
     assert result["independent_audit"] == "required-pending"
 
 
@@ -468,7 +468,7 @@ def test_untrusted_tar_extensions_are_rejected_before_parser_allocation(
     header.size = 2**63 - 1
     malicious = header.tobuf(format=tarfile.GNU_FORMAT)
     assert len(malicious) == 512
-    # Keep receipt hashes coherent so identity checks do not mask parser refusal.
+    # WHY: Keep receipt hashes coherent so identity checks do not mask parser refusal.
     archive_digest = hashlib.sha256(malicious).hexdigest()
     manifest = {
         "schema_version": 1,
@@ -523,7 +523,7 @@ def test_agentic_source_modes_survive_preparation_capture_verification_and_recor
         (original / "case/source").mkdir(parents=True)
         (original / "case/instruction.md").write_text("Inspect the supplied executable tool.\n")
         source_prefix = "case/source"
-    # Authored positive control, never arbitrary imported code. Execution via
+    # WHY: Authored positive control, never arbitrary imported code. Execution via
     # the original command form distinguishes the lost-executable-bit defect.
     program = b"#!/bin/sh\nprintf 'mode-sensitive-control\\n'\n"
     tool_relative = source_prefix + "/tool.sh"
@@ -557,7 +557,7 @@ def test_agentic_source_modes_survive_preparation_capture_verification_and_recor
     frozen = tmp_path / "mode-input"
     receipt = evidence.snapshot(packet, frozen)
     assert receipt["manifest_sha256"] == prep["input_digest"]
-    # A read-only evidence snapshot still retains the executable flag.
+    # WHY: A read-only evidence snapshot still retains the executable flag.
     assert (frozen / tool_relative).stat().st_mode & 0o111
     run = run_directory(tmp_path, prep, control)
     records = tmp_path / "mode-records"
@@ -604,7 +604,7 @@ def test_judge_prompt_supplies_actual_native_model_effort_and_pins_identity(
     assert f"model={MODEL}" in prep["prompt"]
     assert f"effort={EFFORT}" in prep["prompt"]
     run = run_directory(tmp_path, prep, control)
-    # Preserve the envelope hash while removing its actual backend identity;
+    # WHY: Preserve the envelope hash while removing its actual backend identity;
     # recording must still bind the exact prepared invocation prompt.
     changed = prep["prompt"].replace(f"model={MODEL}", "model=guess-the-backend")
     (run / "prompt.txt").write_text(changed)
@@ -698,7 +698,7 @@ def test_native_audit_drift_is_rejected_before_recording(tmp_path: Path, mutatio
         swapped["input_digest"] = "0" * 64
         replacement = json.dumps(swapped).encode()
         audit_file.write_bytes(replacement)
-        # Even a coherent replacement reference cannot borrow this invocation.
+        # WHY: Even a coherent replacement reference cannot borrow this invocation.
         receipt["audit"]["bytes"] = len(replacement)
         receipt["audit"]["sha256"] = hashlib.sha256(replacement).hexdigest()
     elif mutation == "path":
@@ -730,7 +730,7 @@ def test_native_recording_requires_fixed_model_and_effort_even_when_claims_are_c
         receipt["model"] = result["model"]
     else:
         receipt["effort"] = "low"
-    # The actual fixed-backend prompt remains byte-identical and hash-bound.
+    # WHY: The actual fixed-backend prompt remains byte-identical and hash-bound.
     assert (run / "prompt.txt").read_bytes() == prep["prompt"].encode()
     assert f"model={MODEL}\neffort={EFFORT}" in prep["prompt"]
     receipt_file.write_text(json.dumps(receipt))
@@ -769,7 +769,7 @@ def test_completed_run_cannot_claim_incomplete_native_audit_metadata(tmp_path: P
     run = run_directory(tmp_path, prep, document(bundle, prep))
     audit = json.loads(attach_native_audit(run))
     audit["metadata_complete"] = False
-    # Keep both the normal identity and outer audit reference coherent; a
+    # WHY: Keep both the normal identity and outer audit reference coherent; a
     # completed invocation must not borrow the partial-only diagnostic escape.
     replacement = json.dumps(audit).encode()
     (run / "native-audit.json").write_bytes(replacement)

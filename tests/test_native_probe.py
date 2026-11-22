@@ -85,7 +85,7 @@ def test_native_code_mode_custom_exec_remains_the_local_tool_loop(probe: dict[st
 
 
 def test_second_request_requires_the_actual_successful_result(probe: dict[str, Any]) -> None:
-    # The earlier assistant call contains the marker as source text. It is not
+    # WHY: The earlier assistant call contains the marker as source text. It is not
     # evidence that native execution ran or returned a successful result.
     call = {
         "type": "custom_tool_call",
@@ -185,8 +185,8 @@ def test_rejected_request_diagnostic_records_shapes_without_values(probe: dict[s
             {
                 "type": "reasoning",
                 "summary": [],
-                # A known protocol key forbidden on this item type. Null
-                # content is now supported; this still exercises key diagnostics.
+                # WHY: A known protocol key forbidden on this item type. Null content is supported,
+                # so this case exercises key diagnostics instead.
                 "role": "assistant",
                 "content": [
                     {

@@ -88,7 +88,7 @@ def test_review_retains_excerpt_without_exposing_source_paths(tmp_path: Path) ->
     assert packet["exceptions"][0]["category"] == "qualified-unknown"
     assert receipt["human_questions"] == 0
     assert (tmp_path / "result.txt").read_bytes() == original
-    # The portable excerpt packet remains usable after the original source moves.
+    # WHY: The portable excerpt packet remains usable after the original source moves.
     (tmp_path / "result.txt").unlink()
     assert load_packet(tmp_path / "review") == packet
 

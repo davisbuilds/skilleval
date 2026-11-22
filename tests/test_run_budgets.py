@@ -58,7 +58,7 @@ def test_native_omitted_deadline_reaches_guest_and_supervisor(
     assert report["gateway_limits"]["max_requests"] == 1024
     assert report["gateway_limits"]["timeout_seconds"] == 300
     assert report["cleanup_complete"] and report["observed_absent"]
-    # Inspect the exact archive delivered to the synthetic runtime, plus the
+    # WHY: Inspect the exact archive delivered to the synthetic runtime, plus the
     # actual command persisted by the lifecycle supervisor.
     assert delivered["native_timeout_seconds"] == deadline
     assert delivered["request_timeout_seconds"] == 300
@@ -299,7 +299,7 @@ def test_long_gateway_still_rechecks_auth_before_each_request(
         test_transport=transport,
     ) as broker:
         assert request(broker.socket_path)[0] == 200
-        # Still inside the gateway lifetime, but insufficient validity for one
+        # WHY: Still inside the gateway lifetime, but insufficient validity for one
         # more request plus its expiry guard. No refresh or provider dispatch.
         monkeypatch.setattr(gateway.time, "time", lambda: initial + 2906)
         status, raw = request(broker.socket_path)

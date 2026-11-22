@@ -53,7 +53,7 @@ def test_rollouts_retain_a_real_prefix_and_add_distinct_late_messages_and_usage(
         assert final_state["messages"][1]["content"] == [
             {"type": "text", "text": "First pass complete.\nOne entry remains."}
         ]
-        # Cache tokens are a subset of input, not extra usage.
+        # WHY: Cache tokens are a subset of input, not extra usage.
         assert sum(row["tokens_in"] for row in final_state["usage"]) == 1130
         assert sum(row["cache_read_tokens"] for row in final_state["usage"]) == 570
 
