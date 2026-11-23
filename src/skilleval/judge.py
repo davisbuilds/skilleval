@@ -304,7 +304,7 @@ def _read_result(raw: bytes) -> AgenticCalibrationResult:
 def _verified_packet(
     bundle: Path, packet: Path
 ) -> tuple[calibration.CalibrationSuite, str, dict[str, bytes], str]:
-    # Verify actual bytes, including unexpected files and symlinks, rather than
+    # WHY: Verify actual bytes, including unexpected files and symlinks, rather than
     # accepting packet.json's self-reported identity.
     meta = grading._parse_json(grading._read_regular(packet / "packet.json", 64 * 1024))
     if not isinstance(meta, dict) or type(meta.get("investigation")) is not bool:
@@ -320,7 +320,6 @@ def _check_packet(packet: Path, payloads: dict[str, bytes]) -> None:
     source_modes = _packet_modes(payloads)
     try:
         with evidence._directory(packet) as directory:
-            # Reuse evidence's no-follow traversal, including bounded reads.
             for name, data, executable in evidence._walk(directory):
                 if name == "manifest.json":
                     evidence.verify(packet, _input_digest(payloads))
@@ -399,7 +398,7 @@ def _validate_judgments(
 def _native_audit(run_dir: Path, receipt: dict[str, Any]) -> bytes | None:
     """Validate an optional hash-bound bulk audit before retaining its bytes."""
     if "audit" not in receipt:
-        return None  # Earlier native receipts stored the full metadata inline.
+        return None  # WHY: Earlier native receipts stored the full metadata inline.
     reference = receipt["audit"]
     if (
         not isinstance(reference, dict)
@@ -423,7 +422,7 @@ def _native_audit(run_dir: Path, receipt: dict[str, Any]) -> bytes | None:
         audit = grading._parse_json(raw)
     except SkillEvalError:
         raise SkillEvalError("invalid native audit JSON") from None
-    # These invocation/evidence fields stay inline in compact receipts. Bulk
+    # WHY: These invocation/evidence fields stay inline in compact receipts. Bulk
     # identity, inventory, step and change fields are deliberately not identical.
     identity_fields = (
         "schema_version",
@@ -451,7 +450,7 @@ def _native_audit(run_dir: Path, receipt: dict[str, Any]) -> bytes | None:
     ):
         raise SkillEvalError("native audit invocation differs from compact receipt")
     if audit.get("metadata_complete") is False:
-        # The producer preserves an oversized audit outside the recordable
+        # WHY: The producer preserves an oversized audit outside the recordable
         # bundle and emits only this bounded partial diagnostic. It makes no
         # runtime identity or complete-metadata claim.
         overflow = receipt.get("audit_overflow")
@@ -601,7 +600,7 @@ def _run_files(
         raise SkillEvalError("cannot inspect native artifact archive") from None
     if seen != set(entries):
         raise SkillEvalError("native artifact archive is incomplete")
-    # Interrupted repairs can leave useful source edits without final text or
+    # WHY: Interrupted repairs can leave useful source edits without final text or
     # events. The runner retains empty files for absent members; allow only that
     # exact representation, and never relax completed or judge/review evidence.
     missing = b"" if mode == "repair" and receipt["status"] != "completed" else None
@@ -854,7 +853,7 @@ def _review_packet(
                 if field in finding
             }
         )
-    # Execution evidence is supplied by the retained native review receipt,
+    # WHY: Execution evidence is supplied by the retained native review receipt,
     # never accepted from report prose or a model's claimed completion.
     execution = "unknown"
     review_receipt = report_file.parent / "native-run.json"

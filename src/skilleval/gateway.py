@@ -36,10 +36,10 @@ MODEL = "gpt-6.1-sol"
 EFFORT = "high"
 MAX_REQUESTS = 1024
 NATIVE_REQUEST_BACKSTOP = 1024
-# Leave space for a refused attempt beyond every admitted request.
+#: Room for one refused attempt beyond every admitted request.
 MAX_RECEIPTS = 2 * MAX_REQUESTS + 4
-# Reserve ready/stopped plus one observer-cap diagnostic and HTTP refusal. The
-# receipt sink independently fails closed if other rejection traffic fills it.
+#: Reserves ready/stopped plus one observer-cap diagnostic and HTTP refusal. The
+#: receipt sink independently fails closed if other rejection traffic fills it.
 MAX_REQUEST_OBSERVATIONS = MAX_RECEIPTS - 4
 UPSTREAM_COMMIT = "39fec903f1e73bd3e8e3b15cacefbcce051bd1a6"
 UPSTREAM_SHA256 = "ed02f42cc52a22cfd16d49e3d639a27ce66de0b3bc3a9f41758c646bb26aed48"
@@ -177,7 +177,7 @@ def load_chatgpt_auth(path: Path, *, minimum_validity_seconds: float = 30) -> Ho
             raise ValueError
         tokens = document["tokens"]
         token, account = tokens["access_token"], tokens["account_id"]
-        # Reuse upstream's strict ASCII/header validation before retaining values.
+        # WHY: Reuse upstream's strict ASCII/header validation before retaining values.
         _upstream.AuthCredentials(token, account)
         parts = token.split(".")
         if len(parts) != 3:
@@ -464,7 +464,7 @@ def broker_scope(
             return
         if request_observer is not None:
             try:
-                # Body bytes contain guest-supplied task/history, never the host
+                # WHY: Body bytes contain guest-supplied task/history, never the host
                 # authorization headers constructed by the forwarding transport.
                 request_observer(body)
             except Exception as error:

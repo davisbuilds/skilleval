@@ -140,6 +140,12 @@ possible instead of calling the model again. Avoid unrelated requalification.
   handoff only when needed to resume unfinished work. Commit shared docs and
   keep status current. Before archiving, preserve lasting decisions and open
   work in maintained docs and repair links.
+- **Comments.** Don't add code comments. The one exception is a decision record:
+  start it with `WHY:` and state a non-obvious reason the code can't express.
+  Never justify a shortcut in a comment; fix it or record it in
+  `docs/project/BACKLOG.md`. `python3 scripts/check_comments.py` enforces a
+  ratchet: after deleting comments run it with `--update`, and never raise a
+  count in `.comment-baseline.json`.
 - **Commit and push.** Commit coherent chunks, staging by explicit path and
   inspecting the staged set. Push your task branch and open a PR once the work
   is complete and the local gate passes; don't push directly to `main`. Never

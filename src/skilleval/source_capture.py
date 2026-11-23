@@ -217,7 +217,7 @@ def _object_controls(
     retained: dict[str, dict[str, Any]],
     removed: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    # A successful known-present read establishes that the missing-object check
+    # WHY: A successful known-present read establishes that the missing-object check
     # can see this exact generated Git store. Batch output distinguishes missing
     # objects from a command failure instead of accepting arbitrary exit errors.
     positive = next(row["git_blob"] for row in retained.values() if row["mode"] != "120000")

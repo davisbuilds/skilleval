@@ -167,7 +167,6 @@ def test_question_only_final_text_is_not_a_selected_spec(writer_factory, tmp_pat
         runtime.read_text().replace("Final synthetic answer", "Which records should export?")
     )
     attempt = writer_factory(files={})
-    # The native final answer is retained but no specification file was produced.
     assert (attempt["native"] / "final.txt").read_text() == "Which records should export?"
     with pytest.raises(SkillEvalError, match="artifact changed"):
         handoff.prepare_handoff(attempt["spec"], tmp_path / "handoff")
@@ -263,7 +262,6 @@ def test_control_with_borrowed_native_provenance_is_rejected(writer, tmp_path):
     record["provenance"] = genuine["provenance"]
     record_path.write_bytes(evidence._json_bytes(record))
     spec = spec.model_copy(update={"result_sha256": file_digest(record_path)})
-    # The candidate and patch are internally valid; only native lineage is false.
     repair.result_files(writer["task"], spec.task_sha256, control_dir, spec.result_sha256)
     with pytest.raises(SkillEvalError, match="differs from retained native attempt"):
         handoff.prepare_handoff(spec, tmp_path / "forged-handoff")
@@ -378,7 +376,6 @@ def test_audit_cannot_hide_skill_installation_behind_compact_absent_receipt(writ
         mode="repair",
         **writer["route"],
     )
-    # A valid known-positive implementation precedes the contradictory audit.
     handoff.check_implementation(output, prepared["sha256"], run)
     audit_path = run / "native-audit.json"
     audit = json.loads(audit_path.read_text())
@@ -397,7 +394,7 @@ def test_markdown_suffix_is_a_supported_selected_document(writer_factory, tmp_pa
     name = "docs/specs/feature" + suffix
     attempt = writer_factory(files={name: SPEC_BYTES.decode()})
     spec = attempt["spec"].model_copy(update={"spec_path": name})
-    # Validate through the public input model, not model_copy's unchecked update.
+    # WHY: Validate through the public input model, not model_copy's unchecked update.
     spec = handoff.SpecHandoffSpec.model_validate_json(spec.model_dump_json())
     prepared = handoff.prepare_handoff(spec, tmp_path / "handoff")
     handoff.load_handoff(tmp_path / "handoff", prepared["sha256"])

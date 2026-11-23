@@ -153,7 +153,7 @@ def _guest_invocation(
     if command is not None:
         _require(actual == command, "guest command invocation differs")
     else:
-        # Source identity binds the program. Check its authority-bearing route
+        # WHY: Source identity binds the program. Check its authority-bearing route
         # and meaningful command kind without duplicating large inline programs.
         _require(
             len(actual) == 3
@@ -280,7 +280,7 @@ def _ticket(path: Path, identity: dict[str, Any], image: dict[str, Any]) -> dict
 
 
 def _native_policy() -> dict[str, Any]:
-    # Own trusted source only; the main guard prevents every opt-in operation.
+    # WHY: Own trusted source only; the main guard prevents every opt-in operation.
     return runpy.run_path(str(Path(__file__).resolve().parents[2] / "scripts/qualify-native.py"))
 
 

@@ -46,7 +46,7 @@ def solver_process(
     if __package__:
         from skilleval import native_process
     else:
-        # The supervisor is invoked with -I. Import only the explicitly staged,
+        # WHY: The supervisor is invoked with -I. Import only the explicitly staged,
         # trusted controller modules, which the solver's root does not expose.
         sys.path.insert(0, str(Path(__file__).parent))
         import native_process  # type: ignore[no-redef,import-not-found]
@@ -66,7 +66,7 @@ def solver_process(
         "LANG": "C.UTF-8",
         "PYTHONDONTWRITEBYTECODE": "1",
     }
-    # Apply the task-file limit only to the launcher and its descendants. The
+    # WHY: Apply the task-file limit only to the launcher and its descendants. The
     # controller must still be able to record JSON-escaped bounded logs.
     launch = (
         "import os,resource,sys; "
@@ -132,7 +132,7 @@ def main() -> None:
         result, env, profile = solver_process(spec, work)
         boundary = result["boundary"]
         reaped = isinstance(boundary, dict) and boundary.get("namespace_reaped") is True
-        # A missing/failed handshake must still yield the bounded logs and
+        # WHY: A missing/failed handshake must still yield the bounded logs and
         # receipt. Never inspect mutable task state until teardown is observed.
         after = inventory(work) if reaped else None
         result.update(

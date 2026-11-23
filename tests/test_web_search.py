@@ -187,7 +187,7 @@ def test_native_hosted_action_history_requires_opt_in(action: dict) -> None:
     ],
 )
 def test_native_optional_history_metadata_does_not_block_replay(fields: dict) -> None:
-    # Pinned Codex DTO uses optional fields and an open status string; missing
+    # WHY: Pinned Codex DTO uses optional fields and an open status string; missing
     # metadata is not evidence of a completed search, but remains valid history.
     body = search_body()
     body["input"][1] = {"type": "web_search_call", **fields}

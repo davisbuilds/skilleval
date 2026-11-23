@@ -17,8 +17,8 @@ from skilleval.grading import _read_regular
 from skilleval.identity import environment_identity, object_digest
 from skilleval.qualification import _image_archive
 
-# Two 1 MiB log streams can expand sixfold when encoded as JSON. A package
-# has at most eight lanes; envelope and expected-observation space is additional.
+#: Two 1 MiB log streams can expand sixfold when encoded as JSON. A package has at
+#: most eight lanes; envelope and expected-observation space is additional.
 MAX_LANE_BYTES = 16 * 1024 * 1024
 MAX_VALIDATION_BYTES = 160 * 1024 * 1024
 ExecutionProfile = Literal["native-root-v1", "solver-isolated-v1"]
@@ -400,7 +400,7 @@ def checked_validation(
                 raise SkillEvalError("task validation observations missing")
             process = observed["process"]
             if scoped:
-                # Preserve the old interpretation. Its original expected fields
+                # WHY: Preserve the old interpretation. Its original expected fields
                 # and raw process binding remain checked; today's parser need not
                 # reproduce an obsolete interpretation to replay these same bytes.
                 if (

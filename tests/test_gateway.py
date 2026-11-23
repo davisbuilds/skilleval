@@ -34,7 +34,7 @@ from skilleval.gateway import (
     relay_scope,
 )
 
-# Real-socket controls adapted from OpenBench's MIT-licensed gateway tests at
+# WHY: Real-socket controls adapted from OpenBench's MIT-licensed gateway tests at
 # 39fec903f1e73bd3e8e3b15cacefbcce051bd1a6. See _vendor/OPENBENCH_LICENSE.
 BODY: dict[str, object] = {
     "model": MODEL,
@@ -90,7 +90,7 @@ def request(
         else http.client.HTTPConnection("127.0.0.1", port, timeout=3)
     )
     try:
-        # An early policy refusal can close while http.client is still sending
+        # WHY: An early policy refusal can close while http.client is still sending
         # the body. Read that response once; never retry or dispatch another call.
         with suppress(BrokenPipeError):
             connection.request(
@@ -104,7 +104,7 @@ def request(
 
 @pytest.fixture
 def short_root() -> Iterator[Path]:
-    # macOS AF_UNIX paths cannot fit pytest's full generated directory name.
+    # WHY: macOS AF_UNIX paths cannot fit pytest's full generated directory name.
     with tempfile.TemporaryDirectory(prefix="segw-", dir="/tmp") as name:
         yield Path(name)
 
@@ -541,7 +541,7 @@ def test_scope_exit_cancels_active_stream_and_observes_cleanup(short_root: Path)
 def test_native_budget_allows_delayed_active_stream_but_still_enforces_deadline(
     short_root: Path, short_deadline: bool
 ) -> None:
-    # Scale the actual native policy to keep this real HTTP broker/relay check
+    # WHY: Scale the actual native policy to keep this real HTTP broker/relay check
     # fast: the old 90s policy cuts off at 0.9s, the new 300s policy allows 3s.
     # Four progress frames precede terminal usage at approximately 1.4 seconds.
     limits = gateway.native_limits(900)
@@ -585,7 +585,7 @@ def test_native_budget_allows_delayed_active_stream_but_still_enforces_deadline(
     ) as broker:
         with relay_scope(broker.socket_path, limits=limits) as relay:
             status, body = request(broker.socket_path, port=relay.port)
-            # A truncated HTTP body can reach the client before the broker
+            # WHY: A truncated HTTP body can reach the client before the broker
             # finalizes its outcome. Teardown would race that receipt with revocation.
             assert request_recorded.wait(3), "broker did not record the request outcome"
         assert relay.clean

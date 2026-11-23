@@ -287,7 +287,6 @@ def test_assessment_json_rejects_duplicate_keys_and_nonfinite_numbers(
 ) -> None:
     bundle = imported_bundle(tmp_path)
     document = assessment_document(bundle)
-    # The original is a valid control; only the inserted JSON changes admission.
     original = json.dumps(document)
     assessment = tmp_path / "assessment.json"
     assessment.write_text(original[:-1] + insertion + "}")

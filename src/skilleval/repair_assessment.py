@@ -718,7 +718,7 @@ def _tool_evidence(raw: bytes, policy: ToolEvidencePolicy = "legacy-v1") -> dict
         output = item.get("aggregated_output", "")
         if not isinstance(command, str) or not isinstance(output, str):
             continue
-        # Scan full strings before display truncation. Keep v1 bytes reconstructible;
+        # WHY: Scan full strings before display truncation. Keep v1 bytes reconstructible;
         # v2 removes the bare application-setting keyword, not known harness access.
         tokens: tuple[str, ...] = ("/var/tmp/native", "/run/native", "/skills/", "SKILL.md")
         if policy == "legacy-v1":
@@ -802,7 +802,7 @@ def _execution_tool_evidence(raw: bytes) -> dict[str, Any]:
             if not isinstance(command, str):
                 gaps["malformed_command_events"] += 1
                 continue
-            # Interpret lookups only in commands. Ordinary source/diff output can
+            # WHY: Interpret lookups only in commands. Ordinary source/diff output can
             # contain those same expressions without consulting the harness home.
             if _execution_harness_marker(command) or _HARNESS_HOME_LOOKUP.search(command):
                 gaps["command_events_withheld"] += 1
@@ -914,7 +914,7 @@ def _execution_harness_marker(value: str) -> bool:
 def _execution_metadata(value: Any, gaps: dict[str, int], *, limit: int = 4096) -> str | None:
     if not isinstance(value, str) or not value:
         return None
-    # Never truncate identity into a potentially matching ID or working directory.
+    # WHY: Never truncate identity into a potentially matching ID or working directory.
     if len(value) > limit or _execution_harness_marker(value):
         gaps["metadata_withheld"] += 1
         return None
@@ -943,7 +943,7 @@ def _execution_output(item: dict[str, Any]) -> tuple[str | None, str, int]:
 def _requirement_projection(spec: RepairAssessmentSpec) -> dict[str, Any] | None:
     if spec.requirement_policy is None:
         return None
-    # Local import avoids acceptance's existing criterion-contract dependency.
+    # WHY: Local import avoids acceptance's existing criterion-contract dependency.
     from skilleval.acceptance import load_acceptance
     from skilleval.task_package import load_package
 
@@ -1150,7 +1150,7 @@ def packet(
     result_model = assessment_model(spec)
     result_schema = result_model.model_json_schema()
     if document and not specification and not research and requirements is None:
-        # Historical packets pin this schema as well as the rubric. Runtime
+        # WHY: Historical packets pin this schema as well as the rubric. Runtime
         # parsing accepts new versions, but old document-v1 packet bytes do not
         # change merely because another profile was added.
         result_schema["properties"]["rubric_version"]["enum"] = [

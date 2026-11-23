@@ -22,7 +22,7 @@ from skilleval.qualification import _image_archive
 
 def _completed(output: Path) -> tuple[dict[str, Any], str, bytes]:
     with _directory(output) as directory:
-        # A malformed ticket must not fall back to a more permissive old report.
+        # WHY: A malformed ticket must not fall back to a more permissive old report.
         try:
             os.stat("recovery.json", dir_fd=directory, follow_symlinks=False)
             name = "recovery.json"
@@ -51,7 +51,7 @@ def _completed(output: Path) -> tuple[dict[str, Any], str, bytes]:
             raise SkillEvalError("machine absence was not established")
         image = record["image"]
     else:
-        # Older qualification runs predate recovery tickets. Require their
+        # WHY: Older qualification runs predate recovery tickets. Require their
         # explicit successful stop/delete records, never infer from status alone.
         cleanup = record.get("cleanup", [])
         if not isinstance(cleanup, list) or any(not isinstance(row, dict) for row in cleanup):
@@ -123,7 +123,8 @@ def prune_image(output: Path, *, apply: bool = False) -> dict[str, Any]:
 
                 receipt = output / "image-retention.json"
                 _write(receipt, {**result, "status": "removing"})
-                # Recheck paths and recorded cleanup immediately before unlink.
+                # WHY: The archive, its source or the run's cleanup record can change after the
+                # eligibility check; unlink only if all three still match what was inspected.
                 if (
                     _fingerprint(initial)
                     != _fingerprint(os.stat("image.tar", dir_fd=state, follow_symlinks=False))
@@ -210,7 +211,7 @@ def _staging_evidence(output: Path, name: str) -> dict[str, bytes | None]:
         inventories = [step for step in steps if step.get("argv") == invocation]
         positive = False
         for step in inventories:
-            # Earlier failed observations remain diagnostic evidence.
+            # WHY: Earlier failed observations remain diagnostic evidence.
             with suppress(SkillEvalError):
                 if isinstance(step.get("stdout"), str):
                     positive |= machine in inventory_names(step)
@@ -299,7 +300,6 @@ def _staging_evidence(output: Path, name: str) -> dict[str, bytes | None]:
         ):
             raise SkillEvalError("unsupported native staging producer")
         if "audit" in report:
-            # Native receipts compact their identity into a hash-bound full audit.
             from skilleval.judge import _native_audit
 
             audit = _native_audit(output, report)

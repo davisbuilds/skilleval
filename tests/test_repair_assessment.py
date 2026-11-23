@@ -285,7 +285,7 @@ def test_report_cannot_override_frozen_comparison_or_cleanup(
         path.write_text(json.dumps(value))
     else:
         ticket = json.loads((path.parent / "recovery.json").read_text())
-        # The recorded runtime home lives outside tmp_path; remove it afterwards.
+        # WHY: The recorded runtime home lives outside tmp_path; remove it afterwards.
         retained = Path(ticket["runtime_home"])
         retained.mkdir()
         request.addfinalizer(retained.rmdir)

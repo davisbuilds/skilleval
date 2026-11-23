@@ -32,7 +32,7 @@ def _stop(process: subprocess.Popen[bytes], *, process_group_grace_seconds: floa
         os.killpg(process.pid, signal.SIGTERM)
     with suppress(subprocess.TimeoutExpired):
         process.wait(timeout=3)
-    # A host MCP descendant may own a separately grouped runtime client. Give
+    # WHY: A host MCP descendant may own a separately grouped runtime client. Give
     # its TERM handler time to unwind even when the native leader exited first.
     while time.monotonic() < grace_deadline:
         try:
@@ -40,7 +40,7 @@ def _stop(process: subprocess.Popen[bytes], *, process_group_grace_seconds: floa
         except ProcessLookupError:
             break
         time.sleep(min(0.02, max(0, grace_deadline - time.monotonic())))
-    # The leader may exit on TERM while its descendants ignore it. Always kill
+    # WHY: The leader may exit on TERM while its descendants ignore it. Always kill
     # the original group before collecting mutable guest artifacts.
     with suppress(ProcessLookupError):
         os.killpg(process.pid, signal.SIGKILL)
@@ -176,7 +176,7 @@ def _execute_native(
                                 process.stdin.close()
                         except (ValueError, UnicodeError) as error:
                             protocol_error = str(error)[:1024]
-            # A process can close all streams before it exits.
+            # WHY: A process can close all streams before it exits.
             if stopped_at is None:
                 try:
                     process.wait(timeout=max(0.001, timeout - (time.monotonic() - started)))

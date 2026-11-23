@@ -63,7 +63,7 @@ def _record(config: dict[str, Any], entry: dict[str, Any]) -> None:
     try:
         _append_log(Path(config["tools_log"]), entry)
     except (OSError, ValueError, TypeError, SkillEvalError):
-        # Revoke before reporting failure. The marker also rejects a fresh MCP
+        # WHY: Revoke before reporting failure. The marker also rejects a fresh MCP
         # process if the native client reconnects after this process exits.
         with suppress(OSError):
             gate.unlink(missing_ok=True)
@@ -266,7 +266,7 @@ def _tool_call(
         _validate_command(command, requested)
         assert isinstance(command, str)
         _gate(Path(config["gate_path"]), config["deadline_monotonic"])
-        # Lifecycle guest invocation adds ten seconds for supervision and five
+        # WHY: Lifecycle guest invocation adds ten seconds for supervision and five
         # for its host client. Never dispatch into the final cleanup headroom.
         remaining = math.floor(config["deadline_monotonic"] - time.monotonic()) - 15
         if remaining < 1:
@@ -286,7 +286,7 @@ def _tool_call(
         )
         _record(config, entry)
         return {"content": [{"type": "text", "text": json.dumps(result)}], "isError": True}
-    # Commit intent before any guest effect. A recorder failure revokes work.
+    # WHY: Commit intent before any guest effect. A recorder failure revokes work.
     entry["event"] = "command-started"
     _record(config, entry)
     try:
@@ -343,7 +343,7 @@ def serve(
         if descriptor is None:
             raw = source.readline(MCP_INPUT_BYTES + 1)
         else:
-            # Read the descriptor directly so BufferedReader prefetch cannot
+            # WHY: Read the descriptor directly so BufferedReader prefetch cannot
             # hide a queued MCP message from select's kernel readiness check.
             while b"\n" not in pending:
                 if not select.select(

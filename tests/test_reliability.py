@@ -189,7 +189,6 @@ def test_positive_control_detects_stability_and_stable_wrong_answers_separately(
         row["stable_resolved_count"] == row["opportunity_count"] for row in result["invariance"]
     )
     assert result["independent_audit"] == "required-pending"
-    # A consistently wrong answer is stable; authored-label disagreement remains visible.
     wrong = {
         probe["probe_id"]: "unsupported"
         for probe in json.loads((root / "evidence/original/suite.json").read_text())["probes"]

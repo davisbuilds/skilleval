@@ -146,7 +146,7 @@ def _verified_skill(
     manifest = evidence.verify(bundle, expected_digest)
     meta = manifest["meta"]
     name = meta.get("skill_name")
-    # Old immutable captures keep their original name and bytes. Never rename a
+    # WHY: Old immutable captures keep their original name and bytes. Never rename a
     # pinned package during installation; neutral presentation needs a new capture.
     notice_path = meta.get("notice_path", _LEGACY_NOTICE)
     if (
@@ -302,7 +302,6 @@ def _read_command(command: str, skill_path: str) -> bool:
         return False
     if len(argv) == 3 and Path(argv[0]).name in {"sh", "bash", "zsh"} and argv[1] in {"-c", "-lc"}:
         return _read_command(argv[2], skill_path)
-    # Full known content must also occur in the successful command output.
     if len(argv) in {2, 3} and Path(argv[0]).name == "cat":
         return argv[1:] in ([skill_path], ["--", skill_path])
     if len(argv) == 4 and Path(argv[0]).name == "sed" and argv[1] == "-n":
@@ -380,7 +379,7 @@ def request_observer(
     if not skill_path.endswith(f"/skills/{name}/SKILL.md"):
         raise SkillEvalError("observed path must name the installed native skill")
     body = {relative: data for relative, data, _ in files}[f"skills/{name}/SKILL.md"].decode()
-    # Capture only accepts a single-line description. Native YAML presentation
+    # WHY: Capture only accepts a single-line description. Native YAML presentation
     # can differ for complex metadata; unsupported presentations stay unmatched.
     description_match = re.search(r"^description:[ \t]*(\S[^\r\n]*)$", body, re.MULTILINE)
     assert description_match is not None

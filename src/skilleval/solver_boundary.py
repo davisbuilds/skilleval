@@ -40,7 +40,7 @@ ETC_PATHS = ("/etc/alternatives", "/etc/ssl", "/etc/ld.so.cache")
 NODE_DEPENDENCIES = Path("/usr/local/share/task-dependencies/node_modules")
 NODE_DEPENDENCIES_TARGET = Path("/workspace/node_modules")
 TRANSPORT_FILTER = "vsock-deny-v1"
-# Linux v6.18 uapi audit.h, asm-generic/unistd.h, x86 syscall_64.tbl.
+# WHY: Linux v6.18 uapi audit.h, asm-generic/unistd.h, x86 syscall_64.tbl.
 # The profile intentionally supports only the native little-endian 64-bit ABI.
 SECCOMP_ARCHES = {
     "aarch64": (0xC00000B7, 198, 199),
@@ -106,7 +106,6 @@ def validate_layout(root: Path, work: Path) -> tuple[Path, Path]:
             path
         ):
             raise ValueError("boundary root overlaps image dependencies")
-    # Keep task/controller paths away from the runtime and kernel mount points.
     for path in (root, work):
         if path == Path("/") or any(
             path.is_relative_to(prefix)
@@ -299,7 +298,7 @@ def _bind(linux: Linux, source: Path, target: Path, *, readonly: bool) -> None:
 def _runtime_tree(linux: Linux, jail: Path, source: Path) -> None:
     target = _destination(jail, source)
     if source.is_symlink():
-        # Merged-/usr layouts are common. Preserve only symlinks that resolve
+        # WHY: Merged-/usr layouts are common. Preserve only symlinks that resolve
         # within the explicit runtime allowlist, never arbitrary image paths.
         resolved = source.resolve(strict=True)
         if not resolved.is_relative_to("/usr"):
@@ -490,7 +489,7 @@ def _native(
     argv: list[str],
 ) -> None:
     try:
-        # Handshakes after each PDEATHSIG ensure a supervisor lost during setup
+        # WHY: Handshakes after each PDEATHSIG ensure a supervisor lost during setup
         # cannot leave an orphan. setresuid/setresgid clear the first setting.
         linux.prctl(1, signal.SIGKILL)
         _message(channel, {"phase": "forked"})
@@ -648,7 +647,7 @@ def run(root: Path, work: Path, argv: list[str]) -> int:
             receipt.update(status="ready", no_new_privs=True, capabilities_cleared=True)
             native_started = time.monotonic()
             _message(parent_channel, {"continue": True})
-            # A successful exec closes the channel. Failure is an explicit
+            # WHY: A successful exec closes the channel. Failure is an explicit
             # setup message, never a native-run success inferred from EOF alone.
             tail = parent_channel.recv(16384)
             if tail:
