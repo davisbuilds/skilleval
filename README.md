@@ -53,8 +53,9 @@ uv run skilleval --help
 scripts/check
 ```
 
-The deterministic gate runs lint, format checks, type checks, tests, and whitespace
-checks. It does not launch VMs, read credentials, or call models. Tests run in
+The deterministic gate runs lint, format checks, the comment ratchet
+(`scripts/check_comments.py`), type checks, tests, and whitespace checks. It
+does not launch VMs, read credentials, or call models. Tests run in
 parallel through pytest-xdist with one worker per CPU; set `PYTEST_WORKERS` to a
 count, or to `0` to run them serially in one process. Native execution
 has been exercised on Apple Silicon macOS with Linux ARM64 guests; this is not a

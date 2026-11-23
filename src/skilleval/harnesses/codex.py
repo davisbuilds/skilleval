@@ -93,7 +93,7 @@ def parse_codex_jsonl(text: str) -> dict[str, Any]:
                     "exit_code": item.get("exit_code"),
                 }
             )
-    # A malformed stream has incomplete evidence even if a terminal record survived.
+    # WHY: A malformed stream has incomplete evidence even if a terminal record survived.
     if result["parse_errors"]:
         result["execution_status"] = "unknown"
     return result

@@ -41,7 +41,7 @@ def test_failed_turn_preserves_usage_and_unknown_events() -> None:
         )
     )
     assert result["execution_status"] == "failed"
-    assert result["usage"] is None  # second turn's usage is unknown
+    assert result["usage"] is None
     assert result["usage_observations"] == [{"input_tokens": 12, "output_tokens": 0}, None]
     assert result["events"][1]["value"] == 3
     assert result["errors"] == [{"message": "interrupted"}]

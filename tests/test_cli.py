@@ -238,7 +238,7 @@ def test_documented_offline_workflow(tmp_path: Path) -> None:
     stored = output / "demo-assessment-1.json"
     before = stored.read_bytes()
     assert json.loads(before)["evidence_sha256"] == digest
-    assert invoke(*arguments).returncode == 2  # cannot replace a prior judgment
+    assert invoke(*arguments).returncode == 2
     assert stored.read_bytes() == before
 
     controls = tmp_path / "controls.json"
@@ -258,7 +258,6 @@ def test_documented_offline_workflow(tmp_path: Path) -> None:
     assert planned.returncode == 0, planned.stderr
     assert json.loads(plan_path.read_text())["admitted"] is False
     assert json.loads(plan_path.read_text())["bundle_sha256"] == digest
-    # A synthetic digest only tests planning; never ask a runtime to acquire it.
     assert invoke("inspect", str(bundle), "--sha256", digest).returncode == 0
 
 

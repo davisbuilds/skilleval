@@ -469,7 +469,6 @@ def _review_spec(
     )
     if status != "completed":
         host_limit += f" This is a partial synthesis from a {status} invocation."
-    # Keep all authored limitations while reserving one existing row for host context.
     summary["limitations"][0] = host_limit + " " + summary["limitations"][0]
     profile = resolve_profile(judge_profile)
     return ReviewSpec.model_validate_json(

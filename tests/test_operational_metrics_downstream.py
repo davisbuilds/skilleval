@@ -131,7 +131,6 @@ def test_authored_controls_are_actual_integrations_with_distinguishing_mutations
     controls.apply(unused, design, "unwired")
     assert unused_app.read_bytes() == prior
     assert (unused / "frontend/src/OperatorMemoryControl.svelte").read_bytes() == original
-    # This host test proves authored patch structure, not browser rejection.
 
 
 def test_entry_point_refuses_host_before_importing_candidate(tmp_path):
@@ -207,7 +206,6 @@ def test_lane_packaging_freezes_trusted_assets_and_verifies_baseline_without_exe
         assert "mutation" not in archive.read("driver.json").decode()
         assert "design" not in archive.read("driver.json").decode()
         assert json.loads(archive.read("driver.json"))["enter"][0]["target"]["name"] == "Monitor"
-    # The same argv refuses host execution before loading trusted/candidate code.
     completed = subprocess.run(argv, cwd=tmp_path, text=True, capture_output=True, check=False)
     assert completed.returncode != 0
     assert "requires the explicit solver-isolated-v1 guest route" in completed.stderr

@@ -142,7 +142,7 @@ def _read_selective_reference(
 def _read_reference(
     ref: AssessmentObservationSource, task_path: Path, task_digest: str, candidate_digest: str
 ) -> tuple[Any, dict[str, Any]]:
-    # Local imports avoid repair -> judge -> assessment import cycles.
+    # WHY: Local imports avoid repair -> judge -> assessment import cycles.
     from skilleval import task_package
     from skilleval.study import _clean_native
 
@@ -322,7 +322,6 @@ def observation_payloads(
                 unpacked = _archive_payloads(value)
                 for name, raw in unpacked.items():
                     payloads[prefix + "/artifacts/" + name] = raw
-                # Avoid duplicating opaque archive bytes; retain the identity and summary.
                 projection["process"]["stdout"] = evidence._json_bytes(
                     {key: item for key, item in value.items() if key != "base64"}
                 ).decode()

@@ -82,7 +82,7 @@ def _annotations(value: object, text: object) -> None:
         _text(item["title"])
         _text(item["url"])
         start, end = item["start_index"], item["end_index"]
-        # The wire offsets can count encoded characters; bound them by UTF-8
+        # WHY: The wire offsets can count encoded characters; bound them by UTF-8
         # bytes rather than assuming Python codepoint offsets are equivalent.
         if (
             type(start) is not int

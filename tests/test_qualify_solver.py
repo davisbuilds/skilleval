@@ -490,7 +490,6 @@ def test_metadata_identity_is_reported_separately_from_file_access(
 def test_probe_program_is_valid_and_import_is_inert(solver_probe: Any) -> None:
     compile(solver_probe.PROBE, "solver-control-command", "exec")
     compile(solver_probe.ROOT_PING, "root-ping-control", "exec")
-    # Import/--help must remain inert: the opt-in worker is the only VM entry.
     assert (
         solver_probe.PROMPT
         == "Change the value to 'after', run the unit tests, and report the result."

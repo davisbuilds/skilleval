@@ -121,7 +121,7 @@ def _usage(model_usage: Any, model: str | None) -> tuple[dict[str, Any], list[st
         return normalized, ["modelUsage entry must be an object"]
     if "canonicalModel" in raw and raw["canonicalModel"] != CLAUDE_MODEL:
         errors.append("modelUsage canonicalModel differs from pinned model")
-    # Do not substitute result.usage, assistant usage, or guessed cache zeros.
+    # WHY: Do not substitute result.usage, assistant usage, or guessed cache zeros.
     for native, target in _COUNTS.items():
         if native not in raw:
             errors.append(f"modelUsage.{native} missing")
@@ -135,7 +135,7 @@ def _usage(model_usage: Any, model: str | None) -> tuple[dict[str, Any], list[st
         return normalized, errors
     if raw.get("thinkingTokens", 0) > raw["outputTokens"]:
         return normalized, ["modelUsage thinking tokens exceed output tokens"]
-    # Anthropic's inputTokens excludes both cache read and cache creation counts.
+    # WHY: Anthropic's inputTokens excludes both cache read and cache creation counts.
     input_tokens = sum(
         raw[key] for key in ("inputTokens", "cacheReadInputTokens", "cacheCreationInputTokens")
     )
@@ -147,7 +147,7 @@ def _usage(model_usage: Any, model: str | None) -> tuple[dict[str, Any], list[st
         uncached_input_tokens=raw["inputTokens"] + raw["cacheCreationInputTokens"],
         total_tokens=total_tokens,
     )
-    # Native thinking fields can contain placeholder zeros; keep reasoning unknown.
+    # WHY: Native thinking fields can contain placeholder zeros; keep reasoning unknown.
     return normalized, errors
 
 
@@ -249,7 +249,7 @@ def parse_claude_jsonl(text: str) -> dict[str, Any]:
                 continue
             synthetic_api_error = False
             if kind == "assistant":
-                # Native API failures can be assistant-shaped diagnostics rather
+                # WHY: Native API failures can be assistant-shaped diagnostics rather
                 # than inference responses. Only the exact observed marker and
                 # explicit native flag bypass inference-model identity checking.
                 synthetic_api_error = (
@@ -314,7 +314,7 @@ def parse_claude_jsonl(text: str) -> dict[str, Any]:
                         "arguments": arguments,
                         "status": "in_progress",
                     }
-                    # EndConversation is a native session-control tool, never
+                    # WHY: EndConversation is a native session-control tool, never
                     # an executor. It may return a reflection tool_result before
                     # a later call ends the process; missing results stay pending.
                     # https://code.claude.com/docs/en/tools-reference#endconversation-tool-behavior

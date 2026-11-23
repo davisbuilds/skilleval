@@ -55,7 +55,7 @@ def validate_environment(
                 KeyError,
                 LifecycleInterruptedError,
             ) as error:
-                # Preparation can fail before a lifecycle ticket exists. Do not
+                # WHY: Preparation can fail before a lifecycle ticket exists. Do not
                 # invent a successful cleanup or execution identity for that case.
                 row = {
                     "case_id": case.case_id,
@@ -92,7 +92,7 @@ def validate_environment(
         )
         if stop:
             break
-    # Recheck the selected package and captured inputs after both executed and
+    # WHY: Recheck the selected package and captured inputs after both executed and
     # reused selections. On drift, immutable execution receipts remain available
     # but no aggregate selection is published against changed inputs.
     load_package(package, digest)

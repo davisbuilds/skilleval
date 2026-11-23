@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "exclude": [
+    "environments/*/Dockerfile",
+    "examples/*/*/**",
+    "examples/*/*/cases/**",
+    "src/skilleval/_vendor/**"
+  ],
+  "files": {
+    ".github/dependabot.yml": 2,
+    ".github/workflows/ci.yml": 3,
+    "scripts/check": 2,
+    "src/skilleval/evidence.py": 1,
+    "src/skilleval/solver_boundary.py": 22
+  }
+}

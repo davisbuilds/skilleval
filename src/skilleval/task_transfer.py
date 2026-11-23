@@ -13,7 +13,7 @@ from skilleval.errors import SkillEvalError
 from skilleval.native_process import NATIVE_PAX_PATH_BYTES as NATIVE_PAX_PATH_BYTES
 from skilleval.native_process import _pax_path_size
 
-# /run is a 64 MiB tmpfs in the qualified guest. Repository archives, native
+# WHY: /run is a 64 MiB tmpfs in the qualified guest. Repository archives, native
 # logs and output collection need guest disk capacity, outside the task tree.
 GUEST_ROOT = "/var/tmp/native"
 GUEST_TOOLING = "/var/tmp/skilleval-tooling.tar"
