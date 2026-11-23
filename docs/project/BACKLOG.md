@@ -77,7 +77,7 @@ shipped history. Private provenance stays outside public entries and issues.
   alternatives/defects, browser/API observations, and exact artifact handoffs with
   linked consumption and conditional dollar estimates.
   Independent semantic reliability remains unestablished. Through
-  [cross-model review](MEASUREMENT.md#independent-review), audit actual generated
+  [independent fresh-session review](MEASUREMENT.md#independent-review), audit actual generated
   specifications and disagreements against the original need, including truthful
   blockers, unsupported choices and incomplete delivery. Review the first pair's
   retained downstream observations and requirement judgments, preserving valid
@@ -88,7 +88,7 @@ shipped history. Private provenance stays outside public entries and issues.
 - **Acceptance validity for scored or general effectiveness claims:** operator maps
   freeze declared source rationale, probe-field and semantic routes, controls, exposure
   and gaps. They do not establish that those requirements are correct or complete.
-  Independently review ([cross-model by default](MEASUREMENT.md#independent-review))
+  Independently review ([fresh-session review](MEASUREMENT.md#independent-review))
   the completed-session map's scope against ordinary work
   records and the corrected packets/lifecycle controls; retain the remaining gaps
   below. Use baseline,
@@ -153,7 +153,7 @@ shipped history. Private provenance stays outside public entries and issues.
   fixture suitability and alternative solutions. Use the separate
   [lifecycle controls](../../examples/repair/completed-sessions/lifecycle-v2/README.md)
   for cached archive/plain handover and reader limits; independently review their
-  requirement relevance ([cross-model by default](MEASUREMENT.md#independent-review))
+  requirement relevance ([fresh-session review](MEASUREMENT.md#independent-review))
   and extend coverage to corrupt replacement and full watcher
   event ordering. Keep supplemental controls separate from the original six checks
   and related lifecycle probes separate from independent tasks. Tiny authored
@@ -215,11 +215,11 @@ shipped history. Private provenance stays outside public entries and issues.
   paraphrase, anchor, injection and treatment-cue invariance. Expand to isolated
   perturbation sessions and representative cases; shared-packet controls cannot
   isolate contamination or establish general injection resistance.
-  Include [cross-model checks](MEASUREMENT.md#independent-review) before relying on
-  judgments from the same model family as the evaluated agents; escalate to the
-  maintainer only under that policy. Native audit records carry only a pending
-  status, and study output still calls it a human audit; add a way to record a
-  completed cross-model audit, with the reviewer's identity and model family.
+  Include [independent fresh-session review](MEASUREMENT.md#independent-review) before
+  relying on judgments; escalate to the maintainer only under that policy. Native
+  audit records carry only a pending status, and study output still calls it a
+  human audit; add a way to record a completed independent review, with the
+  reviewer's identity, model family and session.
 - **General review coverage:** extend targeted known-defect probes to an auditable
   missed/novel-defect family contract for real reports. Explicit coverage hypotheses
   do not measure unaided discovery or exhaustive recall. Define duplicate handling
@@ -229,7 +229,7 @@ shipped history. Private provenance stays outside public entries and issues.
   per-attempt budgets, retains retries and reports first attempts. Extend the seal
   to retained full-workload/treatment evidence, the applicable native context
   qualification and independent grader qualification before implementing scored
-  dispatch. Grader qualification uses [cross-model review](MEASUREMENT.md#independent-review).
+  dispatch. Grader qualification uses [independent review](MEASUREMENT.md#independent-review).
   The [context controls](../system/NATIVE.md#operator-state-and-effective-context)
   cover the tested Codex route; recheck new harness discovery/configuration paths
   and required task capabilities when their identities change. The existing

@@ -114,8 +114,8 @@ carry forward their entire runners.
 
 Executable checks establish objective outcomes where possible. Semantic judges
 assess claims against source and observations, with evidence citations and an
-unresolved option. Cross-model agent review handles disagreement, novelty, and
-calibration samples, escalating to human adjudication only when
+unresolved option. Independent agent review in fresh sessions handles disagreement,
+novelty, and calibration samples, escalating to human adjudication only when
 [necessary](MEASUREMENT.md#independent-review). No lexical matcher or model judge
 alone is the authority on review quality. Judge reliability must itself be
 measured before a score is used to rank skills.

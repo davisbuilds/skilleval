@@ -150,38 +150,38 @@ decision to escalate. Operator responses remain separate records.
 ### Independent review
 
 The maintainer decided on 2026-11-20 that independent review is performed mostly
-by agents through cross-model review, escalating to the maintainer only when
+by agents in fresh review sessions, escalating to the maintainer only when
 absolutely necessary. This covers the reviews that gate scored or general claims:
 acceptance-map scope and brief sufficiency, representative verdict and label
 audits, specification-quality audits and grader qualification for scored admission.
 
 Policy is provider-agnostic: task agents, judges and reviewers may each use the
 Codex or Claude route, chosen per run and declared before dispatch. The invariant
-is cross-model independence: a reviewer comes from a different model family than
-the agent that produced the reviewed artifact and the primary judgment it audits.
-The reviewer starts a fresh session from the same retained evidence, records its
-own verdicts before seeing the primary judgment, and both records and their
-disagreements are preserved. Cross-model agreement is stronger than same-family
-agreement, but different families can share a mistake; the limits above still apply.
+is session independence: the reviewer starts a fresh model session from the
+retained evidence, with no exposure to the producing or judging session's context,
+and records its own verdicts before seeing the primary judgment. Preserve both
+records and their disagreements. The reviewer may come from the same model family
+as the artifact and primary judgment or from a different one; same-family
+reviewers can share a model's blind spots. The limits above still apply.
 
 Escalate only when:
 
 1. the answer needs owner intent the brief did not delegate, such as whether an
    acceptance requirement or map scope reflects what the maintainer would accept,
    or a criterion change proposed after outcomes were seen;
-2. a consequential cross-model disagreement persists (one that would change a
+2. a consequential reviewer disagreement persists (one that would change a
    task-level outcome, an acceptance requirement or an admission decision) after
    both reviewers investigated retained evidence and a targeted check or another
-   cross-model pass could not settle it; or
-3. neither model family can check the deciding evidence (unavailable domain
+   fresh review pass could not settle it; or
+3. no available reviewer can check the deciding evidence (unavailable domain
    knowledge, inaccessible sources, or behavior no retained observation covers)
    and the verdict gates a scored or general claim.
 
-Do not escalate single-judge uncertainty, missing evidence that can remain a
-qualified unknown, same-family agreement (add a cross-model pass instead),
-authored-control results or exploratory pairs. Escalations use the question format
+Do not escalate single-judge uncertainty (add a fresh review pass instead),
+missing evidence that can remain a qualified unknown, authored-control results or
+exploratory pairs. Escalations use the question format
 above. Native audit records carry only a pending status and cannot yet record a
-completed cross-model audit; see the [backlog](BACKLOG.md).
+completed independent review; see the [backlog](BACKLOG.md).
 
 ## Model spend
 
@@ -194,8 +194,7 @@ The maintainer decided on 2026-11-20 how solver and judge runs consume model usa
   estimates remain comparison scenarios, not spend.
 - Executor choice is per run and declared before dispatch; no stage is assigned
   to a provider. A run may prefer whichever subscription has more headroom
-  (usually Codex), subject to the cross-model invariant in
-  [independent review](#independent-review). Today judges and synthesis can
+  (usually Codex). Today judges and synthesis can
   select either route; task agents run only on the Codex route until a Claude
   solver route has its own treatment and context qualification.
 - Schedule large runs overnight on the maintainer's always-on Mac mini, in a

@@ -119,8 +119,8 @@ reusable infrastructure. Original evidence and its stated limits remain intact.
    Both repairs miss history preservation; investigation also exposed a new
    baseline-relative handover regression beyond the supplied checks. Supported
    test outcomes remain distinct from contradicted broad completion claims.
-   Independent cross-model review remains pending; same-family agreement does
-   not establish reliability. Reuse retained solver artifacts in fresh evidence
+   Independent fresh-session review remains pending; agreement alone does not
+   establish reliability. Reuse retained solver artifacts in fresh evidence
    generations, without counting related probes or overlapping criteria as
    independent outcomes.
    Tiny authored label controls test the grader machinery; their difficulty does

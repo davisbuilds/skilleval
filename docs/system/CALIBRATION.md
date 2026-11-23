@@ -130,11 +130,11 @@ the older offline calibration-result contract. Revisions require a new result ID
 and explicit `supersedes`; earlier records remain intact.
 
 Every native audit starts as `required-pending`. An
-[independent reviewer](../project/MEASUREMENT.md#independent-review), cross-model
-by default, must inspect the original evidence, substantive verdicts and
-reproduction limits before a scored correctness claim. No native result, hash
-check, authored-label agreement, or same-family model pass supplies that audit,
-and nothing marks it complete automatically.
+[independent reviewer](../project/MEASUREMENT.md#independent-review) in a fresh
+session must inspect the original evidence, substantive verdicts and reproduction
+limits before a scored correctness claim. No native result, hash check,
+authored-label agreement, or model pass sharing the judging session's context
+supplies that audit, and nothing marks it complete automatically.
 The current workflow implements preparation, execution and retention; live
 workload success and general judge reliability require their own evidence. The
 earlier tiny-control audit was retired from the active roadmap on 2026-11-02

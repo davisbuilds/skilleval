@@ -21,7 +21,7 @@ flowchart LR
   A --> O
   O --> S[Attributed synthesis and exception routing]
   S --> U[Local results view and separate operator answers]
-  A --> H[Independent cross-model audit]
+  A --> H[Independent fresh-session audit]
 ```
 
 Development execution, checking, recording, and descriptive comparison are
@@ -207,7 +207,7 @@ Records append under fresh IDs, retaining earlier versions and explicit
 supersession. Missing or malformed reports never become empty clean reports;
 failed reviewed executions and failed judge executions stay separate from semantic
 verdicts. Native audit status starts at `required-pending`. Neither authored-label
-agreement nor another pass of the same model family supplies
+agreement nor a model pass that shares the judging session's context supplies
 [independent audit](../project/MEASUREMENT.md#independent-review).
 
 Reports join explicitly selected checks and judgments with artifacts and usage.

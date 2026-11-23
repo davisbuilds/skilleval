@@ -412,9 +412,10 @@ judge's input; review records retain the reviewed native run.
 
 Each audit starts with `independent_audit: required-pending`. A reviewer
 independent of the model judgment
-([cross-model by default](../project/MEASUREMENT.md#independent-review)) must
+([in a fresh session](../project/MEASUREMENT.md#independent-review)) must
 inspect original evidence, verdict reasoning and probe limits before a scored
 correctness claim. The recorder validates structure and identity and cannot supply
 this audit. Native model output cannot name itself a human assessor. Label
-agreement, hash consistency or a same-family model pass does not establish
-independent review, general judge reliability, or a skill benefit.
+agreement, hash consistency or a model pass sharing the judging session's context
+does not establish independent review, general judge reliability, or a skill
+benefit.
