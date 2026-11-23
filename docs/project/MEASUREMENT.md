@@ -155,17 +155,16 @@ absolutely necessary. This covers the reviews that gate scored or general claims
 acceptance-map scope and brief sufficiency, representative verdict and label
 audits, specification-quality audits and grader qualification for scored admission.
 
-A cross-model reviewer comes from a different model family than the agent that
-produced the reviewed artifact and the primary judgment it audits. With Codex task
-agents and the default `codex-sol` judge, the reviewer is the
-[Claude/Opus route](../system/CLAUDE-JUDGES.md); Codex reviews Claude-produced work.
+Policy is provider-agnostic: task agents, judges and reviewers may each use the
+Codex or Claude route, chosen per run and declared before dispatch. The invariant
+is cross-model independence: a reviewer comes from a different model family than
+the agent that produced the reviewed artifact and the primary judgment it audits.
 The reviewer starts a fresh session from the same retained evidence, records its
 own verdicts before seeing the primary judgment, and both records and their
 disagreements are preserved. Cross-model agreement is stronger than same-family
 agreement, but different families can share a mistake; the limits above still apply.
 
-Proposed escalation criteria, pending the maintainer's confirmation. Escalate only
-when:
+Escalate only when:
 
 1. the answer needs owner intent the brief did not delegate, such as whether an
    acceptance requirement or map scope reflects what the maintainer would accept,
@@ -173,13 +172,10 @@ when:
 2. a consequential cross-model disagreement persists (one that would change a
    task-level outcome, an acceptance requirement or an admission decision) after
    both reviewers investigated retained evidence and a targeted check or another
-   cross-model pass could not settle it;
+   cross-model pass could not settle it; or
 3. neither model family can check the deciding evidence (unavailable domain
    knowledge, inaccessible sources, or behavior no retained observation covers)
-   and the verdict gates a scored or general claim; or
-4. a grader is first admitted for scored comparisons on a task population: the
-   maintainer confirms the agent-produced qualification summary once per grader
-   and population, not per judgment.
+   and the verdict gates a scored or general claim.
 
 Do not escalate single-judge uncertainty, missing evidence that can remain a
 qualified unknown, same-family agreement (add a cross-model pass instead),
@@ -196,10 +192,12 @@ The maintainer decided on 2026-11-20 how solver and judge runs consume model usa
   Platform API-key mode, and [Claude judges](../system/CLAUDE-JUDGES.md) require a
   first-party subscription login with no API-billing fallback. API-equivalent
   estimates remain comparison scenarios, not spend.
-- Codex is the default executor for solvers and judges, because more subscription
-  usage is available there. Use Claude/Opus where
-  [independent review](#independent-review) needs a different model family, sized
-  to that audit.
+- Executor choice is per run and declared before dispatch; no stage is assigned
+  to a provider. A run may prefer whichever subscription has more headroom
+  (usually Codex), subject to the cross-model invariant in
+  [independent review](#independent-review). Today judges and synthesis can
+  select either route; task agents run only on the Codex route until a Claude
+  solver route has its own treatment and context qualification.
 - Schedule large runs overnight on the maintainer's always-on Mac mini, in a
   persistent terminal session with logs outside tracked source.
 - Every run declares a per-run cap before dispatch.

@@ -27,11 +27,11 @@ shipped history. Private provenance stays outside public entries and issues.
   retained packets, inspect disagreements with Sol and preserve native-only
   accounting limits. Add cache-write pricing only with an explicit rate contract;
   do not infer cash charges from subscription or client estimates. Solver-side
-  Claude comparisons require their own treatment/context qualification. Spend was
-  decided on 2026-11-20: subscription quota only, under a declared per-run cap
+  Claude comparisons require their own treatment/context qualification; the
+  provider-agnostic [review policy](MEASUREMENT.md#independent-review) needs that
+  route so task agents, judges and reviewers can each use either provider. Spend
+  was decided on 2026-11-20: subscription quota only, under a declared per-run cap
   ([model spend](MEASUREMENT.md#model-spend)); the cap's numbers await the maintainer.
-  This Claude pass is the cross-model check on Codex output and Sol verdicts
-  ([independent review](MEASUREMENT.md#independent-review)).
 
 - **Synthesis follow-through:** the explicit native synthesis pipeline now turns
   selected handoff evidence into an attributed browser review. Extend selection
@@ -229,9 +229,7 @@ shipped history. Private provenance stays outside public entries and issues.
   per-attempt budgets, retains retries and reports first attempts. Extend the seal
   to retained full-workload/treatment evidence, the applicable native context
   qualification and independent grader qualification before implementing scored
-  dispatch. Grader qualification uses [cross-model review](MEASUREMENT.md#independent-review);
-  the proposed policy has the maintainer confirm the first admission per grader
-  and task population.
+  dispatch. Grader qualification uses [cross-model review](MEASUREMENT.md#independent-review).
   The [context controls](../system/NATIVE.md#operator-state-and-effective-context)
   cover the tested Codex route; recheck new harness discovery/configuration paths
   and required task capabilities when their identities change. The existing
@@ -244,7 +242,7 @@ shipped history. Private provenance stays outside public entries and issues.
   Catalog matching remains unmeasured: the detector requires the exact name,
   description and full installed path in one decoded string. Component counts
   cannot establish that presentation. Capture value-free locator diagnostics with
-  a public skill before supporting aliases or broadening the detector, as a Codex
+  a public skill before supporting aliases or broadening the detector, as a
   subscription run under a declared per-run cap ([model spend](MEASUREMENT.md#model-spend)).
   Preserve
   the earlier all-unmatched run as unresolved historical evidence; the new positive
