@@ -201,8 +201,7 @@ The maintainer decided on 2026-11-20 how solver and judge runs consume model usa
   persistent terminal session with logs outside tracked source.
 - Every run declares a per-run cap before dispatch.
 
-Proposed cap form, pending the maintainer's confirmation of the numbers: count
-attempts, not tokens. Tokens cannot bound a run in advance. Usage is observed only
+The cap counts attempts, not tokens. Tokens cannot bound a run in advance. Usage is observed only
 after requests complete, interrupted attempts can leave canonical accounting
 incomplete, the Claude route keeps one terminal usage snapshot without request
 counts, and subscription quota is not denominated in observed tokens. Attempts are
@@ -226,6 +225,30 @@ judge and synthesis invocations have no run-level counter, so the operator enfor
 their declared count. Report observed consumption against the cap afterwards;
 missing usage stays unknown. Treat a provider usage-limit stop as an interrupted
 run, not a task outcome.
+
+### Calibrating the cap
+
+The cap exists so an unattended run cannot exhaust the subscription quota the
+maintainer needs the next day, and still finishes inside its window. Its size is
+not yet known in quota terms: retained runs record tokens and elapsed time, but
+none measured the five-hour or weekly window they consumed. The maintainer decided
+on 2026-11-26 to calibrate before fixing a standard cap.
+
+The unit is a task pair: one task under both arms, one repetition each, plus the
+downstream implementation from each arm's output. The first specification pilot
+was one pair, four task-agent attempts: two writer attempts of about four and six
+minutes and two implementation attempts of about eleven and twelve minutes. A
+retry is another attempt in the same cell and counts against the cap.
+
+- **Calibration run:** one task pair, at most 4 task-agent attempts and 8 judge or
+  synthesis invocations (the pair's judgments plus room for corrections). Worst
+  case under the default deadlines is about four hours; the pilot's observed
+  pace suggests about one.
+- **Measure:** read the provider quota readings before and after the run from the
+  maintainer's local usage monitor, and record the five-hour and weekly window
+  share per attempt and per judge invocation, with the sampling uncertainty.
+- **Standard cap:** afterwards, state the cap as a quota budget per night,
+  converted to a number of task pairs from that measurement, and record it here.
 
 ## Plan comparisons before dispatch
 
