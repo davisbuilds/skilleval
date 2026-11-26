@@ -1,6 +1,6 @@
 ---
 status: in-progress
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 # Roadmap
@@ -81,10 +81,11 @@ reusable infrastructure. Original evidence and its stated limits remain intact.
    The retrospective completed-session map exposes uncovered lifecycle cases and
    grader evidence loss; it does not upgrade the original six-probe results.
    The corrected-packet audit and retained-pair semantic reassessment are complete
-   as development evidence. Seek independent domain review of scope and brief
-   sufficiency before scored or general effectiveness claims; exploratory work can
-   continue with those limits declared. Include a blind alternative implementation
-   where it resolves a consequential uncertainty. Preserve the
+   as development evidence. Seek [independent review](MEASUREMENT.md#independent-review)
+   of scope and brief sufficiency before scored or general effectiveness claims;
+   exploratory work can continue with those limits declared. Include a blind
+   alternative implementation where it resolves a consequential uncertainty.
+   Preserve the
    qualified external-enforcement route and track its documented native wording
    limits. Use ordinary work briefs; review
    actual instructions, accessible files/history, skill resources and tool outputs
@@ -118,8 +119,8 @@ reusable infrastructure. Original evidence and its stated limits remain intact.
    Both repairs miss history preservation; investigation also exposed a new
    baseline-relative handover regression beyond the supplied checks. Supported
    test outcomes remain distinct from contradicted broad completion claims.
-   Independent human/domain review remains pending; same-family agreement does
-   not establish reliability. Reuse retained solver artifacts in fresh evidence
+   Independent fresh-session review remains pending; agreement alone does not
+   establish reliability. Reuse retained solver artifacts in fresh evidence
    generations, without counting related probes or overlapping criteria as
    independent outcomes.
    Tiny authored label controls test the grader machinery; their difficulty does

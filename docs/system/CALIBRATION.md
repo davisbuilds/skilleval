@@ -129,10 +129,12 @@ Use these embedded comparisons for native records; `calibration compare` accepts
 the older offline calibration-result contract. Revisions require a new result ID
 and explicit `supersedes`; earlier records remain intact.
 
-Every native audit starts as `required-pending`. An independent human must inspect
-the original evidence, substantive verdicts and reproduction limits before a
-scored correctness claim. No native result, hash check, authored-label agreement,
-or additional model pass supplies that independent human audit automatically.
+Every native audit starts as `required-pending`. An
+[independent reviewer](../project/MEASUREMENT.md#independent-review) in a fresh
+session must inspect the original evidence, substantive verdicts and reproduction
+limits before a scored correctness claim. No native result, hash check,
+authored-label agreement, or model pass sharing the judging session's context
+supplies that audit, and nothing marks it complete automatically.
 The current workflow implements preparation, execution and retention; live
 workload success and general judge reliability require their own evidence. The
 earlier tiny-control audit was retired from the active roadmap on 2026-11-02
@@ -221,7 +223,7 @@ answers receive consideration on their merits. Missing or access-limited evidenc
 remains unresolved. Report length, headings, template conformity, and resemblance
 to a preferred draft earn no credit. As with every document assessment, retained
 citation checks establish path/line integrity, not semantic entailment. Independent
-human audit remains pending after recording.
+audit remains pending after recording.
 
 Set `web_search: true` in an investigative `research-v1` assessment specification
 and pass `--web-search` to its native judge invocation to opt into the native web

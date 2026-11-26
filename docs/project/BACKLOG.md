@@ -27,7 +27,11 @@ shipped history. Private provenance stays outside public entries and issues.
   retained packets, inspect disagreements with Sol and preserve native-only
   accounting limits. Add cache-write pricing only with an explicit rate contract;
   do not infer cash charges from subscription or client estimates. Solver-side
-  Claude comparisons require their own treatment/context qualification.
+  Claude comparisons require their own treatment/context qualification; the
+  provider-agnostic [review policy](MEASUREMENT.md#independent-review) needs that
+  route so task agents, judges and reviewers can each use either provider. Spend
+  was decided on 2026-11-20: subscription quota only, under a declared per-run cap
+  ([model spend](MEASUREMENT.md#model-spend)); the cap's numbers await the maintainer.
 
 - **Synthesis follow-through:** the explicit native synthesis pipeline now turns
   selected handoff evidence into an attributed browser review. Extend selection
@@ -72,7 +76,8 @@ shipped history. Private provenance stays outside public entries and issues.
   now has source exclusions, requirement-level specification judgments, authored
   alternatives/defects, browser/API observations, and exact artifact handoffs with
   linked consumption and conditional dollar estimates.
-  Independent semantic reliability remains unestablished. Audit actual generated
+  Independent semantic reliability remains unestablished. Through
+  [independent fresh-session review](MEASUREMENT.md#independent-review), audit actual generated
   specifications and disagreements against the original need, including truthful
   blockers, unsupported choices and incomplete delivery. Review the first pair's
   retained downstream observations and requirement judgments, preserving valid
@@ -83,7 +88,8 @@ shipped history. Private provenance stays outside public entries and issues.
 - **Acceptance validity for scored or general effectiveness claims:** operator maps
   freeze declared source rationale, probe-field and semantic routes, controls, exposure
   and gaps. They do not establish that those requirements are correct or complete.
-  Independently review the completed-session map's scope against ordinary work
+  Independently review ([fresh-session review](MEASUREMENT.md#independent-review))
+  the completed-session map's scope against ordinary work
   records and the corrected packets/lifecycle controls; retain the remaining gaps
   below. Use baseline,
   plausible partial fixes and legitimate alternatives to challenge the grader;
@@ -147,7 +153,8 @@ shipped history. Private provenance stays outside public entries and issues.
   fixture suitability and alternative solutions. Use the separate
   [lifecycle controls](../../examples/repair/completed-sessions/lifecycle-v2/README.md)
   for cached archive/plain handover and reader limits; independently review their
-  requirement relevance and extend coverage to corrupt replacement and full watcher
+  requirement relevance ([fresh-session review](MEASUREMENT.md#independent-review))
+  and extend coverage to corrupt replacement and full watcher
   event ordering. Keep supplemental controls separate from the original six checks
   and related lifecycle probes separate from independent tasks. Tiny authored
   controls cannot establish reliability. Treatment metadata masking is not proven
@@ -208,8 +215,11 @@ shipped history. Private provenance stays outside public entries and issues.
   paraphrase, anchor, injection and treatment-cue invariance. Expand to isolated
   perturbation sessions and representative cases; shared-packet controls cannot
   isolate contamination or establish general injection resistance.
-  Include cross-model or human checks before relying on judgments from the same
-  model family as the evaluated agents.
+  Include [independent fresh-session review](MEASUREMENT.md#independent-review) before
+  relying on judgments; escalate to the maintainer only under that policy. Native
+  audit records carry only a pending status, and study output still calls it a
+  human audit; add a way to record a completed independent review, with the
+  reviewer's identity, model family and session.
 - **General review coverage:** extend targeted known-defect probes to an auditable
   missed/novel-defect family contract for real reports. Explicit coverage hypotheses
   do not measure unaided discovery or exhaustive recall. Define duplicate handling
@@ -219,7 +229,8 @@ shipped history. Private provenance stays outside public entries and issues.
   per-attempt budgets, retains retries and reports first attempts. Extend the seal
   to retained full-workload/treatment evidence, the applicable native context
   qualification and independent grader qualification before implementing scored
-  dispatch. The [context controls](../system/NATIVE.md#operator-state-and-effective-context)
+  dispatch. Grader qualification uses [independent review](MEASUREMENT.md#independent-review).
+  The [context controls](../system/NATIVE.md#operator-state-and-effective-context)
   cover the tested Codex route; recheck new harness discovery/configuration paths
   and required task capabilities when their identities change. The existing
   bounded seal cannot grant scored admission.
@@ -231,7 +242,9 @@ shipped history. Private provenance stays outside public entries and issues.
   Catalog matching remains unmeasured: the detector requires the exact name,
   description and full installed path in one decoded string. Component counts
   cannot establish that presentation. Capture value-free locator diagnostics with
-  a public skill before supporting aliases or broadening the detector. Preserve
+  a public skill before supporting aliases or broadening the detector, as a
+  subscription run under a declared per-run cap ([model spend](MEASUREMENT.md#model-spend)).
+  Preserve
   the earlier all-unmatched run as unresolved historical evidence; the new positive
   body control does not explain or repair it. Failed matches do not prove absence.
   An explicit-use pair on 2026-10-28 matched body and metadata in every ON request,
